@@ -2,6 +2,6 @@
 A senior project from Western Oregon University by Natalie, Cooper, Easton, and Aidan
 
 # Milestone 1
-[Information About Us!](/doc/team_info.md)
+[About Us](/doc/team_info.md)
 
 [Project Ideas](/doc/projects.md)
