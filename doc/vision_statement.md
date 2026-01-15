@@ -1,0 +1,2 @@
+###Vision Statement
+The product is a simple to use meal planner.  It has calendar integration, food recommendations, and a vast repository of recipes to choose from. It's purpose is to help you manage your weekly nutrients and budget in a simple to use way. We are choosing this topic because we wanted a way to budget out nutrients, money, and time to better organize eating habits. There are many other meal planning competitors. However this meal planner stands out due to it's smart food recommendations and it's calendar integration. 
