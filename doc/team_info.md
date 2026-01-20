@@ -6,6 +6,8 @@
 **Natalie Perez, Cooper Derville-Teer, Easton Pomrankey, Aidan Hazzard**
 
 ## Meeting Times
+Monday 10:00 AM - 10:15 AM, 2:00 PM - 3:00 PM<br>
+Wednesday 10:00 AM - 10:15 AM<br>
 Thursday 11:00 AM - 3:30 PM<br>
 Saturday 7:00 PM - 8:30 PM
 ## Group Materials
