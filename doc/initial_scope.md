@@ -5,16 +5,16 @@ This app is designed to help user plan their meals, manage groceries, and help s
 ## Shopping List
 
 - Add items manually
-- Add item from meals on calendar
-- Export to Instacart/Shopping API
+- Add items from meals on calendar
+- Export to Instacart/other Shopping API
 - Remove items from shopping list that are in pantry
 
 
 ## Pantry
 
-- UPC bar code scanner to add items
+- Use UPC bar code scanner to add items
 - Add items manually
-- Remove items used by recipes
+- Remove items used in meals
 
 
 ## Recipe Book

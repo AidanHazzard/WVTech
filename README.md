@@ -3,8 +3,11 @@ A senior project from Western Oregon University by Natalie, Cooper, Easton, and 
 
 [About Us](/doc/team_info.md)
 
-# Milestone 2
+## Milestone 2
 
 ### Meal Planner
-[Mind Map](/doc/meal_planner_mind_map.svg)
-[Architecture](/doc/meal_planner_architecture_uml_diagram.pdf)
+
+[Vision Statement](/doc/vision_statement.md)<br>
+[Mind Map](/doc/meal_planner_mind_map.svg)<br>
+[Needs and Features](/doc/initial_scope.md)<br>
+[System Architecture](/doc/meal_planner_architecture_diagram.pdf)
