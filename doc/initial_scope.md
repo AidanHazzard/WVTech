@@ -4,15 +4,15 @@ This app is designed to help user plan their meals, manage groceries, and help s
 
 ## Shopping List
 
-- Allow user to add items manually to the shopping list.
-- Items from upcoming meals on the calendar are added to the shopping list automatically.
-- Use a grocery shopping API to allow the user to quickly purchase items from a local store for pick-up or delivery.
+- Users can manually enter grocery items as well as the desired quantity. Also allows the options of adding notes to their shopping list.
+- Ingredients from upcoming meals on the calendar are added to the shopping list automatically.
+- Users can export their shopping list to a third-party service such as Instacart for online ordering and/or pick-up.
 - Remove items from shopping list that are in pantry automatically
 
 
 ## Pantry
 
-- The user can use a UPC bar code scanner to add items to their pantry
+- Users can scan a grocery item's barcode using one phone camera to quickly add the item(s) to their shopping list.
 - Allow user to add items manually to the pantry
 - The system can remove items used in meals automatically
 - The system can remove perishable items from pantry automatically that have gone beyond their use date
@@ -24,10 +24,13 @@ This app is designed to help user plan their meals, manage groceries, and help s
 
 - Allow users to rate recipes on a 1-5 scale
 - Aggregate user ratings and allow users to search/sort recipes by rating
-- Users can Favorite/Star recipes to quickly search for recipes they like
-- Allow user to add their own recipes to their recipe book
+- Users can save and organize their favorite recipes to have quick access and help with future meal planning.
+- Users can create, edit, and save their own recipes with both ingredients and instructions.
 - The user can search for recipes to add to meals. Search results are ordered by chosen categories of recipes and filtered by the user's dietary requirements.
 - The system uses a grocery shopping API to approximate cost local to the user
+- The system can display the nutritional information for each ingredient and each recipes, including calories and the macronutrients, based on nutrition APIs.
+- The system provides users with step-by-step cooking instructions with integrated timers, to help guide user while cooking.
+- The system can, at the users discretion, notify the user when an integrated cooking timer elapses.
 
 
 ## Budget
@@ -62,14 +65,15 @@ This app is designed to help user plan their meals, manage groceries, and help s
 
 ## User Account
 
-- A user can create and sign-in to an account
+- A user can create and sign-in to an account using email or phone-number along with a password
+- A users account can save their meal plans, dietary needs and restrictions, recipes, and preferences.
   
 
 ## Calendar
 
-- Allow the user to set the times and dates for meals
-- Allow the user to repeat meals on a regular basis
-- Allow the user to set days and times for shopping and manage the shopping list accordingly
+- The user can set the times and dates for meals
+- The user can repeat meals on a regular basis
+- Allow the user to set days and times for shopping and the system will manage the shopping list accordingly
 - When adding a meal to the calendar, the system can recommend a meal to add
-- The user can set days to prepare meals. The system will collate necessary prep work needed for meals in between prep days from recipes and provide a list of instructions to the user.
+- The user can set days to prepare meals. The system will collate necessary prep work needed for meals in between prep days from recipes and provide a list of instructions to the user of what they need to do to prep.
 - The system can send notifications to the user to remind them when to start preparing and cooking a meal. The user can select which notifications they would like to recieve.
