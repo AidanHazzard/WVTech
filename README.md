@@ -1,10 +1,9 @@
 # Willamette Valley Tech
 A senior project from Western Oregon University by Natalie, Cooper, Easton, and Aidan
 
-[About Us](/doc/team_info.md)
+[About Us](/docs/team_info.md)
+[Our Vision](/docs/vision_statement.md)<br>
 
-# Milestone 2
-
-### Meal Planner
-[Mind Map](/doc/meal_planner_mind_map.svg)
-[Architecture](/doc/meal_planner_architecture_uml_diagram.pdf)
+## Milestone 3
+[Timeline](/docs/timeline.html)<br>
+[Needs and Features](/docs/initial_scope.md)<br>
