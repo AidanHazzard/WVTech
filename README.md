@@ -8,7 +8,8 @@ A senior project from Western Oregon University by Natalie, Cooper, Easton, and 
 
 [Timeline](/docs/timeline.html)<br>
 [Needs and Features](/docs/initial_scope.md)<br>
-[Architecture Diagram](/docs/images/meal_planner_architecture_diagram.svg)<br>
-[UI Modeling](/docs/images/ui_example.pdf)<br>
-[Use Case Modeling](/docs/images/meal_planner_use_case_diagram.svg)<br>
-[Data Modeling](/docs/images/meal_planner_object_diagram.pdf)<br>
+[Stakeholders](/docs/stakeholder_write_up.md)<br>
+[Personas](/docs/personas.md)<br>
+[Requirements Elicitation](/docs/requirements_elicitation.md)<br>
+[Requirements Analysis](/docs/requirements_analysis.md)<br>
+[Modeling](/docs/modeling.md)<br>

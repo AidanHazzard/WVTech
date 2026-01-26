@@ -1,3 +1,5 @@
+# Requirements Elicitation Analysis
+
 #### User Account
 
 1. For each attribute, term, entity, relationship, activity ... precisely determine its bounds, limitations, types and constraints in both form and function. Write them down.
@@ -313,3 +315,185 @@ Unit conversion, duplicate handling, export confirmation, and pantry synchroniza
 4. ##### Elicitation Follow-Up
 
 Further elicitation is needed to define auto-removal behavior, duplicate merging, and export expectations.
+
+
+---
+
+
+#### Pantry - Analysis
+
+Go through all the information gathered during the previous round of elicitation.  
+1. For each attribute, term, entity, relationship, activity ... precisely determine its bounds, limitations, types and constraints in both form and function.  Write them down.
+- Entity: User
+    - UserID
+        - Type: UUID/Integer
+        - Constraint: Unique, required
+- Entity: Pantry
+    - PantryID
+        - Type: UUID/Integer
+        - Constraint: Unique
+- Entity: PantryItem
+    - PantryItemID
+        - Type: UUID/Integer
+        - Constraint: Unique
+    - ItemName
+        - Type: String
+        - Constraint: Required
+    - ItemQuantity
+        - Type: Decimal
+        - Constraint: Must be greater than or equal to 0
+    - ItemUnit
+        - Type: Enum (Items, Cups, Lbs, etc.)
+    - ItemExpirationDate
+        - Type: Date
+        - Constraint: Optional
+- Entity: Ingredient
+    - IngredientID
+        - Type: UUID/Integer
+        - Constraint: Unique
+    - IngredientName
+        - Type: String
+        - Constraint: None
+
+
+2. Do they work together or are there some conflicting requirements, specifications or behaviors?
+    The entities work together without major conflicts. A potential conflict may arise if pantry quantities are expected to update automatically when recipes are selected, as this may require additional user confirmation or assumptions about actual usage.
+
+3. Have you discovered if something is missing?
+    Yes. It is still unclear whether expiration tracking and automatic quantity deduction are required features.
+
+4. Return to Elicitation activities if unanswered questions remain.
+    Additional elicitation is needed to determine how detailed pantry tracking should be and whether automation is expected.
+
+
+---
+
+
+#### Budget - Analysis
+
+Go through all the information gathered during the previous round of elicitation.  
+
+1. For each attribute, term, entity, relationship, activity ... precisely determine its bounds, limitations, types and constraints in both form and function.  Write them down.
+- Entity: User
+    - UserID
+        - Type: UUID/Integer
+        - Constraint: Unique, required
+    - Location
+        - Type: String (City/state or zip code)
+        - Constraint: Optional(used for price estimates)
+    - BudgetAmount
+        - Type: Decimal
+        - Constraint: must be greater than or equal to 0
+    - BudgetPeriod
+        - Type: Enum (Weekly, Biweekly, Monthly)
+        - Constraint: Required
+- Entity: Recipe
+    - RecipeId
+        - Type: UUID/Integer
+        - Constraint: Unique, required
+    - Name
+        - Type: String
+        - Constraints: None
+    - Ingredients
+        - Type: List<Ingrediants>
+        - Constraint: None
+    - EsitmatedCost
+        - Type: Decimal
+        - Constraint: Derived value not user entered
+- Entity: Ingredient
+    - IngredientId
+        - Type: UUID/Integer/Id?
+        - Constraint: Unique
+    - Name
+        - Type: String
+        - Constraints: None
+    - Quantity
+        - Type: Decimal
+        - Constraint: None
+    - Unit
+        - Type: Enum (Cups, Lbs, Items, etc.)
+    - EstimatedCost
+        - Type: Decimal
+        - Constraint: Estimated average cost not actual cost
+- Entity: BudgetSummary
+    - BudgetId
+        - Type: UUID/Integer/Id
+        - Constraint: Unique
+    - TotalBudget
+        - Type: Decimal
+        - Constraint: Potentially always changing
+    - EstimatedSpending
+        - Type: Decimal
+        - Constraint: Estamated spening not actual apending
+    - RemianingBudget
+        - Type: Decimal
+        - Constraint: None
+    - OverBudgetFlag
+        - Type: Boolean
+        - Constraint: Doesn't apply if the user does not have a budget limit
+
+2. Do they work together or are there some conflicting requirements, specifications or behaviors?
+    There is potential conflict between providing accurate pricing and maintaining simplicity. Exact pricing may require real-time store data, while estimates may reduce accuracy but improve usability and performance.
+
+3. Have you discovered if something is missing?  
+    Further clarification is needed on whether tax, store selection, and price fluctuations should be included in budget calculations.
+
+4. Return to Elicitation activities if unanswered questions remain.
+    If real-time pricing or store-specific accuracy is required, additional reaserch will need to be done.
+
+
+---
+
+
+#### Time Management - Analysis
+
+Go through all the information gathered during the previous round of elicitation.  
+
+1. For each attribute, term, entity, relationship, activity ... precisely determine its bounds, limitations, types and constraints in both form and function.  Write them down.
+
+- Entity: User
+    - UserID
+        - Type: UUID/Integer
+        - Constraint: Unique, required
+- Entity: Calendar
+    - CalendarID
+        - Type: UUID/Integer
+        - Constraint: Unique
+    - StartDate
+        - Type: DateTime
+        - Constraint: Required
+    - EndDate
+        - Type: DateTime
+        - Constraint: Required
+- Entity: MealPlan
+     - MealPlanID
+        - Type: UUID/Integer
+        - Constraint: Unique
+    - Date
+        - Type: Date
+        - Constraint: Must fall within calendar range
+    - MealType
+        - Type: Enum (Breakfast, Lunch, Dinner)
+        - Constraint: Required
+    - EstimatedPrepTime
+        - Type: Integer (minutes)
+        - Constraint: Optional, estimated value
+- Entity: Recipe
+    - RecipeID
+        - Type: UUID/Integer
+        - Constraint: Unique
+    - RecipeName
+        - Type: String
+        - Constraint: None
+    - EstimatedCookTime
+        - Type: Integer (minutes)
+        - Constraint: Estimated, not exact
+
+2. Do they work together or are there some conflicting requirements, specifications or behaviors?
+    The entities and activities work together without major conflict. A potential issue may arise if detailed time tracking is expected, as time estimates are approximate and may vary between users. However, this does not prevent the system from supporting basic scheduling and planning.
+
+3. Have you discovered if something is missing?
+    Yes. It is still unclear whether features such as reminders, notifications, or time-based alerts are part of the time management requirements.
+
+4. Return to Elicitation activities if unanswered questions remain.
+    Further elicitation is needed to determine whether reminder notifications or more detailed time tracking should be included.
