@@ -1,0 +1,2 @@
+# Vision Statement
+We envision a meal planner that takes the stress out of everyday cooking by doing the hard work for you. By balancing budget, time and nutrition, it provides users with well-rounded meal plans tailored to their individual needs. Meals are organized in a clear calendar format so users always know what they’ll be eating in the days ahead. With smart, personalized recommendations, meal planning becomes simple, efficient, and accessible making healthy, affordable eating easier than ever.
