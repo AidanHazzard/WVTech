@@ -270,22 +270,26 @@ It is unclear how many meals the system should recommend; at what point in the p
 The scope is unclear. It is clear what information is used in the recommendation of meals, and that this requirement only is to recommend meals. However it is unclear in that the definition of "meals" is undefined and how the system infers recipe preferences
 
 4. What do you not understand?
-    * Technical domain knowledge
-	* What algorithm to use to recommend meals?
-		* A DNN of some sort might work. Other recommendation algorithms as well such as collaborative filtering. No matter what, we're diving into machine learning for this
-	* How to get inferred preferences from favorited recipes and recipe ratings?
-		* See 5
-	* 
-    * Business domain knowledge
-	* How should the system take into account diet when recommending meals?
-	* How should the system balance all the factors given?
-
+    - Technical domain knowledge
+		* What algorithm to use to recommend meals?
+			* A DNN of some sort might work. Other recommendation algorithms as well such as collaborative filtering. No matter what, we're diving into machine learning for this
+			* Combining budget and diet together looks a lot like a multi-dimensional knapsack problem
+			* One way to do this is to first filter recipes by what the user can have, have a recommendation algorithm sort recipes and another algorithm to solve our budget/diet knapsack problem to create a meal. Further research is required but this knapsack problem seems like it should be NP-hard. A greedy algorithm that can provide multiple different solutions for the user to pick from if that is so.
+		* How to get inferred preferences from favorited recipes and recipe ratings?
+			* See 5
+    - Business domain knowledge	
+		* Meals is plural, how many meals should be recommended to the user?
+			* 3 is a good number. Could be user provided.
+		* How should the system take into account diet when recommending meals?
+		* How should the system balance all the factors given?
+			* User provided priorities!
+		* How should a user's time budget be determined? Sometimes people have more time to make food than other times.
+		* Sometimes a person is allergic to an ingredient only if its raw, how do we handle this in terms of filtering recipes?
 5. Is there something missing?
 	* How does the system infer recipe preferences?
 		* Sounds like a job for AI. This is what DNNs are good at. I would expect a correlation between favorited recipes/recipe ratings and food preferences. However, a user may give a recipe a good rating because its cheap or easy to make, not necessarily because they find it tastes better than others, which could complicate the goal of this analytical model limited to the given information.
 	* What type of data is used to determine "food preferences"
 		* A tag system for recipes, describing what type of food the recipe makes.
-
 6. Get answers to these questions.
 
 
@@ -310,12 +314,27 @@ It is not clear how a search of recipes is done, and where the recipes originate
 The scope is clear. Only searching and viewing of recipes is included
 
 4. What do you not understand?
-    * Technical domain knowledge
-	* What categories is searching done by?
-    * Business domain knowledge	
-	* 
+	- Technical domain knowledge
+		- What categories is searching done by?
+	    		- Tags to determine what type of food the recipe makes
+			- Ingredients
+			- Nutritional info
+		- Metric or Imperial?
+			- Por que no los dos? Store information as metric and convert to imperial to display, shop, and search if the user wishes.
+  	- Business domain knowledge
+  		- What nutrional info to include?
+  			- Macros: protein, carbs, fats
+  			- Caloric content
+  			- Vitamins
 5. Is there something missing?
-	* What categories is searching done by?
 	* Where do the recipes come from?
+		- Recipe API, user provided, we (the developers) can also provide our own
+	* What is a recipe comprised of?
+		- A name
+		- Tags for searching, e.g. Breakfast, Italian, Easy
+		- A list of ingredients and amounts
+		- Nutritional info
+		- Instructions
+		- A description of the recipe would be useful for users
 6. Get answers to these questions.
 

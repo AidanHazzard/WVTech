@@ -395,7 +395,7 @@ Go through all the information gathered during the previous round of elicitation
         - Type: String
         - Constraints: None
     - Ingredients
-        - Type: List<Ingrediants>
+        - Type: List\<Ingredients>
         - Constraint: None
     - EsitmatedCost
         - Type: Decimal
@@ -497,3 +497,197 @@ Go through all the information gathered during the previous round of elicitation
 
 4. Return to Elicitation activities if unanswered questions remain.
     Further elicitation is needed to determine whether reminder notifications or more detailed time tracking should be included.
+
+
+---
+
+
+#### Recipe Book - Analysis
+
+Go through all the information gathered during the previous round of elicitation.  
+
+1. For each attribute, term, entity, relationship, activity ... precisely determine its bounds, limitations, types and constraints in both form and function.  Write them down.
+
+- Entity: Recipe
+	- Name
+		- Type: string
+		- Constraint: Required
+	- Tags
+		- Type: List\<Tag>
+		- Constraint: None
+	- Ingredients
+		- Type: List\<Ingredients>
+		- Constraint: Must not be empty
+	- Instructions
+		- Type: string
+		- Constraint: None
+	- Description
+		- Type: string
+		- Constraint: None
+	- Calories
+		- Type: uint
+		- Constraint: None
+	- Nutrients
+		- Type: Dictionary\<Nutrient, uint>
+		- Constraint: None
+
+- Entity: Ingredient
+	- Base
+		- Type: IngredientBase
+		- Constraint: Required
+	- Measurement
+		- Type: Measurement
+		- Constraint: Required
+	- Amount
+		- Type: uint
+		- Constraint: Required
+		- Notes: Amounts can be both countable (number of apples) and fractional (cups of flour), but if we use metric to store ingredient information we would only require Amount to be a whole number
+
+- Entity: IngredientBase
+	- id
+		- Type: uint
+		- Constraint: Required, Unique
+	- Name
+		- Type: string
+		- Constraint: Required, Unique, case insensitive
+
+- Entity: Measurement
+	- id
+		- Type: uint
+		- Constraint: Unique, Required
+	- Name
+		- Type: string
+		- Constraint: Unique, Required, case insensitive
+
+- Entity: Tag
+	- id
+		- Type: uint
+		- Constraint: Unique, Required
+	- Name
+		- Type: string
+		- Constraint: Unique, Required, case insensitive
+
+- Entity: Nutrient
+	- id
+		- Type: uint
+		- Constraint: Unique, Required
+	- Name
+		- Type: string
+		- Constraint: Unique, Required, case insensitive
+	- Measurement
+		- Type: Measurement
+		- Constraint: Required
+
+
+---
+
+
+#### Calendar - Analysis
+
+Go through all the information gathered during the previous round of elicitation.  
+
+1. For each attribute, term, entity, relationship, activity ... precisely determine its bounds, limitations, types and constraints in both form and function.  Write them down.
+
+- Entity: User
+	- Calendar
+		- Type: List\<Day>
+		- Constraint: None
+- Entity: Day
+	- Date
+		- Type: DateTime
+		- Constraint: Required
+	- Meals
+		- Type: List\<Meal>
+		- Constraint: None
+- Entity: Meal
+	- Time
+		- Type: DateTime
+		- Constraint: Required
+
+
+---
+
+
+## Meal Recommendation - Analysis
+
+Go through all the information gathered during the previous round of elicitation.  
+
+1. For each attribute, term, entity, relationship, activity ... precisely determine its bounds, limitations, types and constraints in both form and function.  Write them down.
+
+- Entity: Meal
+	- Recipes
+		- Type: List\<Recipe>
+		- Constraint: Required
+	- Time
+		- Type: DateTime
+		- Constraint: Required
+
+- Entity: Recipe
+	- EstimatedCost
+		- Type: float
+		- Constraint: non-negative, stored client-side as prices are local to user
+	- Calories
+		- Type: uint
+		- Constraint: None
+	- Nutrients
+		- Type: Dictionary\<Nutrient, uint>
+		- Constraint: None
+		- Note: the Nutrient entity is sufficiently defined for this elsewhere, so it will not be reiterated
+	- EstimatedCookingTime
+		- Type: uint
+		- Constraint: number of seconds
+	- Favorite
+		- Type: bool
+		- Default: false
+		- Constraint: stored client-side
+	- SiteRating
+		- Type: float
+		- Constraint: between 1-5
+	- UserRating
+		- Type: float
+		- Constraint: between 1-5, stored client-side
+
+- Entity: User
+	- Budget
+		- Type: float
+		- Constraint: non-negative
+	- BudgetPriority
+		- Type: float
+		- Constraint: between 0 and 1
+	- Diet
+		- Type: Diet
+		- Constraint: Required
+	- FoodPreferences
+		- Type: Dictionary\<Tag, float>
+		- Constraint: value is between 0 and 1, default 0.5
+		- Note: the Tag entity is sufficiently defined for this elsewhere, so it will not be reiterated 
+	- FoodPreferencePriority
+		- Type: float
+		- Constraint: between 0 and 1
+	- MinRecipeRating
+		- Type: float
+		- Constraint: between 1 and 5
+
+- Entity: Diet
+	- CaloriesPerDay
+		- Type: uint
+		- Constraint: None
+	- CalorieGoalTolerance
+		- Type: uint
+		- Constraint: None
+	- CalorieGoalPriority
+		- Type: float
+		- Constraint: between 0 and 1
+	- NutrientsPerDay
+		- Type: Dictionary\<Nutrient, uint>
+		- Constraint: None
+	- NutrientsGoalTolerance
+		- Type: Dictionary\<Nutrient, uint>
+		- Constraint: None
+	- NutrientGoalPriority
+		- Type: Dictionary\<Nutrient, float>
+		- Constraint: value is between 0 and 1
+	- IngredientRestrictions
+		- Type: List\<BaseIngredient>
+		- Constraint: None
+		- Note: the BaseIngredient entity is sufficiently defined for this elsewhere, so it will not be reiterated 
