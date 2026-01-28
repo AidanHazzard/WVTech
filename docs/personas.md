@@ -1,6 +1,8 @@
-### User Persona 1: Jack Black 
+### User Persona: Jack Black 
 
-Jack Black is a single father who lives in Seattle WA and works in construction. Jack balances a full-time job with raising his kids. Most of his time is spent working and driving his children to and from school and sports practices. Because of his busy schedule, Jack struggles to find time to meal prep or research affordable, healthy recipes. Jack wants to provide good meals for his family, but planning ahead often feels overwhelming. He is mindful of his grocery budget and tries to avoid unnecessary spending, especially with rising food costs. Convenience is extremely important to him, as his days are tightly scheduled and leave little room for extra errands. Overall, Jack values solutions that save time, reduce stress, and allow him to spend more quality time with his kids instead of worrying about meals and grocery shopping.
+Jack Black is a single father who lives in Seattle, WA. He works full-time in construction and is heavily occupied by his schedule, balancing work with driving his kids to school and extracurricular activities. This leaves him with limited time for detailed meal planning. The biggest challenge he faces is staying within a budget while still providing filling family meals.
+
+Jack often makes quick trips to the store after work and ends up buying items he already has or forgetting ones he needs. He wants a simple way to organize his groceries and avoid overspending.
 
 ![Jack Black](/docs/images/persona_images/jack_black_image.webp)
 
@@ -8,13 +10,12 @@ Jack Black is a single father who lives in Seattle WA and works in construction.
 ---
 
 
-### User Persona 2: Katy Winter (Non-User)
+### User Persona: Katy Winter (Non-User)
 
-Katy Winter is a woman in her early 20s and a senior in college, who lives in San Marcos, CA. She balances a demanding schedule that includes being a full-time student, working a full-time job, and maintaining a consistent gym routine. Earlier in her college career, Katy struggled to take care of her health due to exhaustion and time constraints, often skipping meals or relying on convenience food after long days of classes and work. That phase of her life has passed.
+Katy Winter is a woman in her early 20s and a college senior who lives in San Marcos, CA. She balances being a full-time student, working a full-time job, and consistently going to the gym. When she began college, Katy struggled to see gym progress due to not fueling herself properly because of her class and work schedule.
 
-Now, Katy has established a stable routine that works well for her. She understands her nutritional needs, fuels her body appropriately for workouts, and has developed habits that support both her academic and physical goals. Because of this, Katy prefers flexibility and autonomy when it comes to eating. Rather than following a structured meal plan, she chooses foods intuitively based on how she feels and what her body needs on a given day.
+Now that she is a college senior, Katy has achieved the gym results she wanted during her freshman year. She understands how to organize her time and what she needs nutritionally to support her fitness goals. Katy has gone through trial and error with meal prepping and planning but found them too restrictive. She felt she did not have room for impromptu plans, and when plans were made, she often could not eat what she wanted because it did not fit into her meal plans.
 
-Katy has tried meal planning and meal prepping in the past, but found them too restrictive. She dislikes feeling constrained by predefined meals, especially when spontaneous plans arise. In those situations, meal plans made her feel pressured to eat foods that no longer matched her preferences or schedule.
 
 ![Katy Winter](/docs/images/persona_images/katy_winter.png)
 
@@ -22,16 +23,21 @@ Katy has tried meal planning and meal prepping in the past, but found them too r
 ---
 
 
-### User Persona 3: Bob Ross
-Bob Ross is an owner of a small real estate firm. They live in Austin Texas and are 57 years old. They are constantly having meetings and work a lengthy but extremely variable schedule. They do not get a lot of down time but when they do get it they enjoy biking.
-They plan to retire at age 60 and are very well off financially. They do not have any immediate family and lives alone. They have 1 dog and 1 cat. They are a very stressed-out person due to their intensive schedule and lack of down time.
+### User Persona: Bob Ross
+
+Bob Ross is a 57-year-old owner of a small real estate firm living in Austin, TX. He has an unpredictable schedule, leaving him with little consistency in daily life, especially when it comes to eating. Bob lives alone with his dog and cat and rarely cooks after long workdays. Because of this, he often chooses whatever is most convenient, relying on takeout or pre-packaged foods.
+
+Recently, Bob has started thinking more about his lifestyle as he approaches retirement. He is less concerned with budgeting or detailed nutritional facts and more focused on finding simple meals that require little to no effort, allowing him to rely less on takeout.
 
 ![Bob Ross](/docs/images/persona_images/bob_ross.png)
 
 
 ---
 
-### User Persona 4: Gary Betlach
-Gary Betlach is a 37 year old man who lives in Ellicott City, Maryland. He works as a registered dietitian at the John Hopkins Hospital in Baltimore. He has no children himself, but he and his SO takes care of his brother's kids often as both his brother and sister-in-law travel a lot for work. Despite being a dietitian, he often doesn't have enough time to cook at home due to the long hours of his work and his SO does much of the cooking and prep work while he creates diet plans for the family. During the weekends he likes to head to Baltimore to watch the Orioles during baseball season.
+### User Persona: Gary Betlach
+
+Gary Betlach is a 37-year-old registered dietitian living in Ellicott City, Maryland, who works long hours at Johns Hopkins Hospital. While Gary understands nutrition at a professional level, managing meals across his household and extended family has become increasingly complex, especially when helping care for his brother’s children.
+
+Gary already has a rhythm for creating diet plans but struggles with organizing them while factoring in his family’s nutritional needs and schedules.
 
 ![Gary Betlach](/docs/images/persona_images/gary_betlach.png)
