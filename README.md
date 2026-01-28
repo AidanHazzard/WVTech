@@ -6,7 +6,7 @@ A senior project from Western Oregon University by Natalie, Cooper, Easton, and 
 
 ## Milestone 3
 
-[Timeline](/docs/timeline.html)<br>
+[Timeline](/docs/timeline.md)<br>
 [Needs and Features](/docs/initial_scope.md)<br>
 [Stakeholders](/docs/stakeholder_write_up.md)<br>
 [Personas](/docs/personas.md)<br>
