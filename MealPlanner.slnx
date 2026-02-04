@@ -3,6 +3,10 @@
   <Folder Name="/src/MealPlanner/">
     <Project Path="src/MealPlanner/MealPlanner.Tests/MealPlanner.Tests.csproj" />
     <Project Path="src/MealPlanner/MealPlanner/MealPlanner.csproj" />
+    <Project Path="src/MealPlanner/MealPlanner.IntegrationTests/Mealplanner.IntegrationTests.csproj" />
+    <Project Path="src/MealPlanner/MealPlanner.JSTests/MealPlanner.JSTests.esproj">
+      <Build />
+      <Deploy />
+    </Project>
   </Folder>
-  <Folder Name="/src/MealPlanner/Mealplanner/" />
 </Solution>
