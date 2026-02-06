@@ -1,7 +1,17 @@
+using MealPlanner.Models;
+using Microsoft.EntityFrameworkCore; 
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+
+
+// Configure the DbContext to use SQL Server (Docker)
+string connectionString = builder.Configuration["ConnectionString"];
+
+builder.Services.AddDbContext<MealPlannerDBContext>(options =>
+    options.UseSqlServer(connectionString));
 
 var app = builder.Build();
 
