@@ -36,7 +36,7 @@ body {
 background-color: #4a4a4a;
     border-radius: 20px;
 
-    margin: 24px 0;     /* top/bottom only */
+    margin: 24px 0;
     padding: 24px;
 
     width: 100%;
@@ -44,6 +44,8 @@ background-color: #4a4a4a;
     box-sizing: border-box;
         position: relative;
 }
+
+/*Used for the text on the 1st background layer*/
 .back1Title {
     color: white;
     text-align: center;
@@ -75,11 +77,11 @@ background-color: #4a4a4a;
     position: relative;
         transition: background-color 0.3s ease-in-out;
 }
-
 .imageButton:hover {
   background-color: rgb(97, 97, 97);
 }
 
+/*Used for the image that is contained in the button image*/
 .imageButtonimage{
 display: block;
     width: 200px;
@@ -88,12 +90,10 @@ display: block;
     object-fit: contain;
   transition: transform 0.3s ease-in-out;
 }
-
 .imageScaleDown{
     width: 175px;
     height: 175px;
 }
-
 .imageButton:hover .imageButtonimage {
     transform: scale(1.08);
 }
@@ -117,15 +117,14 @@ display: block;
     border: none;
     transition: background-color 0.3s ease-in-out;
   }
-  
   .buttonBlue:hover {
     background-color: rgb(104, 192, 198);
 }
-
 .imageButton:hover .buttonBlue {
     background-color: rgb(104, 192, 198);
 }
 
+/*Used for buttons text so it can increase and decrease in size*/
 .buttonText {
     transition: transform 0.3s ease-in-out;
 }
@@ -136,7 +135,22 @@ display: block;
       transform: scale(1.08);
 }
 
-  /*Use this class if the background div has a button attatched to it*/
+/*Use this class if the background div has a button attatched to it*/
 .backHasButton {
     padding-bottom: 70px;
+}
+
+/*Use this to make any image centered and autoscaled*/
+.imageFit{
+    display: block;
+
+    max-width: 100%;
+    max-height: 100%;
+
+    width: auto;
+    height: auto;
+
+    margin: 16px auto;
+
+    object-fit: contain;
 }
