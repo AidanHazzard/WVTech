@@ -2,31 +2,51 @@
     ViewData["Title"] = "Home Page";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
-</div> *@
+<div class="back1">
+    <h1 class="back1Title">Welcome Back {Name}</h1>
 
-@model IEnumerable<dynamic>
+<!-- Holds the top 3 navigation buttons for getting to the meal plan, food entrys, and shopping lists -->
+    <div class="row align-items-center">
+        <div class="col">
+            <button class="imageButton">
 
-<h2>Users</h2>
+                <img src="~/images/icons/calendar.webp" alt="calendar" class="imageButtonimage imageScaleDown">
+                <div class="buttonBlue">
+                    <h2 class="buttonText">Meal Plan</h2>
+                </div>
 
-<table class="table">
-    <thead>
-        <tr>
-            <th>First Name</th>
-            <th>Last Name</th>
-            <th>Email</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var user in Model)
-        {
-            <tr>
-                <td>@user.FirstName</td>
-                <td>@user.LastName</td>
-                <td>@user.Email</td>
-            </tr>
-        }
-    </tbody>
-</table>
+            </button>
+        </div>
+
+        <div class="col">
+            <button class="imageButton">
+
+                <img src="~/images/icons/servedish.png" alt="servedish" class="imageButtonimage">
+                <div class="buttonBlue">
+                    <h2 class="buttonText">Your Food Entrys</h2>
+                </div>
+
+            </button>
+        </div>
+
+        <div class="col">
+            <button class="imageButton">
+
+                <img src="~/images/icons/shoppingcart.webp" alt="shoppingcart" class="imageButtonimage">
+                <div class="buttonBlue">
+                    <h2 class="buttonText">Shopping List</h2>
+                </div>
+
+            </button>
+        </div>
+    </div>
+
+<!-- Holds a display of the statistics so far today. Will populate this with info when the nutrient info is done -->
+    <div class="back2 backHasButton">
+        <h2 class="back1Title">Todays Statistics</h2>
+        <img src="~/images/placeholder/nutrients.png" alt="nutrients" class="imageFit">
+        <button class="buttonBlue">
+            <h2 class="buttonText">More Statistics</h2>
+        </button>
+    </div>
+</div>

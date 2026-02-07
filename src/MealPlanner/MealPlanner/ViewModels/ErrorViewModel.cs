@@ -1,4 +1,4 @@
-namespace MealPlanner.Models;
+namespace MealPlanner.ViewModels;
 
 public class ErrorViewModel
 {

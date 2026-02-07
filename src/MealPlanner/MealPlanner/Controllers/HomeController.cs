@@ -1,9 +1,6 @@
 using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
-using MealPlanner.Models;      
-using Microsoft.EntityFrameworkCore;
-using System.Linq;
-using System.Threading.Tasks;
+using MealPlanner.ViewModels;
 
 namespace MealPlanner.Controllers;
 public class HomeController : Controller
