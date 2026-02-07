@@ -73,6 +73,29 @@ background-color: #4a4a4a;
     padding: 0;
     border: none;
     position: relative;
+        transition: background-color 0.3s ease-in-out;
+}
+
+.imageButton:hover {
+  background-color: rgb(97, 97, 97);
+}
+
+.imageButtonimage{
+display: block;
+    width: 200px;
+    height: 200px;
+    margin: -40px auto 0 auto;
+    object-fit: contain;
+  transition: transform 0.3s ease-in-out;
+}
+
+.imageScaleDown{
+    width: 175px;
+    height: 175px;
+}
+
+.imageButton:hover .imageButtonimage {
+    transform: scale(1.08);
 }
 
 /*Use this for blue buttons*/
@@ -92,8 +115,27 @@ background-color: #4a4a4a;
     width: 100%;
 
     border: none;
+    transition: background-color 0.3s ease-in-out;
   }
   
+  .buttonBlue:hover {
+    background-color: rgb(104, 192, 198);
+}
+
+.imageButton:hover .buttonBlue {
+    background-color: rgb(104, 192, 198);
+}
+
+.buttonText {
+    transition: transform 0.3s ease-in-out;
+}
+.imageButton:hover .buttonText {
+    transform: scale(1.08);
+}
+.buttonBlue:hover .buttonText {
+      transform: scale(1.08);
+}
+
   /*Use this class if the background div has a button attatched to it*/
 .backHasButton {
     padding-bottom: 70px;
