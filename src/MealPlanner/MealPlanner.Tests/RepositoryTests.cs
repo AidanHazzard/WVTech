@@ -1,5 +1,4 @@
 ﻿using System.Data.Common;
-using MealPlanner.DAL.Abstract;
 using MealPlanner.DAL.Concrete;
 using MealPlanner.Models;
 using Microsoft.Data.Sqlite;
@@ -46,7 +45,7 @@ public class RepositoryTests
     }
 
     [Test]
-    public void RepositoryReadReturnsEntityById()
+    public void ReadReturnsEntityById()
     {
         // Arrange
         MealPlannerDBContext context = CreateContext();
@@ -61,7 +60,7 @@ public class RepositoryTests
     }
     
     [Test]
-    public void RepositoryReadReturnsNullWhenIdNotFound()
+    public void ReadReturnsNullWhenIdNotFound()
     {
         // Arrange
         MealPlannerDBContext context = CreateContext();
@@ -75,7 +74,7 @@ public class RepositoryTests
     }
 
     [Test]
-    public void RepoistoryReadAllReturnsMultipleEntities()
+    public void ReadAllReturnsMultipleEntities()
     {
         // Arrange
         MealPlannerDBContext context = CreateContext();
@@ -90,7 +89,7 @@ public class RepositoryTests
     }
 
     [Test]
-    public void RepositoryCreateOrUpdateMakesANewRowInTableIfEntityIsNotInTable()
+    public void CreateOrUpdateMakesANewRowInTableIfEntityIsNotInTable()
     {
         // Arrange
         MealPlannerDBContext context = CreateContext();
@@ -107,7 +106,7 @@ public class RepositoryTests
     }
 
     [Test]
-    public void RepositoryCreateOrUpdateChangesExistingRowOnTable()
+    public void CreateOrUpdateChangesExistingRowOnTable()
     {
         // Arrange
         MealPlannerDBContext context = CreateContext();
@@ -126,7 +125,7 @@ public class RepositoryTests
     }
 
     [Test]
-    public void RepositoryDeleteRemovesEntityFromTable()
+    public void DeleteRemovesEntityFromTable()
     {
         // Arrange
         MealPlannerDBContext context = CreateContext();
@@ -143,7 +142,7 @@ public class RepositoryTests
     }
 
     [Test]
-    public void RepositoryExistsReturnsTrueIfIdFoundInTable()
+    public void ExistsReturnsTrueIfIdFoundInTable()
     {
         // Arrange
         MealPlannerDBContext context = CreateContext();
@@ -158,7 +157,7 @@ public class RepositoryTests
     }
 
     [Test]
-    public void RepositoryExistsReturnsFalseIfIdNotFoundInTable()
+    public void ExistsReturnsFalseIfIdNotFoundInTable()
     {
         // Arrange
         MealPlannerDBContext context = CreateContext();
