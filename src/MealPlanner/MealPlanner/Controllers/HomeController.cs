@@ -1,6 +1,6 @@
 using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
-using MealPlanner.Models;
+using MealPlanner.ViewModels;
 
 namespace MealPlanner.Controllers;
 

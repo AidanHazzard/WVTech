@@ -7,7 +7,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllersWithViews();
 
 
-// Configure the DbContext to use SQL Server (Docker)
+// Configure the DbContext to use SQL Server
 string connectionString = builder.Configuration["ConnectionString"];
 
 builder.Services.AddDbContext<MealPlannerDBContext>(options =>
