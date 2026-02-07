@@ -9,10 +9,12 @@
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/MealPlanner.styles.css" asp-append-version="true" />
 </head>
+
 <body>
     <header>
         <nav class="custom-navbar">
             <ul class="nav-list">
+                <!-- Home Page -->
                 <li class="nav-item">
                     <button
                         class="nav-button @(ViewContext.RouteData.Values["Controller"].ToString() == "Home" && ViewContext.RouteData.Values["Action"].ToString() == "Index" ? "active" : "")"
@@ -20,39 +22,43 @@
                         <span class="nav-text">Home</span>
                     </button>
                 </li>
-
-                <li class="nav-item">
-                    <button
-                        class="nav-button @(ViewContext.RouteData.Values["Controller"].ToString() == "FoodEntries"  && ViewContext.RouteData.Values["Action"].ToString() == "Index" ? "active" : "")"
-                        onclick="location.href='/'">
-                        <span class="nav-text">Food Entries</span>
-                    </button>
-                </li>
-                <li class="nav-item">
-                    <button
-                        class="nav-button @(ViewContext.RouteData.Values["Controller"].ToString() == "Statistics"  && ViewContext.RouteData.Values["Action"].ToString() == "Index" ? "active" : "")"
-                        onclick="location.href='/'">
-                        <span class="nav-text">Statistics</span>
-                    </button>
-                </li>
+                <!-- Meal Planner -->
                 <li class="nav-item">
                     <button
                         class="nav-button @(ViewContext.RouteData.Values["Controller"].ToString() == "MealPlanner" && ViewContext.RouteData.Values["Action"].ToString() == "Index" ? "active" : "")"
                         onclick="location.href='/'">
-                        <span class="nav-text">Meal Planner</span>
+                        <span class="nav-text">Planner</span>
                     </button>
                 </li>
+                <!-- Food Entries -->
+                <li class="nav-item">
+                    <button
+                        class="nav-button @(ViewContext.RouteData.Values["Controller"].ToString() == "FoodEntries" && ViewContext.RouteData.Values["Action"].ToString() == "Index" ? "active" : "")"
+                        onclick="location.href='/'">
+                        <span class="nav-text">Food Entries</span>
+                    </button>
+                </li>
+                <!-- Stats -->
+                <li class="nav-item">
+                    <button
+                        class="nav-button @(ViewContext.RouteData.Values["Controller"].ToString() == "Statistics" && ViewContext.RouteData.Values["Action"].ToString() == "Index" ? "active" : "")"
+                        onclick="location.href='/'">
+                        <span class="nav-text">Statistics</span>
+                    </button>
+                </li>
+                <!-- Cart -->
                 <li class="nav-item">
                     <button
                         class="nav-button @(ViewContext.RouteData.Values["Controller"].ToString() == "Cart" && ViewContext.RouteData.Values["Action"].ToString() == "Index" ? "active" : "")"
                         onclick="location.href='/'">
-                        <span class="nav-text">Cart</span>
+                        <span class="nav-text">MyCart</span>
                     </button>
                 </li>
-                <button class="profile-button">
-                <img src="~/images/icons/profiledefault.webp" alt="profiledefault" class="imageFit">
-                </button>
             </ul>
+            <!-- profile button -->
+            <button class="profile-button">
+                <img src="~/images/icons/profiledefault.webp" alt="profiledefault" class="imageFit">
+            </button>
         </nav>
     </header>
 

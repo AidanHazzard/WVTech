@@ -16,6 +16,7 @@ html {
   box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
 }
 
+
 html {
   position: relative;
   min-height: 100%;
@@ -166,4 +167,6 @@ body {
   margin: auto auto;
 
   object-fit: contain;
+
+  transition: transform 0.3s ease-in-out;
 }
