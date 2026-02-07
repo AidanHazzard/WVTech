@@ -19,6 +19,7 @@ html {
 
 body {
   margin-bottom: 60px;
+  background-color: #1a1a1aff;
 }
 
 .form-floating > .form-control-plaintext::placeholder, .form-floating > .form-control::placeholder {
@@ -28,4 +29,72 @@ body {
 
 .form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
   text-align: start;
+}
+
+/*Use this for the first background layer*/
+.back1 {
+background-color: #4a4a4a;
+    border-radius: 20px;
+
+    margin: 24px 0;     /* top/bottom only */
+    padding: 24px;
+
+    width: 100%;
+
+    box-sizing: border-box;
+        position: relative;
+}
+.back1Title {
+    color: white;
+    text-align: center;
+    position: relative;
+}
+
+/*Use this for the second background layer*/
+.back2 {
+    background-color: #737373ff;
+    border-radius: 20px;
+
+    margin: 4px;
+    padding: 24px;
+    position: relative;
+}
+
+/*Use this for if you want to have an image be a button*/
+.imageButton {
+    background-color: #737373ff;
+    border-radius: 20px;
+
+  width: 300px;
+  height: 300px;
+
+    margin: 24px;
+
+    padding: 0;
+    border: none;
+    position: relative;
+}
+
+/*Use this for blue buttons*/
+.buttonBlue {
+    border-radius: 20px;
+    background-color: #80eef6ff;
+
+    margin-top: 24px;
+
+    padding: 4px;
+    width: 100%;
+    box-sizing: border-box;
+
+     position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+
+    border: none;
+  }
+  
+  /*Use this class if the background div has a button attatched to it*/
+.backHasButton {
+    padding-bottom: 70px;
 }
