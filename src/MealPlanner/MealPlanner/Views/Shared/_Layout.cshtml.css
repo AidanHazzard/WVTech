@@ -1,48 +1,142 @@
-﻿/* Please see documentation at https://learn.microsoft.com/aspnet/core/client-side/bundling-and-minification
-for details on configuring this project to bundle and minify static web assets. */
-
-a.navbar-brand {
-  white-space: normal;
-  text-align: center;
-  word-break: break-all;
+﻿.custom-navbar {
+  display: flex;
+  align-items: stretch;
+  background-color: #4a4a4a;
+  min-height: 60px;
+  box-sizing: border-box;
+  padding: 0 0 0 1rem;
+  overflow: hidden;
+  position: relative;
 }
 
-a {
-  color: #0077cc;
+.custom-navbar .navbar-brand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: bold;
+  margin-right: 1rem;
+  text-decoration: none;
 }
 
-.btn-primary {
-  color: #fff;
-  background-color: #1b6ec2;
-  border-color: #1861ac;
+.nav-list {
+  display: flex;
+  flex: 1;
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
-.nav-pills .nav-link.active, .nav-pills .show > .nav-link {
-  color: #fff;
-  background-color: #1b6ec2;
-  border-color: #1861ac;
+.nav-item {
+  flex: 1;
+  display: flex;
 }
 
-.border-top {
-  border-top: 1px solid #e5e5e5;
-}
-.border-bottom {
-  border-bottom: 1px solid #e5e5e5;
-}
-
-.box-shadow {
-  box-shadow: 0 .25rem .75rem rgba(0, 0, 0, .05);
-}
-
-button.accept-policy {
+.nav-button {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #4a4a4a;
+  border: none;
+  color: white;
   font-size: 1rem;
-  line-height: inherit;
+  cursor: pointer;
+  transition: background-color 0.3s, transform 0.2s;
+  overflow: hidden;
+  transition: background-color 0.3s ease-in-out;
 }
 
-.footer {
-  position: absolute;
-  bottom: 0;
+.nav-button:hover {
+  background-color: #373737;
+}
+
+.nav-button.active {
+  background-color: #1a1a1aff;
+  color: white;
+  z-index: 1;
+  position: relative;
+  box-shadow: 4px 0 8px rgba(0, 0, 0, 0.3), -4px 0 8px rgba(0, 0, 0, 0.3);
+}
+
+.nav-button .nav-text {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 100%;
+  height: 100%;
+  transition: transform 0.3s;
+  font-size: 30px;
   white-space: nowrap;
-  line-height: 60px;
+}
+
+.nav-button:hover .nav-text {
+  transform: scale(1.08);
+}
+
+.nav-button.active .nav-text {
+  transform: scale(1.08);
+}
+
+.nav-button.active:hover .nav-text {
+  transform: scale(1.08);
+}
+
+.profile-button {
+  background-color: #00000000;
+  align-items: center;
+  justify-content: center;
+  border-radius: 180px;
+  width: 80px;
+  height: 80px;
+
+  padding: 0;
+  border: none;
+  position: relative;
+  transition: background-color 0.3s ease-in-out;
+}
+
+
+/*When the page is below this width then put it into verticle mode*/
+@media (max-width: 900px) {
+  .custom-navbar {
+    flex-direction: column;
+    position: relative;
+    padding: 0 0 0 0rem;
+    padding-top: 80px;
+    padding-bottom: 8px;
+  }
+
+  .nav-list {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .nav-item {
+    width: 100%;
+  }
+
+  .nav-button {
+    width: 100%;
+    justify-content: center;
+    padding: 1rem;
+  }
+
+  .nav-button .nav-text {
+    font-size: 1.5rem;
+  }
+
+  .profile-button {
+    position: absolute;
+    background-color: #00000000;
+    top: 0px;
+    right: 0px;
+    width: 80px;
+    height: 80px;
+    z-index: 5;
+  }
+
+  .nav-item:first-child {
+    margin-top: -90px;
+  }
 }
