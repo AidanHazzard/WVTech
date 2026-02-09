@@ -9,42 +9,68 @@
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/MealPlanner.styles.css" asp-append-version="true" />
 </head>
+
 <body>
     <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-            <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">MealPlanner</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-                        </li>
-                    </ul>
-                </div>
-            </div>
+        <nav class="custom-navbar">
+            <ul class="nav-list">
+                <!-- Home Page -->
+                <li class="nav-item">
+                    <button
+                        class="nav-button @(ViewContext.RouteData.Values["Controller"].ToString() == "Home" && ViewContext.RouteData.Values["Action"].ToString() == "Index" ? "active" : "")"
+                        onclick="location.href='/Home'">
+                        <span class="nav-text">Home</span>
+                    </button>
+                </li>
+                <!-- Meal Planner -->
+                <li class="nav-item">
+                    <button
+                        class="nav-button @(ViewContext.RouteData.Values["Controller"].ToString() == "MealPlanner" && ViewContext.RouteData.Values["Action"].ToString() == "Index" ? "active" : "")"
+                        onclick="location.href='/'">
+                        <span class="nav-text">Planner</span>
+                    </button>
+                </li>
+                <!-- Food Entries -->
+                <li class="nav-item">
+                    <button
+                        class="nav-button @(ViewContext.RouteData.Values["Controller"].ToString() == "FoodEntries" && ViewContext.RouteData.Values["Action"].ToString() == "Index" ? "active" : "")"
+                        onclick="location.href='/'">
+                        <span class="nav-text">Food Entries</span>
+                    </button>
+                </li>
+                <!-- Stats -->
+                <li class="nav-item">
+                    <button
+                        class="nav-button @(ViewContext.RouteData.Values["Controller"].ToString() == "Statistics" && ViewContext.RouteData.Values["Action"].ToString() == "Index" ? "active" : "")"
+                        onclick="location.href='/'">
+                        <span class="nav-text">Statistics</span>
+                    </button>
+                </li>
+                <!-- Cart -->
+                <li class="nav-item">
+                    <button
+                        class="nav-button @(ViewContext.RouteData.Values["Controller"].ToString() == "Cart" && ViewContext.RouteData.Values["Action"].ToString() == "Index" ? "active" : "")"
+                        onclick="location.href='/'">
+                        <span class="nav-text">MyCart</span>
+                    </button>
+                </li>
+            </ul>
+            <!-- profile button -->
+            <button class="profile-button">
+                <img src="~/images/icons/profiledefault.webp" alt="profiledefault" class="imageFit">
+            </button>
         </nav>
     </header>
+
     <div class="container">
         <main role="main" class="pb-3">
             @RenderBody()
         </main>
     </div>
-
-    <footer class="border-top footer text-muted">
-        <div class="container">
-            &copy; 2026 - MealPlanner - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-        </div>
-    </footer>
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" type="module" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
+
 </html>
