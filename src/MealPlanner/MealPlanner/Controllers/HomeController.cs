@@ -1,27 +1,23 @@
 using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using MealPlanner.ViewModels;
+using MealPlanner.Models;
 
 namespace MealPlanner.Controllers;
 public class HomeController : Controller
 {
-    private readonly MealPlannerDBContext _context;
-    public HomeController(MealPlannerDBContext context)
-        {
-            _context = context;
-        }
+   private readonly MealPlannerDBContext _context;
+
+public HomeController(MealPlannerDBContext context)
+{
+    _context = context;
+}
+
     public async Task<IActionResult> Index()
         {
-            var users = await _context.Users
-                .Select(u => new
-                {
-                    u.FirstName,
-                    u.LastName,
-                    u.Email
-                })
-                .ToListAsync();
-
-            return View(users);
+           
+            return View();
         }
 
     public IActionResult Privacy()
