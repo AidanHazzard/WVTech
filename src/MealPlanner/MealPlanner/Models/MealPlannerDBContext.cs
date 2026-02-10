@@ -2,17 +2,19 @@ using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using MealPlanner.Models;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity;
 
 namespace MealPlanner.Models
 {
-    public class MealPlannerDBContext : DbContext
+    public class MealPlannerDBContext : IdentityDbContext<User>
     {
         public MealPlannerDBContext(DbContextOptions<MealPlannerDBContext> options)
             : base(options)
         {
         }
 
-        public DbSet<User> Users { get; set; }
+        // public DbSet<User> Users { get; set; }
         public DbSet<UserProfile> UserProfiles { get; set; }
         public DbSet<UserNutritionPreference> UserNutritionPreferences { get; set; }
         public DbSet<Meal> Meals { get; set; }
