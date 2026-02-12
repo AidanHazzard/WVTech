@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MealPlanner.ViewModels;
 using MealPlanner.Models;
+using Microsoft.AspNetCore.Authorization;
 
 namespace MealPlanner.Controllers;
 public class HomeController : Controller
@@ -20,12 +21,25 @@ public HomeController(MealPlannerDBContext context)
             return View();
         }
 
+    [Authorize]
     public IActionResult Privacy()
     {
         return View();
     }
 
     public IActionResult Register()
+    {
+        return View();
+    }
+
+    [Authorize(Roles = "Admin")]
+    public IActionResult Admin()
+    {
+        return View();
+    }
+
+    [Authorize(Roles = "User")]
+    public IActionResult User()
     {
         return View();
     }
