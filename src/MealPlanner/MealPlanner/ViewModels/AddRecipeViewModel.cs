@@ -2,7 +2,7 @@ public class AddRecipeViewModel
 {
     public string Name { get; set; }
     public List<string> Ingredients { get; set; }
-    public string Steps { get; set; }
+    public string Directions { get; set; }
 
     public string FlattenList()
     {

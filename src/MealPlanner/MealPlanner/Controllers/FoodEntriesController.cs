@@ -30,10 +30,10 @@ public class FoodEntriesController : Controller
         Recipe recipe = new Recipe();
         recipe.Name = newRecipeViewModel.Name;
         recipe.Ingredients = Ingredients;
-        recipe.Directions = newRecipeViewModel.Steps;
-
+        recipe.Directions = newRecipeViewModel.Directions;
         recipe.Meals = new List<Meal>();
         
+        Console.WriteLine(recipe.Directions);
         return View("Recipes");
     }
 
