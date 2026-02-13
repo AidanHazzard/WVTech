@@ -1,8 +1,9 @@
 using MealPlanner.Models;
+using MealPlanner.DAL.Abstract;
 
 namespace MealPlanner.DAL.Concrete;
 
-public class RecipeRepository : Repository<Recipe>
+public class RecipeRepository : Repository<Recipe>, IRecipeRepository
 {
     public RecipeRepository(MealPlannerDBContext context)
         : base(context)

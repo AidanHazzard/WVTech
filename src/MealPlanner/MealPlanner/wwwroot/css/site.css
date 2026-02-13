@@ -8,9 +8,14 @@ html {
   }
 }
 
-.btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
+.btn:focus,
+.btn:active:focus,
+.btn-link.nav-link:focus,
+.form-control:focus,
+.form-check-input:focus {
   box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
 }
+
 
 html {
   position: relative;
@@ -19,138 +24,205 @@ html {
 
 body {
   margin-bottom: 60px;
-  background-color: #1a1a1aff;
+  background-color: rgb(21, 21, 21);
 }
 
-.form-floating > .form-control-plaintext::placeholder, .form-floating > .form-control::placeholder {
+.form-floating>.form-control-plaintext::placeholder,
+.form-floating>.form-control::placeholder {
   color: var(--bs-secondary-color);
   text-align: end;
 }
 
-.form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
+.form-floating>.form-control-plaintext:focus::placeholder,
+.form-floating>.form-control:focus::placeholder {
   text-align: start;
 }
 
 /*Use this for the first background layer*/
 .back1 {
-background-color: #4a4a4a;
-    border-radius: 20px;
+  background-color: #4a4a4a;
+  border-radius: 20px;
 
-    margin: 24px 0;
-    padding: 24px;
+  margin: 24px 0;
+  padding: 24px;
 
-    width: 100%;
+  width: 100%;
 
-    box-sizing: border-box;
-        position: relative;
+  box-sizing: border-box;
+  position: relative;
 }
 
 /*Used for the text on the 1st background layer*/
 .back1Title {
-    color: white;
-    text-align: center;
-    position: relative;
+  color: white;
+  text-align: center;
+  position: relative;
 }
+.left {
+  text-align: left;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem; /* space between text and input */
+}
+
 
 /*Use this for the second background layer*/
 .back2 {
-    background-color: #737373ff;
-    border-radius: 20px;
+  background-color: #737373ff;
+  border-radius: 20px;
 
-    margin: 4px;
-    padding: 24px;
-    position: relative;
+  margin-top: 30px;
+  margin-bottom: 10px;
+  padding: 24px;
+  position: relative;
 }
+
+.back2-textbox {
+  display: inline-block;
+  background-color: #919191ff;
+  color: #ffffff;
+
+  font-size: 1.5rem;
+  padding: 0.75rem 1rem;
+  width: 100%;
+
+  margin-top: 5px;
+  margin-bottom: 5px;
+
+  border-radius: 20px;
+  border-color: #ffffff00;
+  box-shadow: none;
+  outline: none;
+  box-sizing: border-box;
+}
+
 
 /*Use this for if you want to have an image be a button*/
 .imageButton {
-    background-color: #737373ff;
-    border-radius: 20px;
+  background-color: #737373ff;
+  border-radius: 20px;
 
   width: 300px;
   height: 300px;
 
-    margin: 24px;
+  margin: 24px;
 
-    padding: 0;
-    border: none;
-    position: relative;
-        transition: background-color 0.3s ease-in-out;
+  padding: 0;
+  border: none;
+  position: relative;
+  transition: background-color 0.3s ease-in-out;
 }
+
 .imageButton:hover {
   background-color: rgb(97, 97, 97);
 }
 
 /*Used for the image that is contained in the button image*/
-.imageButtonimage{
-display: block;
-    width: 200px;
-    height: 200px;
-    margin: -40px auto 0 auto;
-    object-fit: contain;
+.imageButtonimage {
+  display: block;
+  width: 200px;
+  height: 200px;
+  margin: -40px auto 0 auto;
+  object-fit: contain;
   transition: transform 0.3s ease-in-out;
 }
-.imageScaleDown{
-    width: 175px;
-    height: 175px;
+
+.imageScaleDown {
+  width: 175px;
+  height: 175px;
 }
+
 .imageButton:hover .imageButtonimage {
-    transform: scale(1.08);
+  transform: scale(1.08);
 }
 
 /*Use this for blue buttons*/
 .buttonBlue {
-    border-radius: 20px;
-    background-color: #80eef6ff;
+  border-radius: 20px;
+  background-color: #80eef6ff;
 
-    margin-top: 24px;
+  margin-top: 24px;
 
-    padding: 4px;
-    width: 100%;
-    box-sizing: border-box;
+  padding: 4px;
+  width: 100%;
+  box-sizing: border-box;
 
-     position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 100%;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
 
-    border: none;
-    transition: background-color 0.3s ease-in-out;
-  }
-  .buttonBlue:hover {
-    background-color: rgb(104, 192, 198);
+  border: none;
+  transition: background-color 0.3s ease-in-out;
 }
+
+.buttonBlue:hover {
+  background-color: rgb(104, 192, 198);
+}
+
 .imageButton:hover .buttonBlue {
-    background-color: rgb(104, 192, 198);
+  background-color: rgb(104, 192, 198);
+}
+
+/*Use this for green buttons*/
+.buttonGreen {
+  border-radius: 20px;
+  background-color: #69ff90ff;
+
+  margin-top: 24px;
+
+  padding: 4px;
+  width: 100%;
+  box-sizing: border-box;
+
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+
+  border: none;
+  transition: background-color 0.3s ease-in-out;
+}
+
+.buttonGreen:hover {
+  background-color: rgb(87, 212, 120);
 }
 
 /*Used for buttons text so it can increase and decrease in size*/
 .buttonText {
-    transition: transform 0.3s ease-in-out;
+  transition: transform 0.3s ease-in-out;
 }
+
 .imageButton:hover .buttonText {
-    transform: scale(1.08);
+  transform: scale(1.08);
 }
+
 .buttonBlue:hover .buttonText {
-      transform: scale(1.08);
+  transform: scale(1.08);
+}
+
+.buttonGreen:hover .buttonText {
+  transform: scale(1.08);
 }
 
 /*Use this class if the background div has a button attatched to it*/
 .backHasButton {
-    padding-bottom: 70px;
+  padding-bottom: 70px;
 }
 
 /*Use this to make any image centered and autoscaled*/
-.imageFit{
-    display: block;
+.imageFit {
+  display: block;
 
-    max-width: 100%;
-    max-height: 100%;
+  max-width: 100%;
+  max-height: 100%;
 
-    width: auto;
-    height: auto;
+  width: auto;
+  height: auto;
 
-    margin: 16px auto;
+  margin: auto auto;
 
-    object-fit: contain;
+  object-fit: contain;
+
+  transition: transform 0.3s ease-in-out;
 }
