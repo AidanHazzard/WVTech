@@ -1,6 +1,8 @@
 using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using MealPlanner.ViewModels;
+using MealPlanner.Models;
+
 
 namespace MealPlanner.Controllers;
 public class HomeController : Controller
@@ -12,16 +14,7 @@ public class HomeController : Controller
         }
     public async Task<IActionResult> Index()
         {
-            var users = await _context.Users
-                .Select(u => new
-                {
-                    u.FirstName,
-                    u.LastName,
-                    u.Email
-                })
-                .ToListAsync();
-
-            return View(users);
+            return View();
         }
 
     public IActionResult Privacy()
