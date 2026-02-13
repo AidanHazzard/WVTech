@@ -2,6 +2,9 @@ using MealPlanner.Models;
 using Microsoft.EntityFrameworkCore; 
 using MealPlanner.DAL.Abstract;
 using MealPlanner.DAL.Concrete;
+using MealPlanner.Services;
+using Microsoft.AspNetCore.Identity;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,8 +19,25 @@ builder.Services.AddDbContext<MealPlannerDBContext>(options =>
     options.UseSqlServer(connectionString));
 
 builder.Services.AddScoped<IRecipeRepository, RecipeRepository>();
+builder.Services.AddIdentity<User, IdentityRole>(options =>
+{
+    options.Password.RequireDigit = true;
+    options.Password.RequireLowercase = true;
+    options.Password.RequiredLength = 6;
+    options.User.RequireUniqueEmail = true;
+    options.SignIn.RequireConfirmedAccount = true;
+    options.SignIn.RequireConfirmedEmail = false;
+    options.SignIn.RequireConfirmedPhoneNumber = false;
+})
+.AddEntityFrameworkStores<MealPlannerDBContext>()
+.AddDefaultTokenProviders();
+
+// Register AccountService for dependency injection
+builder.Services.AddScoped<IAccountService, AccountService>();
 
 var app = builder.Build();
+
+await SeedService.SeedData(app.Services);
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
@@ -29,6 +49,8 @@ if (!app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseRouting();
+
+app.UseAuthentication();
 
 app.UseAuthorization();
 
