@@ -24,7 +24,7 @@ html {
 
 body {
   margin-bottom: 60px;
-  background-color: #1a1a1aff;
+  background-color: rgb(21, 21, 21);
 }
 
 .form-floating>.form-control-plaintext::placeholder,
@@ -58,16 +58,44 @@ body {
   text-align: center;
   position: relative;
 }
+.left {
+  text-align: left;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem; /* space between text and input */
+}
+
 
 /*Use this for the second background layer*/
 .back2 {
   background-color: #737373ff;
   border-radius: 20px;
 
-  margin: 4px;
+  margin-top: 30px;
+  margin-bottom: 10px;
   padding: 24px;
   position: relative;
 }
+
+.back2-textbox {
+  display: inline-block;
+  background-color: #919191ff;
+  color: #ffffff;
+
+  font-size: 1.5rem;
+  padding: 0.75rem 1rem;
+  width: 100%;
+
+  margin-top: 5px;
+  margin-bottom: 5px;
+
+  border-radius: 20px;
+  border-color: #ffffff00;
+  box-shadow: none;
+  outline: none;
+  box-sizing: border-box;
+}
+
 
 /*Use this for if you want to have an image be a button*/
 .imageButton {
@@ -136,6 +164,30 @@ body {
   background-color: rgb(104, 192, 198);
 }
 
+/*Use this for green buttons*/
+.buttonGreen {
+  border-radius: 20px;
+  background-color: #69ff90ff;
+
+  margin-top: 24px;
+
+  padding: 4px;
+  width: 100%;
+  box-sizing: border-box;
+
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+
+  border: none;
+  transition: background-color 0.3s ease-in-out;
+}
+
+.buttonGreen:hover {
+  background-color: rgb(87, 212, 120);
+}
+
 /*Used for buttons text so it can increase and decrease in size*/
 .buttonText {
   transition: transform 0.3s ease-in-out;
@@ -146,6 +198,10 @@ body {
 }
 
 .buttonBlue:hover .buttonText {
+  transform: scale(1.08);
+}
+
+.buttonGreen:hover .buttonText {
   transform: scale(1.08);
 }
 
