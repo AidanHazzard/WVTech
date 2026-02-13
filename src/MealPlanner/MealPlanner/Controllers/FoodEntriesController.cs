@@ -3,21 +3,19 @@ using Microsoft.AspNetCore.Mvc;
 using MealPlanner.ViewModels;
 using MealPlanner.Models;
 using MealPlanner.DAL.Abstract;
-using MealPlanner.DAL.Concrete;
 
 namespace MealPlanner.Controllers;
 
 public class FoodEntriesController : Controller
 {
-    private readonly IRecipeRepository _recipeRepository;
     private readonly MealPlannerDBContext _context;
+    private readonly IRecipeRepository _recipeRepository;
 
     public FoodEntriesController(IRecipeRepository recipeRepository, MealPlannerDBContext context)
     {
         _recipeRepository = recipeRepository;
         _context = context;
     }
-
 
     public IActionResult SelectType()
     {
@@ -49,9 +47,16 @@ public class FoodEntriesController : Controller
         recipe.Ingredients = Ingredients;
         recipe.Directions = newRecipeViewModel.Directions;
         recipe.Meals = new List<Meal>();
-        
+
         _recipeRepository.CreateOrUpdate(recipe);
-        _context.SaveChanges(); 
+        _context.SaveChanges();
+
+        var allRecipes = _recipeRepository.ReadAll().ToList();
+        Console.WriteLine($"Total recipes: {allRecipes.Count}");
+        foreach (var r in allRecipes)
+        {
+            Console.WriteLine($"Id: {r.Id}, Name: {r.Name}, Ingredients: {r.Ingredients}");
+        }
 
         return View("Recipes");
     }
