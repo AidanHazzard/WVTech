@@ -33,11 +33,12 @@
                 <!-- Food Entries -->
                 <li class="nav-item">
                     <button
-                        class="nav-button @(ViewContext.RouteData.Values["Controller"].ToString() == "FoodEntries" && ViewContext.RouteData.Values["Action"].ToString() == "Index" ? "active" : "")"
-                        onclick="location.href='/'">
+                        class="nav-button @(ViewContext.RouteData.Values["Controller"]?.ToString() == "FoodEntries" ? "active" : "")"
+                        onclick="location.href='/FoodEntries/SelectType'">
                         <span class="nav-text">Food Entries</span>
                     </button>
                 </li>
+
                 <!-- Stats -->
                 <li class="nav-item">
                     <button
@@ -58,19 +59,19 @@
             <!-- profile button -->
             <button class="profile-button">
                 <img src="~/images/icons/profiledefault.webp" alt="profiledefault" class="imageFit">
-            </button>
-        </nav>
-    </header>
+                </button>
+            </nav>
+        </header>
 
-    <div class="container">
-        <main role="main" class="pb-3">
-            @RenderBody()
-        </main>
-    </div>
-    <script src="~/lib/jquery/dist/jquery.min.js"></script>
-    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="~/js/site.js" type="module" asp-append-version="true"></script>
-    @await RenderSectionAsync("Scripts", required: false)
-</body>
+        <div class="container">
+            <main role="main" class="pb-3">
+                @RenderBody()
+            </main>
+        </div>
+        <script src="~/lib/jquery/dist/jquery.min.js"></script>
+        <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+        <script src="~/js/site.js" type="module" asp-append-version="true"></script>
+        @await RenderSectionAsync("Scripts", required: false)
+    </body>
 
 </html>

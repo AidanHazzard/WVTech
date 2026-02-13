@@ -1,0 +1,61 @@
+.input-wrapper {
+    position: relative;
+    /* allows button to be positioned over input */
+    width: 100%;
+    margin: 5px 0;
+}
+
+/* Delete button styling */
+.deleteButton {
+    position: absolute;
+    top: 50%;
+    right: 0px;
+    transform: translateY(-50%);
+
+    width: 120px;
+    height: 86.5%;
+    background-color: #ff4d4d;
+    border: none;
+    border-radius: 19px;
+    color: white;
+    font-size: 1.2rem;
+    cursor: pointer;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2;
+    transition: background-color 0.3s ease-in-out;
+}
+
+.deleteButton:hover {
+    background-color: #e60000;
+}
+
+.deleteImage {
+    display: block;
+
+    max-width: 80%;
+    max-height: 80%;
+
+    width: auto;
+    height: auto;
+
+    margin: auto auto;
+
+    object-fit: contain;
+
+    transition: transform 0.3s ease-in-out;
+}
+
+.deleteButton:hover .deleteImage {
+  transform: scale(1.08);
+}
+
+.textStopAtButton{
+    padding-right: 130px;
+}
+
+.instructionsBox{
+    height: 400px;
+}

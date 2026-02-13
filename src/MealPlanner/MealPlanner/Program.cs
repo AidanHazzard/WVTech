@@ -1,5 +1,7 @@
 using MealPlanner.Models;
 using Microsoft.EntityFrameworkCore; 
+using MealPlanner.DAL.Abstract;
+using MealPlanner.DAL.Concrete;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -12,6 +14,8 @@ string connectionString = builder.Configuration["ConnectionString"];
 
 builder.Services.AddDbContext<MealPlannerDBContext>(options =>
     options.UseSqlServer(connectionString));
+
+builder.Services.AddScoped<IRecipeRepository, RecipeRepository>();
 
 var app = builder.Build();
 
