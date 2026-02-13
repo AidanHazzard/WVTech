@@ -1,81 +1,84 @@
-using Microsoft.AspNetCore.Identity;
 using MealPlanner.Models;
 using MealPlanner.ViewModels;
+using Microsoft.AspNetCore.Identity;
 
-namespace MealPlanner.Services;
 
-public class AccountService
+namespace MealPlanner.Services
 {
-    private readonly UserManager<User> _userManager;
-    private readonly SignInManager<User> _signInManager;
-    private readonly RoleManager<IdentityRole> _roleManager;
-
-    public AccountService(UserManager<User> userManager, SignInManager<User> signInManager, RoleManager<IdentityRole> roleManager)
+    public class AccountService : IAccountService
     {
-        _userManager = userManager;
-        _signInManager = signInManager;
-        _roleManager = roleManager;
-    }
+        private readonly UserManager<User> _userManager;
+        private readonly SignInManager<User> _signInManager;
+        private readonly RoleManager<IdentityRole> _roleManager;
 
-    // Handles user registration including role creation and assignment
-    public async Task<IdentityResult> RegisterUserAsync(RegisterViewModel model)
-    {
-        var user = new User
+        public AccountService(
+            UserManager<User> userManager,
+            SignInManager<User> signInManager,
+            RoleManager<IdentityRole> roleManager)
         {
-            FullName = model.Name,
-            UserName = model.Email,
-            NormalizedUserName = model.Email.ToUpper(),
-            Email = model.Email,
-            NormalizedEmail = model.Email.ToUpper(),
-            EmailConfirmed = true
-        };
-
-        var result = await _userManager.CreateAsync(user, model.Password);
-        if (!result.Succeeded) return result;
-
-        // Ensure "User" role exists
-        if (!await _roleManager.RoleExistsAsync("User"))
-        {
-            await _roleManager.CreateAsync(new IdentityRole("User"));
+            _userManager = userManager;
+            _signInManager = signInManager;
+            _roleManager = roleManager;
         }
 
-        // Assign role
-        await _userManager.AddToRoleAsync(user, "User");
+        public async Task<SignInResult> LoginUserAsync(LoginViewModel model)
+        {
+            return await _signInManager.PasswordSignInAsync(
+                model.Email,
+                model.Password,
+                model.RememberMe,
+                lockoutOnFailure: false);
+        }
 
-        // Sign in the user immediately
-        await _signInManager.SignInAsync(user, isPersistent: false);
+        public async Task<IdentityResult> RegisterUserAsync(RegisterViewModel model)
+        {
+            var user = new User
+            {
+                FullName = model.Name,
+                UserName = model.Email,
+                Email = model.Email,
+                NormalizedEmail = model.Email.ToUpper(),
+                NormalizedUserName = model.Email.ToUpper(),
+                EmailConfirmed = true
+            };
 
-        return result;
-    }
+            var result = await _userManager.CreateAsync(user, model.Password);
+            if (!result.Succeeded) return result;
 
-    // Checks user credentials and signs in
-    public async Task<SignInResult> LoginUserAsync(LoginViewModel model)
-    {
-        return await _signInManager.PasswordSignInAsync(model.Email, model.Password, model.RememberMe, lockoutOnFailure: false);
-    }
+            if (!await _roleManager.RoleExistsAsync("User"))
+            {
+                await _roleManager.CreateAsync(new IdentityRole("User"));
+            }
 
-    // Verify if user exists by email
-    public async Task<User?> FindUserByEmailAsync(string email)
-    {
-        return await _userManager.FindByEmailAsync(email);
-    }
+            await _userManager.AddToRoleAsync(user, "User");
+            await _signInManager.SignInAsync(user, isPersistent: false);
 
-    // Change password workflow
-    public async Task<IdentityResult> ChangePasswordAsync(string email, string newPassword)
-    {
-        var user = await _userManager.FindByEmailAsync(email);
-        if (user == null) return IdentityResult.Failed(new IdentityError { Description = "User not found" });
+            return result;
+        }
 
-        var removeResult = await _userManager.RemovePasswordAsync(user);
-        if (!removeResult.Succeeded) return removeResult;
+        public async Task<User?> FindUserByEmailAsync(string email)
+        {
+            return await _userManager.FindByEmailAsync(email);
+        }
 
-        var addResult = await _userManager.AddPasswordAsync(user, newPassword);
-        return addResult;
-    }
+        public async Task<IdentityResult> ChangePasswordAsync(string email, string newPassword)
+        {
+            var user = await _userManager.FindByEmailAsync(email);
+            if (user == null)
+            {
+                return IdentityResult.Failed(
+                    new IdentityError { Description = "User not found" });
+            }
 
-    // Logout user
-    public async Task LogoutUserAsync()
-    {
-        await _signInManager.SignOutAsync();
+            var removeResult = await _userManager.RemovePasswordAsync(user);
+            if (!removeResult.Succeeded) return removeResult;
+
+            return await _userManager.AddPasswordAsync(user, newPassword);
+        }
+
+        public async Task LogoutUserAsync()
+        {
+            await _signInManager.SignOutAsync();
+        }
     }
 }
