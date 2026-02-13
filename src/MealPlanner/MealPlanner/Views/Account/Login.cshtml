@@ -6,35 +6,61 @@
     Layout = "~/Views/Shared/_AccountLayout.cshtml";
 }
 
+<!-- 
+    Main container for the Login page.
+    Provides consistent styling and layout for account-related pages.
+-->
 <div class="account-container">
     <div class="account-box">
         <h2 class="text-center mb-4">Login</h2>
+
+         <!-- 
+            Form for user login.
+            - Uses POST method for secure submission.
+            - Anti-forgery token is included to prevent CSRF attacks.
+        -->
         <form asp-action="Login" method="post">
             @Html.AntiForgeryToken()
+
+            <!-- Display model-level validation errors (e.g., invalid credentials) -->
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+            <!-- Email input field -->
             <div class="mb-3">
                 <label asp-for="Email" class="form-label"></label>
                 <input asp-for="Email" class="form-control" />
                 <span asp-validation-for="Email" class="text-danger"></span>
             </div>
+
+            <!-- Password input field -->
             <div class="mb-3">
                 <label asp-for="Password" class="form-label"></label>
                 <input asp-for="Password" class="form-control" />
                 <span asp-validation-for="Password" class="text-danger"></span>
             </div>
+
+            <!-- Forgot password link, floated to the right -->
             <div class="float-end">
                 <a asp-controller="Account" asp-action="VerifyEmail" class=:text-decoration-none>Forgot your password?</a>
             </div>
+
+            <!-- Remember Me checkbox -->
             <div class="mb-3 form-check">
                 <label class="form-check-label">
                     <input asp-for="RememberMe" class="form-check-input" />
                     @Html.DisplayNameFor(m => m.RememberMe)
                 </label>
             </div>
+
+            <!-- Submit button styled with Bootstrap classes for full-width and padding -->
             <Input type="submit" value="Login" class="btn btn-primary w-100 p-2" />
+
+             <!-- Link to register page for users without an account -->
             <p class="text-center mt-2">
                 Don't have an account? <a asp-controller="Account" asp-action="Register" class="text-decoration-none">Register here</a>
             </p>
+
+             <!-- Back link to navigate to home page -->
             <div class="text-center">
                 <a asp-controller="Home" asp-action="Index" class="text-decoration-none">Back</a>
             </div>
@@ -44,6 +70,7 @@
 
 @section Scripts {
    @{
+     <!-- Include client-side validation scripts for unobtrusive validation -->
     await Html.RenderPartialAsync("_ValidationScriptsPartial.cshtml");
    }
 }

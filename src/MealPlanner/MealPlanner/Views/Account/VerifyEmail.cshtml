@@ -6,17 +6,32 @@
     Layout = "~/Views/Shared/_AccountLayout.cshtml";
 }
 
+<!-- 
+    Main container for the Verify Email page.
+    Ensures consistent styling and layout for all account-related pages.
+-->
 <div class="account-container">
     <div class="account-box">
         <h2 class="text-center mb-4">Verify Email</h2>
+
+        <!-- 
+            Form for verifying the user's email.
+            - Uses POST method for secure submission.
+            - Includes anti-forgery token to prevent CSRF attacks.
+        -->
         <form asp-action="VerifyEmail" method="post">
             @Html.AntiForgeryToken()
+
+             <!-- Display model-level validation errors (e.g., email not found) -->
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+            <!-- Email input field for user to enter their email to verify -->
             <div class="mb-3">
                 <label asp-for="Email" class="form-label"></label>
                 <input asp-for="Email" class="form-control" />
                 <span asp-validation-for="Email" class="text-danger"></span>
             </div>
+            <!-- Submit button to trigger email verification -->
             <Input type="submit" value="Verify" class="btn btn-primary w-100 p-2" />
             <div class="text-center mt-2">
                 <a asp-controller="Account" asp-action="Login" class="text-decoration-none">Back</a>
@@ -27,6 +42,7 @@
 
 @section Scripts {
    @{
+    <!-- Include client-side validation scripts partial for unobtrusive validation -->
     await Html.RenderPartialAsync("_ValidationScriptsPartial.cshtml");
    }
 }

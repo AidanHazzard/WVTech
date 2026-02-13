@@ -14,13 +14,11 @@ namespace MealPlanner.Models
         {
         }
 
-        // public DbSet<User> Users { get; set; }
         public DbSet<UserProfile> UserProfiles { get; set; }
         public DbSet<UserNutritionPreference> UserNutritionPreferences { get; set; }
         public DbSet<Meal> Meals { get; set; }
         public DbSet<UserDietaryRestriction> UserDietaryRestrictions { get; set; }
         public DbSet<Recipe> Recipes { get; set; }
-        
         
     }
 }

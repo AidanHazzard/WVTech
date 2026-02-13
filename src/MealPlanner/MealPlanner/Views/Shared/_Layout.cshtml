@@ -29,12 +29,14 @@
                          <li class="nav-item">
                             <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Register">Register</a>
                         </li>
+                        <!-- Only show the Admin link if the currently logged-in user has the "Admin" role. -->
                         @if (User.IsInRole("Admin"))
                         {
                             <li class="nav-item">
                                 <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Admin">Admin</a>
                             </li>
                         }
+                        <!-- Show the User link if the currently logged-in user has the "User" role. -->
                         else if (User.IsInRole("User"))
                         {
                             <li class="nav-item">

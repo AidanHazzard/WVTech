@@ -75,7 +75,7 @@ namespace MealPlanner.Controllers;
                 UserName = model.Email,
                 NormalizedUserName = model.Email.ToUpper(),
                 Email = model.Email,
-                EmailConfirmed = true,
+                EmailConfirmed = true, //Remove this line if you want to implement email verification
                 NormalizedEmail = model.Email.ToUpper(),
             };
 
