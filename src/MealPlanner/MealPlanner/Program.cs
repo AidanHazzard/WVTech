@@ -29,6 +29,9 @@ builder.Services.AddIdentity<User, IdentityRole>(options =>
 .AddEntityFrameworkStores<MealPlannerDBContext>()
 .AddDefaultTokenProviders();
 
+// Register AccountService for dependency injection
+builder.Services.AddScoped<AccountService>();
+
 var app = builder.Build();
 
 await SeedService.SeedData(app.Services);
