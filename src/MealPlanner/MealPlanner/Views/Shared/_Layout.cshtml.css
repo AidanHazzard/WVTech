@@ -32,6 +32,13 @@
   display: flex;
 }
 
+.nav-item form {
+  display: flex;
+  flex: 1;
+  margin: 0;
+}
+
+
 .nav-button {
   flex: 1;
   display: flex;
