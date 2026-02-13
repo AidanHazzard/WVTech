@@ -1,15 +1,35 @@
 using System.ComponentModel.DataAnnotations;
 public class AddRecipeViewModel
 {
-    [Required(ErrorMessage = "Recipe name is required")]
     public string Name { get; set; }
 
-    [Required(ErrorMessage = "At least one ingredient is required")]
     public List<string> Ingredients { get; set; }
 
-    [Required(ErrorMessage = "Instructions are required")]
     public string Directions { get; set; }
 
+
+
+    //loops through edge cases to look for errors
+    public bool AnyErrors()
+    {
+        if (Directions == null || Directions.Trim() == "" ||
+            Ingredients == null || Ingredients.Count == 0 ||
+            Name == null || Name.Trim() == "")
+        {
+            return true;
+        }
+        foreach (string entry in Ingredients)
+        {
+            if (entry.Trim() == "")
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    //creates a flattend string of all the entrys from the ingredients list
+    //no need to error check the ingredient list because that will have already been ran above
     public string FlattenList()
     {
         string ingredientsFlat = "";

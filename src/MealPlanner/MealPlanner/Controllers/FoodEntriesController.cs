@@ -35,28 +35,25 @@ public class FoodEntriesController : Controller
     [HttpPost]
     public IActionResult RecipeAdded(AddRecipeViewModel newRecipeViewModel)
     {
-        if (!ModelState.IsValid)
+        //error checking
+        if (!ModelState.IsValid || newRecipeViewModel.AnyErrors() == true)
         {
-            return View("AddRecipe", newRecipeViewModel);
+            return View("AddNewRecipe", newRecipeViewModel);
         }
 
+        //creates a flattend string of all the entrys from the ingredients list
         string Ingredients = newRecipeViewModel.FlattenList();
 
+        //creates a new recipe model with the viewmodels information
         Recipe recipe = new Recipe();
         recipe.Name = newRecipeViewModel.Name;
         recipe.Ingredients = Ingredients;
         recipe.Directions = newRecipeViewModel.Directions;
         recipe.Meals = new List<Meal>();
 
+        //adds it to the database
         _recipeRepository.CreateOrUpdate(recipe);
         _context.SaveChanges();
-
-        var allRecipes = _recipeRepository.ReadAll().ToList();
-        Console.WriteLine($"Total recipes: {allRecipes.Count}");
-        foreach (var r in allRecipes)
-        {
-            Console.WriteLine($"Id: {r.Id}, Name: {r.Name}, Ingredients: {r.Ingredients}");
-        }
 
         return View("Recipes");
     }
