@@ -4,5 +4,5 @@ namespace MealPlanner.DAL.Abstract;
 
 public interface IRecipeRepository : IRepository<Recipe>
 {
-    public IQueryable<Recipe> GetRecipesByName(string name);
+    public List<Recipe> GetRecipesByName(string name);
 }

@@ -73,6 +73,71 @@ namespace MealPlanner.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Recipe");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = -1,
+                            Directions = "",
+                            Ingredients = "",
+                            Name = "Oatmeal Cookies"
+                        },
+                        new
+                        {
+                            Id = -2,
+                            Directions = "",
+                            Ingredients = "",
+                            Name = "Spaghetti All'assassina"
+                        },
+                        new
+                        {
+                            Id = -3,
+                            Directions = "",
+                            Ingredients = "",
+                            Name = "Spaghetti and Meatballs"
+                        },
+                        new
+                        {
+                            Id = -4,
+                            Directions = "",
+                            Ingredients = "",
+                            Name = "Vegan Spaghetti with Mushrooms"
+                        },
+                        new
+                        {
+                            Id = -5,
+                            Directions = "",
+                            Ingredients = "",
+                            Name = "Baked Spaghetti Casserole"
+                        },
+                        new
+                        {
+                            Id = -6,
+                            Directions = "",
+                            Ingredients = "",
+                            Name = "Mac 'n Cheese Casserole"
+                        },
+                        new
+                        {
+                            Id = -7,
+                            Directions = "",
+                            Ingredients = "",
+                            Name = "Homemade Mac 'n Cheese"
+                        },
+                        new
+                        {
+                            Id = -8,
+                            Directions = "",
+                            Ingredients = "",
+                            Name = "Mushroom Steak Salad"
+                        },
+                        new
+                        {
+                            Id = -9,
+                            Directions = "",
+                            Ingredients = "",
+                            Name = "Ceasar Salad"
+                        });
                 });
 
             modelBuilder.Entity("MealPlanner.Models.User", b =>

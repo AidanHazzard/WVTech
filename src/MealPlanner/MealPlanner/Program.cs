@@ -1,3 +1,5 @@
+using MealPlanner.DAL.Abstract;
+using MealPlanner.DAL.Concrete;
 using MealPlanner.Models;
 using Microsoft.EntityFrameworkCore; 
 using MealPlanner.DAL.Abstract;
@@ -18,6 +20,8 @@ string connectionString = builder.Configuration["ConnectionString"];
 builder.Services.AddDbContext<MealPlannerDBContext>(options =>
     options.UseSqlServer(connectionString));
 
+builder.Services.AddScoped<DbContext, MealPlannerDBContext>();
+builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 builder.Services.AddScoped<IRecipeRepository, RecipeRepository>();
 builder.Services.AddIdentity<User, IdentityRole>(options =>
 {

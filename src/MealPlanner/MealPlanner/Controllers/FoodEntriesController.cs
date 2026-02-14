@@ -17,6 +17,11 @@ public class FoodEntriesController : Controller
         _context = context;
     }
 
+    public IActionResult SearchRecipes()
+    {
+        return View();
+    }
+
     public IActionResult SelectType()
     {
         return View();

@@ -4,7 +4,7 @@ public interface IRepository<TEntity> where TEntity : class, new()
 {
     public TEntity? Read(int id);
 
-    public IQueryable<TEntity> ReadAll();
+    public List<TEntity> ReadAll();
 
     public void CreateOrUpdate(TEntity entity);
 

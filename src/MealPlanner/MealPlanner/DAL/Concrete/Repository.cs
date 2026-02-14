@@ -28,10 +28,10 @@ public class Repository<TEntity> : IRepository<TEntity> where TEntity : class, n
     /// Reads all entities in the repository which can be further
     /// sorted using LINQ queries.
     /// </summary>
-    /// <returns>The repository as an IQueryable</returns>
-    public IQueryable<TEntity> ReadAll()
+    /// <returns>The repository as a List</returns>
+    public List<TEntity> ReadAll()
     {
-        return _dbset.AsQueryable();
+        return _dbset.ToList();
     }
 
     /// <summary>
