@@ -7,7 +7,11 @@ namespace MealPlanner.Models;
 public class UserDietaryRestriction
 {
     [Key]
-    public int UserId { get; set; }
+    public int Id { get; set; }
+
+    public string UserId { get; set; }
+    
+    [ForeignKey("UserId")]
     public User User { get; set; }
 
 }

@@ -8,11 +8,18 @@ public class Meal
 {
     [Key]
     public int Id { get; set; }
-    public int UserId { get; set; }
+
+    public string UserId { get; set; }
+
+    [ForeignKey("UserId")]
+    public User User { get; set; }  
+
     public DateTime? StartTime { get; set; }
+
     public DateTime? EndTime { get; set; }
+
     public string? RepeatRule { get; set; }
+    
     public List<Recipe> Recipes { get; set; } = [];
     
-    public User User { get; set; }
 }
