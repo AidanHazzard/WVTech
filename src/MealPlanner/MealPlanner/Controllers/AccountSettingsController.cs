@@ -14,6 +14,7 @@ namespace MealPlanner.Controllers
         {
             _accountService = accountService;
         }
+        
 
         // GET: /AccountSettings/ResetPassword
         [HttpGet]
@@ -45,8 +46,9 @@ namespace MealPlanner.Controllers
             }
 
             foreach (var error in result.Errors)
-                ModelState.AddModelError(string.Empty, error.Description);
-
+            {
+                ModelState.AddModelError("", error.Description);
+            }
             return View(model);
         }
     }
