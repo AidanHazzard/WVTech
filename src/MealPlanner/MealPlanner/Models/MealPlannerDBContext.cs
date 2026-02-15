@@ -19,9 +19,6 @@ namespace MealPlanner.Models
         public DbSet<Meal> Meals { get; set; }
         public DbSet<UserDietaryRestriction> UserDietaryRestrictions { get; set; }
         public DbSet<Recipe> Recipes { get; set; }
-<<<<<<< HEAD
-        
-=======
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -42,7 +39,6 @@ namespace MealPlanner.Models
                 );
             });
         }
->>>>>>> 54aac7e389ee06d5e7a9afc2c47c1f58400be9f5
     }
 }
 
