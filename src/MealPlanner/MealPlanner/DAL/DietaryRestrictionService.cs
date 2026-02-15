@@ -1,13 +1,12 @@
 using Microsoft.EntityFrameworkCore;
 using MealPlanner.Models;
 
-
 namespace MealPlanner.DAL;
-
 
 public class DietaryRestrictionService
 {
     private readonly MealPlannerDBContext _db;
+
     public DietaryRestrictionService(MealPlannerDBContext db)
     {
         _db = db;
@@ -15,11 +14,12 @@ public class DietaryRestrictionService
 
     public async Task<List<DietaryRestriction>> GetAllRestrictionsAsync()
     {
-        return await _db.DietaryRestrictions 
+        return await _db.DietaryRestrictions
             .OrderBy(r => r.Name)
             .ToListAsync();
     }
-    public async Task<List<int>> GetUserRestrictionIdsAsync(int userId)
+
+    public async Task<List<int>> GetUserRestrictionIdsAsync(string userId)
     {
         return await _db.UserDietaryRestrictions
             .Where(x => x.UserId == userId)
@@ -27,8 +27,7 @@ public class DietaryRestrictionService
             .ToListAsync();
     }
 
-
-    public async Task UpdateUserRestrictionAsync(int userId, IEnumerable<int> selectedRestrictionIds)
+    public async Task UpdateUserRestrictionAsync(string userId, IEnumerable<int> selectedRestrictionIds)
     {
         var selected = selectedRestrictionIds
             .Distinct()
@@ -46,7 +45,6 @@ public class DietaryRestrictionService
             _db.UserDietaryRestrictions.RemoveRange(toRemove);
         }
 
-
         var toAddIds = selected.Where(id => !currentIds.Contains(id)).ToList();
         if (toAddIds.Count > 0)
         {
@@ -55,8 +53,10 @@ public class DietaryRestrictionService
                 UserId = userId,
                 DietaryRestrictionId = id
             });
+
             await _db.UserDietaryRestrictions.AddRangeAsync(toAdd);
         }
+
         await _db.SaveChangesAsync();
     }
 }

@@ -2,13 +2,8 @@ using MealPlanner.DAL.Abstract;
 using MealPlanner.DAL.Concrete;
 using MealPlanner.Models;
 using Microsoft.EntityFrameworkCore; 
-using MealPlanner.DAL.Abstract;
-using MealPlanner.DAL.Concrete;
-<<<<<<< HEAD
 using MealPlanner.Services;
 using Microsoft.AspNetCore.Identity;
-=======
->>>>>>> c668c06 (I added UserDietaryRestrictionRepository in the dependency injection)
 
 
 var builder = WebApplication.CreateBuilder(args);
