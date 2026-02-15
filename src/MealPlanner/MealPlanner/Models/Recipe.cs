@@ -11,5 +11,11 @@ public class Recipe
     public string Name { get; set; }
     public string Directions { get; set; }
     public string Ingredients { get; set; }
+
+    public int? Calories { get; set; }
+    public int? ProteinGrams { get; set; }
+    public int? CarbGrams { get; set; }
+    public int? FatGrams { get; set; } 
+
     public List<Meal> Meals { get; set; } = [];
 }
