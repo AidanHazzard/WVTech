@@ -1,0 +1,37 @@
+@model MealPlanner.ViewModels.CreateMealViewModel
+
+<div class="back1">
+    <h2 class="back1Title">Create a Meal</h2>
+    <hr>
+
+    <!-- View for user -->
+    <div id="createMealList">
+        <template id="addRecipeRow">
+            <div class="back2 text-center back2-textbox">
+                <h4 id="recipeName">Oatmeal Cookies</h4>
+            </div>
+        </template>
+    </div>
+
+    <!-- JS adds hidden elements to transfer data
+     from the search to the form -->
+    <div class="row align-items-center">
+        <div class="text-danger" asp-validation-summary="All"></div>
+        <form id="createMealForm" class="col d-flex mx-1" asp-action="NewMeal" method="POST">
+            <button class="col d-flex mx-1 btn btn-success justify-content-center">
+                <h4>Create Meal</h4>
+            </button>
+        </form>
+    </div>
+
+    <!-- Search Partial -->
+    <div class="back2 pe-5">
+        <h3 class="back1Title">Search for Recipes to Add</h3>
+        @await Html.PartialAsync("_RecipeSearchPartial")
+    </div>
+</div>
+
+@section Scripts {
+    <script type="module" src="~/js/recipeSearch.js"></script>
+    <script type="module" src="~/js/createMeal.js"></script>
+}

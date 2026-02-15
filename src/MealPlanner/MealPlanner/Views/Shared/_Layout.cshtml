@@ -25,8 +25,8 @@
                 <!-- Meal Planner -->
                 <li class="nav-item">
                     <button
-                        class="nav-button @(ViewContext.RouteData.Values["Controller"].ToString() == "MealPlanner" && ViewContext.RouteData.Values["Action"].ToString() == "Index" ? "active" : "")"
-                        onclick="location.href='/'">
+                        class="nav-button @(ViewContext.RouteData.Values["Controller"].ToString() == "Meal" && ViewContext.RouteData.Values["Action"].ToString() == "PlannerHome" ? "active" : "")"
+                        onclick="location.href='@Url.Action(action: "PlannerHome", controller: "Meal")'">
                         <span class="nav-text">Planner</span>
                     </button>
                 </li>
