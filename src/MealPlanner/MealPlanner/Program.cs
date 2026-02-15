@@ -20,6 +20,8 @@ builder.Services.AddDbContext<MealPlannerDBContext>(options =>
 
 builder.Services.AddScoped<IUserDietaryRestrictionRepository, UserDietaryRestrictionRepository>();
 
+builder.Services.AddScoped<INutritionProgressService, NutritionProgressService>();
+
 var app = builder.Build();
 
 await SeedService.SeedData(app.Services);
