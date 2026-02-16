@@ -44,10 +44,10 @@ public class NutritionProgressService : INutritionProgressService
                 .ToListAsync();
 
         var totals = new MacroTotals(
-            Calories: meals.Sum(m => m.Recipes.Sum(r => r.Calories ?? 0)),
-            Protein:  meals.Sum(m => m.Recipes.Sum(r => r.Protein ?? 0)),
-            Carbs:    meals.Sum(m => m.Recipes.Sum(r => r.Carbs ?? 0)),
-            Fat:      meals.Sum(m => m.Recipes.Sum(r => r.Fat ?? 0))
+            Calories: meals.Sum(m => m.Recipes.Sum(r => r.Calories)),
+            Protein:  meals.Sum(m => m.Recipes.Sum(r => r.Protein)),
+            Carbs:    meals.Sum(m => m.Recipes.Sum(r => r.Carbs)),
+            Fat:      meals.Sum(m => m.Recipes.Sum(r => r.Fat))
         );
 
         return new NutritionProgressDto(

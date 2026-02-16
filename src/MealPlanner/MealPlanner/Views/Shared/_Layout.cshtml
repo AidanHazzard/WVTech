@@ -39,6 +39,17 @@
                     </button>
                 </li>
 
+                <!-- Nutrition -->
+                <li class="nav-item">
+                    <button
+                        class="nav-button @(ViewContext.RouteData.Values["Controller"]?.ToString() == "FoodEntries"
+                            && ViewContext.RouteData.Values["Action"]?.ToString() == "Nutrition" ? "active" : "")"
+                        onclick="location.href='/FoodEntries/Nutrition'">
+                        <span class="nav-text">Nutrition</span>
+                    </button>
+                </li>
+
+
                 <!-- Stats -->
                 <li class="nav-item">
                     <button
