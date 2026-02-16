@@ -27,25 +27,26 @@ async function recipeSearchHandler(event)
         return;
     }
 
-    const respose = await fetch(`/api/recipe/search?name=${search}`);
+    const response = await fetch(`/api/recipe/search?name=${search}`);
     
     $("#recipeResults").text("")
-    if (!respose.ok)
+    if (!response.ok)
     {
         $("#error").show();
         $("#error").text("No recipes found, sorry!");
         return;
     }
 
-    const recipes = await respose.json();
+    const recipes = await response.json();
     const rowTemplate = $("#recipeResult");
 
     for (const i in recipes)
     {
         const recipe = recipes[i];
-        const row = rowTemplate.contents().clone();
+        const row = rowTemplate.contents().clone(true);
 
         $("#recipeName", row).text(recipe.name);
+        $("#recipeId", row).text(recipe.id);
         $("#recipeResults").append(row);
     }
 }
