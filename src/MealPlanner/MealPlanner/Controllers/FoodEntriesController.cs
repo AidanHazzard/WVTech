@@ -4,17 +4,30 @@ using MealPlanner.ViewModels;
 using MealPlanner.Models;
 using MealPlanner.DAL.Abstract;
 
+using MealPlanner.Services;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
+
 namespace MealPlanner.Controllers;
 
 public class FoodEntriesController : Controller
 {
     private readonly MealPlannerDBContext _context;
     private readonly IRecipeRepository _recipeRepository;
+    private readonly INutritionProgressService? _nutritionProgressService;
 
-    public FoodEntriesController(IRecipeRepository recipeRepository, MealPlannerDBContext context)
+    public FoodEntriesController(
+        IRecipeRepository recipeRepository,
+        MealPlannerDBContext context,
+        INutritionProgressService? nutritionProgressService = null)
     {
         _recipeRepository = recipeRepository;
         _context = context;
+        _nutritionProgressService = nutritionProgressService;
+    }   
+    public IActionResult SearchRecipes()
+    {
+        return View();
     }
 
     public IActionResult SelectType()
@@ -30,6 +43,24 @@ public class FoodEntriesController : Controller
     public IActionResult AddNewRecipe()
     {
         return View();
+    }
+
+    [Authorize]
+    public async Task<IActionResult> Nutrition()
+    {
+        if (_nutritionProgressService is null)
+            return StatusCode(500, "NutritionProgressService not configured.");
+
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        if (string.IsNullOrWhiteSpace(userId))
+            return Unauthorized();
+
+        var today = DateOnly.FromDateTime(DateTime.Today);
+
+        var progress = await _nutritionProgressService.GetDailyProgressAsync(userId, today);
+
+        return View(progress);
     }
 
     [HttpPost]

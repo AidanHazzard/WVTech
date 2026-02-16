@@ -45,7 +45,7 @@ public class RepositoryTests
     }
 
     [Test]
-    public void ReadReturnsEntityById()
+    public void Read_ReturnsEntityById()
     {
         // Arrange
         MealPlannerDBContext context = CreateContext();
@@ -60,7 +60,7 @@ public class RepositoryTests
     }
     
     [Test]
-    public void ReadReturnsNullWhenIdNotFound()
+    public void Read_ReturnsNullWhenIdNotFound()
     {
         // Arrange
         MealPlannerDBContext context = CreateContext();
@@ -74,7 +74,7 @@ public class RepositoryTests
     }
 
     [Test]
-    public void ReadAllReturnsMultipleEntities()
+    public void ReadAll_ReturnsMultipleEntities()
     {
         // Arrange
         MealPlannerDBContext context = CreateContext();
@@ -89,7 +89,7 @@ public class RepositoryTests
     }
 
     [Test]
-    public void CreateOrUpdateMakesANewRowInTableIfEntityIsNotInTable()
+    public void CreateOrUpdate_MakesANewRowInTableIfEntityIsNotInTable()
     {
         // Arrange
         MealPlannerDBContext context = CreateContext();
@@ -106,7 +106,7 @@ public class RepositoryTests
     }
 
     [Test]
-    public void CreateOrUpdateChangesExistingRowOnTable()
+    public void CreateOrUpdate_ChangesExistingRowOnTable()
     {
         // Arrange
         MealPlannerDBContext context = CreateContext();
@@ -125,7 +125,7 @@ public class RepositoryTests
     }
 
     [Test]
-    public void DeleteRemovesEntityFromTable()
+    public void Delete_RemovesEntityFromTable()
     {
         // Arrange
         MealPlannerDBContext context = CreateContext();
@@ -142,7 +142,7 @@ public class RepositoryTests
     }
 
     [Test]
-    public void ExistsReturnsTrueIfIdFoundInTable()
+    public void Exists_ReturnsTrueIfIdFoundInTable()
     {
         // Arrange
         MealPlannerDBContext context = CreateContext();
@@ -157,7 +157,7 @@ public class RepositoryTests
     }
 
     [Test]
-    public void ExistsReturnsFalseIfIdNotFoundInTable()
+    public void Exists_ReturnsFalseIfIdNotFoundInTable()
     {
         // Arrange
         MealPlannerDBContext context = CreateContext();

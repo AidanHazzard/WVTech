@@ -1,5 +1,5 @@
-using MealPlanner.Models;
 using MealPlanner.DAL.Abstract;
+using MealPlanner.Models;
 
 namespace MealPlanner.DAL.Concrete;
 
@@ -10,16 +10,11 @@ public class RecipeRepository : Repository<Recipe>, IRecipeRepository
     {
     }
 
-    public IQueryable<Recipe> GetRecipesByName(string name)
+    public List<Recipe> GetRecipesByName(string name)
     {        
-        IQueryable<Recipe> results = _dbset.Where(
-            r => r.Name.ToLower().Contains($" {name.ToLower()}")
-            );
-                
-        results = results.Concat(_dbset.Where(
-            r => r.Name.ToLower().StartsWith($"{name.ToLower()}")
-            )
-        );
+        List<Recipe> results = _dbset.Where(
+            r => r.Name.ToLower().Contains($" {name.ToLower()}") || r.Name.ToLower().StartsWith($"{name.ToLower()}")
+            ).ToList();
         
         return results;
     }

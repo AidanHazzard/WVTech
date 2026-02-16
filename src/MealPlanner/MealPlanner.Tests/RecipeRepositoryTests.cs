@@ -26,16 +26,10 @@ public class RecipeRepositoryTests
 
         if (context.Database.EnsureCreated())
         {
+            // Normally we'd add in test data here, but we will use the seed data definined in MealPlannerDBContext
+            // This is just to build the model in the first place
             context.AddRange(
-                new Recipe { Name="Oatmeal Cookies", Directions="", Ingredients="" },
-                new Recipe { Name="Spaghetti All'assassina", Directions="", Ingredients="" },
-                new Recipe { Name="Spaghetti and Meatballs", Directions="", Ingredients="" },
-                new Recipe { Name="Vegan Spaghetti with Mushrooms", Directions="", Ingredients="" },
-                new Recipe { Name="Baked Spaghetti Casserole", Directions="", Ingredients="" },
-                new Recipe { Name="Mac 'n Cheese Casserole", Directions="", Ingredients="" },
-                new Recipe { Name="Homemade Mac 'n Cheese", Directions="", Ingredients="" },
-                new Recipe { Name="Mushroom Steak Salad", Directions="", Ingredients="" },
-                new Recipe { Name="Ceasar Salad", Directions="", Ingredients="" }
+                new Recipe { Name="R1", Directions="", Ingredients="" }
             );
 
             context.SaveChanges();
@@ -51,98 +45,104 @@ public class RecipeRepositoryTests
     }
     
     [Test]
-    public void GetRecipesByNameReturnsARecipe()
+    public void GetRecipesByName_ReturnsARecipe()
     {   
         // Arrange
         MealPlannerDBContext context = CreateContext();
         RecipeRepository repo = new RecipeRepository(context);
 
         // Act
-        IQueryable<Recipe> results = repo.GetRecipesByName("Oatmeal Cookies");
+        List<Recipe> results = repo.GetRecipesByName("Oatmeal Cookies");
 
         // Assert
         Assert.That(results.First().Name, Is.EqualTo("Oatmeal Cookies"));
     }
     
     [Test]
-    public void GetRecipesByNameReturnsEmptyListIfNoneFound()
+    public void GetRecipesByName_ReturnsEmptyListIfNoneFound()
     {   
         // Arrange
         MealPlannerDBContext context = CreateContext();
         RecipeRepository repo = new RecipeRepository(context);
 
         // Act
-        IQueryable<Recipe> results = repo.GetRecipesByName("I don't exist");
+        List<Recipe> results = repo.GetRecipesByName("I don't exist");
 
         // Assert
         Assert.That(results, Is.Empty);
     }
     
     [Test]
-    public void GetRecipesByNameMatchesBeginningOfName()
+    public void GetRecipesByName_MatchesBeginningOfName()
     {   
         // Arrange
         MealPlannerDBContext context = CreateContext();
         RecipeRepository repo = new RecipeRepository(context);
 
         // Act
-        IQueryable<Recipe> results = repo.GetRecipesByName("Home");
+        List<Recipe> results = repo.GetRecipesByName("Home");
 
         // Assert
         Assert.That(results.First().Name, Is.EqualTo("Homemade Mac 'n Cheese"));
     }
     
     [Test]
-    public void GetRecipesByNameIsNotCaseSensitive()
+    public void GetRecipesByName_IsNotCaseSensitive()
     {   
         // Arrange
         MealPlannerDBContext context = CreateContext();
         RecipeRepository repo = new RecipeRepository(context);
 
         // Act
-        IQueryable<Recipe> results = repo.GetRecipesByName("baked spaghetti casserole");
+        List<Recipe> results = repo.GetRecipesByName("baked spaghetti casserole");
 
         // Assert
         Assert.That(results.First().Name, Is.EqualTo("Baked Spaghetti Casserole"));
     }
     
     [Test]
-    public void GetRecipesByNameMatchesWordsInMiddleOfRecipeName()
+    public void GetRecipesByName_MatchesWordsInMiddleOfRecipeName()
     {   
         // Arrange
         MealPlannerDBContext context = CreateContext();
         RecipeRepository repo = new RecipeRepository(context);
 
         // Act
-        IQueryable<Recipe> results = repo.GetRecipesByName("Spaghetti");
+        List<Recipe> results = repo.GetRecipesByName("Spaghetti");
 
         // Assert
+        foreach (Recipe r in results)
+        {
+            Console.WriteLine(r.Name);
+        }
+        
         Assert.That(results.Count(), Is.EqualTo(4), "There are 4 recipes with spaghetti in their name");
     }
     
     [Test]
-    public void GetRecipesByNameMatchesBeginningOfWordsInMiddleOfRecipeName()
+    public void GetRecipesByName_MatchesBeginningOfWordsInMiddleOfRecipeName()
     {   
         // Arrange
         MealPlannerDBContext context = CreateContext();
         RecipeRepository repo = new RecipeRepository(context);
 
         // Act
-        IQueryable<Recipe> results = repo.GetRecipesByName("Cass");
+        List<Recipe> results = repo.GetRecipesByName("Cass");
 
         // Assert
+        Console.Write(results);
         Assert.That(results.Count(), Is.EqualTo(2), "There are 2 recipes with words that start with Cass");
     }
     
     [Test]
-    public void GetRecipesByNameDoesntMatchMiddleOfWords()
+    public void GetRecipesByName_DoesntMatchMiddleOfWords()
     {   
         // Arrange
         MealPlannerDBContext context = CreateContext();
         RecipeRepository repo = new RecipeRepository(context);
 
         // Act
-        IQueryable<Recipe> results = repo.GetRecipesByName("aghe");
+        List<Recipe> results = repo.GetRecipesByName("aghe");
 
         // Assert
         Assert.That(results, Is.Empty);
