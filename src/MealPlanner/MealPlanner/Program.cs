@@ -1,15 +1,9 @@
 using MealPlanner.DAL.Abstract;
 using MealPlanner.DAL.Concrete;
 using MealPlanner.Models;
-using Microsoft.EntityFrameworkCore; 
-using MealPlanner.DAL.Abstract;
-using MealPlanner.DAL.Concrete;
-<<<<<<< HEAD
 using MealPlanner.Services;
 using Microsoft.AspNetCore.Identity;
-=======
->>>>>>> c668c06 (I added UserDietaryRestrictionRepository in the dependency injection)
-
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,15 +12,20 @@ builder.Services.AddControllersWithViews();
 
 
 // Configure the DbContext to use SQL Server
-string connectionString = builder.Configuration["ConnectionString"];
+string connectionString =
+    builder.Configuration.GetConnectionString("DefaultConnection")
+    ?? builder.Configuration["ConnectionString"]
+    ?? throw new InvalidOperationException("Missing connection string. Set user-secrets 'ConnectionStrings:DefaultConnection' or 'ConnectionString'.");
+
 
 builder.Services.AddDbContext<MealPlannerDBContext>(options =>
     options.UseSqlServer(connectionString));
 
-<<<<<<< HEAD
 builder.Services.AddScoped<DbContext, MealPlannerDBContext>();
 builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 builder.Services.AddScoped<IRecipeRepository, RecipeRepository>();
+builder.Services.AddScoped<IUserDietaryRestrictionRepository, UserDietaryRestrictionRepository>();
+
 builder.Services.AddIdentity<User, IdentityRole>(options =>
 {
     options.Password.RequireDigit = true;
@@ -42,11 +41,9 @@ builder.Services.AddIdentity<User, IdentityRole>(options =>
 
 // Register AccountService for dependency injection
 builder.Services.AddScoped<IAccountService, AccountService>();
-=======
-builder.Services.AddScoped<IUserDietaryRestrictionRepository, UserDietaryRestrictionRepository>();
->>>>>>> c668c06 (I added UserDietaryRestrictionRepository in the dependency injection)
 
 var app = builder.Build();
+
 
 await SeedService.SeedData(app.Services);
 
