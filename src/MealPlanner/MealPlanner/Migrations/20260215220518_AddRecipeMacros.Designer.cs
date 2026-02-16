@@ -4,6 +4,7 @@ using MealPlanner.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace MealPlanner.Migrations
 {
     [DbContext(typeof(MealPlannerDBContext))]
-    partial class MealPlannerDBContextModelSnapshot : ModelSnapshot
+    [Migration("20260215220518_AddRecipeMacros")]
+    partial class AddRecipeMacros
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -75,17 +78,17 @@ namespace MealPlanner.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("Calories")
+                    b.Property<int?>("Calories")
                         .HasColumnType("int");
 
-                    b.Property<int>("Carbs")
+                    b.Property<int?>("CarbGrams")
                         .HasColumnType("int");
 
                     b.Property<string>("Directions")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("Fat")
+                    b.Property<int?>("FatGrams")
                         .HasColumnType("int");
 
                     b.Property<string>("Ingredients")
@@ -96,7 +99,7 @@ namespace MealPlanner.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("Protein")
+                    b.Property<int?>("ProteinGrams")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
@@ -107,101 +110,65 @@ namespace MealPlanner.Migrations
                         new
                         {
                             Id = -1,
-                            Calories = 0,
-                            Carbs = 0,
                             Directions = "",
-                            Fat = 0,
                             Ingredients = "",
-                            Name = "Oatmeal Cookies",
-                            Protein = 0
+                            Name = "Oatmeal Cookies"
                         },
                         new
                         {
                             Id = -2,
-                            Calories = 0,
-                            Carbs = 0,
                             Directions = "",
-                            Fat = 0,
                             Ingredients = "",
-                            Name = "Spaghetti All'assassina",
-                            Protein = 0
+                            Name = "Spaghetti All'assassina"
                         },
                         new
                         {
                             Id = -3,
-                            Calories = 0,
-                            Carbs = 0,
                             Directions = "",
-                            Fat = 0,
                             Ingredients = "",
-                            Name = "Spaghetti and Meatballs",
-                            Protein = 0
+                            Name = "Spaghetti and Meatballs"
                         },
                         new
                         {
                             Id = -4,
-                            Calories = 0,
-                            Carbs = 0,
                             Directions = "",
-                            Fat = 0,
                             Ingredients = "",
-                            Name = "Vegan Spaghetti with Mushrooms",
-                            Protein = 0
+                            Name = "Vegan Spaghetti with Mushrooms"
                         },
                         new
                         {
                             Id = -5,
-                            Calories = 0,
-                            Carbs = 0,
                             Directions = "",
-                            Fat = 0,
                             Ingredients = "",
-                            Name = "Baked Spaghetti Casserole",
-                            Protein = 0
+                            Name = "Baked Spaghetti Casserole"
                         },
                         new
                         {
                             Id = -6,
-                            Calories = 0,
-                            Carbs = 0,
                             Directions = "",
-                            Fat = 0,
                             Ingredients = "",
-                            Name = "Mac 'n Cheese Casserole",
-                            Protein = 0
+                            Name = "Mac 'n Cheese Casserole"
                         },
                         new
                         {
                             Id = -7,
-                            Calories = 0,
-                            Carbs = 0,
                             Directions = "",
-                            Fat = 0,
                             Ingredients = "",
-                            Name = "Homemade Mac 'n Cheese",
-                            Protein = 0
+                            Name = "Homemade Mac 'n Cheese"
                         },
                         new
                         {
                             Id = -8,
-                            Calories = 0,
-                            Carbs = 0,
                             Directions = "",
-                            Fat = 0,
                             Ingredients = "",
-                            Name = "Mushroom Steak Salad",
-                            Protein = 0
+                            Name = "Mushroom Steak Salad"
                         },
                         new
                         {
                             Id = -9,
-                            Calories = 0,
-                            Carbs = 0,
                             Directions = "",
-                            Fat = 0,
                             Ingredients = "",
-                            Name = "Ceasar Salad",
-                            Protein = 0
+                            Name = "Ceasar Salad"
                         });
                 });
 

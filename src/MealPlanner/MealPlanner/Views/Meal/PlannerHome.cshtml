@@ -1,0 +1,80 @@
+@model MealPlanner.ViewModels.PlannerHomeViewModel
+
+<div class="back1">
+
+    <div class="back2">
+        <h2 class="text-center">Meal Plan</h2>
+    </div>
+
+    <div class="back2 mt-3 p-3">
+        <form method="get" asp-action="PlannerHome" class="row align-items-end g-3">
+            <div class="col-md-4">
+                <label class="form-label">Select Date</label>
+                <input type="date"
+                       name="date"
+                       value="@Model.SelectedDate.ToString("yyyy-MM-dd")"
+                       class="form-control" />
+            </div>
+
+            <div class="col-md-3">
+                <button type="submit" class="btn btn-primary w-100">View</button>
+            </div>
+        </form>
+    </div>
+
+    <div class="back2 mt-3 p-3">
+        @if (Model.Meals == null || !Model.Meals.Any())
+        {
+            <h4 class="text-center">No meals scheduled for this day.</h4>
+        }
+        else
+        {
+            <div class="list-group">
+                @foreach (var meal in Model.Meals)
+                {
+                    <div class="list-group-item">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <div class="fw-bold">
+                                    @(meal.StartTime?.ToString("h:mm tt") ?? "No time")
+                                    @if (meal.RepeatRule == "Weekly")
+                                    {
+                                        <span class="badge bg-info ms-2">Weekly</span>
+                                    }
+                                </div>
+
+                                <div class="mt-2">
+                                    @if (meal.Recipes != null && meal.Recipes.Any())
+                                    {
+                                        foreach (var r in meal.Recipes)
+                                        {
+                                            <span class="badge bg-secondary me-1">@r.Name</span>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">No recipes attached</span>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+
+    <div class="row align-items-center mt-3">
+        <div class="col d-flex justify-content-center">
+            <form asp-action="NewMeal" method="get">
+                <button type="submit" class="imageButton">
+                    <img src="~/images/icons/meal.png" alt="meal" class="imageButtonimage">
+                    <div class="buttonBlue">
+                        <h2 class="buttonText">Add a Meal</h2>
+                    </div>
+                </button>
+            </form>
+        </div>
+    </div>
+
+</div>
