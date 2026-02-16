@@ -11,11 +11,8 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllersWithViews();
 
 
-// ✅ Configure the DbContext to use SQL Server
-var connectionString =
-    builder.Configuration.GetConnectionString("DefaultConnection")
-    ?? builder.Configuration["ConnectionStrings:DefaultConnection"]
-    ?? builder.Configuration["ConnectionString"];
+// Configure the DbContext to use SQL Server
+var connectionString = builder.Configuration["ConnectionString"];
 
 if (string.IsNullOrWhiteSpace(connectionString))
 {
