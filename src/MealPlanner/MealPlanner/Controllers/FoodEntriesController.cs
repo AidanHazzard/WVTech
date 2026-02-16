@@ -44,6 +44,20 @@ public class FoodEntriesController : Controller
         return View(progress);
     }
 
+    [Authorize]
+    public async Task<IActionResult> Nutrition()
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        if (string.IsNullOrWhiteSpace(userId))
+            return Unauthorized();
+
+        var today = DateOnly.FromDateTime(DateTime.Today);
+
+        var progress = await _nutritionProgressService.GetDailyProgressAsync(userId, today);
+
+        return View(progress);
+    }
 
     [HttpPost]
     public IActionResult RecipeAdded(AddRecipeViewModel newRecipeViewModel)
