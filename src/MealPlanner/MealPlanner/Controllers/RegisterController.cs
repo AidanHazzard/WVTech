@@ -4,36 +4,19 @@ using MealPlanner.ViewModels;
 
 namespace MealPlanner.Controllers;
 
-public class AccountController : Controller
+public class RegisterController : Controller
 {
     private readonly IAccountService _accountService;
 
-    public AccountController(IAccountService accountService)
+    public RegisterController(IAccountService accountService)
     {
         _accountService = accountService;
     }
 
-    [HttpGet]
-    public IActionResult Login() => View();
-
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Login(LoginViewModel model)
-    {
-        if (!ModelState.IsValid) return View(model);
-
-        var result = await _accountService.LoginUserAsync(model);
-
-        if (result.Succeeded) return RedirectToAction("Index", "Home");
-
-        ModelState.AddModelError("", "Invalid login attempt.");
-        return View(model);
-    }
-
-    [HttpGet]
+    [HttpGet("Register")]
     public IActionResult Register() => View();
 
-    [HttpPost]
+    [HttpPost("Register")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Register(RegisterViewModel model)
     {
@@ -49,10 +32,10 @@ public class AccountController : Controller
         return View(model);
     }
 
-    [HttpGet]
+    [HttpGet("VerifyEmail")]
     public IActionResult VerifyEmail() => View();
 
-    [HttpPost]
+    [HttpPost("VerifyEmail")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> VerifyEmail(VerifyEmailViewModel model)
     {
@@ -68,7 +51,7 @@ public class AccountController : Controller
         return RedirectToAction("ChangePassword", new { username = user.UserName });
     }
 
-    [HttpGet]
+    [HttpGet("ChangePassword")]
     public IActionResult ChangePassword(string username)
     {
         if (string.IsNullOrEmpty(username)) return RedirectToAction("VerifyEmail");
@@ -76,7 +59,7 @@ public class AccountController : Controller
         return View(new ChangePasswordViewModel { Email = username });
     }
 
-    [HttpPost]
+    [HttpPost("ChangePassword")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> ChangePassword(ChangePasswordViewModel model)
     {
@@ -88,7 +71,7 @@ public class AccountController : Controller
 
         var result = await _accountService.ChangePasswordAsync(model.Email, model.NewPassword);
 
-        if (result.Succeeded) return RedirectToAction("Login");
+        if (result.Succeeded) return RedirectToAction("Login", "Login");
 
         foreach (var error in result.Errors)
             ModelState.AddModelError("", error.Description);
@@ -96,11 +79,5 @@ public class AccountController : Controller
         return View(model);
     }
 
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Logout()
-    {
-        await _accountService.LogoutUserAsync();
-        return RedirectToAction("Index", "Home");
-    }
+    
 }

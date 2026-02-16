@@ -5,7 +5,7 @@
         @if (SignInManager.IsSignedIn(User))
         {
             <li class="nav-item">
-                <form method="post" asp-area="" asp-controller="Account" asp-action="Logout" id="logoutForm" class="form-inline">
+                <form method="post" asp-area="" asp-controller="Login" asp-action="Logout" id="logoutForm" class="form-inline">
                     @Html.AntiForgeryToken()
                     <button type="submit" class="nav-link btn btn-link text-dark">Logout</button>
                 </form>
@@ -14,10 +14,10 @@
         else
         {
             <li class="nav-item">
-                <a class="nav-link text-dark" asp-area="" asp-controller="Account" asp-action="Login">Login</a>
+                <a class="nav-link text-dark" asp-area="" asp-controller="Login" asp-action="Login">Login</a>
             </li>
             <li class="nav-item">
-                <a class="nav-link text-dark" asp-area="" asp-controller="Account" asp-action="Register">Register</a>
+                <a class="nav-link text-dark" asp-area="" asp-controller="Register" asp-action="Register">Register</a>
             </li>
         }
     </ul>
