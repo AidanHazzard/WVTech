@@ -4,6 +4,7 @@ using MealPlanner.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace MealPlanner.Controllers;
 
@@ -23,10 +24,33 @@ public class MealController : Controller
         _context = context;
     }
 
-    public IActionResult PlannerHome()
+    public async Task<IActionResult> PlannerHome(string? date)
     {
-        return View();
+        var user = await _userManager.GetUserAsync(User);
+
+        DateTime selectedDate =
+            DateTime.TryParse(date, out var parsed)
+            ? parsed.Date
+            : DateTime.Today;
+
+        var meals = await _context.Set<Meal>()
+            .Include(m => m.Recipes)
+            .Where(m => m.UserId == user.Id && m.StartTime != null)
+            .Where(m =>
+                m.StartTime!.Value.Date == selectedDate ||
+                (m.RepeatRule == "Weekly" && m.StartTime!.Value.DayOfWeek == selectedDate.DayOfWeek)
+            )
+            .OrderBy(m => m.StartTime)
+            .ToListAsync();
+
+        var vm = new PlannerHomeViewModel
+        {
+            SelectedDate = selectedDate,
+            Meals = meals
+        };
+        return View(vm);
     }
+
 
     [HttpGet]
     public IActionResult NewMeal()
