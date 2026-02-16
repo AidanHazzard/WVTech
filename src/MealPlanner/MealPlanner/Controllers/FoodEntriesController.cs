@@ -14,37 +14,34 @@ public class FoodEntriesController : Controller
 {
     private readonly MealPlannerDBContext _context;
     private readonly IRecipeRepository _recipeRepository;
-    private readonly INutritionProgressService _nutritionProgressService;
-
+    private readonly INutritionProgressService? _nutritionProgressService;
 
     public FoodEntriesController(
         IRecipeRepository recipeRepository,
         MealPlannerDBContext context,
-        INutritionProgressService nutritionProgressService)
+        INutritionProgressService? nutritionProgressService = null)
     {
         _recipeRepository = recipeRepository;
         _context = context;
         _nutritionProgressService = nutritionProgressService;
     }
 
-    public IActionResult SearchRecipes()
+    [Authorize]
+    public async Task<IActionResult> Nutrition()
     {
-        return View();
-    }
+        if (_nutritionProgressService is null)
+            return StatusCode(500, "NutritionProgressService not configured.");
 
-    public IActionResult SelectType()
-    {
-        return View();
-    }
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-    public IActionResult Recipes()
-    {
-        return View();
-    }
+        if (string.IsNullOrWhiteSpace(userId))
+            return Unauthorized();
 
-    public IActionResult AddNewRecipe()
-    {
-        return View();
+        var today = DateOnly.FromDateTime(DateTime.Today);
+
+        var progress = await _nutritionProgressService.GetDailyProgressAsync(userId, today);
+
+        return View(progress);
     }
 
     [Authorize]
