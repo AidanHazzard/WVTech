@@ -50,7 +50,12 @@ public class MealController : Controller
             newMeal.Recipes.Add(recipe);
         }
 
-        newMeal.User = await _userManager.GetUserAsync(User);
+        var user = await _userManager.GetUserAsync(User);
+        newMeal.User = user;
+        newMeal.UserId = user.Id;
+
+        newMeal.StartTime = model.Date.Date.Add(model.Time);
+        newMeal.RepeatRule = model.RepeatWeekly ? "Weekly" : null;
 
         _mealRepo.CreateOrUpdate(newMeal);
         _context.SaveChanges();
