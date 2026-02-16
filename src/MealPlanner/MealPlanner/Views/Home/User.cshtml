@@ -1,0 +1,29 @@
+@{
+    ViewData["Title"] = "User";
+}
+<!-- This view is for the user page or dashboard -->
+
+<div class="back1">
+    <h2 class="back1Title">User Settings</h2>
+
+    <div class="row mt-4">
+        <div class="col-md-4">
+            <button class="imageButton"
+                onclick="location.href='@Url.Action("ResetPassword", "AccountSettings")'">
+                <span class="buttonText">Reset Password</span>
+            </button>
+        </div>
+
+        <div class="col-md-4">
+            <button class="imageButton" disabled>
+                <span class="buttonText">Coming Soon</span>
+            </button>
+        </div>
+
+        <div class="col-md-4">
+            <button class="imageButton" disabled>
+                <span class="buttonText">Coming Soon</span>
+            </button>
+        </div>
+    </div>
+</div>

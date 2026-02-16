@@ -1,0 +1,49 @@
+<div class="back1">
+    <h1 class="back1Title">Select What You Want To View</h1>
+
+    <div class="row align-items-center">
+        <!-- Meal Planner -->
+        <div class="col d-flex justify-content-center">
+            <button class="imageButton">
+                <img src="~/images/icons/meal.png" alt="meal" class="imageButtonimage">
+                    <div class="buttonBlue">
+                        <h2 class="buttonText">Your Meals</h2>
+                    </div>
+            </button>
+        </div>
+
+        <!-- Food Entries -->
+        <div class="col d-flex justify-content-center">
+            <form asp-controller="FoodEntries" asp-action="Recipes" method="get">
+                <button type="submit" class="imageButton">
+                    <img src="~/images/icons/hamburger.png" alt="hamburger" class="imageButtonimage">
+                        <div class="buttonBlue">
+                            <h2 class="buttonText">Your Recipes</h2>
+                        </div>
+                </button>
+            </form>
+        </div>
+
+        <!-- Cart -->
+        <div class="col d-flex justify-content-center">
+            <button class="imageButton">
+                <img src="~/images/icons/Ingredient.png" alt="Ingredient" class="imageButtonimage">
+                    <div class="buttonBlue">
+                        <h2 class="buttonText">Your Ingredients</h2>
+                    </div>
+            </button>
+        </div>
+
+        <!-- Search -->
+        <div class="col d-flex justify-content-center">
+            <form asp-controller="FoodEntries" asp-action="SearchRecipes">
+                <button class="imageButton" asp-action="SearchRecipes">
+                    <img src="~/images/icons/search.svg" alt="Search" class="imageButtonimage">
+                        <div class="buttonBlue">
+                            <h2 class="buttonText">Search for Recipes</h2>
+                        </div>
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
