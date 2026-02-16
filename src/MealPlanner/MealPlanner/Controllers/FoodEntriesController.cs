@@ -4,17 +4,27 @@ using MealPlanner.ViewModels;
 using MealPlanner.Models;
 using MealPlanner.DAL.Abstract;
 
+using MealPlanner.Services;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
+
 namespace MealPlanner.Controllers;
 
 public class FoodEntriesController : Controller
 {
     private readonly MealPlannerDBContext _context;
     private readonly IRecipeRepository _recipeRepository;
+    private readonly INutritionProgressService _nutritionProgressService;
 
-    public FoodEntriesController(IRecipeRepository recipeRepository, MealPlannerDBContext context)
+
+    public FoodEntriesController(
+        IRecipeRepository recipeRepository,
+        MealPlannerDBContext context,
+        INutritionProgressService nutritionProgressService)
     {
         _recipeRepository = recipeRepository;
         _context = context;
+        _nutritionProgressService = nutritionProgressService;
     }
 
     public IActionResult SearchRecipes()
@@ -35,6 +45,21 @@ public class FoodEntriesController : Controller
     public IActionResult AddNewRecipe()
     {
         return View();
+    }
+
+    [Authorize]
+    public async Task<IActionResult> Nutrition()
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        if (string.IsNullOrWhiteSpace(userId))
+            return Unauthorized();
+
+        var today = DateOnly.FromDateTime(DateTime.Today);
+
+        var progress = await _nutritionProgressService.GetDailyProgressAsync(userId, today);
+
+        return View(progress);
     }
 
     [HttpPost]

@@ -21,20 +21,4 @@ public class UserNutritionPreference
     public int? CarbTarget { get; set; }
 
     public int? FatTarget { get; set; }
-
-    public int? IronTarget { get; set; }
-
-    public int? FiberTarget { get; set; }
-
-    public int? CalciumTarget { get; set; }
-
-    public int? VitaminATarget { get; set; }
-
-    public int? VitaminCTarget { get; set; }
-
-    public int? B12Target { get; set; }
-
-    public int? FolateTarget { get; set; }
-    
-    public int? PotassiumTarget { get; set; }
 }

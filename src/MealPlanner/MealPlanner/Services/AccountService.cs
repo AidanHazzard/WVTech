@@ -1,7 +1,7 @@
+using System.Security.Claims;
 using MealPlanner.Models;
 using MealPlanner.ViewModels;
 using Microsoft.AspNetCore.Identity;
-
 
 namespace MealPlanner.Services
 {
@@ -74,6 +74,18 @@ namespace MealPlanner.Services
             if (!removeResult.Succeeded) return removeResult;
 
             return await _userManager.AddPasswordAsync(user, newPassword);
+        }
+
+        public async Task<IdentityResult> ResetPasswordAsync(ClaimsPrincipal userPrincipal, string currentPassword, string newPassword)
+        {
+            var user = await _userManager.GetUserAsync(userPrincipal);
+            if (user == null)
+                return IdentityResult.Failed(
+                    new IdentityError { Description = "User not found" });
+
+            
+
+            return await _userManager.ChangePasswordAsync(user, currentPassword, newPassword);
         }
 
         public async Task LogoutUserAsync()
