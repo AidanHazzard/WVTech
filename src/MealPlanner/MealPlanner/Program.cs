@@ -1,5 +1,3 @@
-using MealPlanner.DAL.Abstract;
-using MealPlanner.DAL.Concrete;
 using MealPlanner.Models;
 using MealPlanner.Services;
 using Microsoft.AspNetCore.Identity;
@@ -7,21 +5,13 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+
 builder.Services.AddControllersWithViews();
 
-
-// ✅ Configure the DbContext to use SQL Server
-var connectionString = builder.Configuration["ConnectionString"]
-    ?? builder.Configuration.GetConnectionString("DefaultConnection")
-    ?? builder.Configuration["ConnectionStrings:DefaultConnection"];
-
-if (string.IsNullOrWhiteSpace(connectionString))
-{
-    throw new InvalidOperationException(
-        "Missing connection string. Set user-secrets 'ConnectionStrings:DefaultConnection' or 'ConnectionString'."
-    );
-}
+string connectionString =
+    builder.Configuration.GetConnectionString("DefaultConnection")
+    ?? builder.Configuration["ConnectionString"]
+    ?? throw new InvalidOperationException("Missing connection string. Set user-secrets 'ConnectionStrings:DefaultConnection' or 'ConnectionString'.");
 
 builder.Services.AddDbContext<MealPlannerDBContext>(options =>
     options.UseSqlServer(connectionString, options => options.EnableRetryOnFailure()));

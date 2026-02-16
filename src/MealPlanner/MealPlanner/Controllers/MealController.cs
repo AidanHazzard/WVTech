@@ -4,6 +4,7 @@ using MealPlanner.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace MealPlanner.Controllers;
 
@@ -23,10 +24,50 @@ public class MealController : Controller
         _context = context;
     }
 
-    public IActionResult PlannerHome()
+    public async Task<IActionResult> PlannerHome(string? date)
+{
+    var user = await _userManager.GetUserAsync(User);
+
+    DateTime selectedDate =
+        DateTime.TryParse(date, out var parsed)
+            ? parsed.Date
+            : DateTime.Today;
+
+    var start = selectedDate;
+    var end = selectedDate.AddDays(1);
+
+    var exactDateMeals = await _context.Set<Meal>()
+        .Include(m => m.Recipes)
+        .Where(m => m.UserId == user.Id && m.StartTime != null)
+        .Where(m => m.StartTime >= start && m.StartTime < end)
+        .ToListAsync();
+
+    var weeklyRepeatMeals = await _context.Set<Meal>()
+        .Include(m => m.Recipes)
+        .Where(m => m.UserId == user.Id && m.StartTime != null)
+        .Where(m => m.RepeatRule == "Weekly")
+        .ToListAsync();
+
+    weeklyRepeatMeals = weeklyRepeatMeals
+        .Where(m => m.StartTime!.Value.DayOfWeek == selectedDate.DayOfWeek)
+        .ToList();
+
+    var meals = exactDateMeals
+        .Concat(weeklyRepeatMeals)
+        .GroupBy(m => m.Id)
+        .Select(g => g.First())
+        .OrderBy(m => m.StartTime)
+        .ToList();
+
+    var vm = new PlannerHomeViewModel
     {
-        return View();
-    }
+        SelectedDate = selectedDate,
+        Meals = meals
+    };
+
+    return View(vm);
+}
+
 
     [HttpGet]
     public IActionResult NewMeal()
@@ -50,7 +91,12 @@ public class MealController : Controller
             newMeal.Recipes.Add(recipe);
         }
 
-        newMeal.User = await _userManager.GetUserAsync(User);
+        var user = await _userManager.GetUserAsync(User);
+        newMeal.User = user;
+        newMeal.UserId = user.Id;
+
+        newMeal.StartTime = model.Date.Date.Add(model.Time);
+        newMeal.RepeatRule = model.RepeatWeekly ? "Weekly" : null;
 
         _mealRepo.CreateOrUpdate(newMeal);
         _context.SaveChanges();
