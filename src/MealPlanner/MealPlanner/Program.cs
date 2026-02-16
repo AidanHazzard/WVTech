@@ -11,8 +11,10 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllersWithViews();
 
 
-// Configure the DbContext to use SQL Server
-var connectionString = builder.Configuration["ConnectionString"];
+// ✅ Configure the DbContext to use SQL Server
+var connectionString = builder.Configuration["ConnectionString"]
+    ?? builder.Configuration.GetConnectionString("DefaultConnection")
+    ?? builder.Configuration["ConnectionStrings:DefaultConnection"];
 
 if (string.IsNullOrWhiteSpace(connectionString))
 {
@@ -22,7 +24,7 @@ if (string.IsNullOrWhiteSpace(connectionString))
 }
 
 builder.Services.AddDbContext<MealPlannerDBContext>(options =>
-    options.UseSqlServer(connectionString));
+    options.UseSqlServer(connectionString, options => options.EnableRetryOnFailure()));
 
 builder.Services.AddScoped<DbContext, MealPlannerDBContext>();
 builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
