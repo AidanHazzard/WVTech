@@ -31,7 +31,6 @@ builder.Services.AddScoped<DbContext, MealPlannerDBContext>();
 builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 builder.Services.AddScoped<IRecipeRepository, RecipeRepository>();
 builder.Services.AddScoped<IUserDietaryRestrictionRepository, UserDietaryRestrictionRepository>();
-
 builder.Services.AddIdentity<User, IdentityRole>(options =>
 {
     options.Password.RequireDigit = true;
@@ -47,6 +46,7 @@ builder.Services.AddIdentity<User, IdentityRole>(options =>
 
 // Register AccountService for dependency injection
 builder.Services.AddScoped<IAccountService, AccountService>();
+builder.Services.AddScoped<INutritionProgressService, NutritionProgressService>();
 
 var app = builder.Build();
 

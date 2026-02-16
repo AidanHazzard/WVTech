@@ -4,6 +4,7 @@ using MealPlanner.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace MealPlanner.Migrations
 {
     [DbContext(typeof(MealPlannerDBContext))]
-    partial class MealPlannerDBContextModelSnapshot : ModelSnapshot
+    [Migration("20260215211253_FixUserDietaryRestrictionSchema")]
+    partial class FixUserDietaryRestrictionSchema
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -75,18 +78,9 @@ namespace MealPlanner.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int?>("Calories")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("CarbGrams")
-                        .HasColumnType("int");
-
                     b.Property<string>("Directions")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<int?>("FatGrams")
-                        .HasColumnType("int");
 
                     b.Property<string>("Ingredients")
                         .IsRequired()
@@ -95,9 +89,6 @@ namespace MealPlanner.Migrations
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<int?>("ProteinGrams")
-                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
