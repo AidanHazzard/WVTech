@@ -4,11 +4,8 @@ using MealPlanner.Models;
 using Microsoft.EntityFrameworkCore; 
 using MealPlanner.DAL.Abstract;
 using MealPlanner.DAL.Concrete;
-<<<<<<< HEAD
 using MealPlanner.Services;
 using Microsoft.AspNetCore.Identity;
-=======
->>>>>>> c668c06 (I added UserDietaryRestrictionRepository in the dependency injection)
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -23,7 +20,6 @@ string connectionString = builder.Configuration["ConnectionString"];
 builder.Services.AddDbContext<MealPlannerDBContext>(options =>
     options.UseSqlServer(connectionString));
 
-<<<<<<< HEAD
 builder.Services.AddScoped<DbContext, MealPlannerDBContext>();
 builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 builder.Services.AddScoped<IRecipeRepository, RecipeRepository>();
@@ -42,9 +38,6 @@ builder.Services.AddIdentity<User, IdentityRole>(options =>
 
 // Register AccountService for dependency injection
 builder.Services.AddScoped<IAccountService, AccountService>();
-=======
-builder.Services.AddScoped<IUserDietaryRestrictionRepository, UserDietaryRestrictionRepository>();
->>>>>>> c668c06 (I added UserDietaryRestrictionRepository in the dependency injection)
 
 var app = builder.Build();
 
