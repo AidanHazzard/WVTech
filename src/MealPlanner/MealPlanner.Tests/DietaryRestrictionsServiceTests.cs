@@ -1,80 +1,94 @@
 using System;
+using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
-using Xunit;
 using MealPlanner.DAL;
 using MealPlanner.Models;
+using Microsoft.EntityFrameworkCore;
+using NUnit.Framework;
 
 namespace MealPlanner.Tests;
 
+[TestFixture]
 public class DietaryRestrictionServiceTests
 {
-    private static MealPlannerDBContext MakeDb(string dbName)
+    private static MealPlannerDBContext MakeDb()
     {
         var options = new DbContextOptionsBuilder<MealPlannerDBContext>()
-            .UseInMemoryDatabase(databaseName: dbName)
+            .UseInMemoryDatabase(Guid.NewGuid().ToString())
             .Options;
 
         return new MealPlannerDBContext(options);
     }
 
-    [Fact]
-    public async Task UpdateUserRestrictions_AddsNewRestrictions()
+    private static async Task SeedBaseAsync(MealPlannerDBContext db)
     {
-        using var db = MakeDb(Guid.NewGuid().ToString());
-        db.Users.Add(new User { Id = 1, FirstName="A", LastName="B", PhoneNumber="1", Email="a@b.com", PasswordHash="x", CreatedAt=DateTime.UtcNow, UpdatedAt=DateTime.UtcNow });
+        db.Users.Add(new User
+        {
+            Id = "userA",
+            UserName = "userA",
+            NormalizedUserName = "USERA",
+            FullName = "Test User A"
+        });
+
         db.DietaryRestrictions.AddRange(
             new DietaryRestriction { Id = 1, Name = "Vegan" },
             new DietaryRestriction { Id = 2, Name = "Gluten-Free" }
         );
+
         await db.SaveChangesAsync();
-
-        var service = new DietaryRestrictionService(db);
-        await service.UpdateUserRestrictionsAsync(1, new[] { 1, 2 });
-
-        var ids = await service.GetUserRestrictionIdsAsync(1);
-        Assert.Contains(1, ids);
-        Assert.Contains(2, ids);
-        Assert.Equal(2, ids.Count);
     }
 
-    [Fact]
-    public async Task UpdateUserRestrictions_RemovesUnselectedRestrictions()
+    [Test]
+    public async Task UpdateUserRestriction_AddsNewRestrictions()
     {
-        using var db = MakeDb(Guid.NewGuid().ToString());
-        db.Users.Add(new User { Id = 1, FirstName="A", LastName="B", PhoneNumber="1", Email="a@b.com", PasswordHash="x", CreatedAt=DateTime.UtcNow, UpdatedAt=DateTime.UtcNow });
-        db.DietaryRestrictions.AddRange(
-            new DietaryRestriction { Id = 1, Name = "Vegan" },
-            new DietaryRestriction { Id = 2, Name = "Gluten-Free" }
-        );
+        await using var db = MakeDb();
+        await SeedBaseAsync(db);
+
+        var service = new DietaryRestrictionService(db);
+        await service.UpdateUserRestrictionAsync("userA", new[] { 1, 2 });
+
+        var ids = await service.GetUserRestrictionIdsAsync("userA");
+
+        Assert.That(ids.Count, Is.EqualTo(2));
+        Assert.That(ids, Does.Contain(1));
+        Assert.That(ids, Does.Contain(2));
+    }
+
+    [Test]
+    public async Task UpdateUserRestriction_RemovesUnselectedRestrictions()
+    {
+        await using var db = MakeDb();
+        await SeedBaseAsync(db);
+
         db.UserDietaryRestrictions.AddRange(
-            new UserDietaryRestriction { UserId = 1, DietaryRestrictionId = 1 },
-            new UserDietaryRestriction { UserId = 1, DietaryRestrictionId = 2 }
+            new UserDietaryRestriction { UserId = "userA", DietaryRestrictionId = 1 },
+            new UserDietaryRestriction { UserId = "userA", DietaryRestrictionId = 2 }
         );
         await db.SaveChangesAsync();
 
         var service = new DietaryRestrictionService(db);
-        await service.UpdateUserRestrictionsAsync(1, new[] { 2 });
+        await service.UpdateUserRestrictionAsync("userA", new[] { 2 });
 
-        var ids = await service.GetUserRestrictionIdsAsync(1);
-        Assert.DoesNotContain(1, ids);
-        Assert.Contains(2, ids);
-        Assert.Single(ids);
+        var ids = await service.GetUserRestrictionIdsAsync("userA");
+
+        Assert.That(ids.Count, Is.EqualTo(1));
+        Assert.That(ids, Does.Contain(2));
+        Assert.That(ids, Does.Not.Contain(1));
     }
 
-    [Fact]
-    public async Task UpdateUserRestrictions_DoesNotDuplicateExistingSelections()
+    [Test]
+    public async Task UpdateUserRestriction_DoesNotDuplicateExistingSelections()
     {
-        using var db = MakeDb(Guid.NewGuid().ToString());
-        db.Users.Add(new User { Id = 1, FirstName="A", LastName="B", PhoneNumber="1", Email="a@b.com", PasswordHash="x", CreatedAt=DateTime.UtcNow, UpdatedAt=DateTime.UtcNow });
-        db.DietaryRestrictions.Add(new DietaryRestriction { Id = 1, Name = "Vegan" });
-        db.UserDietaryRestrictions.Add(new UserDietaryRestriction { UserId = 1, DietaryRestrictionId = 1 });
+        await using var db = MakeDb();
+        await SeedBaseAsync(db);
+
+        db.UserDietaryRestrictions.Add(new UserDietaryRestriction { UserId = "userA", DietaryRestrictionId = 1 });
         await db.SaveChangesAsync();
 
         var service = new DietaryRestrictionService(db);
-        await service.UpdateUserRestrictionsAsync(1, new[] { 1, 1, 1 });
+        await service.UpdateUserRestrictionAsync("userA", new[] { 1, 1, 1 });
 
-        var count = await db.UserDietaryRestrictions.CountAsync();
-        Assert.Equal(1, count);
+        var count = await db.UserDietaryRestrictions.CountAsync(x => x.UserId == "userA");
+        Assert.That(count, Is.EqualTo(1));
     }
 }

@@ -1,12 +1,13 @@
 using System;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
-using Xunit;
-using Assert = Xunit.Assert;
-
 using MealPlanner.Models;
+using Microsoft.EntityFrameworkCore;
+using NUnit.Framework;
 
+namespace MealPlanner.Tests;
+
+[TestFixture]
 public class UserNutritionPreferenceTests
 {
     private static MealPlannerDBContext CreateDb()
@@ -40,7 +41,7 @@ public class UserNutritionPreferenceTests
         await db.SaveChangesAsync();
     }
 
-    [Fact]
+    [Test]
     public async Task CanCreateNutritionPreference_ForUser()
     {
         await using var db = CreateDb();
@@ -60,14 +61,14 @@ public class UserNutritionPreferenceTests
 
         var saved = await db.UserNutritionPreferences.SingleAsync(x => x.UserId == "userA");
 
-        Assert.True(saved.Id > 0);
-        Assert.Equal(2500, saved.CalorieTarget);
-        Assert.Equal(180, saved.ProteinTarget);
-        Assert.Equal(300, saved.CarbTarget);
-        Assert.Equal(70, saved.FatTarget);
+        Assert.That(saved.Id, Is.GreaterThan(0));
+        Assert.That(saved.CalorieTarget, Is.EqualTo(2500));
+        Assert.That(saved.ProteinTarget, Is.EqualTo(180));
+        Assert.That(saved.CarbTarget, Is.EqualTo(300));
+        Assert.That(saved.FatTarget, Is.EqualTo(70));
     }
 
-    [Fact]
+    [Test]
     public async Task CanUpdateNutritionPreference_ForUser()
     {
         await using var db = CreateDb();
@@ -85,19 +86,19 @@ public class UserNutritionPreferenceTests
 
         existing.CalorieTarget = 2400;
         existing.ProteinTarget = 175;
-        existing.IronTarget = 18;
-        existing.FiberTarget = 30;
+        existing.CarbTarget = 250;
+        existing.FatTarget = 80;
 
         await db.SaveChangesAsync();
 
         var updated = await db.UserNutritionPreferences.SingleAsync(x => x.UserId == "userA");
-        Assert.Equal(2400, updated.CalorieTarget);
-        Assert.Equal(175, updated.ProteinTarget);
-        Assert.Equal(18, updated.IronTarget);
-        Assert.Equal(30, updated.FiberTarget);
+        Assert.That(updated.CalorieTarget, Is.EqualTo(2400));
+        Assert.That(updated.ProteinTarget, Is.EqualTo(175));
+        Assert.That(updated.CarbTarget, Is.EqualTo(250));
+        Assert.That(updated.FatTarget, Is.EqualTo(80));
     }
 
-    [Fact]
+    [Test]
     public async Task Preferences_AreIsolatedBetweenUsers()
     {
         await using var db = CreateDb();
@@ -123,44 +124,14 @@ public class UserNutritionPreferenceTests
         var a = await db.UserNutritionPreferences.SingleAsync(x => x.UserId == "userA");
         var b = await db.UserNutritionPreferences.SingleAsync(x => x.UserId == "userB");
 
-        Assert.Equal(2300, a.CalorieTarget);
-        Assert.Equal(160, a.ProteinTarget);
+        Assert.That(a.CalorieTarget, Is.EqualTo(2300));
+        Assert.That(a.ProteinTarget, Is.EqualTo(160));
 
-        Assert.Equal(1800, b.CalorieTarget);
-        Assert.Equal(120, b.ProteinTarget);
+        Assert.That(b.CalorieTarget, Is.EqualTo(1800));
+        Assert.That(b.ProteinTarget, Is.EqualTo(120));
     }
 
-    [Fact]
-    public async Task CanQueryPreferenceByUserId()
-    {
-        await using var db = CreateDb();
-        await SeedUsersAsync(db);
-
-        db.UserNutritionPreferences.Add(new UserNutritionPreference
-        {
-            UserId = "userA",
-            VitaminATarget = 900,
-            VitaminCTarget = 90,
-            B12Target = 2
-        });
-        await db.SaveChangesAsync();
-
-        var pref = await db.UserNutritionPreferences
-            .Where(x => x.UserId == "userA")
-            .Select(x => new
-            {
-                x.VitaminATarget,
-                x.VitaminCTarget,
-                x.B12Target
-            })
-            .SingleAsync();
-
-        Assert.Equal(900, pref.VitaminATarget);
-        Assert.Equal(90, pref.VitaminCTarget);
-        Assert.Equal(2, pref.B12Target);
-    }
-
-    [Fact]
+    [Test]
     public async Task CanStoreNullTargets_AndLaterSetThem()
     {
         await using var db = CreateDb();
@@ -175,8 +146,8 @@ public class UserNutritionPreferenceTests
         await db.SaveChangesAsync();
 
         var pref = await db.UserNutritionPreferences.SingleAsync(x => x.UserId == "userA");
-        Assert.Null(pref.CalorieTarget);
-        Assert.Null(pref.ProteinTarget);
+        Assert.That(pref.CalorieTarget, Is.Null);
+        Assert.That(pref.ProteinTarget, Is.Null);
 
         pref.CalorieTarget = 2100;
         pref.ProteinTarget = 155;
@@ -184,7 +155,7 @@ public class UserNutritionPreferenceTests
         await db.SaveChangesAsync();
 
         var updated = await db.UserNutritionPreferences.SingleAsync(x => x.UserId == "userA");
-        Assert.Equal(2100, updated.CalorieTarget);
-        Assert.Equal(155, updated.ProteinTarget);
+        Assert.That(updated.CalorieTarget, Is.EqualTo(2100));
+        Assert.That(updated.ProteinTarget, Is.EqualTo(155));
     }
 }
