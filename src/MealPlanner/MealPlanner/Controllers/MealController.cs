@@ -25,31 +25,48 @@ public class MealController : Controller
     }
 
     public async Task<IActionResult> PlannerHome(string? date)
-    {
-        var user = await _userManager.GetUserAsync(User);
+{
+    var user = await _userManager.GetUserAsync(User);
 
-        DateTime selectedDate =
-            DateTime.TryParse(date, out var parsed)
+    DateTime selectedDate =
+        DateTime.TryParse(date, out var parsed)
             ? parsed.Date
             : DateTime.Today;
 
-        var meals = await _context.Set<Meal>()
-            .Include(m => m.Recipes)
-            .Where(m => m.UserId == user.Id && m.StartTime != null)
-            .Where(m =>
-                m.StartTime!.Value.Date == selectedDate ||
-                (m.RepeatRule == "Weekly" && m.StartTime!.Value.DayOfWeek == selectedDate.DayOfWeek)
-            )
-            .OrderBy(m => m.StartTime)
-            .ToListAsync();
+    var start = selectedDate;
+    var end = selectedDate.AddDays(1);
 
-        var vm = new PlannerHomeViewModel
-        {
-            SelectedDate = selectedDate,
-            Meals = meals
-        };
-        return View(vm);
-    }
+    var exactDateMeals = await _context.Set<Meal>()
+        .Include(m => m.Recipes)
+        .Where(m => m.UserId == user.Id && m.StartTime != null)
+        .Where(m => m.StartTime >= start && m.StartTime < end)
+        .ToListAsync();
+
+    var weeklyRepeatMeals = await _context.Set<Meal>()
+        .Include(m => m.Recipes)
+        .Where(m => m.UserId == user.Id && m.StartTime != null)
+        .Where(m => m.RepeatRule == "Weekly")
+        .ToListAsync();
+
+    weeklyRepeatMeals = weeklyRepeatMeals
+        .Where(m => m.StartTime!.Value.DayOfWeek == selectedDate.DayOfWeek)
+        .ToList();
+
+    var meals = exactDateMeals
+        .Concat(weeklyRepeatMeals)
+        .GroupBy(m => m.Id)
+        .Select(g => g.First())
+        .OrderBy(m => m.StartTime)
+        .ToList();
+
+    var vm = new PlannerHomeViewModel
+    {
+        SelectedDate = selectedDate,
+        Meals = meals
+    };
+
+    return View(vm);
+}
 
 
     [HttpGet]
