@@ -4,7 +4,6 @@ namespace MealPlanner.DAL.Abstract;
 
 public interface IUserDietaryRestrictionRepository
 {
-    Task<List<int>> GetRestrictionIdsForUserAsync(int userId);
-    Task UpdateUserRestrictionAsync(int userId, IEnumerable<int> selectedRestrictionIds);
-    
+    List<UserDietaryRestriction> GetByUserId(string userId);
+    void SetForUser(string userId, List<int> dietaryRestrictionIds);
 }

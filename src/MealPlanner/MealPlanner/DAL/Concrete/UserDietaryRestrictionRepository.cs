@@ -1,52 +1,40 @@
-using Microsoft.EntityFrameworkCore;
 using MealPlanner.DAL.Abstract;
 using MealPlanner.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace MealPlanner.DAL.Concrete;
 
 public class UserDietaryRestrictionRepository : IUserDietaryRestrictionRepository
 {
-    private readonly MealPlannerDBContext _db;
+    private readonly MealPlannerDBContext _context;
 
-    public UserDietaryRestrictionRepository(MealPlannerDBContext db)
+    public UserDietaryRestrictionRepository(MealPlannerDBContext context)
     {
-        _db = db;
-    }
-    public async Task<List<int>> GetRestrictionIdsForUserAsync(int userId)
-    {
-        return await _db.UserDietaryRestrictions
-            .Where(x => x.UserId == userId)
-            .Select(x => x.DietaryRestrictionId)
-            .ToListAsync();
+        _context = context;
     }
 
-    public async Task UpdateUserRestrictionAsync(int userId, IEnumerable<int>) selectedRestrictionIds
+    public List<UserDietaryRestriction> GetByUserId(string userId)
     {
-        var selected = selectedRestrictionIds.Distinct().ToHashSet();
-        var current = await _db.UserDietaryRestrictions
+        return _context.UserDietaryRestrictions
             .Where(x => x.UserId == userId)
-            .ToListAsync();
+            .Include(x => x.DietaryRestriction)
+            .ToList();
+    }
 
-        var currentIds = current.Select(x => x.DietaryRestrictionId).ToHashSet();
+    public void SetForUser(string userId, List<int> dietaryRestrictionIds)
+    {
+        var existing = _context.UserDietaryRestrictions
+            .Where(x => x.UserId == userId);
 
-        var toRemove = current.Where(x => !selected.Contains(x.DietaryRestrictionId)).ToList();
-        if (toRemove.Count > 0)
+        _context.UserDietaryRestrictions.RemoveRange(existing);
+
+        foreach (var restrictionId in dietaryRestrictionIds.Distinct())
         {
-            _db.UserDietaryRestrictions.RemoveRange(toRemove);
-        }
-
-
-        var toAddIds = selected.Where(id => !currentIds.Contains(id)).ToList();
-        if (toAddIds.Count > 0)
-        {
-            var toAdd = toAddIds.Select(id => new UserDietaryRestriction
+            _context.UserDietaryRestrictions.Add(new UserDietaryRestriction
             {
                 UserId = userId,
-                DietaryRestrictionId = id
+                DietaryRestrictionId = restrictionId
             });
-
-            await _db.UserDietaryRestrictions.AddRangeAsync(toAdd);
         }
-        await _db.SaveChangesAsync();
     }
 }
