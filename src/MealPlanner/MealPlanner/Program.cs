@@ -1,5 +1,7 @@
 using MealPlanner.Models;
 using MealPlanner.Services;
+using MealPlanner.DAL.Abstract;
+using MealPlanner.DAL.Concrete;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
