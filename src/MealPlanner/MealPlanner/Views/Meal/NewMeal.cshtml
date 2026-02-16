@@ -4,7 +4,6 @@
     <h2 class="back1Title">Create a Meal</h2>
     <hr>
 
-    <!-- View for user -->
     <div id="createMealList">
         <template id="addRecipeRow">
             <div class="back2 text-center back2-textbox">
@@ -13,18 +12,41 @@
         </template>
     </div>
 
-    <!-- JS adds hidden elements to transfer data
-     from the search to the form -->
     <div class="row align-items-center">
         <div class="text-danger" asp-validation-summary="All"></div>
-        <form id="createMealForm" class="col d-flex mx-1" asp-action="NewMeal" method="POST">
-            <button class="col d-flex mx-1 btn btn-success justify-content-center">
+
+        <form id="createMealForm" class="col d-flex flex-column mx-1" asp-action="NewMeal" method="POST">
+
+            <div class="row g-3 mb-3">
+                <div class="col-md-4">
+                    <label asp-for="Date" class="form-label"></label>
+                    <input asp-for="Date" type="date" class="form-control" />
+                    <span asp-validation-for="Date" class="text-danger"></span>
+                </div>
+
+                <div class="col-md-4">
+                    <label asp-for="Time" class="form-label"></label>
+                    <input asp-for="Time" type="time" class="form-control" />
+                    <span asp-validation-for="Time" class="text-danger"></span>
+                </div>
+
+                <div class="col-md-4 d-flex align-items-end">
+                    <div class="form-check">
+                        <input asp-for="RepeatWeekly" class="form-check-input" />
+                        <label asp-for="RepeatWeekly" class="form-check-label">
+                            Repeat Weekly
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" class="col d-flex mx-1 btn btn-success justify-content-center">
                 <h4>Create Meal</h4>
             </button>
+
         </form>
     </div>
 
-    <!-- Search Partial -->
     <div class="back2 pe-5">
         <h3 class="back1Title">Search for Recipes to Add</h3>
         @await Html.PartialAsync("_RecipeSearchPartial")
