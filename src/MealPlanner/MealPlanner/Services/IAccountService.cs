@@ -15,5 +15,6 @@ namespace MealPlanner.Services
         Task<IdentityResult> ChangePasswordAsync(string email, string newPassword);
         Task<IdentityResult> ResetPasswordAsync(ClaimsPrincipal userPrincipal, string currentPassword, string newPassword);
         Task LogoutUserAsync();
+        Task<User?> FindUserByClaimAsync(ClaimsPrincipal claim);
     }
 }
