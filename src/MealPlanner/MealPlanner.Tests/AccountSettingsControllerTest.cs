@@ -14,14 +14,14 @@ namespace MealPlanner.Tests
     [TestFixture]
     public class AccountSettingsControllerTests
     {
-        private Mock<IAccountService> _mockAccountService;
+        private Mock<IAccountSettingsService> _mockAccountService;
         private AccountSettingsController _controller;
 
         [SetUp]
         public void SetUp()
         {
             // Arrange: create mock service and controller
-            _mockAccountService = new Mock<IAccountService>();
+            _mockAccountService = new Mock<IAccountSettingsService>();
             _controller = new AccountSettingsController(_mockAccountService.Object);
 
             // Add a fake authenticated user for the controller
