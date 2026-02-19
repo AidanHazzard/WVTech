@@ -6,11 +6,11 @@ namespace MealPlanner.Controllers;
 
 public class LoginController : Controller
 {
-    private readonly IAccountService _accountService;
+    private readonly ILoginService _loginService;
 
-    public LoginController(IAccountService accountService)
+    public LoginController(ILoginService loginService)
     {
-        _accountService = accountService;
+        _loginService = loginService;
     }
 
     [HttpGet("Login")]
@@ -22,7 +22,7 @@ public class LoginController : Controller
     {
         if (!ModelState.IsValid) return View(model);
 
-        var result = await _accountService.LoginUserAsync(model);
+        var result = await _loginService.LoginUserAsync(model);
 
         if (result.Succeeded) return RedirectToAction("Index", "Home");
 
@@ -34,7 +34,7 @@ public class LoginController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Logout()
     {
-        await _accountService.LogoutUserAsync();
+        await _loginService.LogoutUserAsync();
         return RedirectToAction("Index", "Home");
     }
 }

@@ -6,11 +6,11 @@ namespace MealPlanner.Controllers;
 
 public class RegisterController : Controller
 {
-    private readonly IAccountService _accountService;
+    private readonly IRegistrationService _registrationService;
 
-    public RegisterController(IAccountService accountService)
+    public RegisterController(IRegistrationService registrationService)
     {
-        _accountService = accountService;
+        _registrationService = registrationService;
     }
 
     [HttpGet("Register")]
@@ -22,7 +22,7 @@ public class RegisterController : Controller
     {
         if (!ModelState.IsValid) return View(model);
 
-        var result = await _accountService.RegisterUserAsync(model);
+        var result = await _registrationService.RegisterUserAsync(model);
 
         if (result.Succeeded) return RedirectToAction("Index", "Home");
 
@@ -41,7 +41,7 @@ public class RegisterController : Controller
     {
         if (!ModelState.IsValid) return View(model);
 
-        var user = await _accountService.FindUserByEmailAsync(model.Email);
+        var user = await _registrationService.FindUserByEmailAsync(model.Email);
         if (user == null)
         {
             ModelState.AddModelError("", "User not found");
@@ -69,7 +69,7 @@ public class RegisterController : Controller
             return View(model);
         }
 
-        var result = await _accountService.ChangePasswordAsync(model.Email, model.NewPassword);
+        var result = await _registrationService.ChangePasswordAsync(model.Email, model.NewPassword);
 
         if (result.Succeeded) return RedirectToAction("Login", "Login");
 

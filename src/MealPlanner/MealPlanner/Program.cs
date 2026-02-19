@@ -36,8 +36,13 @@ builder.Services.AddIdentity<User, IdentityRole>(options =>
 .AddEntityFrameworkStores<MealPlannerDBContext>()
 .AddDefaultTokenProviders();
 
-// Register AccountService for dependency injection
-builder.Services.AddScoped<IAccountService, AccountService>();
+// Register LoginService for dependency injection
+builder.Services.AddScoped<ILoginService, LoginService>();
+// Register RegisterService for dependency injection
+builder.Services.AddScoped<IRegistrationService, RegistrationService>();
+// Register AccountSettingsService for dependency injection
+builder.Services.AddScoped<IAccountSettingsService, AccountSettingsService>();
+
 
 var app = builder.Build();
 

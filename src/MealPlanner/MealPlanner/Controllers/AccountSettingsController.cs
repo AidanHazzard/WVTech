@@ -2,28 +2,27 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MealPlanner.Services;
 using MealPlanner.ViewModels;
+using Microsoft.AspNetCore.Identity;
 
 namespace MealPlanner.Controllers
 {
     [Authorize(Roles = "User")]
     public class AccountSettingsController : Controller
     {
-        private readonly IAccountService _accountService;
+        private readonly IAccountSettingsService _accountSettingsService;
 
-        public AccountSettingsController(IAccountService accountService)
+        public AccountSettingsController(
+            IAccountSettingsService accountSettingsService)
         {
-            _accountService = accountService;
+            _accountSettingsService = accountSettingsService;
         }
-        
 
-        // GET: /AccountSettings/ResetPassword
         [HttpGet]
         public IActionResult ResetPassword()
         {
             return View(new AccountSettingsResetPasswordViewModel());
         }
 
-        // POST: /AccountSettings/ResetPassword
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> ResetPassword(
@@ -32,24 +31,33 @@ namespace MealPlanner.Controllers
             if (!ModelState.IsValid)
                 return View(model);
 
-            // logged-in user password reset
-            var result = await _accountService.ResetPasswordAsync(
+            var result = await _accountSettingsService.ChangePasswordAsync(
                 User,
                 model.Password,
                 model.NewPassword);
 
             if (result.Succeeded)
-            {
-                ViewBag.StatusMessage = "Your password has been reset successfully.";
-                ModelState.Clear();
-                return View(new AccountSettingsResetPasswordViewModel());
-            }
+                return ResetPasswordSuccess();
 
+            AddErrors(result);
+            return View(model);
+        }
+
+        // --- private helpers (controller-only concerns) ---
+
+        private IActionResult ResetPasswordSuccess()
+        {
+            ViewBag.StatusMessage = "Your password has been reset successfully.";
+            ModelState.Clear();
+            return View(new AccountSettingsResetPasswordViewModel());
+        }
+
+        private void AddErrors(IdentityResult result)
+        {
             foreach (var error in result.Errors)
             {
-                ModelState.AddModelError("", error.Description);
+                ModelState.AddModelError(string.Empty, error.Description);
             }
-            return View(model);
         }
     }
 }
