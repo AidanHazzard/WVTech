@@ -12,6 +12,6 @@ namespace MealPlanner.Services
         Task<IdentityResult> RegisterUserAsync(RegisterViewModel model);
         Task<User?> FindUserByEmailAsync(string email);
         Task<IdentityResult> ChangePasswordAsync(string email, string newPassword);
-        Task<IdentityResult> ResetPasswordAsync(ClaimsPrincipal userPrincipal, string currentPassword, string newPassword);
+        
     }
 }

@@ -31,7 +31,7 @@ namespace MealPlanner.Controllers
             if (!ModelState.IsValid)
                 return View(model);
 
-            var result = await _accountSettingsService.ChangePasswordAsync(
+            var result = await _accountSettingsService.ResetPasswordAsync(
                 User,
                 model.Password,
                 model.NewPassword);

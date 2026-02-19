@@ -13,12 +13,14 @@ namespace MealPlanner.Services
             _userManager = userManager;
         }
 
-        public async Task<IdentityResult> ChangePasswordAsync(
-            ClaimsPrincipal userPrincipal, string currentPassword, string newPassword)
+       public async Task<IdentityResult> ResetPasswordAsync(ClaimsPrincipal userPrincipal, string currentPassword, string newPassword)
         {
             var user = await _userManager.GetUserAsync(userPrincipal);
             if (user == null)
-                return IdentityResult.Failed(new IdentityError { Description = "User not found" });
+                return IdentityResult.Failed(
+                    new IdentityError { Description = "User not found" });
+
+            
 
             return await _userManager.ChangePasswordAsync(user, currentPassword, newPassword);
         }

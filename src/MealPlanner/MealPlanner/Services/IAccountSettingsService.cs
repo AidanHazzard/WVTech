@@ -5,6 +5,6 @@ namespace MealPlanner.Services
 {
     public interface IAccountSettingsService
     {
-        Task<IdentityResult> ChangePasswordAsync(ClaimsPrincipal userPrincipal, string currentPassword, string newPassword);
+       Task<IdentityResult> ResetPasswordAsync(ClaimsPrincipal userPrincipal, string currentPassword, string newPassword);
     }
 }
