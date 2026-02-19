@@ -1,73 +1,47 @@
 using MealPlanner.DAL.Abstract;
 using MealPlanner.Models;
+using MealPlanner.Services;
 using MealPlanner.ViewModels;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace MealPlanner.Controllers;
 
 [Authorize]
 public class MealController : Controller
 {
-    private readonly UserManager<User> _userManager;
+    private readonly IAccountService _accountService;
     private readonly IRecipeRepository _recipeRepo;
-    private readonly IRepository<Meal> _mealRepo;
+    private readonly IMealRepository _mealRepo;
     private readonly MealPlannerDBContext _context;
 
-    public MealController(UserManager<User> userManager, IRecipeRepository recipeRepo, IRepository<Meal> mealRepo, MealPlannerDBContext context)
+    public MealController(IAccountService accountService, IRecipeRepository recipeRepo, IMealRepository mealRepo, MealPlannerDBContext context)
     {
-        _userManager = userManager;
+        _accountService = accountService;
         _recipeRepo = recipeRepo;
         _mealRepo = mealRepo;
         _context = context;
     }
 
     public async Task<IActionResult> PlannerHome(string? date)
-{
-    var user = await _userManager.GetUserAsync(User);
-
-    DateTime selectedDate =
-        DateTime.TryParse(date, out var parsed)
-            ? parsed.Date
-            : DateTime.Today;
-
-    var start = selectedDate;
-    var end = selectedDate.AddDays(1);
-
-    var exactDateMeals = await _context.Set<Meal>()
-        .Include(m => m.Recipes)
-        .Where(m => m.UserId == user.Id && m.StartTime != null)
-        .Where(m => m.StartTime >= start && m.StartTime < end)
-        .ToListAsync();
-
-    var weeklyRepeatMeals = await _context.Set<Meal>()
-        .Include(m => m.Recipes)
-        .Where(m => m.UserId == user.Id && m.StartTime != null)
-        .Where(m => m.RepeatRule == "Weekly")
-        .ToListAsync();
-
-    weeklyRepeatMeals = weeklyRepeatMeals
-        .Where(m => m.StartTime!.Value.DayOfWeek == selectedDate.DayOfWeek)
-        .ToList();
-
-    var meals = exactDateMeals
-        .Concat(weeklyRepeatMeals)
-        .GroupBy(m => m.Id)
-        .Select(g => g.First())
-        .OrderBy(m => m.StartTime)
-        .ToList();
-
-    var vm = new PlannerHomeViewModel
     {
-        SelectedDate = selectedDate,
-        Meals = meals
-    };
+        User user = await _accountService.FindUserByClaimAsync(User);
 
-    return View(vm);
-}
+        DateTime selectedDate =
+            DateTime.TryParse(date, out var parsed)
+                ? parsed.Date
+                : DateTime.Today;
 
+        var meals = await _mealRepo.GetUserMealsByDateAsync(user, selectedDate);
+
+        var vm = new PlannerHomeViewModel
+        {
+            SelectedDate = selectedDate,
+            Meals = meals
+        };
+
+        return View(vm);
+    }
 
     [HttpGet]
     public IActionResult NewMeal()
@@ -91,7 +65,7 @@ public class MealController : Controller
             newMeal.Recipes.Add(recipe);
         }
 
-        var user = await _userManager.GetUserAsync(User);
+        User user = await _accountService.FindUserByClaimAsync(User);
         newMeal.User = user;
         newMeal.UserId = user.Id;
 
