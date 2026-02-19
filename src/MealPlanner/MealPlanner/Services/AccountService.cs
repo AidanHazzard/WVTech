@@ -92,5 +92,10 @@ namespace MealPlanner.Services
         {
             await _signInManager.SignOutAsync();
         }
+
+        public async Task<User?> FindUserByClaimAsync(ClaimsPrincipal claim)
+        {
+            return await _userManager.GetUserAsync(claim);
+        }
     }
 }
