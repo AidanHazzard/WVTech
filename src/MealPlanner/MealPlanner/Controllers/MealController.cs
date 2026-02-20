@@ -10,14 +10,14 @@ namespace MealPlanner.Controllers;
 [Authorize]
 public class MealController : Controller
 {
-    private readonly IAccountService _accountService;
+    private readonly IRegistrationService _registrationService;
     private readonly IRecipeRepository _recipeRepo;
     private readonly IMealRepository _mealRepo;
     private readonly MealPlannerDBContext _context;
 
-    public MealController(IAccountService accountService, IRecipeRepository recipeRepo, IMealRepository mealRepo, MealPlannerDBContext context)
+    public MealController(IRegistrationService registrationService, IRecipeRepository recipeRepo, IMealRepository mealRepo, MealPlannerDBContext context)
     {
-        _accountService = accountService;
+        _registrationService = registrationService;
         _recipeRepo = recipeRepo;
         _mealRepo = mealRepo;
         _context = context;
@@ -25,7 +25,7 @@ public class MealController : Controller
 
     public async Task<IActionResult> PlannerHome(string? date)
     {
-        User user = await _accountService.FindUserByClaimAsync(User);
+        User user = await _registrationService.FindUserByClaimAsync(User);
 
         DateTime selectedDate =
             DateTime.TryParse(date, out var parsed)
@@ -65,7 +65,7 @@ public class MealController : Controller
             newMeal.Recipes.Add(recipe);
         }
 
-        User user = await _accountService.FindUserByClaimAsync(User);
+        User user = await _registrationService.FindUserByClaimAsync(User);
         newMeal.User = user;
         newMeal.UserId = user.Id;
 
