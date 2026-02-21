@@ -62,9 +62,9 @@ body {
   text-align: left;
   display: flex;
   align-items: center;
-  gap: 0.5rem; /* space between text and input */
+  gap: 0.5rem;
+  
 }
-
 
 /*Use this for the second background layer*/
 .back2 {
