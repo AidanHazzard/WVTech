@@ -80,6 +80,10 @@ public class FoodEntriesController : Controller
         recipe.Name = newRecipeViewModel.Name;
         recipe.Ingredients = Ingredients;
         recipe.Directions = newRecipeViewModel.Directions;
+        recipe.Calories = newRecipeViewModel.Calories;
+        recipe.Protein = newRecipeViewModel.Protein;
+        recipe.Carbs = newRecipeViewModel.Carbs;
+        recipe.Fat = newRecipeViewModel.Fat;
         recipe.Meals = new List<Meal>();
 
         //adds it to the database

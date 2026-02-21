@@ -7,6 +7,10 @@ public class AddRecipeViewModel
 
     public string Directions { get; set; }
 
+    public int Calories { get; set; }
+    public int Protein { get; set; }
+    public int Carbs { get; set; }
+    public int Fat { get; set; }
 
 
     //loops through edge cases to look for errors
