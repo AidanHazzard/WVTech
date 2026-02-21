@@ -18,7 +18,8 @@ public class AddRecipeViewModel
     {
         if (Directions == null || Directions.Trim() == "" ||
             Ingredients == null || Ingredients.Count == 0 ||
-            Name == null || Name.Trim() == "")
+            Name == null || Name.Trim() == "" ||
+            Calories < 0 || Protein < 0 || Carbs < 0 || Fat < 0)
         {
             return true;
         }
