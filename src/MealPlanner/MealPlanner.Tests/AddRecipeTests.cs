@@ -29,6 +29,14 @@ namespace MealPlanner.Tests
             _controller = new FoodEntriesController(_recipeRepository, _context);
         }
 
+        //handels the cleaning up after every test
+        [TearDown]
+        public void Cleanup()
+        {
+            _controller?.Dispose();
+            _context?.Dispose();
+        }
+
         [Test]
         public void FlattenListToString()
         {
@@ -41,6 +49,7 @@ namespace MealPlanner.Tests
                     "2 cups flour"
                 },
                 Directions = "Mix ingredients and bake 20 mins"
+                //no need to set nutrition because there are auto set to 0 which is acceptable                
             };
 
             string flattened = vm1.FlattenList();
@@ -58,7 +67,11 @@ namespace MealPlanner.Tests
                     "1 cup sugar",
                     "2 cups flour"
                 },
-                Directions = "Mix ingredients and bake 20 mins"
+                Directions = "Mix ingredients and bake 20 mins",
+                Calories = 0,
+                Protein = 1,
+                Carbs = 2,
+                Fat = 3,
             };
 
             _controller.RecipeAdded(vm);
@@ -70,6 +83,10 @@ namespace MealPlanner.Tests
             Assert.That(recipe.Name, Is.EqualTo("Test Recipe"));
             Assert.That(recipe.Ingredients, Is.EqualTo("1 cup sugar\n2 cups flour"));
             Assert.That(recipe.Directions, Is.EqualTo("Mix ingredients and bake 20 mins"));
+            Assert.That(recipe.Calories, Is.EqualTo(0));
+            Assert.That(recipe.Protein, Is.EqualTo(1));
+            Assert.That(recipe.Carbs, Is.EqualTo(2));
+            Assert.That(recipe.Fat, Is.EqualTo(3));
         }
 
         [Test]
@@ -83,6 +100,7 @@ namespace MealPlanner.Tests
                     "2 cups flour"
                 },
                 Directions = "Mix ingredients and bake 20 mins"
+                //no need to set the cals and stuff because that is auto set to 0 which is valid
             };
 
             var vm2 = new AddRecipeViewModel
@@ -200,7 +218,11 @@ namespace MealPlanner.Tests
                     "1Entry1",
                     "1Entry2"
                 },
-                Directions = "1Directions"
+                Directions = "1Directions",
+                Calories = 0,
+                Protein = 1,
+                Carbs = 2,
+                Fat = 3,
             };
 
             var vm2 = new AddRecipeViewModel
@@ -211,7 +233,11 @@ namespace MealPlanner.Tests
                     "2Entry1",
                     "2Entry2"
                 },
-                Directions = "2Directions"
+                Directions = "2Directions",
+                Calories = 20,
+                Protein = 21,
+                Carbs = 22,
+                Fat = 23,
             };
 
             _controller.RecipeAdded(vm1);
@@ -224,19 +250,90 @@ namespace MealPlanner.Tests
             Assert.That(recipe.Name, Is.EqualTo("1Name"));
             Assert.That(recipe.Ingredients, Is.EqualTo("1Entry1\n1Entry2"));
             Assert.That(recipe.Directions, Is.EqualTo("1Directions"));
+            Assert.That(recipe.Calories, Is.EqualTo(0));
+            Assert.That(recipe.Protein, Is.EqualTo(1));
+            Assert.That(recipe.Carbs, Is.EqualTo(2));
+            Assert.That(recipe.Fat, Is.EqualTo(3));
 
             var recipe2 = recipes.Last();
             Assert.That(recipe2.Name, Is.EqualTo("2Name"));
             Assert.That(recipe2.Ingredients, Is.EqualTo("2Entry1\n2Entry2"));
             Assert.That(recipe2.Directions, Is.EqualTo("2Directions"));
+            Assert.That(recipe2.Calories, Is.EqualTo(20));
+            Assert.That(recipe2.Protein, Is.EqualTo(21));
+            Assert.That(recipe2.Carbs, Is.EqualTo(22));
+            Assert.That(recipe2.Fat, Is.EqualTo(23));
         }
 
-        //handels the cleaning up after test
-        [TearDown]
-        public void Cleanup()
+        [Test]
+        public void NutritionSetToANegative()
         {
-            _controller?.Dispose();
-            _context?.Dispose();
+            var vm1 = new AddRecipeViewModel
+            {
+                Name = "Test Recipe",
+                Ingredients = new List<string>
+                {
+                    "1 cup sugar",
+                    "2 cups flour"
+                },
+                Directions = "Mix ingredients and bake 20 mins",
+                Calories = -1,
+                Protein = 0,
+                Carbs = 0,
+                Fat = 0
+            };
+
+            var vm2 = new AddRecipeViewModel
+            {
+                Name = "Test Recipe",
+                Ingredients = new List<string>
+                {
+                    "1 cup sugar",
+                    "2 cups flour"
+                },
+                Directions = "Mix ingredients and bake 20 mins",
+                Calories = 0,
+                Protein = -1,
+                Carbs = 0,
+                Fat = 0
+            };
+
+            var vm3 = new AddRecipeViewModel
+            {
+                Name = "Test Recipe",
+                Ingredients = new List<string>
+                {
+                    "1 cup sugar",
+                    "2 cups flour"
+                },
+                Directions = "Mix ingredients and bake 20 mins",
+                Calories = 0,
+                Protein = 0,
+                Carbs = -1,
+                Fat = 0
+            };
+
+            var vm4 = new AddRecipeViewModel
+            {
+                Name = "Test Recipe",
+                Ingredients = new List<string>
+                {
+                    "1 cup sugar",
+                    "2 cups flour"
+                },
+                Directions = "Mix ingredients and bake 20 mins",
+                Calories = 0,
+                Protein = 0,
+                Carbs = 0,
+                Fat = -1
+            };
+            _controller.RecipeAdded(vm1);
+            _controller.RecipeAdded(vm2);
+            _controller.RecipeAdded(vm3);
+            _controller.RecipeAdded(vm4);
+
+            var recipes = _recipeRepository.ReadAll().ToList();
+            Assert.That(recipes.Count, Is.EqualTo(0));
         }
     }
 }
