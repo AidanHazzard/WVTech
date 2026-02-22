@@ -40,7 +40,7 @@ namespace MealPlanner.Tests
         [Test]
         public void FlattenListToString()
         {
-            var vm1 = new AddRecipeViewModel
+            var vm1 = new RecipeViewModel
             {
                 Name = "Test Recipe",
                 Ingredients = new List<string>
@@ -59,7 +59,7 @@ namespace MealPlanner.Tests
         [Test]
         public void AddsRecipeToRepository()
         {
-            var vm = new AddRecipeViewModel
+            var vm = new RecipeViewModel
             {
                 Name = "Test Recipe",
                 Ingredients = new List<string>
@@ -92,7 +92,7 @@ namespace MealPlanner.Tests
         [Test]
         public void IncorrectName()
         {
-            var vm1 = new AddRecipeViewModel
+            var vm1 = new RecipeViewModel
             {
                 Ingredients = new List<string>
                 {
@@ -103,7 +103,7 @@ namespace MealPlanner.Tests
                 //no need to set the cals and stuff because that is auto set to 0 which is valid
             };
 
-            var vm2 = new AddRecipeViewModel
+            var vm2 = new RecipeViewModel
             {
                 Name = "    ",
                 Ingredients = new List<string>
@@ -123,14 +123,14 @@ namespace MealPlanner.Tests
         [Test]
         public void IncorrectIngredients()
         {
-            var vm1 = new AddRecipeViewModel
+            var vm1 = new RecipeViewModel
             {
                 Name = "Test Recipe",
 
                 Directions = "Mix ingredients and bake 20 mins"
             };
 
-            var vm2 = new AddRecipeViewModel
+            var vm2 = new RecipeViewModel
             {
                 Name = "Test Recipe",
                 Ingredients = new List<string>
@@ -141,7 +141,7 @@ namespace MealPlanner.Tests
                 Directions = "Mix ingredients and bake 20 mins"
             };
 
-            var vm3 = new AddRecipeViewModel
+            var vm3 = new RecipeViewModel
             {
                 Name = "Test Recipe",
                 Ingredients = new List<string>(),
@@ -159,7 +159,7 @@ namespace MealPlanner.Tests
         [Test]
         public void IncorrectDirections()
         {
-            var vm1 = new AddRecipeViewModel
+            var vm1 = new RecipeViewModel
             {
                 Name = "Test Recipe",
                 Ingredients = new List<string>
@@ -169,7 +169,7 @@ namespace MealPlanner.Tests
                 },
             };
 
-            var vm2 = new AddRecipeViewModel
+            var vm2 = new RecipeViewModel
             {
                 Name = "Test Recipe",
                 Ingredients = new List<string>
@@ -189,7 +189,7 @@ namespace MealPlanner.Tests
         [Test]
         public void InvalidModelState()
         {
-            var vm1 = new AddRecipeViewModel
+            var vm1 = new RecipeViewModel
             {
                 Name = "Test Recipe",
                 Ingredients = new List<string>
@@ -210,7 +210,7 @@ namespace MealPlanner.Tests
         [Test]
         public void AddingMultipleRecipes()
         {
-            var vm1 = new AddRecipeViewModel
+            var vm1 = new RecipeViewModel
             {
                 Name = "1Name",
                 Ingredients = new List<string>
@@ -225,7 +225,7 @@ namespace MealPlanner.Tests
                 Fat = 3,
             };
 
-            var vm2 = new AddRecipeViewModel
+            var vm2 = new RecipeViewModel
             {
                 Name = "2Name",
                 Ingredients = new List<string>
@@ -268,7 +268,7 @@ namespace MealPlanner.Tests
         [Test]
         public void NutritionSetToANegative()
         {
-            var vm1 = new AddRecipeViewModel
+            var vm1 = new RecipeViewModel
             {
                 Name = "Test Recipe",
                 Ingredients = new List<string>
@@ -283,7 +283,7 @@ namespace MealPlanner.Tests
                 Fat = 0
             };
 
-            var vm2 = new AddRecipeViewModel
+            var vm2 = new RecipeViewModel
             {
                 Name = "Test Recipe",
                 Ingredients = new List<string>
@@ -298,7 +298,7 @@ namespace MealPlanner.Tests
                 Fat = 0
             };
 
-            var vm3 = new AddRecipeViewModel
+            var vm3 = new RecipeViewModel
             {
                 Name = "Test Recipe",
                 Ingredients = new List<string>
@@ -313,7 +313,7 @@ namespace MealPlanner.Tests
                 Fat = 0
             };
 
-            var vm4 = new AddRecipeViewModel
+            var vm4 = new RecipeViewModel
             {
                 Name = "Test Recipe",
                 Ingredients = new List<string>

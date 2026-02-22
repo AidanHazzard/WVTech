@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
-public class AddRecipeViewModel
+using MealPlanner.Models;
+public class RecipeViewModel
 {
     public string Name { get; set; }
 
@@ -13,6 +14,7 @@ public class AddRecipeViewModel
     public int Fat { get; set; }
 
 
+    // REFACTOR: Really should move these to an extension class, but that's a later me problem
     //loops through edge cases to look for errors
     public bool AnyErrors()
     {
@@ -51,5 +53,22 @@ public class AddRecipeViewModel
             }
         }
         return ingredientsFlat;
+    }
+
+    public static RecipeViewModel FromRecipe(Recipe recipe)
+    {
+        // Unflatten Ingredients list
+        List<string> ingredients = recipe.Ingredients.Split('\n').ToList();
+
+        return new RecipeViewModel
+        {
+            Name = recipe.Name,
+            Ingredients = ingredients,
+            Directions = recipe.Directions,
+            Calories = recipe.Calories,
+            Protein = recipe.Protein,
+            Carbs = recipe.Carbs,
+            Fat = recipe.Fat
+        };
     }
 }

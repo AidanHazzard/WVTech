@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Mvc;
 using MealPlanner.ViewModels;
 using MealPlanner.Models;
 using MealPlanner.DAL.Abstract;
-
 using MealPlanner.Services;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
@@ -25,6 +24,7 @@ public class FoodEntriesController : Controller
         _context = context;
         _nutritionProgressService = nutritionProgressService;
     }   
+
     public IActionResult SearchRecipes()
     {
         return View();
@@ -35,9 +35,21 @@ public class FoodEntriesController : Controller
         return View();
     }
 
+    [Route("/FoodEntries/Recipes")]
     public IActionResult Recipes()
     {
         return View();
+    }
+
+    [HttpGet]
+    [Route("/FoodEntries/Recipes/{id}")]
+    public IActionResult Recipes(int id)
+    {
+        Recipe? recipe = _recipeRepository.Read(id);
+        // Change to not-found error!
+        if (recipe == null) { return RedirectToAction("SelectType"); }
+        RecipeViewModel viewModel = RecipeViewModel.FromRecipe(recipe);
+        return View("SingleRecipe", viewModel);
     }
 
     public IActionResult AddNewRecipe()
@@ -64,7 +76,7 @@ public class FoodEntriesController : Controller
     }
 
     [HttpPost]
-    public IActionResult RecipeAdded(AddRecipeViewModel newRecipeViewModel)
+    public IActionResult RecipeAdded(RecipeViewModel newRecipeViewModel)
     {
         //error checking
         if (!ModelState.IsValid || newRecipeViewModel.AnyErrors() == true)
