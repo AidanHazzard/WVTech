@@ -43,9 +43,9 @@ public class FoodEntriesController : Controller
 
     [HttpGet]
     [Route("/FoodEntries/Recipes/{id}")]
-    public IActionResult Recipes(int id)
+    public async Task<IActionResult> Recipes(int id)
     {
-        Recipe? recipe = _recipeRepository.Read(id);
+        Recipe? recipe = await _recipeRepository.ReadRecipeWithIngredientsAsync(id);
         // Change to not-found error!
         if (recipe == null) { return RedirectToAction("SelectType"); }
         RecipeViewModel viewModel = RecipeViewModel.FromRecipe(recipe);
@@ -84,19 +84,29 @@ public class FoodEntriesController : Controller
             return View("AddNewRecipe", newRecipeViewModel);
         }
 
-        //creates a flattend string of all the entrys from the ingredients list
-        string Ingredients = newRecipeViewModel.FlattenList();
-
         //creates a new recipe model with the viewmodels information
         Recipe recipe = new Recipe();
         recipe.Name = newRecipeViewModel.Name;
-        recipe.Ingredients = Ingredients;
+        recipe.Ingredients = [];
         recipe.Directions = newRecipeViewModel.Directions;
         recipe.Calories = newRecipeViewModel.Calories;
         recipe.Protein = newRecipeViewModel.Protein;
         recipe.Carbs = newRecipeViewModel.Carbs;
         recipe.Fat = newRecipeViewModel.Fat;
         recipe.Meals = new List<Meal>();
+
+        // Adds the ingredients to the recipe
+        foreach (string i in newRecipeViewModel.Ingredients)
+        {
+            Ingredient newIngredient = new Ingredient
+            {
+                IngredientBase = new IngredientBase { Name = i },
+                Measurement = new Measurement { Name = "count" },
+                Amount = 1
+            };
+
+            recipe.Ingredients.Add(newIngredient);
+        }
 
         //adds it to the database
         _recipeRepository.CreateOrUpdate(recipe);

@@ -57,8 +57,13 @@ public class RecipeViewModel
 
     public static RecipeViewModel FromRecipe(Recipe recipe)
     {
-        // Unflatten Ingredients list
-        List<string> ingredients = recipe.Ingredients.Split('\n').ToList();
+        // Convert Ingredients list to strings
+        List<string> ingredients = [];
+
+        foreach (Ingredient i in recipe.Ingredients)
+        {
+            ingredients.Add(i.IngredientBase.Name);
+        }
 
         return new RecipeViewModel
         {
