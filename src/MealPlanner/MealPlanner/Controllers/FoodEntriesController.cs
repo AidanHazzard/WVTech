@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Mvc;
 using MealPlanner.ViewModels;
 using MealPlanner.Models;
 using MealPlanner.DAL.Abstract;
-
 using MealPlanner.Services;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
@@ -44,41 +43,61 @@ public class FoodEntriesController : Controller
         return View(progress);
     }
 
-    [Authorize]
-    public async Task<IActionResult> Nutrition()
+    [Route("/FoodEntries/Recipes")]
+    public IActionResult Recipes()
     {
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        return View();
+    }
 
-        if (string.IsNullOrWhiteSpace(userId))
-            return Unauthorized();
+    [HttpGet]
+    [Route("/FoodEntries/Recipes/{id}")]
+    public async Task<IActionResult> Recipes(int id)
+    {
+        Recipe? recipe = await _recipeRepository.ReadRecipeWithIngredientsAsync(id);
+        if (recipe == null)
+        {
+            return RedirectToAction("SelectType");
+        }
 
-        var today = DateOnly.FromDateTime(DateTime.Today);
+        RecipeViewModel viewModel = RecipeViewModel.FromRecipe(recipe);
+        return View("SingleRecipe", viewModel);
+    }
 
-        var progress = await _nutritionProgressService.GetDailyProgressAsync(userId, today);
-
-        return View(progress);
+    public IActionResult AddNewRecipe()
+    {
+        return View();
     }
 
     [HttpPost]
-    public IActionResult RecipeAdded(AddRecipeViewModel newRecipeViewModel)
+    public IActionResult RecipeAdded(RecipeViewModel newRecipeViewModel)
     {
-        //error checking
         if (!ModelState.IsValid || newRecipeViewModel.AnyErrors() == true)
         {
             return View("AddNewRecipe", newRecipeViewModel);
         }
 
-        //creates a flattend string of all the entrys from the ingredients list
-        string Ingredients = newRecipeViewModel.FlattenList();
-
-        //creates a new recipe model with the viewmodels information
         Recipe recipe = new Recipe();
         recipe.Name = newRecipeViewModel.Name;
-        recipe.Ingredients = Ingredients;
+        recipe.Ingredients = [];
         recipe.Directions = newRecipeViewModel.Directions;
+        recipe.Calories = newRecipeViewModel.Calories;
+        recipe.Protein = newRecipeViewModel.Protein;
+        recipe.Carbs = newRecipeViewModel.Carbs;
+        recipe.Fat = newRecipeViewModel.Fat;
         recipe.Meals = new List<Meal>();
 
-        //adds it to the database
+        foreach (string i in newRecipeViewModel.Ingredients)
+        {
+            Ingredient newIngredient = new Ingredient
+            {
+                IngredientBase = new IngredientBase { Name = i },
+                Measurement = new Measurement { Name = "count" },
+                Amount = 1
+            };
+
+            recipe.Ingredients.Add(newIngredient);
+        }
+
         _recipeRepository.CreateOrUpdate(recipe);
         _context.SaveChanges();
 

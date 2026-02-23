@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - MealPlanner</title>
+    <title>@ViewData["Title"] - OneBite</title>
     <script type="importmap"></script>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
@@ -75,7 +75,11 @@
                 else if (User.IsInRole("User"))
                 {
                     <li class="nav-item">
-                        <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="User">User Settings</a>
+                        <button
+                            class="nav-button @(ViewContext.RouteData.Values["Controller"]?.ToString() == "UserSettings" ? "active" : "")"
+                            onclick="location.href='@Url.Action("Index", "UserSettings")'">
+                            <span class="nav-text">User Settings</span>
+                        </button>
                     </li>
                 }
                 <partial name="_LoginPartial" />

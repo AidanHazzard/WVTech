@@ -43,7 +43,7 @@ public class Repository<TEntity> : IRepository<TEntity> where TEntity : class, n
     /// for the changes to be saved.
     /// </summary>
     /// <param name="entity">Entity to be added or changed</param>
-    public void CreateOrUpdate(TEntity entity)
+    public virtual void CreateOrUpdate(TEntity entity)
     {
         _dbset.Update(entity);
     }

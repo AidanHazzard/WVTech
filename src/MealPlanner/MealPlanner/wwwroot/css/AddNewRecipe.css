@@ -59,3 +59,22 @@
 .instructionsBox{
     height: 400px;
 }
+
+.left {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  align-items: center;
+  margin: 5px 0;
+}
+
+.left span {
+  text-align: right;
+  padding-right: 10px;
+}
+
+.nutrientLableArea {
+  display: flex;
+  align-items: center;
+  margin: 5px 0;
+}
+

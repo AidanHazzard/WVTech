@@ -12,12 +12,14 @@ namespace MealPlanner.Controllers;
 public class HomeController : Controller
 {
     private readonly MealPlannerDBContext _context;
-    private readonly IAccountService _accountService;
+    private readonly ILoginService _loginService;
+    private readonly IRegistrationService _registrationService;
 
-    public HomeController(MealPlannerDBContext context, IAccountService accountService)
+    public HomeController(MealPlannerDBContext context, ILoginService loginService, IRegistrationService registrationService)
     {
         _context = context;
-        _accountService = accountService;
+        _loginService = loginService;
+        _registrationService = registrationService;
     }
 
     public async Task<IActionResult> Index()

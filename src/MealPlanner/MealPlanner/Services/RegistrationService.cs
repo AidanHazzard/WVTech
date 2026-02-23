@@ -5,13 +5,13 @@ using Microsoft.AspNetCore.Identity;
 
 namespace MealPlanner.Services
 {
-    public class AccountService : IAccountService
+    public class RegistrationService : IRegistrationService
     {
         private readonly UserManager<User> _userManager;
         private readonly SignInManager<User> _signInManager;
         private readonly RoleManager<IdentityRole> _roleManager;
 
-        public AccountService(
+        public RegistrationService(
             UserManager<User> userManager,
             SignInManager<User> signInManager,
             RoleManager<IdentityRole> roleManager)
@@ -19,15 +19,6 @@ namespace MealPlanner.Services
             _userManager = userManager;
             _signInManager = signInManager;
             _roleManager = roleManager;
-        }
-
-        public async Task<SignInResult> LoginUserAsync(LoginViewModel model)
-        {
-            return await _signInManager.PasswordSignInAsync(
-                model.Email,
-                model.Password,
-                model.RememberMe,
-                lockoutOnFailure: false);
         }
 
         public async Task<IdentityResult> RegisterUserAsync(RegisterViewModel model)
@@ -76,21 +67,10 @@ namespace MealPlanner.Services
             return await _userManager.AddPasswordAsync(user, newPassword);
         }
 
-        public async Task<IdentityResult> ResetPasswordAsync(ClaimsPrincipal userPrincipal, string currentPassword, string newPassword)
+        public async Task<User?> FindUserByClaimAsync(ClaimsPrincipal claim)
         {
-            var user = await _userManager.GetUserAsync(userPrincipal);
-            if (user == null)
-                return IdentityResult.Failed(
-                    new IdentityError { Description = "User not found" });
-
-            
-
-            return await _userManager.ChangePasswordAsync(user, currentPassword, newPassword);
+            return await _userManager.GetUserAsync(claim);
         }
-
-        public async Task LogoutUserAsync()
-        {
-            await _signInManager.SignOutAsync();
-        }
+        
     }
 }

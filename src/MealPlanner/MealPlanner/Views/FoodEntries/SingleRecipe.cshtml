@@ -1,0 +1,24 @@
+@model RecipeViewModel
+
+<div class="back1 row container-fluid">
+    <div class="col-3 mx-1">
+        <!-- Image would go here -->
+        <!-- Maybe nutrients too -->
+        <h3 class="back1Title">Ingredients</h3>
+        <ul>
+            @{
+                foreach (string i in Model.Ingredients)
+                {
+                    <li>@i</li>
+                }
+            }
+        </ul>
+    </div>
+
+    <div class="col mx-1">
+        <h2 class="back1Title">@Model.Name</h2>
+        <p>Quos id nesciunt sed odio. Fuga harum quo voluptatem soluta earum. Architecto inventore in est harum voluptatem. Corporis repellendus velit aspernatur minima veritatis ut numquam </p>
+        <h3 class="back1Title">Instructions</h3>
+        <p>@Model.Directions</p>
+    </div>
+</div>
