@@ -1,9 +1,5 @@
-using System;
-using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
-using MealPlanner.Models;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
-using Microsoft.AspNetCore.Identity;
 
 namespace MealPlanner.Models
 {
@@ -17,9 +13,7 @@ namespace MealPlanner.Models
         public DbSet<UserProfile> UserProfiles { get; set; }
         public DbSet<UserNutritionPreference> UserNutritionPreferences { get; set; }
         public DbSet<Meal> Meals { get; set; }
-
         public DbSet<Recipe> Recipes { get; set; }
-
         public DbSet<DietaryRestriction> DietaryRestrictions { get; set; }
         public DbSet<UserDietaryRestriction> UserDietaryRestrictions { get; set; }
 
@@ -56,12 +50,14 @@ namespace MealPlanner.Models
                 .WithMany()
                 .HasForeignKey(udr => udr.DietaryRestrictionId)
                 .OnDelete(DeleteBehavior.Cascade);
-            
-            modelBuilder.Entity<Ingredient>()
-                .Navigation(i => i.IngredientBase).AutoInclude();
 
             modelBuilder.Entity<Ingredient>()
-                .Navigation(i => i.Measurement).AutoInclude();
+                .Navigation(i => i.IngredientBase)
+                .AutoInclude();
+
+            modelBuilder.Entity<Ingredient>()
+                .Navigation(i => i.Measurement)
+                .AutoInclude();
         }
     }
 }
