@@ -79,5 +79,53 @@ namespace MealPlanner.Controllers
             TempData["Message"] = "Dietary restrictions saved.";
             return RedirectToAction(nameof(Dietary));
         }
+
+        [HttpGet]
+        public async Task<IActionResult> Nutrition()
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            var pref = await _db.UserNutritionPreferences
+                .FirstOrDefaultAsync(x => x.UserId == userId);
+
+            var vm = new NutritionSettingsViewModel
+            {
+                CalorieTarget = pref?.CalorieTarget,
+                ProteinTarget = pref?.ProteinTarget,
+                CarbTarget = pref?.CarbTarget,
+                FatTarget = pref?.FatTarget
+            };
+
+            return View(vm);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Nutrition(NutritionSettingsViewModel vm)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            var pref = await _db.UserNutritionPreferences
+                .FirstOrDefaultAsync(x => x.UserId == userId);
+
+            if (pref == null)
+            {
+                pref = new UserNutritionPreference
+                {
+                    UserId = userId
+                };
+                _db.UserNutritionPreferences.Add(pref);
+            }
+
+            pref.CalorieTarget = vm.CalorieTarget;
+            pref.ProteinTarget = vm.ProteinTarget;
+            pref.CarbTarget = vm.CarbTarget;
+            pref.FatTarget = vm.FatTarget;
+
+            await _db.SaveChangesAsync();
+
+            TempData["Message"] = "Nutrition goals saved.";
+            return RedirectToAction(nameof(Nutrition));
+        }
     }
 }

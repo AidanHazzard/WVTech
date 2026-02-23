@@ -23,38 +23,6 @@ public class FoodEntriesController : Controller
         _recipeRepository = recipeRepository;
         _context = context;
         _nutritionProgressService = nutritionProgressService;
-    }   
-
-    public IActionResult SearchRecipes()
-    {
-        return View();
-    }
-
-    public IActionResult SelectType()
-    {
-        return View();
-    }
-
-    [Route("/FoodEntries/Recipes")]
-    public IActionResult Recipes()
-    {
-        return View();
-    }
-
-    [HttpGet]
-    [Route("/FoodEntries/Recipes/{id}")]
-    public async Task<IActionResult> Recipes(int id)
-    {
-        Recipe? recipe = await _recipeRepository.ReadRecipeWithIngredientsAsync(id);
-        // Change to not-found error!
-        if (recipe == null) { return RedirectToAction("SelectType"); }
-        RecipeViewModel viewModel = RecipeViewModel.FromRecipe(recipe);
-        return View("SingleRecipe", viewModel);
-    }
-
-    public IActionResult AddNewRecipe()
-    {
-        return View();
     }
 
     [Authorize]
@@ -75,16 +43,39 @@ public class FoodEntriesController : Controller
         return View(progress);
     }
 
+    [Route("/FoodEntries/Recipes")]
+    public IActionResult Recipes()
+    {
+        return View();
+    }
+
+    [HttpGet]
+    [Route("/FoodEntries/Recipes/{id}")]
+    public async Task<IActionResult> Recipes(int id)
+    {
+        Recipe? recipe = await _recipeRepository.ReadRecipeWithIngredientsAsync(id);
+        if (recipe == null)
+        {
+            return RedirectToAction("SelectType");
+        }
+
+        RecipeViewModel viewModel = RecipeViewModel.FromRecipe(recipe);
+        return View("SingleRecipe", viewModel);
+    }
+
+    public IActionResult AddNewRecipe()
+    {
+        return View();
+    }
+
     [HttpPost]
     public IActionResult RecipeAdded(RecipeViewModel newRecipeViewModel)
     {
-        //error checking
         if (!ModelState.IsValid || newRecipeViewModel.AnyErrors() == true)
         {
             return View("AddNewRecipe", newRecipeViewModel);
         }
 
-        //creates a new recipe model with the viewmodels information
         Recipe recipe = new Recipe();
         recipe.Name = newRecipeViewModel.Name;
         recipe.Ingredients = [];
@@ -95,7 +86,6 @@ public class FoodEntriesController : Controller
         recipe.Fat = newRecipeViewModel.Fat;
         recipe.Meals = new List<Meal>();
 
-        // Adds the ingredients to the recipe
         foreach (string i in newRecipeViewModel.Ingredients)
         {
             Ingredient newIngredient = new Ingredient
@@ -108,7 +98,6 @@ public class FoodEntriesController : Controller
             recipe.Ingredients.Add(newIngredient);
         }
 
-        //adds it to the database
         _recipeRepository.CreateOrUpdate(recipe);
         _context.SaveChanges();
 
