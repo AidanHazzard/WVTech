@@ -25,6 +25,16 @@ public class FoodEntriesController : Controller
         _nutritionProgressService = nutritionProgressService;
     }
 
+    public IActionResult SearchRecipes()
+    {
+        return View();
+    }
+
+    public IActionResult SelectType()
+    {
+        return View();
+    }
+    
     [Authorize]
     public async Task<IActionResult> Nutrition()
     {
@@ -54,6 +64,8 @@ public class FoodEntriesController : Controller
     public async Task<IActionResult> Recipes(int id)
     {
         Recipe? recipe = await _recipeRepository.ReadRecipeWithIngredientsAsync(id);
+        
+        // Change to not-found error!
         if (recipe == null)
         {
             return RedirectToAction("SelectType");
@@ -71,11 +83,13 @@ public class FoodEntriesController : Controller
     [HttpPost]
     public IActionResult RecipeAdded(RecipeViewModel newRecipeViewModel)
     {
+        //error checking
         if (!ModelState.IsValid || newRecipeViewModel.AnyErrors() == true)
         {
             return View("AddNewRecipe", newRecipeViewModel);
         }
 
+        //creates a new recipe model with the viewmodels information
         Recipe recipe = new Recipe();
         recipe.Name = newRecipeViewModel.Name;
         recipe.Ingredients = [];
@@ -86,6 +100,7 @@ public class FoodEntriesController : Controller
         recipe.Fat = newRecipeViewModel.Fat;
         recipe.Meals = new List<Meal>();
 
+        // Adds the ingredients to the recipe
         foreach (string i in newRecipeViewModel.Ingredients)
         {
             Ingredient newIngredient = new Ingredient
@@ -98,6 +113,7 @@ public class FoodEntriesController : Controller
             recipe.Ingredients.Add(newIngredient);
         }
 
+        //adds it to the database
         _recipeRepository.CreateOrUpdate(recipe);
         _context.SaveChanges();
 
