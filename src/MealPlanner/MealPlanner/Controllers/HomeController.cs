@@ -4,22 +4,29 @@ using Microsoft.EntityFrameworkCore;
 using MealPlanner.ViewModels;
 using MealPlanner.Models;
 using Microsoft.AspNetCore.Authorization;
+using MealPlanner.Services;
+using System.Security.Claims;
 
 namespace MealPlanner.Controllers;
+
 public class HomeController : Controller
 {
-   private readonly MealPlannerDBContext _context;
+    private readonly MealPlannerDBContext _context;
+    private readonly ILoginService _loginService;
+    private readonly IRegistrationService _registrationService;
 
-public HomeController(MealPlannerDBContext context)
-{
-    _context = context;
-}
+    public HomeController(MealPlannerDBContext context, ILoginService loginService, IRegistrationService registrationService)
+    {
+        _context = context;
+        _loginService = loginService;
+        _registrationService = registrationService;
+    }
 
     public async Task<IActionResult> Index()
-        {
-           
-            return View();
-        }
+    {
+
+        return View();
+    }
 
     [Authorize]
     public IActionResult Privacy()
@@ -27,17 +34,13 @@ public HomeController(MealPlannerDBContext context)
         return View();
     }
 
-    public IActionResult Register()
-    {
-        return View();
-    }
-
+    //This is the specific admin view
     [Authorize(Roles = "Admin")]
     public IActionResult Admin()
     {
         return View();
     }
-
+    // This is the specific user view or dashboard
     [Authorize(Roles = "User")]
     public IActionResult User()
     {

@@ -1,0 +1,35 @@
+@model MealPlanner.Services.NutritionProgressDto
+
+@{
+    ViewData["Title"] = "Nutrition";
+}
+
+<h2>Nutrition</h2>
+
+<div>
+    <p><strong>Range:</strong> @Model.StartDay to @Model.EndDay</p>
+
+    <h3>Targets</h3>
+    <ul>
+        <li><strong>Calories:</strong> @Model.Targets.Calories</li>
+        <li><strong>Protein:</strong> @Model.Targets.Protein</li>
+        <li><strong>Carbs:</strong> @Model.Targets.Carbs</li>
+        <li><strong>Fat:</strong> @Model.Targets.Fat</li>
+    </ul>
+
+    <h3>Totals</h3>
+    <ul>
+        <li><strong>Calories:</strong> @Model.Totals.Calories</li>
+        <li><strong>Protein:</strong> @Model.Totals.Protein</li>
+        <li><strong>Carbs:</strong> @Model.Totals.Carbs</li>
+        <li><strong>Fat:</strong> @Model.Totals.Fat</li>
+    </ul>
+
+    <h3>Progress</h3>
+    <ul>
+        <li><strong>Calories Remaining:</strong> @(Model.Targets.Calories - Model.Totals.Calories)</li>
+        <li><strong>Protein Remaining:</strong> @(Model.Targets.Protein - Model.Totals.Protein)</li>
+        <li><strong>Carbs Remaining:</strong> @(Model.Targets.Carbs - Model.Totals.Carbs)</li>
+        <li><strong>Fat Remaining:</strong> @(Model.Targets.Fat - Model.Totals.Fat)</li>
+    </ul>
+</div>

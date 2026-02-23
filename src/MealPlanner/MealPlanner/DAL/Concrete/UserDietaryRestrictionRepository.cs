@@ -13,28 +13,32 @@ public class UserDietaryRestrictionRepository : IUserDietaryRestrictionRepositor
         _context = context;
     }
 
-    public List<UserDietaryRestriction> GetByUserId(string userId)
+    public async Task<List<UserDietaryRestriction>> GetByUserIdAsync(string userId)
     {
-        return _context.UserDietaryRestrictions
-            .Where(x => x.UserId == userId)
+        return await _context.UserDietaryRestrictions
             .Include(x => x.DietaryRestriction)
-            .ToList();
+            .Where(x => x.UserId == userId)
+            .ToListAsync();
     }
 
-    public void SetForUser(string userId, List<int> dietaryRestrictionIds)
+    public async Task SetForUserAsync(string userId, IEnumerable<int> dietaryRestrictionIds)
     {
-        var existing = _context.UserDietaryRestrictions
-            .Where(x => x.UserId == userId);
+        var existing = await _context.UserDietaryRestrictions
+            .Where(x => x.UserId == userId)
+            .ToListAsync();
 
         _context.UserDietaryRestrictions.RemoveRange(existing);
 
-        foreach (var restrictionId in dietaryRestrictionIds.Distinct())
-        {
-            _context.UserDietaryRestrictions.Add(new UserDietaryRestriction
+        var toAdd = dietaryRestrictionIds
+            .Distinct()
+            .Select(id => new UserDietaryRestriction
             {
                 UserId = userId,
-                DietaryRestrictionId = restrictionId
-            });
-        }
+                DietaryRestrictionId = id
+            })
+            .ToList();
+
+        await _context.UserDietaryRestrictions.AddRangeAsync(toAdd);
+        await _context.SaveChangesAsync();
     }
 }

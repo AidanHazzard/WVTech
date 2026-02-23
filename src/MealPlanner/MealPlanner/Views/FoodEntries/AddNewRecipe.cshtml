@@ -1,4 +1,4 @@
-@model AddRecipeViewModel
+@model RecipeViewModel
 
 <link rel="stylesheet" href="~/css/AddNewRecipe.css" asp-append-version="true" />
 
@@ -6,29 +6,54 @@
     <h1 class="back1Title">Create a Recipe</h1>
 
     <form asp-controller="FoodEntries" asp-action="RecipeAdded" method="post">
-    <h2 class="back1Title left">
-        <span>Name:</span>
-        <input class="back2-textbox" type="text" placeholder="Enter Recipe Name"  asp-for="Name" required>
-    </h2>
+        <h2 class="back1Title left">
+            <span>Name:</span>
+            <input class="back2-textbox" type="text" placeholder="Enter Recipe Name" asp-for="Name" required>
+            </h2>
 
 
-    <div class="back2 backHasButton" id="AppendHere">
-        <h2 class="back1Title">Ingredients</h2>
-        <input type="text" class="back2-textbox", placeholder="Enter Ingredient"  name="Ingredients" required>
+            <div class="back2 backHasButton" id="AppendHere">
+                <h2 class="back1Title">Ingredients</h2>
+                <input type="text" class="back2-textbox" , placeholder="Enter Ingredient" name="Ingredients" required>
 
-        <button class="buttonGreen" id="buttonAppend">
-            <h2 class="buttonText">Add Ingredient</h2>
-        </button>
-    </div>
+                <button class="buttonGreen" id="buttonAppend">
+                    <h2 class="buttonText">Add Ingredient</h2>
+                </button>
+            </div>
 
-    <div class="back2">
-        <h2 class="back1Title">Instructions</h2>
-        <textarea class="back2-textbox instructionsBox" placeholder="Enter Instructions"  asp-for="Directions" required></textarea>
-    </div>
+            <div class="back2">
+                <h2 class="back1Title">Instructions</h2>
+                <textarea class="back2-textbox instructionsBox" placeholder="Enter Instructions" asp-for="Directions"
+                          required></textarea>
+            </div>
 
-        <button class="buttonBlue" type="submit">
-            <h2 class="buttonText">Add Recipe</h2>
-        </button>
+            <div class="back2">
+                <h2 class="back1Title">Nutrients</h2>
+                
+                <h2 class="back1Title left">
+                    <span>Calories:</span>
+                    <input type="number" class="back2-textbox" placeholder="Enter Calories" min="0" max="100" step="1" asp-for="Calories" required>
+                </h2>
+
+                    <h2 class="back1Title left">
+                        <span>Protein:</span>
+                        <input type="number" class="back2-textbox" placeholder="Enter Protein" min="0" max="100" step="1" asp-for="Protein" required>
+                        </h2>
+
+                        <h2 class="back1Title left">
+                            <span>Carbs:</span>
+                            <input type="number" class="back2-textbox" placeholder="Enter Carbs" min="0" max="100" step="1" asp-for="Carbs" required>
+                            </h2>
+
+                            <h2 class="back1Title left">
+                                <span>Fat:</span>
+                                <input type="number" class="back2-textbox" placeholder="Enter Fat" min="0" max="100" step="1" asp-for="Fat" required>
+                                </h2>
+            </div>
+
+            <button class="buttonBlue" type="submit">
+                <h2 class="buttonText">Add Recipe</h2>
+            </button>
     </form>
 </div>
 

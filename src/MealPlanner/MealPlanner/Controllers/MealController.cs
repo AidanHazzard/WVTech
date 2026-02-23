@@ -1,8 +1,8 @@
 using MealPlanner.DAL.Abstract;
 using MealPlanner.Models;
+using MealPlanner.Services;
 using MealPlanner.ViewModels;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
 namespace MealPlanner.Controllers;
@@ -10,22 +10,37 @@ namespace MealPlanner.Controllers;
 [Authorize]
 public class MealController : Controller
 {
-    private readonly UserManager<User> _userManager;
+    private readonly IRegistrationService _registrationService;
     private readonly IRecipeRepository _recipeRepo;
-    private readonly IRepository<Meal> _mealRepo;
+    private readonly IMealRepository _mealRepo;
     private readonly MealPlannerDBContext _context;
 
-    public MealController(UserManager<User> userManager, IRecipeRepository recipeRepo, IRepository<Meal> mealRepo, MealPlannerDBContext context)
+    public MealController(IRegistrationService registrationService, IRecipeRepository recipeRepo, IMealRepository mealRepo, MealPlannerDBContext context)
     {
-        _userManager = userManager;
+        _registrationService = registrationService;
         _recipeRepo = recipeRepo;
         _mealRepo = mealRepo;
         _context = context;
     }
 
-    public IActionResult PlannerHome()
+    public async Task<IActionResult> PlannerHome(string? date)
     {
-        return View();
+        User user = await _registrationService.FindUserByClaimAsync(User);
+
+        DateTime selectedDate =
+            DateTime.TryParse(date, out var parsed)
+                ? parsed.Date
+                : DateTime.Today;
+
+        var meals = await _mealRepo.GetUserMealsByDateAsync(user, selectedDate);
+
+        var vm = new PlannerHomeViewModel
+        {
+            SelectedDate = selectedDate,
+            Meals = meals
+        };
+
+        return View(vm);
     }
 
     [HttpGet]
@@ -50,7 +65,12 @@ public class MealController : Controller
             newMeal.Recipes.Add(recipe);
         }
 
-        newMeal.User = await _userManager.GetUserAsync(User);
+        User user = await _registrationService.FindUserByClaimAsync(User);
+        newMeal.User = user;
+        newMeal.UserId = user.Id;
+
+        newMeal.StartTime = model.Date.Date.Add(model.Time);
+        newMeal.RepeatRule = model.RepeatWeekly ? "Weekly" : null;
 
         _mealRepo.CreateOrUpdate(newMeal);
         _context.SaveChanges();

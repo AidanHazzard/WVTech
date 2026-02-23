@@ -1,13 +1,13 @@
-using MealPlanner.DAL.Abstract;
-using MealPlanner.DAL.Concrete;
 using MealPlanner.Models;
 using MealPlanner.Services;
+using MealPlanner.DAL.Abstract;
+using MealPlanner.DAL.Concrete;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+
 builder.Services.AddControllersWithViews();
 
 
@@ -25,13 +25,13 @@ if (string.IsNullOrWhiteSpace(connectionString))
 }
 
 builder.Services.AddDbContext<MealPlannerDBContext>(options =>
-    options.UseSqlServer(connectionString));
+    options.UseSqlServer(connectionString, options => options.EnableRetryOnFailure()));
 
 builder.Services.AddScoped<DbContext, MealPlannerDBContext>();
 builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 builder.Services.AddScoped<IRecipeRepository, RecipeRepository>();
 builder.Services.AddScoped<IUserDietaryRestrictionRepository, UserDietaryRestrictionRepository>();
-
+builder.Services.AddScoped<IMealRepository, MealRepository>();
 builder.Services.AddIdentity<User, IdentityRole>(options =>
 {
     options.Password.RequireDigit = true;
@@ -45,8 +45,14 @@ builder.Services.AddIdentity<User, IdentityRole>(options =>
 .AddEntityFrameworkStores<MealPlannerDBContext>()
 .AddDefaultTokenProviders();
 
-// Register AccountService for dependency injection
-builder.Services.AddScoped<IAccountService, AccountService>();
+builder.Services.AddScoped<INutritionProgressService, NutritionProgressService>();
+// Register LoginService for dependency injection
+builder.Services.AddScoped<ILoginService, LoginService>();
+// Register RegisterService for dependency injection
+builder.Services.AddScoped<IRegistrationService, RegistrationService>();
+// Register AccountSettingsService for dependency injection
+builder.Services.AddScoped<IAccountSettingsService, AccountSettingsService>();
+
 
 var app = builder.Build();
 

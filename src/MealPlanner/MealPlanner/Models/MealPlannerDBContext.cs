@@ -56,6 +56,12 @@ namespace MealPlanner.Models
                 .WithMany()
                 .HasForeignKey(udr => udr.DietaryRestrictionId)
                 .OnDelete(DeleteBehavior.Cascade);
+            
+            modelBuilder.Entity<Ingredient>()
+                .Navigation(i => i.IngredientBase).AutoInclude();
+
+            modelBuilder.Entity<Ingredient>()
+                .Navigation(i => i.Measurement).AutoInclude();
         }
     }
 }
