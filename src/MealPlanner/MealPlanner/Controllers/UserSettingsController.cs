@@ -41,9 +41,9 @@ namespace MealPlanner.Controllers
             {
                 Restrictions = allRestrictions.Select(r => new DietaryRestrictionOptionViewModel
                 {
-                    DietaryRestrictionId = r.DietaryRestrictionId,
+                    DietaryRestrictionId = r.Id,
                     Name = r.Name,
-                    IsSelected = selectedIds.Contains(r.DietaryRestrictionId)
+                    IsSelected = selectedIds.Contains(r.Id)
                 }).ToList()
             };
 
