@@ -45,6 +45,10 @@ builder.Services.AddScoped<IRegistrationService, RegistrationService>();
 builder.Services.AddScoped<IAccountSettingsService, AccountSettingsService>();
 
 
+// Register EmailService for dependency injection
+builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
+builder.Services.AddTransient<IEmailService, EmailService>();
+
 var app = builder.Build();
 
 await SeedService.SeedData(app.Services);
