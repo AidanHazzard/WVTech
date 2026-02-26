@@ -23,10 +23,7 @@ jobs:
         with:
           dotnet-version: '10.x'
 
-      - name: Show repo contents
-        run: dir WVTech /s
-
-      - name: Build
+      - name: dotnet Build
         run: dotnet build --configuration Release
 
       - name: dotnet publish
@@ -67,6 +64,7 @@ jobs:
           package: .
 
           
+
 
 
 
