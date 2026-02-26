@@ -24,7 +24,7 @@ jobs:
           dotnet-version: '10.x'
 
       - name: Build
-        run: dotnet build src/MealPlanner/MealPlanner/MealPlanner.csproj --configuration Release
+        run: dotnet build WVTech/src/MealPlanner/MealPlanner/MealPlanner.csproj --configuration Release
 
       - name: dotnet publish
         run: dotnet publish -c Release -o "${{env.DOTNET_ROOT}}/myapp"
@@ -64,3 +64,4 @@ jobs:
           package: .
 
           
+
