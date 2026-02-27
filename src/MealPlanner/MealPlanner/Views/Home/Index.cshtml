@@ -30,15 +30,15 @@
         }
         @foreach (Meal meal in @Model.Meals)
         {
-                <form asp-controller="Home" asp-action="Index">
-                    <button class="imageButton">
-                        <input type="checkbox" class="MealCheckBox">
-                        <img src="~/images/icons/meal.png" alt="meal" class="imageButtonimage">
-                        <div class="buttonGreen">
-                            <h2 class="buttonText">{Meals Name}</h2>
-                        </div>
-                    </button>
-                </form>
+            <form asp-controller="Home" asp-action="Index">
+                <button class="imageButton">
+                    <input type="checkbox" class="MealCheckBox">
+                    <img src="~/images/icons/meal.png" alt="meal" class="imageButtonimage">
+                    <div class="buttonGreen">
+                        <h2 class="buttonText">{Meals Name}</h2>
+                    </div>
+                </button>
+            </form>
         }
         
         <!-- Holds a display of the statistics so far today. Will populate this with info when the nutrient info is done -->
