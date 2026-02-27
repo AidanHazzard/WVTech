@@ -3,8 +3,10 @@ using MealPlanner.Controllers;
 using MealPlanner.Models;
 using MealPlanner.Services;
 using MealPlanner.ViewModels;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Routing;
 using Moq;
 using NUnit.Framework;
 
@@ -14,14 +16,15 @@ namespace MealPlanner.Tests
     public class RegisterControllerTests
     {
         private Mock<IRegistrationService> _mockAccountService;
+        private Mock<IEmailService> _mockEmailService;
         private RegisterController _controller;
 
         [SetUp]
         public void SetUp()
         {
-            // Arrange: create mock and controller
             _mockAccountService = new Mock<IRegistrationService>();
-            _controller = new RegisterController(_mockAccountService.Object);
+            _mockEmailService = new Mock<IEmailService>();
+            _controller = new RegisterController(_mockAccountService.Object, _mockEmailService.Object);
         }
 
         [TearDown]
@@ -34,7 +37,6 @@ namespace MealPlanner.Tests
         [Test]
         public async Task Register_Post_RedirectsToHome_WhenRegistrationSucceeds()
         {
-            // Arrange
             var model = new RegisterViewModel
             {
                 Name = "Test User",
@@ -44,10 +46,8 @@ namespace MealPlanner.Tests
             _mockAccountService.Setup(s => s.RegisterUserAsync(model))
                 .ReturnsAsync(IdentityResult.Success);
 
-            // Act
             var result = await _controller.Register(model);
 
-            // Assert
             var redirectResult = result as RedirectToActionResult;
             Assert.That(redirectResult, Is.Not.Null);
             Assert.That(redirectResult.ActionName, Is.EqualTo("Index"));
@@ -57,7 +57,6 @@ namespace MealPlanner.Tests
         [Test]
         public async Task Register_Post_ReturnsView_WhenRegistrationFails()
         {
-            // Arrange
             var model = new RegisterViewModel
             {
                 Name = "Test User",
@@ -68,10 +67,8 @@ namespace MealPlanner.Tests
             _mockAccountService.Setup(s => s.RegisterUserAsync(model))
                 .ReturnsAsync(IdentityResult.Failed(errors));
 
-            // Act
             var result = await _controller.Register(model);
 
-            // Assert
             var viewResult = result as ViewResult;
             Assert.That(viewResult, Is.Not.Null);
             Assert.That(_controller.ModelState.ContainsKey(""), Is.True);
@@ -79,13 +76,37 @@ namespace MealPlanner.Tests
 
         // ===================== VERIFY EMAIL =====================
         [Test]
-        public async Task VerifyEmail_Post_RedirectsToChangePassword_WhenUserFound()
+        public async Task VerifyEmail_Post_RedirectsToEmailSent_WhenUserFound()
         {
-            // Arrange
-            var model = new VerifyEmailViewModel { Email = "found@test.com" };
-            var user = new User { UserName = "found@test.com" };
+            var model = new VerifyEmailViewModel { Email = "example@test.com" };
+            var user = new User { UserName = "example@test.com", Email = "example@test.com" };
+            var token = "mock-token";
+
+            // Mock registration service
             _mockAccountService.Setup(s => s.FindUserByEmailAsync(model.Email))
                 .ReturnsAsync(user);
+            _mockAccountService.Setup(s => s.GeneratePasswordResetTokenAsync(user))
+                .ReturnsAsync(token);
+
+            // Setup fake HttpContext and Request.Scheme
+            var controllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext()
+            };
+            controllerContext.HttpContext.Request.Scheme = "https";
+            _controller.ControllerContext = controllerContext;
+
+            // Mock UrlHelper
+            var mockUrlHelper = new Mock<IUrlHelper>();
+            mockUrlHelper
+                .Setup(u => u.Action(It.IsAny<UrlActionContext>()))
+                .Returns("https://fakeurl/resetpassword");
+            _controller.Url = mockUrlHelper.Object;
+
+            // Mock email service
+            _mockEmailService.Setup(e => e.SendEmailAsync(user.Email, It.IsAny<string>(), It.IsAny<string>()))
+                .Returns(Task.CompletedTask)
+                .Verifiable();
 
             // Act
             var result = await _controller.VerifyEmail(model);
@@ -93,71 +114,75 @@ namespace MealPlanner.Tests
             // Assert
             var redirectResult = result as RedirectToActionResult;
             Assert.That(redirectResult, Is.Not.Null);
-            Assert.That(redirectResult.ActionName, Is.EqualTo("ChangePassword"));
-            Assert.That(redirectResult.RouteValues["username"], Is.EqualTo(user.UserName));
+            Assert.That(redirectResult.ActionName, Is.EqualTo("EmailSent"));
+            Assert.That(redirectResult.ControllerName, Is.EqualTo("Register"));
+
+            _mockEmailService.Verify(e => e.SendEmailAsync(user.Email, It.IsAny<string>(), It.IsAny<string>()), Times.Once);
         }
 
         [Test]
         public async Task VerifyEmail_Post_ReturnsView_WhenUserNotFound()
         {
-            // Arrange
             var model = new VerifyEmailViewModel { Email = "notfound@test.com" };
             _mockAccountService.Setup(s => s.FindUserByEmailAsync(model.Email))
                 .ReturnsAsync((User)null);
 
-            // Act
             var result = await _controller.VerifyEmail(model);
 
-            // Assert
             var viewResult = result as ViewResult;
             Assert.That(viewResult, Is.Not.Null);
             Assert.That(_controller.ModelState.ContainsKey(""), Is.True);
+
+            _mockEmailService.Verify(e => e.SendEmailAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()), Times.Never);
         }
 
         // ===================== CHANGE PASSWORD =====================
         [Test]
-        public async Task ChangePassword_Post_RedirectsToLogin_WhenChangeSucceeds()
+        public async Task ChangePassword_Post_RedirectsToLogin_WhenResetSucceeds()
         {
-            // Arrange
             var model = new ChangePasswordViewModel
             {
                 Email = "user@test.com",
+                Token = "mock-token",
                 NewPassword = "NewPassword123!"
             };
-            _mockAccountService.Setup(s => s.ChangePasswordAsync(model.Email, model.NewPassword))
+            var user = new User { Email = model.Email, UserName = model.Email };
+
+            _mockAccountService.Setup(s => s.FindUserByEmailAsync(model.Email))
+                .ReturnsAsync(user);
+            _mockAccountService.Setup(s => s.ResetPasswordAsync(user, model.Token, model.NewPassword))
                 .ReturnsAsync(IdentityResult.Success);
 
-            // Act
             var result = await _controller.ChangePassword(model);
 
-            // Assert
             var redirectResult = result as RedirectToActionResult;
             Assert.That(redirectResult, Is.Not.Null);
             Assert.That(redirectResult.ActionName, Is.EqualTo("Login"));
+            Assert.That(redirectResult.ControllerName, Is.EqualTo("Login"));
         }
 
         [Test]
-        public async Task ChangePassword_Post_ReturnsView_WhenChangeFails()
+        public async Task ChangePassword_Post_ReturnsView_WhenResetFails()
         {
-            // Arrange
             var model = new ChangePasswordViewModel
             {
                 Email = "user@test.com",
+                Token = "mock-token",
                 NewPassword = "NewPassword123!"
             };
+            var user = new User { Email = model.Email, UserName = model.Email };
             var errors = new IdentityError[] { new IdentityError { Description = "Password invalid" } };
-            _mockAccountService.Setup(s => s.ChangePasswordAsync(model.Email, model.NewPassword))
+
+            _mockAccountService.Setup(s => s.FindUserByEmailAsync(model.Email))
+                .ReturnsAsync(user);
+            _mockAccountService.Setup(s => s.ResetPasswordAsync(user, model.Token, model.NewPassword))
                 .ReturnsAsync(IdentityResult.Failed(errors));
 
-            // Act
             var result = await _controller.ChangePassword(model);
 
-            // Assert
             var viewResult = result as ViewResult;
             Assert.That(viewResult, Is.Not.Null);
             Assert.That(_controller.ModelState.ContainsKey(""), Is.True);
         }
-
-     
     }
 }
