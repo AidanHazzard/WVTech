@@ -3,12 +3,11 @@ document.addEventListener('DOMContentLoaded', function () {
     const rightArrow = document.getElementById('ARight');
     const container = document.getElementById('back1DatesInnerContainer');
 
-    const scrollSpeed = 5;
     let scrollInterval;
 
     function startScroll(direction) {
         scrollInterval = setInterval(() => {
-            container.scrollBy({ left: direction * scrollSpeed, behavior: 'auto' });
+            container.scrollBy({ left: direction * 5, behavior: 'auto' });
         }, 10);
     }
 

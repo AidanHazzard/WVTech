@@ -55,7 +55,7 @@ button {
     transform: scale(1.08);
 }
 
-.Selected {
+#Selected {
     background-color: #69ff90ff;
     border-radius: 20px;
 
@@ -69,11 +69,13 @@ button {
     justify-content: center;
     align-items: center;
     text-align: center;
-    transform: scale(1.08);
 }
 
-.Selected .back1Title {
+#Selected .back1Title {
     color: black;
+    -webkit-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
 }
 
 .Arrow {
@@ -163,9 +165,7 @@ button {
 
 #back1DatesInnerContainer {
     -ms-overflow-style: none;
-    /* IE and Edge */
     scrollbar-width: none;
-    /* Firefox */
 }
 
 /*When the page is below this width then put it into verticle mode*/
