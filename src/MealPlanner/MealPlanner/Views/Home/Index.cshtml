@@ -1,9 +1,71 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
-}
+﻿<link rel="stylesheet" href="~/css/index.css" asp-append-version="true" />
 
-<div class="back1">
-    <h1 class="back1Title">Welcome Back {Name}</h1>
+<div class="back1Dates">
+    <button class="Arrow ALeft">
+        <img src="~/images/icons/arrow.png" alt="arrow">
+    </button>
+
+    <div class="back1DatesInnerContainer">
+        <button class="Date">
+            <h2 class="back1Title">Feb<br />22</h2>
+        </button>
+
+        <button class="Date">
+            <h2 class="back1Title">Feb<br />23</h2>
+        </button>
+
+        <button class="Date">
+            <h2 class="back1Title">Feb<br />24</h2>
+        </button>
+
+        <button class="Date">
+            <h2 class="back1Title">Feb<br />25</h2>
+        </button>
+
+        <button class="Date">
+            <h2 class="back1Title">Feb<br />26</h2>
+        </button>
+
+        <button class="Date">
+            <h2 class="back1Title">Feb<br />27</h2>
+        </button>
+
+        <button class="Date">
+            <h2 class="back1Title">Feb<br />28</h2>
+        </button>
+
+        <button class="Date">
+            <h2 class="back1Title">Feb<br />29</h2>
+        </button>
+
+        <button class="Date">
+            <h2 class="back1Title">Feb<br />30</h2>
+        </button>
+
+        <button class="Date">
+            <h2 class="back1Title">Feb<br />31</h2>
+        </button>
+
+        <button class="Date">
+            <h2 class="back1Title">Mar<br />1</h2>
+        </button>
+
+        <button class="Date">
+            <h2 class="back1Title">Mar<br />2</h2>
+        </button>
+
+        <button class="Date">
+            <h2 class="back1Title">Mar<br />3</h2>
+        </button>
+    </div>
+
+    <button class="Arrow ARight">
+        <img src="~/images/icons/arrow.png" alt="arrow">
+    </button>
+</div>
+
+<div class="back1 backHasButton">
+    <h1 class="back1Title">Meals</h1>
 
     <div class="row align-items-center">
         <!-- Meal Planner -->
@@ -11,7 +73,7 @@
             <form asp-controller="Meal" asp-action="PlannerHome">
                 <button class="imageButton">
                     <img src="~/images/icons/calendar.webp" alt="calendar" class="imageButtonimage imageScaleDown">
-                    <div class="buttonBlue">
+                    <div class="buttonGreen">
                         <h2 class="buttonText">Meal Planner</h2>
                     </div>
                 </button>
@@ -23,7 +85,7 @@
             <form asp-controller="FoodEntries" asp-action="SelectType" method="get">
                 <button type="submit" class="imageButton">
                     <img src="~/images/icons/servedish.png" alt="servedish" class="imageButtonimage">
-                    <div class="buttonBlue">
+                    <div class="buttonGreen">
                         <h2 class="buttonText">Your Food Entries</h2>
                     </div>
                 </button>
@@ -34,19 +96,24 @@
         <div class="col d-flex justify-content-center">
             <button class="imageButton">
                 <img src="~/images/icons/shoppingcart.webp" alt="shoppingcart" class="imageButtonimage">
-                <div class="buttonBlue">
+                <div class="buttonGreen">
                     <h2 class="buttonText">My Cart</h2>
                 </div>
             </button>
         </div>
 
         <!-- Holds a display of the statistics so far today. Will populate this with info when the nutrient info is done -->
-        <div class="back2 backHasButton">
+        <div class="back2">
             <h2 class="back1Title">Todays Statistics</h2>
             <img src="~/images/placeholder/nutrients.png" alt="nutrients" class="imageFit">
-            <button class="buttonBlue">
-                <h2 class="buttonText">More Statistics</h2>
-            </button>
         </div>
     </div>
+
+    <button class="buttonBlue">
+        <h2 class="buttonText">Add A Meal</h2>
+    </button>
 </div>
+
+@section Scripts {
+    <script src="~/js/indexPlanner.js"></script>
+}
