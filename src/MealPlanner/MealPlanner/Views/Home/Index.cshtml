@@ -1,38 +1,25 @@
 ﻿@model MealPlanner.ViewModels.PlannerHomeViewModel
 
 <link rel="stylesheet" href="~/css/index.css" asp-append-version="true" />
+<p id="modelsDate" hidden>@Model.SelectedDate</p>
+
 
 <div class="back1Dates">
     <button class="Arrow" id="ALeft">
-        <img src="~/images/icons/arrow.png" alt="arrow">
+        <img src="~/images/icons/arrow.png" alt="arrow" draggable="false">
     </button>
 
     <div id="back1DatesInnerContainer">
-        <form asp-controller="Home" asp-action="Index">
-            <button class="Date" name="date" value="2/23/2026 12:00:00 AM">
-                <h2 class="back1Title">Feb<br />23</h2>
-            </button>
-        </form>
 
-        <form asp-controller="Home" asp-action="Index">
-            <button class="Date" name="date" value="2/24/2026 12:00:00 AM">
-                <h2 class="back1Title">Feb<br />24</h2>
-            </button>
-        </form>
-
-        <div id="Selected">
-            <h2 class="back1Title">@Model.SelectedDate.ToString("MMM")<br />@Model.SelectedDate.Day</h2>
-            <p hidden>@Model.SelectedDate</p>
-        </div>
     </div>
 
     <button class="Arrow" id="ARight">
-        <img src="~/images/icons/arrow.png" alt="arrow">
+        <img src="~/images/icons/arrow.png" alt="arrow" draggable="false">
     </button>
 </div>
 
 <div class="back1 backHasButton">
-    <h1 class="back1Title">Meals On @Model.SelectedDate</h1>
+    <h1 class="back1Title">Meals On @Model.SelectedDate.ToString("MMM")/@Model.SelectedDate.Day/@Model.SelectedDate.ToString("yy")</h1>
 
     <div class="row align-items-center">
         @if (@Model.Meals.Count == 0)
@@ -43,16 +30,15 @@
         }
         @foreach (Meal meal in @Model.Meals)
         {
-            <div class="col d-flex justify-content-center">
                 <form asp-controller="Home" asp-action="Index">
                     <button class="imageButton">
+                        <input type="checkbox" class="MealCheckBox">
                         <img src="~/images/icons/meal.png" alt="meal" class="imageButtonimage">
                         <div class="buttonGreen">
                             <h2 class="buttonText">{Meals Name}</h2>
                         </div>
                     </button>
                 </form>
-            </div>
         }
         
         <!-- Holds a display of the statistics so far today. Will populate this with info when the nutrient info is done -->

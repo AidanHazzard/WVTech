@@ -28,8 +28,13 @@ button {
     -webkit-overflow-scrolling: touch;
     flex-wrap: nowrap;
     width: max-content;
+    overflow-anchor: none;
     align-items: center;
     padding: 5px 0 5px 0;
+}
+
+#scrollAnchor {
+    overflow-anchor: auto;
 }
 
 .Date {
@@ -104,6 +109,9 @@ button {
     height: 60px;
     object-fit: contain;
     transition: transform 0.3s ease-in-out;
+    -webkit-user-drag: none;
+    user-select: none;
+    pointer-events: none;
 }
 
 #ALeft {
@@ -166,6 +174,27 @@ button {
 #back1DatesInnerContainer {
     -ms-overflow-style: none;
     scrollbar-width: none;
+}
+
+.MealCheckBox {
+    border-radius: 20px;
+    position: absolute;
+    top: 0;
+    left: 0;
+    margin: 8px;
+    width: 40px;
+    height: 40px;
+    z-index: 1;
+    cursor: pointer;
+    background-color: #4a4a4a
+}
+
+.MealCheckBox:checked img {
+    filter: grayscale(1);
+}
+
+.MealCheckBox:checked img {
+    filter: grayscale(1);
 }
 
 /*When the page is below this width then put it into verticle mode*/
