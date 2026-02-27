@@ -51,6 +51,24 @@ button {
     transform: scale(1.08);
 }
 
+.Selected {
+    background-color: #69ff90ff;
+    border-radius: 20px;
+
+    width: 100px;
+    height: 100px;
+    position: relative;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    transform: scale(1.08);
+}
+.Selected .back1Title {
+    color: black;
+}
+
 .Arrow {
     position: absolute;
     top: 50%;
