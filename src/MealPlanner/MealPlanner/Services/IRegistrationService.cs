@@ -13,6 +13,15 @@ namespace MealPlanner.Services
         Task<User?> FindUserByEmailAsync(string email);
         Task<IdentityResult> ChangePasswordAsync(string email, string newPassword);
         Task<User?> FindUserByClaimAsync(ClaimsPrincipal claim);
-        
+
+        // For registration password reset
+        Task<string> GeneratePasswordResetTokenAsync(User user);
+        Task<IdentityResult> ResetPasswordAsync(User user, string token, string newPassword);
+
+         // For email confirmation
+
+        Task<string> GenerateEmailConfirmationTokenAsync(User user);
+        Task<IdentityResult> ConfirmEmailAsync(User user, string token);
+        Task<User?> FindUserByIdAsync(string userId);
     }
 }
