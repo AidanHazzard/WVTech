@@ -22,6 +22,7 @@
     <h1 class="back1Title">Meals On @Model.SelectedDate.ToString("MMM")/@Model.SelectedDate.Day/@Model.SelectedDate.ToString("yy")</h1>
 
     <div class="row align-items-center">
+        <div class="col d-flex justify-content-center">
         @if (@Model.Meals.Count == 0)
         {
             <div class="back2">
@@ -33,17 +34,18 @@
             <form asp-controller="Home" asp-action="Index">
                 <button class="imageButton">
                     <input type="checkbox" class="MealCheckBox">
-                    <img src="~/images/icons/meal.png" alt="meal" class="imageButtonimage">
-                    <div class="buttonGreen">
+                    <img src="~/images/placeholder/apples.avif" alt="apples" class="fullImage">
+                    <div class="buttonGreen noBevelTop">
                         <h2 class="buttonText">{Meals Name}</h2>
                     </div>
                 </button>
             </form>
         }
+        </div>
         
         <!-- Holds a display of the statistics so far today. Will populate this with info when the nutrient info is done -->
         <div class="back2">
-            <h2 class="back1Title">Todays Statistics</h2>
+            <h2 class="back1Title">Statistics</h2>
             <img src="~/images/placeholder/nutrients.png" alt="nutrients" class="imageFit">
         </div>
     </div>

@@ -27,6 +27,9 @@ public class HomeController : Controller
 
     public async Task<IActionResult> Index(string? date)
     {
+        if (!HttpContext.User.Identity?.IsAuthenticated ?? true)
+            return Redirect("/Login");
+
         User user = await _registrationService.FindUserByClaimAsync(HttpContext.User);
 
         DateTime selectedDate =

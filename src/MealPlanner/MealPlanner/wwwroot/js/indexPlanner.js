@@ -23,8 +23,10 @@ document.addEventListener('DOMContentLoaded', function () {
         MakeDate(nextDate);
     }
 
+    //recenters view
     document.getElementById('Selected').scrollIntoView({ behavior: 'instant', block: 'nearest', inline: 'center' });
 
+    //adds a new date entry
     function MakeDate(nextDate) {
         nextDate = new Date(nextDate);
         const shortMonth = nextDate.toLocaleString('en-US', { month: 'short' });
@@ -47,6 +49,7 @@ document.addEventListener('DOMContentLoaded', function () {
         container.append(newDate);
     }
 
+    //marks the current date
     function MakeSelected() {
         const shortMonth = curDate.toLocaleString('en-US', { month: 'short' });
 
@@ -67,7 +70,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     let scrollInterval;
-    
+
     function startScroll(direction) {
         scrollInterval = setInterval(() => {
             container.scrollBy({ left: direction * 10, behavior: 'auto' });
@@ -78,17 +81,27 @@ document.addEventListener('DOMContentLoaded', function () {
         clearInterval(scrollInterval);
     }
 
-    //Left arrow events
+    //Left arrow
     leftArrow.addEventListener('mousedown', () => startScroll(-1));
     leftArrow.addEventListener('touchstart', () => startScroll(-1));
     leftArrow.addEventListener('mouseup', stopScroll);
     leftArrow.addEventListener('mouseleave', stopScroll);
     leftArrow.addEventListener('touchend', stopScroll);
 
-    //Right arrow events
+    //Right arrow
     rightArrow.addEventListener('mousedown', () => startScroll(1));
     rightArrow.addEventListener('touchstart', () => startScroll(1));
     rightArrow.addEventListener('mouseup', stopScroll);
     rightArrow.addEventListener('mouseleave', stopScroll);
     rightArrow.addEventListener('touchend', stopScroll);
+
+    //makes it so when the beckbox is checked it can not be clicked
+    document.querySelectorAll('form').forEach(form => {
+        form.addEventListener('submit', function (e) {
+            const checkbox = this.querySelector('.MealCheckBox');
+            if (checkbox.checked) {
+                e.preventDefault();
+            }
+        });
+    });
 });
