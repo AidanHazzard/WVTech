@@ -15,7 +15,7 @@ public class RecipeAPIControllerTests
         // Arrange
         string searchTerm = "oat";
         var repo = new Mock<IRecipeRepository>();
-        repo.Setup(repo => repo.GetRecipesByName(searchTerm)).Returns([new Recipe{Id=1, Name = "Oatmeal Cookies", Directions = "", Ingredients = ""}]);
+        repo.Setup(repo => repo.GetRecipesByName(searchTerm)).Returns([new Recipe{Id=1, Name = "Oatmeal Cookies", Directions = ""}]);
         var controller = new RecipeAPIController(repo.Object);
 
         // Act
@@ -50,7 +50,7 @@ public class RecipeAPIControllerTests
         // Arrange
         string searchTerm = "oat";
         var repo = new Mock<IRecipeRepository>();
-        repo.Setup(repo => repo.GetRecipesByName(searchTerm)).Returns([new Recipe{Id=1, Name = "Oatmeal Cookies", Directions = "", Ingredients = ""}]);
+        repo.Setup(repo => repo.GetRecipesByName(searchTerm)).Returns([new Recipe{Id=1, Name = "Oatmeal Cookies", Directions = ""}]);
         var controller = new RecipeAPIController(repo.Object);
         
         // Act
@@ -69,11 +69,12 @@ public class RecipeAPIControllerTests
         var repo = new Mock<IRecipeRepository>();
         repo.Setup(repo => repo.GetRecipesByName(searchTerm)).Returns(
             [
-                new Recipe { Name="Spaghetti All'assassina", Directions="", Ingredients="" },
-                new Recipe { Name="Spaghetti and Meatballs", Directions="", Ingredients="" },
-                new Recipe { Name="Vegan Spaghetti with Mushrooms", Directions="", Ingredients="" },
-                new Recipe { Name="Baked Spaghetti Casserole", Directions="", Ingredients="" }
-                ]);
+                new Recipe { Name="Spaghetti All'assassina", Directions=""},
+                new Recipe { Name="Spaghetti and Meatballs", Directions=""},
+                new Recipe { Name="Vegan Spaghetti with Mushrooms", Directions=""},
+                new Recipe { Name="Baked Spaghetti Casserole", Directions=""}
+            ]
+        );
         var controller = new RecipeAPIController(repo.Object);
 
         // Act

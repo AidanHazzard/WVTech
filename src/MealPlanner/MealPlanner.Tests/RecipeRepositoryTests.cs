@@ -29,7 +29,7 @@ public class RecipeRepositoryTests
             // Normally we'd add in test data here, but we will use the seed data definined in MealPlannerDBContext
             // This is just to build the model in the first place
             context.AddRange(
-                new Recipe { Name="R1", Directions="", Ingredients="" }
+                new Recipe { Name="R1", Directions="" }
             );
 
             context.SaveChanges();
