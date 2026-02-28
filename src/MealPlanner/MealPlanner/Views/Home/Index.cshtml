@@ -1,9 +1,11 @@
-﻿@{
+﻿@using Microsoft.EntityFrameworkCore.Internal
+@{
     ViewData["Title"] = "Home Page";
+    var userName = User.Identity?.IsAuthenticated == true ? User.Identity.Name : "Guest";
 }
 
 <div class="back1">
-    <h1 class="back1Title">Welcome Back {Name}</h1>
+    <h1 class="back1Title">Welcome Back @userName</h1>
 
     <div class="row align-items-center">
         <!-- Meal Planner -->
