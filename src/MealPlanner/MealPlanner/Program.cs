@@ -37,6 +37,13 @@ builder.Services.AddIdentity<User, IdentityRole>(options =>
 .AddEntityFrameworkStores<MealPlannerDBContext>()
 .AddDefaultTokenProviders();
 
+//when an unauthorized user tries to access a protected resource, redirect them to the login page
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.LoginPath = "/Login";           // must match your LoginController
+    options.AccessDeniedPath = "/Login";    // optional
+});
+
 builder.Services.AddScoped<INutritionProgressService, NutritionProgressService>();
 // Register LoginService for dependency injection
 builder.Services.AddScoped<ILoginService, LoginService>();
