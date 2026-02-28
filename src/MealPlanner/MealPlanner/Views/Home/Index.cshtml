@@ -1,52 +1,62 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
-}
+﻿@model MealPlanner.ViewModels.PlannerHomeViewModel
 
-<div class="back1">
-    <h1 class="back1Title">Welcome Back {Name}</h1>
+<link rel="stylesheet" href="~/css/index.css" asp-append-version="true" />
+<p id="modelsDate" hidden>@Model.SelectedDate</p>
+
+
+<div class="back1Dates">
+    <button class="Arrow" id="ALeft">
+        <img src="~/images/icons/arrow.png" alt="arrow" draggable="false">
+    </button>
+
+    <div id="back1DatesInnerContainer">
+
+    </div>
+
+    <button class="Arrow" id="ARight">
+        <img src="~/images/icons/arrow.png" alt="arrow" draggable="false">
+    </button>
+</div>
+
+<div class="back1 backHasButton">
+    <h1 class="back1Title">Meals On @Model.SelectedDate.ToString("MMM")/@Model.SelectedDate.Day/@Model.SelectedDate.ToString("yy")</h1>
 
     <div class="row align-items-center">
-        <!-- Meal Planner -->
         <div class="col d-flex justify-content-center">
-            <form asp-controller="Meal" asp-action="PlannerHome">
+        @if (@Model.Meals.Count == 0)
+        {
+            <div class="back2">
+                <h2 class="back1Title">You are yet to add a meal to this day.</h2>
+            </div>
+        }
+        @foreach (Meal meal in @Model.Meals)
+        {
+            <form asp-controller="Home" asp-action="Index">
                 <button class="imageButton">
-                    <img src="~/images/icons/calendar.webp" alt="calendar" class="imageButtonimage imageScaleDown">
-                    <div class="buttonBlue">
-                        <h2 class="buttonText">Meal Planner</h2>
+                    <input type="checkbox" class="MealCheckBox">
+                    <img src="~/images/placeholder/apples.avif" alt="apples" class="fullImage">
+                    <div class="buttonGreen noBevelTop">
+                        <h2 class="buttonText">{Meals Name}</h2>
                     </div>
                 </button>
             </form>
+        }
         </div>
-
-        <!-- Food Entries -->
-        <div class="col d-flex justify-content-center">
-            <form asp-controller="FoodEntries" asp-action="SelectType" method="get">
-                <button type="submit" class="imageButton">
-                    <img src="~/images/icons/servedish.png" alt="servedish" class="imageButtonimage">
-                    <div class="buttonBlue">
-                        <h2 class="buttonText">Your Food Entries</h2>
-                    </div>
-                </button>
-            </form>
-        </div>
-
-        <!-- Cart -->
-        <div class="col d-flex justify-content-center">
-            <button class="imageButton">
-                <img src="~/images/icons/shoppingcart.webp" alt="shoppingcart" class="imageButtonimage">
-                <div class="buttonBlue">
-                    <h2 class="buttonText">My Cart</h2>
-                </div>
-            </button>
-        </div>
-
+        
         <!-- Holds a display of the statistics so far today. Will populate this with info when the nutrient info is done -->
-        <div class="back2 backHasButton">
-            <h2 class="back1Title">Todays Statistics</h2>
+        <div class="back2">
+            <h2 class="back1Title">Statistics</h2>
             <img src="~/images/placeholder/nutrients.png" alt="nutrients" class="imageFit">
-            <button class="buttonBlue">
-                <h2 class="buttonText">More Statistics</h2>
-            </button>
         </div>
     </div>
+
+    <form asp-controller="Meal" asp-action="NewMeal" method="get">
+        <button class="buttonBlue">
+            <h2 class="buttonText">Add A Meal</h2>
+        </button>
+    </form>
 </div>
+
+@section Scripts {
+    <script src="~/js/indexPlanner.js"></script>
+}
