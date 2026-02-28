@@ -26,12 +26,30 @@ public class RegisterController : Controller
 
         var result = await _registrationService.RegisterUserAsync(model);
 
-        if (result.Succeeded) return RedirectToAction("Index", "Home");
+        if (!result.Succeeded)
+        {
+            foreach (var error in result.Errors)
+                ModelState.AddModelError("", error.Description);
 
-        foreach (var error in result.Errors)
-            ModelState.AddModelError("", error.Description);
+            return View(model);
+        }
 
-        return View(model);
+        // Registration succeeded, send confirmation email
+        var user = await _registrationService.FindUserByEmailAsync(model.Email);
+        var token = await _registrationService.GenerateEmailConfirmationTokenAsync(user);
+
+        var confirmationLink = Url.Action(
+            "ConfirmEmail",
+            "Register",
+            new { userId = user.Id, token },
+            Request.Scheme);
+
+        var subject = "Confirm your email";
+        var message = $"Please confirm your account by <a href='{confirmationLink}'>clicking here</a>.";
+
+        await _emailService.SendEmailAsync(user.Email, subject, message);
+
+        return RedirectToAction("EmailAuth", "Register");
     }
 
     //confirm user email when they click the link in their email
@@ -50,7 +68,7 @@ public class RegisterController : Controller
         if (result.Succeeded)
         {
             // Redirect user to profile or login page
-            return RedirectToAction("User", "Home"); // or wherever
+            return RedirectToAction("Login", "Login"); // or wherever
         }
 
         return View("Error"); // create an error view if needed
@@ -122,13 +140,17 @@ public class RegisterController : Controller
         return View(model);
     }
 
+
     [HttpGet("EmailSent")]
     public IActionResult EmailSent()
     {
         return View();
     }
 
+    [HttpGet("EmailAuth")]
+    public IActionResult EmailAuth()
+    {
+        return View();
+    }
 
-
-    
 }

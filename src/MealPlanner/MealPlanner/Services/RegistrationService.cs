@@ -30,7 +30,7 @@ namespace MealPlanner.Services
                 Email = model.Email,
                 NormalizedEmail = model.Email.ToUpper(),
                 NormalizedUserName = model.Email.ToUpper(),
-                EmailConfirmed = true
+                EmailConfirmed = false
             };
 
             var result = await _userManager.CreateAsync(user, model.Password);
@@ -67,12 +67,7 @@ namespace MealPlanner.Services
             return await _userManager.AddPasswordAsync(user, newPassword);
         }
 
-        public async Task<User?> FindUserByClaimAsync(ClaimsPrincipal claim)
-        {
-            return await _userManager.GetUserAsync(claim);
-        }
-
-         public async Task<string> GeneratePasswordResetTokenAsync(User user)
+        public async Task<string> GeneratePasswordResetTokenAsync(User user)
         {
             return await _userManager.GeneratePasswordResetTokenAsync(user);
         }
@@ -85,6 +80,13 @@ namespace MealPlanner.Services
         {
             return await _userManager.ResetPasswordAsync(user, token, newPassword);
         }
+
+
+        public async Task<User?> FindUserByClaimAsync(ClaimsPrincipal claim)
+        {
+            return await _userManager.GetUserAsync(claim);
+        }
+
 
         public async Task<IdentityResult> ConfirmEmailAsync(User user, string token)
         {
@@ -103,6 +105,6 @@ namespace MealPlanner.Services
         }
 
 
-        
+
     }
 }
