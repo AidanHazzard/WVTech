@@ -1,0 +1,256 @@
+button {
+    border: none;
+    outline: none;
+    background: none;
+    padding: 0;
+}
+
+.back1Dates {
+    background-color: #4a4a4a;
+    border-radius: 20px;
+
+    margin: 24px 0;
+    width: 100%;
+    box-sizing: border-box;
+    position: relative;
+
+    display: flex;
+    align-items: stretch;
+    overflow: hidden;
+
+}
+
+#back1DatesInnerContainer {
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+    flex-wrap: nowrap;
+    width: max-content;
+    overflow-anchor: none;
+    align-items: center;
+    padding: 5px 0 5px 0;
+}
+
+#scrollAnchor {
+    overflow-anchor: auto;
+}
+
+.Date {
+    background-color: #737373ff;
+    border-radius: 20px;
+    flex: 0 0 auto;
+
+    width: 90px;
+    height: 90px;
+    position: relative;
+
+    display: flex;
+    display: inline-block;
+    align-items: center;
+    text-align: center;
+
+    transition: background-color 0.3s ease-in-out;
+    transition: transform 0.3s ease-in-out;
+}
+
+.Date:hover {
+    background-color: rgb(153, 153, 153);
+    transform: scale(1.08);
+}
+
+#Selected {
+    background-color: #69ff90ff;
+    border-radius: 20px;
+
+    flex: 0 0 auto;
+
+    width: 90px;
+    height: 90px;
+    position: relative;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+}
+
+#Selected .back1Title {
+    color: black;
+    -webkit-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+.Arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50.3%);
+    z-index: 10;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    background-color: #4a4a4a;
+    width: 60px;
+    height: 110.1px;
+    transition: background-color 0.3s ease-in-out;
+}
+
+.Arrow:hover {
+    background-color: #6d6d6d;
+}
+
+.Arrow img {
+    position: relative;
+    display: block;
+    width: 60px;
+    height: 60px;
+    object-fit: contain;
+    transition: transform 0.3s ease-in-out;
+    -webkit-user-drag: none;
+    user-select: none;
+    pointer-events: none;
+}
+
+#ALeft {
+    border-radius: 20px 0 0 20px;
+    left: 0;
+}
+
+#ALeft img {
+    transform: rotate(90deg);
+}
+
+#ALeft:hover img {
+    transform: rotate(90deg) scale(1.14);
+}
+
+#ARight {
+    border-radius: 0 20px 20px 0;
+    right: 0;
+}
+
+#ARight img {
+    transform: rotate(270deg);
+}
+
+#ARight:hover img {
+    transform: rotate(270deg) scale(1.14);
+}
+
+#ALeft::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: -400%;
+    width: 400%;
+    height: 100%;
+    pointer-events: none;
+    background: linear-gradient(to right,
+            rgba(0, 0, 0, 0.65),
+            rgba(0, 0, 0, 0));
+}
+
+#ARight::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -400%;
+    width: 400%;
+    height: 100%;
+    pointer-events: none;
+    background: linear-gradient(to left,
+            rgba(0, 0, 0, 0.65),
+            rgba(0, 0, 0, 0));
+}
+
+/*hides scrollbar*/
+#back1DatesInnerContainer::-webkit-scrollbar {
+    display: none;
+}
+
+#back1DatesInnerContainer {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+.MealCheckBox {
+    position: absolute;
+    top: 0;
+    left: 0;
+    margin: 10px;
+    width: 50px;
+    height: 50px;
+    z-index: 1;
+    cursor: pointer;
+    transition: transform 0.3s ease-in-out;
+}
+
+.MealCheckBox:hover {
+    transform: scale(1.08);
+}
+
+.MealCheckBox:checked~img {
+    filter: grayscale(1);
+}
+
+.MealCheckBox:checked~.buttonGreen {
+    background-color: #808080;
+}
+
+.noBevelTop {
+    border-radius: 0px 0px 20px 20px;
+}
+
+.fullImage {
+    width: 100%;
+    height: 100%;
+    transition: all 0.3s ease-in-out;
+}
+
+.imageButton:hover .fullImage {
+    transform: scale(1.08);
+}
+
+.imageButton:has(.MealCheckBox:checked):hover .fullImage {
+    transform: scale(1);
+}
+
+.imageButton:has(.MealCheckBox:checked):hover .buttonText {
+    transform: scale(1);
+}
+
+.imageButton:has(.MealCheckBox:checked):hover {
+    cursor: default;
+}
+
+/*When the page is below this width then put it into verticle mode*/
+@media (max-width: 900px) {
+    .ALeft::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        right: -200%;
+        width: 200%;
+        height: 100%;
+        pointer-events: none;
+        background: linear-gradient(to right,
+                rgba(0, 0, 0, 0.65),
+                rgba(0, 0, 0, 0));
+    }
+
+    .ARight::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -200%;
+        width: 200%;
+        height: 100%;
+        pointer-events: none;
+        background: linear-gradient(to left,
+                rgba(0, 0, 0, 0.65),
+                rgba(0, 0, 0, 0));
+    }
+}
