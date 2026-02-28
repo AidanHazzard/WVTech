@@ -106,5 +106,47 @@ namespace MealPlanner.Tests
             _mockUserManager.Verify(u => u.AddToRoleAsync(It.IsAny<User>(), "User"), Times.Never);
             _mockSignInManager.Verify(s => s.SignInAsync(It.IsAny<User>(), false, null), Times.Never);
         }
+
+        [Test]
+        public async Task GenerateEmailConfirmationTokenAsync_ReturnsToken()
+        {
+            // Arrange
+            var user = new User { Email = "test@test.com" };
+            var token = "email-token";
+
+            _mockUserManager
+                .Setup(u => u.GenerateEmailConfirmationTokenAsync(user))
+                .ReturnsAsync(token);
+
+            // Act
+            var result = await _registrationService.GenerateEmailConfirmationTokenAsync(user);
+
+            // Assert
+            Assert.That(result, Is.EqualTo(token));
+            _mockUserManager.Verify(
+                u => u.GenerateEmailConfirmationTokenAsync(user),
+                Times.Once);
+        }
+
+        [Test]
+        public async Task ConfirmEmailAsync_ReturnsSuccess_WhenValid()
+        {
+            // Arrange
+            var user = new User { Email = "test@test.com" };
+            var token = "valid-token";
+
+            _mockUserManager
+                .Setup(u => u.ConfirmEmailAsync(user, token))
+                .ReturnsAsync(IdentityResult.Success);
+
+            // Act
+            var result = await _registrationService.ConfirmEmailAsync(user, token);
+
+            // Assert
+            Assert.That(result.Succeeded, Is.True);
+            _mockUserManager.Verify(
+                u => u.ConfirmEmailAsync(user, token),
+                Times.Once);
+        }
     }
 }

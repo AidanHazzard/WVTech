@@ -35,23 +35,68 @@ namespace MealPlanner.Tests
 
         // ===================== REGISTER =====================
         [Test]
-        public async Task Register_Post_RedirectsToHome_WhenRegistrationSucceeds()
+        public async Task Register_Post_RedirectsToEmailAuth_WhenRegistrationSucceeds()
         {
+            // Arrange
             var model = new RegisterViewModel
             {
                 Name = "Test User",
                 Email = "test@test.com",
                 Password = "Password123!"
             };
-            _mockAccountService.Setup(s => s.RegisterUserAsync(model))
+
+            var user = new User
+            {
+                Id = "user-id",
+                Email = model.Email,
+                UserName = model.Email
+            };
+
+            _mockAccountService
+                .Setup(s => s.RegisterUserAsync(model))
                 .ReturnsAsync(IdentityResult.Success);
 
+            _mockAccountService
+                .Setup(s => s.FindUserByEmailAsync(model.Email))
+                .ReturnsAsync(user);
+
+            _mockAccountService
+                .Setup(s => s.GenerateEmailConfirmationTokenAsync(user))
+                .ReturnsAsync("email-token");
+
+            var controllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext()
+            };
+            controllerContext.HttpContext.Request.Scheme = "https";
+            _controller.ControllerContext = controllerContext;
+
+            var mockUrlHelper = new Mock<IUrlHelper>();
+            mockUrlHelper
+                .Setup(u => u.Action(It.IsAny<UrlActionContext>()))
+                .Returns("https://fakeurl/confirmemail");
+
+            _controller.Url = mockUrlHelper.Object;
+
+            _mockEmailService
+                .Setup(e => e.SendEmailAsync(
+                    user.Email,
+                    It.IsAny<string>(),
+                    It.IsAny<string>()))
+                .Returns(Task.CompletedTask);
+
+            // Act
             var result = await _controller.Register(model);
 
+            // Assert
             var redirectResult = result as RedirectToActionResult;
             Assert.That(redirectResult, Is.Not.Null);
-            Assert.That(redirectResult.ActionName, Is.EqualTo("Index"));
-            Assert.That(redirectResult.ControllerName, Is.EqualTo("Home"));
+            Assert.That(redirectResult.ActionName, Is.EqualTo("EmailAuth"));
+            Assert.That(redirectResult.ControllerName, Is.EqualTo("Register"));
+
+            _mockEmailService.Verify(
+                e => e.SendEmailAsync(user.Email, It.IsAny<string>(), It.IsAny<string>()),
+                Times.Once);
         }
 
         [Test]
@@ -72,6 +117,93 @@ namespace MealPlanner.Tests
             var viewResult = result as ViewResult;
             Assert.That(viewResult, Is.Not.Null);
             Assert.That(_controller.ModelState.ContainsKey(""), Is.True);
+        }
+
+        [Test]
+        public async Task Register_Post_SendsConfirmationEmail_AndRedirectsToEmailAuth()
+        {
+            // Arrange
+            var model = new RegisterViewModel
+            {
+                Name = "Test User",
+                Email = "test@test.com",
+                Password = "Password123!"
+            };
+
+            var user = new User
+            {
+                Id = "user-id",
+                Email = model.Email,
+                UserName = model.Email
+            };
+
+            _mockAccountService
+                .Setup(s => s.RegisterUserAsync(model))
+                .ReturnsAsync(IdentityResult.Success);
+
+            _mockAccountService
+                .Setup(s => s.FindUserByEmailAsync(model.Email))
+                .ReturnsAsync(user);
+
+            _mockAccountService
+                .Setup(s => s.GenerateEmailConfirmationTokenAsync(user))
+                .ReturnsAsync("email-token");
+
+            var controllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext()
+            };
+            controllerContext.HttpContext.Request.Scheme = "https";
+            _controller.ControllerContext = controllerContext;
+
+            var mockUrlHelper = new Mock<IUrlHelper>();
+            mockUrlHelper
+                .Setup(u => u.Action(It.IsAny<UrlActionContext>()))
+                .Returns("https://fakeurl/confirmemail");
+            _controller.Url = mockUrlHelper.Object;
+
+            _mockEmailService
+                .Setup(e => e.SendEmailAsync(user.Email, It.IsAny<string>(), It.IsAny<string>()))
+                .Returns(Task.CompletedTask)
+                .Verifiable();
+
+            // Act
+            var result = await _controller.Register(model);
+
+            // Assert
+            var redirect = result as RedirectToActionResult;
+            Assert.That(redirect, Is.Not.Null);
+            Assert.That(redirect.ActionName, Is.EqualTo("EmailAuth"));
+            Assert.That(redirect.ControllerName, Is.EqualTo("Register"));
+
+            _mockEmailService.Verify(
+                e => e.SendEmailAsync(user.Email, It.IsAny<string>(), It.IsAny<string>()),
+                Times.Once);
+        }
+
+        [Test]
+        public async Task ConfirmEmail_Get_RedirectsToLogin_WhenConfirmationSucceeds()
+        {
+            // Arrange
+            var user = new User { Id = "user-id", Email = "test@test.com" };
+            var token = "valid-token";
+
+            _mockAccountService
+                .Setup(s => s.FindUserByIdAsync(user.Id))
+                .ReturnsAsync(user);
+
+            _mockAccountService
+                .Setup(s => s.ConfirmEmailAsync(user, token))
+                .ReturnsAsync(IdentityResult.Success);
+
+            // Act
+            var result = await _controller.ConfirmEmail(user.Id, token);
+
+            // Assert
+            var redirect = result as RedirectToActionResult;
+            Assert.That(redirect, Is.Not.Null);
+            Assert.That(redirect.ActionName, Is.EqualTo("Login"));
+            Assert.That(redirect.ControllerName, Is.EqualTo("Login"));
         }
 
         // ===================== VERIFY EMAIL =====================
