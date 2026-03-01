@@ -3,7 +3,6 @@ $(document).ready(() => {
 });
 
 function goToView(event) {
-    // If the click was inside a favorite button/form, don't navigate
     if ($(event.target).closest(".favoriteForm").length > 0) return;
 
     const id = $(this).find(".recipeId").text().trim();
