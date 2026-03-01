@@ -30,7 +30,7 @@ namespace MealPlanner.Services
                 Email = model.Email,
                 NormalizedEmail = model.Email.ToUpper(),
                 NormalizedUserName = model.Email.ToUpper(),
-                EmailConfirmed = true
+                EmailConfirmed = false
             };
 
             var result = await _userManager.CreateAsync(user, model.Password);
@@ -42,7 +42,7 @@ namespace MealPlanner.Services
             }
 
             await _userManager.AddToRoleAsync(user, "User");
-            await _signInManager.SignInAsync(user, isPersistent: false);
+            //await _signInManager.SignInAsync(user, isPersistent: false);
 
             return result;
         }
@@ -67,10 +67,44 @@ namespace MealPlanner.Services
             return await _userManager.AddPasswordAsync(user, newPassword);
         }
 
+        public async Task<string> GeneratePasswordResetTokenAsync(User user)
+        {
+            return await _userManager.GeneratePasswordResetTokenAsync(user);
+        }
+
+        // already have one of these this needs to be moved to change password
+        public async Task<IdentityResult> ResetPasswordAsync(
+            User user,
+            string token,
+            string newPassword)
+        {
+            return await _userManager.ResetPasswordAsync(user, token, newPassword);
+        }
+
+
         public async Task<User?> FindUserByClaimAsync(ClaimsPrincipal claim)
         {
             return await _userManager.GetUserAsync(claim);
         }
-        
+
+
+        public async Task<IdentityResult> ConfirmEmailAsync(User user, string token)
+        {
+            return await _userManager.ConfirmEmailAsync(user, token);
+        }
+
+
+        public async Task<string> GenerateEmailConfirmationTokenAsync(User user)
+        {
+            return await _userManager.GenerateEmailConfirmationTokenAsync(user);
+        }
+
+        public async Task<User?> FindUserByIdAsync(string userId)
+        {
+            return await _userManager.FindByIdAsync(userId);
+        }
+
+
+
     }
 }
