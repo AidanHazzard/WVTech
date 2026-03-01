@@ -16,114 +16,113 @@
 </head>
 
 <body>
-    <header>
-        <nav class="custom-navbar">
-            <ul class="nav-list">
+<header>
+    <nav class="custom-navbar">
+        <ul class="nav-list">
 
-                <!-- Home -->
+            <!-- Home -->
+            <li class="nav-item">
+                <button
+                    class="nav-button @(currentController == "Home" && currentAction == "Index" ? "active" : "")"
+                    onclick="location.href='/'">
+                    <span class="nav-text">Home</span>
+                </button>
+            </li>
+
+            <!-- Planner -->
+            <li class="nav-item">
+                <button
+                    class="nav-button @(currentController == "Meal" && currentAction == "PlannerHome" ? "active" : "")"
+                    onclick="location.href='@Url.Action("PlannerHome", "Meal")'">
+                    <span class="nav-text">Planner</span>
+                </button>
+            </li>
+
+            <!-- Food Entries -->
+            <li class="nav-item">
+                <button
+                    class="nav-button @(currentController == "FoodEntries" ? "active" : "")"
+                    onclick="location.href='@Url.Action("SelectType", "FoodEntries")'">
+                    <span class="nav-text">Food Entries</span>
+                </button>
+            </li>
+
+            <!-- Nutrition -->
+            <li class="nav-item">
+                <button
+                    class="nav-button @(currentController == "FoodEntries" && currentAction == "Nutrition" ? "active" : "")"
+                    onclick="location.href='@Url.Action("Nutrition", "FoodEntries")'">
+                    <span class="nav-text">Nutrition</span>
+                </button>
+            </li>
+
+            <!-- Statistics (placeholder) -->
+            <li class="nav-item">
+                <button
+                    class="nav-button @(currentController == "Statistics" && currentAction == "Index" ? "active" : "")"
+                    onclick="location.href='/'">
+                    <span class="nav-text">Statistics</span>
+                </button>
+            </li>
+
+            <!-- Cart (placeholder) -->
+            <li class="nav-item">
+                <button
+                    class="nav-button @(currentController == "Cart" && currentAction == "Index" ? "active" : "")"
+                    onclick="location.href='/'">
+                    <span class="nav-text">MyCart</span>
+                </button>
+            </li>
+
+            <!-- Favorites -->
+            <li class="nav-item">
+                <button
+                    class="nav-button @(currentController == "Favorites" ? "active" : "")"
+                    onclick="location.href='@Url.Action("Index", "Favorites")'">
+                    <span class="nav-text">Favorites</span>
+                </button>
+            </li>
+
+            <!-- Admin / User Settings -->
+            @if (User.IsInRole("Admin"))
+            {
+                <li class="nav-item">
+                    <a class="nav-link text-dark" asp-controller="Home" asp-action="Admin">Admin</a>
+                </li>
+            }
+            else if (User.IsInRole("User"))
+            {
                 <li class="nav-item">
                     <button
-                        class="nav-button @(currentController == "Home" && currentAction == "Index" ? "active" : "")"
-                        onclick="location.href='/Home'">
-                        <span class="nav-text">Home</span>
+                        class="nav-button @(currentController == "UserSettings" ? "active" : "")"
+                        onclick="location.href='@Url.Action("Index", "UserSettings")'">
+                        <span class="nav-text">User Settings</span>
                     </button>
                 </li>
+            }
 
-                <!-- Planner -->
-                <li class="nav-item">
-                    <button
-                        class="nav-button @(currentController == "Meal" && currentAction == "PlannerHome" ? "active" : "")"
-                        onclick="location.href='@Url.Action("PlannerHome", "Meal")'">
-                        <span class="nav-text">Planner</span>
-                    </button>
-                </li>
+            <!-- Login/Logout -->
+            <partial name="_LoginPartial" />
 
-                <!-- Food Entries -->
-                <li class="nav-item">
-                    <button
-                        class="nav-button @(currentController == "FoodEntries" ? "active" : "")"
-                        onclick="location.href='/FoodEntries/SelectType'">
-                        <span class="nav-text">Food Entries</span>
-                    </button>
-                </li>
+        </ul>
 
-                <!-- Nutrition -->
-                <li class="nav-item">
-                    <button
-                        class="nav-button @(currentController == "FoodEntries" && currentAction == "Nutrition" ? "active" : "")"
-                        onclick="location.href='/FoodEntries/Nutrition'">
-                        <span class="nav-text">Nutrition</span>
-                    </button>
-                </li>
+        <!-- Profile button -->
+        <button class="profile-button">
+            <img src="~/images/icons/profiledefault.webp" alt="profiledefault" class="imageFit">
+        </button>
+    </nav>
+</header>
 
-                <!-- Statistics -->
-                <li class="nav-item">
-                    <button
-                        class="nav-button @(currentController == "Statistics" && currentAction == "Index" ? "active" : "")"
-                        onclick="location.href='/'">
-                        <span class="nav-text">Statistics</span>
-                    </button>
-                </li>
+<div class="container">
+    <main role="main" class="pb-3">
+        @RenderBody()
+    </main>
+</div>
 
-                <!-- Cart -->
-                <li class="nav-item">
-                    <button
-                        class="nav-button @(currentController == "Cart" && currentAction == "Index" ? "active" : "")"
-                        onclick="location.href='/'">
-                        <span class="nav-text">MyCart</span>
-                    </button>
-                </li>
+<script src="~/lib/jquery/dist/jquery.min.js"></script>
+<script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+<script src="~/js/site.js" type="module" asp-append-version="true"></script>
+@await RenderSectionAsync("Scripts", required: false)
 
-                <!-- Favorites (Logged In Only) -->
-                @if (User.Identity != null && User.Identity.IsAuthenticated)
-                {
-                    <li class="nav-item">
-                        <button
-                            class="nav-button @(currentController == "Favorites" ? "active" : "")"
-                            onclick="location.href='@Url.Action("MyFavorites", "Favorites")'">
-                            <span class="nav-text">Favorites</span>
-                        </button>
-                    </li>
-                }
-
-                <!-- Admin -->
-                @if (User.IsInRole("Admin"))
-                {
-                    <li class="nav-item">
-                        <a class="nav-link text-dark" asp-controller="Home" asp-action="Admin">Admin</a>
-                    </li>
-                }
-                else if (User.IsInRole("User"))
-                {
-                    <li class="nav-item">
-                        <button
-                            class="nav-button @(currentController == "UserSettings" ? "active" : "")"
-                            onclick="location.href='@Url.Action("Index", "UserSettings")'">
-                            <span class="nav-text">User Settings</span>
-                        </button>
-                    </li>
-                }
-
-                <partial name="_LoginPartial" />
-            </ul>
-
-            <!-- Profile button -->
-            <button class="profile-button">
-                <img src="~/images/icons/profiledefault.webp" alt="profiledefault" class="imageFit">
-            </button>
-
-        </nav>
-
-        <div class="container">
-            <main role="main" class="pb-3">
-                @RenderBody()
-            </main>
-        </div>
-
-        <script src="~/lib/jquery/dist/jquery.min.js"></script>
-        <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-        <script src="~/js/site.js" type="module" asp-append-version="true"></script>
-        @await RenderSectionAsync("Scripts", required: false)
-    </header>
 </body>
 </html>

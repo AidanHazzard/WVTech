@@ -1,11 +1,9 @@
 using System.Diagnostics;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using MealPlanner.ViewModels;
-using MealPlanner.Models;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using MealPlanner.Models;
 using MealPlanner.Services;
-using System.Security.Claims;
+using MealPlanner.ViewModels;
 
 namespace MealPlanner.Controllers;
 
@@ -22,9 +20,23 @@ public class HomeController : Controller
         _registrationService = registrationService;
     }
 
-    public async Task<IActionResult> Index()
+    // "/" route:
+    // - logged in -> Dashboard
+    // - not logged in -> Login page (acts as Landing)
+    public IActionResult Index()
     {
+        if (User?.Identity?.IsAuthenticated == true)
+        {
+            return View(); // your original Home page (Views/Home/Index.cshtml)
+        }
 
+        return RedirectToAction("Login", "Login"); // public landing
+    }
+
+    // Authenticated dashboard
+    [Authorize]
+    public IActionResult Dashboard()
+    {
         return View();
     }
 
@@ -34,15 +46,9 @@ public class HomeController : Controller
         return View();
     }
 
-    //This is the specific admin view
+    // Admin view
     [Authorize(Roles = "Admin")]
     public IActionResult Admin()
-    {
-        return View();
-    }
-    // This is the specific user view or dashboard
-    [Authorize(Roles = "User")]
-    public IActionResult User()
     {
         return View();
     }
