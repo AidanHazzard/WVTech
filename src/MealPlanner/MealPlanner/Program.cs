@@ -24,6 +24,7 @@ if (string.IsNullOrWhiteSpace(connectionString))
     );
 }
 
+// Get Secrets from Azure Key Vault (production only)
 if (builder.Environment.IsProduction())
 {
     var keyVaultUri = builder.Configuration["AzureKeyVault:VaultUri"];
