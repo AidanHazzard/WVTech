@@ -16,6 +16,8 @@ string connectionString =
     ?? builder.Configuration["ConnectionString"]
     ?? throw new InvalidOperationException("Missing connection string. Set user-secrets 'ConnectionStrings:DefaultConnection' or 'ConnectionString'.");
 
+Console.WriteLine("USING CONNECTION STRING: " + connectionString);
+
 builder.Services.AddDbContext<MealPlannerDBContext>(options =>
     options.UseSqlServer(connectionString, options => options.EnableRetryOnFailure()));
 
