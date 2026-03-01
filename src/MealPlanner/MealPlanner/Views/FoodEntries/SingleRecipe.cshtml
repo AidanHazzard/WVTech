@@ -2,22 +2,40 @@
 
 <div class="back1 row container-fluid">
     <div class="col-3 mx-1">
-        <!-- Image would go here -->
-        <!-- Maybe nutrients too -->
+
+        <h3 class="back1Title">Nutrition</h3>
+
+        @{
+            bool hasNutrition =
+                !(Model.Calories == 0 && Model.Protein == 0 && Model.Carbs == 0 && Model.Fat == 0);
+        }
+
+        @if (hasNutrition)
+        {
+            <ul>
+                <li><strong>Calories:</strong> @Model.Calories kcal</li>
+                <li><strong>Protein:</strong> @Model.Protein g</li>
+                <li><strong>Carbs:</strong> @Model.Carbs g</li>
+                <li><strong>Fat:</strong> @Model.Fat g</li>
+            </ul>
+        }
+        else
+        {
+            <p>Nutrition information is not available for this recipe yet.</p>
+        }
+
         <h3 class="back1Title">Ingredients</h3>
         <ul>
-            @{
-                foreach (string i in Model.Ingredients)
-                {
-                    <li>@i</li>
-                }
+            @foreach (string i in Model.Ingredients)
+            {
+                <li>@i</li>
             }
         </ul>
     </div>
 
     <div class="col mx-1">
         <h2 class="back1Title">@Model.Name</h2>
-        <p>Quos id nesciunt sed odio. Fuga harum quo voluptatem soluta earum. Architecto inventore in est harum voluptatem. Corporis repellendus velit aspernatur minima veritatis ut numquam </p>
+
         <h3 class="back1Title">Instructions</h3>
         <p>@Model.Directions</p>
     </div>
