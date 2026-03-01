@@ -6,10 +6,10 @@ $(document).ready(
 function throttle(func, delay)
 {
     let last = 0;
-    return function (...args) 
+    return function (...args)
     {
         let now = Date.now();
-        if (now - last >= delay) 
+        if (now - last >= delay)
         {
             func.apply(this, args);
             last = now;
@@ -28,8 +28,8 @@ async function recipeSearchHandler(event)
     }
 
     const response = await fetch(`/api/recipe/search?name=${search}`);
-    
-    $("#recipeResults").text("")
+
+    $("#recipeResults").text("");
     if (!response.ok)
     {
         $("#error").show();
