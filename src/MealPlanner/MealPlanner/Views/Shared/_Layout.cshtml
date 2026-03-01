@@ -16,19 +16,21 @@
 </head>
 
 <body>
-    <header>
-        <nav class="custom-navbar">
-            <ul class="nav-list">
+<header>
+    <nav class="custom-navbar">
+        <ul class="nav-list">
 
-                <!-- Home -->
-                <li class="nav-item">
-                    <button
-                        class="nav-button @(currentController == "Home" && currentAction == "Index" ? "active" : "")"
-                        onclick="location.href='/Home'">
-                        <span class="nav-text">Home</span>
-                    </button>
-                </li>
+            <!-- Home (always visible) -->
+            <li class="nav-item">
+                <button
+                    class="nav-button @(currentController == "Home" && currentAction == "Index" ? "active" : "")"
+                    onclick="location.href='/'">
+                    <span class="nav-text">Home</span>
+                </button>
+            </li>
 
+            @if (User.Identity?.IsAuthenticated == true)
+            {
                 <!-- Planner -->
                 <li class="nav-item">
                     <button
@@ -42,7 +44,7 @@
                 <li class="nav-item">
                     <button
                         class="nav-button @(currentController == "FoodEntries" ? "active" : "")"
-                        onclick="location.href='/FoodEntries/SelectType'">
+                        onclick="location.href='@Url.Action("SelectType", "FoodEntries")'">
                         <span class="nav-text">Food Entries</span>
                     </button>
                 </li>
@@ -51,49 +53,28 @@
                 <li class="nav-item">
                     <button
                         class="nav-button @(currentController == "FoodEntries" && currentAction == "Nutrition" ? "active" : "")"
-                        onclick="location.href='/FoodEntries/Nutrition'">
+                        onclick="location.href='@Url.Action("Nutrition", "FoodEntries")'">
                         <span class="nav-text">Nutrition</span>
                     </button>
                 </li>
 
-                <!-- Statistics -->
+                <!-- Favorites -->
                 <li class="nav-item">
                     <button
-                        class="nav-button @(currentController == "Statistics" && currentAction == "Index" ? "active" : "")"
-                        onclick="location.href='/'">
-                        <span class="nav-text">Statistics</span>
+                        class="nav-button @(currentController == "Favorites" ? "active" : "")"
+                        onclick="location.href='@Url.Action("MyFavorites", "Favorites")'">
+                        <span class="nav-text">Favorites</span>
                     </button>
                 </li>
 
-                <!-- Cart -->
-                <li class="nav-item">
-                    <button
-                        class="nav-button @(currentController == "Cart" && currentAction == "Index" ? "active" : "")"
-                        onclick="location.href='/'">
-                        <span class="nav-text">MyCart</span>
-                    </button>
-                </li>
-
-                <!-- Favorites (Logged In Only) -->
-                @if (User.Identity != null && User.Identity.IsAuthenticated)
-                {
-                    <li class="nav-item">
-                        <button
-                            class="nav-button @(currentController == "Favorites" ? "active" : "")"
-                            onclick="location.href='@Url.Action("MyFavorites", "Favorites")'">
-                            <span class="nav-text">Favorites</span>
-                        </button>
-                    </li>
-                }
-
-                <!-- Admin -->
+                <!-- User Settings or Admin -->
                 @if (User.IsInRole("Admin"))
                 {
                     <li class="nav-item">
                         <a class="nav-link text-dark" asp-controller="Home" asp-action="Admin">Admin</a>
                     </li>
                 }
-                else if (User.IsInRole("User"))
+                else
                 {
                     <li class="nav-item">
                         <button
@@ -103,27 +84,34 @@
                         </button>
                     </li>
                 }
+            }
 
-                <partial name="_LoginPartial" />
-            </ul>
+            <!-- Login / Logout Partial -->
+            <partial name="_LoginPartial" />
 
-            <!-- Profile button -->
+        </ul>
+
+        @if (User.Identity?.IsAuthenticated == true)
+        {
+            <!-- Profile button only visible when logged in -->
             <button class="profile-button">
                 <img src="~/images/icons/profiledefault.webp" alt="profiledefault" class="imageFit">
             </button>
+        }
 
-        </nav>
+    </nav>
+</header>
 
-        <div class="container">
-            <main role="main" class="pb-3">
-                @RenderBody()
-            </main>
-        </div>
+<div class="container">
+    <main role="main" class="pb-3">
+        @RenderBody()
+    </main>
+</div>
 
-        <script src="~/lib/jquery/dist/jquery.min.js"></script>
-        <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-        <script src="~/js/site.js" type="module" asp-append-version="true"></script>
-        @await RenderSectionAsync("Scripts", required: false)
-    </header>
+<script src="~/lib/jquery/dist/jquery.min.js"></script>
+<script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+<script src="~/js/site.js" type="module" asp-append-version="true"></script>
+@await RenderSectionAsync("Scripts", required: false)
+
 </body>
 </html>
