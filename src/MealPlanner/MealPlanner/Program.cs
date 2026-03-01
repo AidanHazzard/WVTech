@@ -1,5 +1,6 @@
 using MealPlanner.Models;
 using MealPlanner.Services;
+using MealPlanner.Services.Abstractions;
 using MealPlanner.DAL.Abstract;
 using MealPlanner.DAL.Concrete;
 using Microsoft.AspNetCore.Identity;
@@ -24,18 +25,16 @@ if (string.IsNullOrWhiteSpace(connectionString))
     );
 }
 
-// Get Secrets from Azure Key Vault
 if (builder.Environment.IsProduction())
 {
     var keyVaultUri = builder.Configuration["AzureKeyVault:VaultUri"];
     if (!string.IsNullOrEmpty(keyVaultUri))
     {
         SecretClient secretClient = new SecretClient(new Uri(keyVaultUri), new DefaultAzureCredential());
-        builder.Configuration["EmailSettings:Password"] = secretClient.GetSecret("EmailSettings--Password").Value.Value;
+        builder.Configuration["EmailSettings:Password"] =
+            secretClient.GetSecret("EmailSettings--Password").Value.Value;
     }
 }
-
-Console.WriteLine("USING CONNECTION STRING: " + connectionString);
 
 Console.WriteLine("USING CONNECTION STRING: " + connectionString);
 
@@ -47,6 +46,8 @@ builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 builder.Services.AddScoped<IRecipeRepository, RecipeRepository>();
 builder.Services.AddScoped<IUserDietaryRestrictionRepository, UserDietaryRestrictionRepository>();
 builder.Services.AddScoped<IMealRepository, MealRepository>();
+builder.Services.AddScoped<IFavoritesService, FavoritesService>();
+
 builder.Services.AddIdentity<User, IdentityRole>(options =>
 {
     options.Password.RequireDigit = true;
