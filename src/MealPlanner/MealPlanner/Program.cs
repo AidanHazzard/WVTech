@@ -37,6 +37,8 @@ if (builder.Environment.IsProduction())
 
 Console.WriteLine("USING CONNECTION STRING: " + connectionString);
 
+Console.WriteLine("USING CONNECTION STRING: " + connectionString);
+
 builder.Services.AddDbContext<MealPlannerDBContext>(options =>
     options.UseSqlServer(connectionString, options => options.EnableRetryOnFailure()));
 
