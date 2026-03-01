@@ -21,6 +21,8 @@ if (string.IsNullOrWhiteSpace(connectionString))
     );
 }
 
+Console.WriteLine("USING CONNECTION STRING: " + connectionString);
+
 builder.Services.AddDbContext<MealPlannerDBContext>(options =>
     options.UseSqlServer(connectionString, options => options.EnableRetryOnFailure()));
 
