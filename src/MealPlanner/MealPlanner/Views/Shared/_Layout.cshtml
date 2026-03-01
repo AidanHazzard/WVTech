@@ -29,7 +29,13 @@
                 </button>
             </li>
 
-            @if (User.Identity?.IsAuthenticated == true)
+            @if (User.IsInRole("Admin"))
+            {
+                <li class="nav-item">
+                    <a class="nav-link text-dark" asp-controller="Home" asp-action="Admin">Admin</a>
+                </li>
+            }
+            else if (User.IsInRole("User"))
             {
                 <!-- Planner -->
                 <li class="nav-item">
@@ -58,6 +64,24 @@
                     </button>
                 </li>
 
+                <!-- Stats (placeholder if not implemented yet) -->
+                <li class="nav-item">
+                    <button
+                        class="nav-button @(currentController == "Statistics" && currentAction == "Index" ? "active" : "")"
+                        onclick="location.href='/'">
+                        <span class="nav-text">Statistics</span>
+                    </button>
+                </li>
+
+                <!-- Cart (placeholder if not implemented yet) -->
+                <li class="nav-item">
+                    <button
+                        class="nav-button @(currentController == "Cart" && currentAction == "Index" ? "active" : "")"
+                        onclick="location.href='/'">
+                        <span class="nav-text">MyCart</span>
+                    </button>
+                </li>
+
                 <!-- Favorites -->
                 <li class="nav-item">
                     <button
@@ -67,23 +91,14 @@
                     </button>
                 </li>
 
-                <!-- User Settings or Admin -->
-                @if (User.IsInRole("Admin"))
-                {
-                    <li class="nav-item">
-                        <a class="nav-link text-dark" asp-controller="Home" asp-action="Admin">Admin</a>
-                    </li>
-                }
-                else
-                {
-                    <li class="nav-item">
-                        <button
-                            class="nav-button @(currentController == "UserSettings" ? "active" : "")"
-                            onclick="location.href='@Url.Action("Index", "UserSettings")'">
-                            <span class="nav-text">User Settings</span>
-                        </button>
-                    </li>
-                }
+                <!-- User Settings -->
+                <li class="nav-item">
+                    <button
+                        class="nav-button @(currentController == "UserSettings" ? "active" : "")"
+                        onclick="location.href='@Url.Action("Index", "UserSettings")'">
+                        <span class="nav-text">User Settings</span>
+                    </button>
+                </li>
             }
 
             <!-- Login / Logout Partial -->
@@ -93,7 +108,7 @@
 
         @if (User.Identity?.IsAuthenticated == true)
         {
-            <!-- Profile button only visible when logged in -->
+            <!-- Profile button only when logged in -->
             <button class="profile-button">
                 <img src="~/images/icons/profiledefault.webp" alt="profiledefault" class="imageFit">
             </button>
