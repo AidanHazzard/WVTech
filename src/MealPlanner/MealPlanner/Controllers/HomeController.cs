@@ -27,10 +27,10 @@ public class HomeController : Controller
     {
         if (User?.Identity?.IsAuthenticated == true)
         {
-            return RedirectToAction(nameof(Dashboard));
+            return View(); // your original Home page (Views/Home/Index.cshtml)
         }
 
-        return RedirectToAction("Login", "Login");
+        return RedirectToAction("Login", "Login"); // public landing
     }
 
     // Authenticated dashboard
