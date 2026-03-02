@@ -24,7 +24,7 @@ public class LoginController : Controller
 
         var result = await _loginService.LoginUserAsync(model);
 
-        if (result.Succeeded) return RedirectToAction("Dashboard", "Home");
+        if (result.Succeeded) return RedirectToAction("Index", "Home");
 
         ModelState.AddModelError("", "Invalid login attempt.");
         return View(model);
