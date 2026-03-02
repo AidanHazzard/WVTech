@@ -13,9 +13,9 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllersWithViews();
 
 string? connectionString =
-    builder.Configuration["ConnectionString"]
+    builder.Configuration.GetConnectionString("DefaultConnection")
     ?? builder.Configuration["ConnectionStrings:DefaultConnection"]
-    ?? builder.Configuration.GetConnectionString("DefaultConnection");
+    ?? builder.Configuration["ConnectionString"];
 
 if (string.IsNullOrWhiteSpace(connectionString))
 {
@@ -24,14 +24,15 @@ if (string.IsNullOrWhiteSpace(connectionString))
     );
 }
 
-// Get Secrets from Azure Key Vault
+// Get Secrets from Azure Key Vault (production only)
 if (builder.Environment.IsProduction())
 {
     var keyVaultUri = builder.Configuration["AzureKeyVault:VaultUri"];
     if (!string.IsNullOrEmpty(keyVaultUri))
     {
         SecretClient secretClient = new SecretClient(new Uri(keyVaultUri), new DefaultAzureCredential());
-        builder.Configuration["EmailSettings:Password"] = secretClient.GetSecret("EmailSettings--Password").Value.Value;
+        builder.Configuration["EmailSettings:Password"] =
+            secretClient.GetSecret("EmailSettings--Password").Value.Value;
     }
 }
 
@@ -45,6 +46,7 @@ builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 builder.Services.AddScoped<IRecipeRepository, RecipeRepository>();
 builder.Services.AddScoped<IUserDietaryRestrictionRepository, UserDietaryRestrictionRepository>();
 builder.Services.AddScoped<IMealRepository, MealRepository>();
+
 builder.Services.AddIdentity<User, IdentityRole>(options =>
 {
     options.Password.RequireDigit = true;

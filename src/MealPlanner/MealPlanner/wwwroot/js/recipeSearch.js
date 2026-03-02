@@ -44,11 +44,11 @@ async function recipeSearchHandler(event)
     {
         const recipe = recipes[i];
         const row = rowTemplate.contents().clone(true);
-
+    
         $(".recipeName", row).text(recipe.name);
         $(".recipeId", row).text(recipe.id);
         $(".recipeIdInput", row).val(recipe.id);
-
+    
         $("#recipeResults").append(row);
     }
 }
