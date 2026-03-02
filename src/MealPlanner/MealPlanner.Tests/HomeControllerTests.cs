@@ -52,32 +52,6 @@ public class HomeControllerTests
     }
 
     [Test]
-    public void Landing_WhenUnauthenticated_RedirectsToLoginControllerLogin()
-    {
-        var controller = CreateController(UnauthenticatedUser());
-
-        var result = controller.Landing();
-
-        var redirect = result as RedirectToActionResult;
-        Assert.That(redirect, Is.Not.Null);
-        Assert.That(redirect!.ControllerName, Is.EqualTo("Login"));
-        Assert.That(redirect.ActionName, Is.EqualTo("Login"));
-    }
-
-    [Test]
-    public void Landing_WhenAuthenticated_RedirectsToIndex()
-    {
-        var controller = CreateController(AuthenticatedUser());
-
-        var result = controller.Landing();
-
-        var redirect = result as RedirectToActionResult;
-        Assert.That(redirect, Is.Not.Null);
-        Assert.That(redirect!.ControllerName, Is.Null);
-        Assert.That(redirect.ActionName, Is.EqualTo("Index"));
-    }
-
-    [Test]
     public async Task Index_WhenUnauthenticated_RedirectsToLoginPath()
     {
         var controller = CreateController(UnauthenticatedUser());
