@@ -32,6 +32,12 @@ public class FavoritesController : Controller
         return RedirectToAction("MyFavorites");
     }
 
+    [HttpGet]
+    public IActionResult Index()
+    {
+        return RedirectToAction(nameof(MyFavorites));
+    }
+
     [HttpPost]
     public async Task<IActionResult> Remove(int recipeId, string? returnUrl = null)
     {
