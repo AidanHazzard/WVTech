@@ -14,9 +14,9 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllersWithViews();
 
 string? connectionString =
-    builder.Configuration["ConnectionString"]
+    builder.Configuration.GetConnectionString("DefaultConnection")
     ?? builder.Configuration["ConnectionStrings:DefaultConnection"]
-    ?? builder.Configuration.GetConnectionString("DefaultConnection");
+    ?? builder.Configuration["ConnectionString"];
 
 if (string.IsNullOrWhiteSpace(connectionString))
 {
