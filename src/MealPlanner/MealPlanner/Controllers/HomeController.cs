@@ -42,7 +42,7 @@ public class HomeController : Controller
             return Redirect("/Login");
 
         var user = await _registrationService.FindUserByClaimAsync(HttpContext.User);
-        if (user == null)
+        if (user is null)
             return Redirect("/Login");
 
         DateTime selectedDate =
@@ -62,6 +62,12 @@ public class HomeController : Controller
     }
 
     [Authorize]
+    public Task<IActionResult> Dashboard(string? date)
+    {
+        return Index(date);
+    }
+
+    [Authorize]
     public IActionResult Privacy()
     {
         return View();
@@ -69,12 +75,6 @@ public class HomeController : Controller
 
     [Authorize(Roles = "Admin")]
     public IActionResult Admin()
-    {
-        return View();
-    }
-
-    [Authorize(Roles = "User")]
-    public IActionResult Dashboard()
     {
         return View();
     }
