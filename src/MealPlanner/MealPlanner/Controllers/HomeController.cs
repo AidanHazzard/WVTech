@@ -1,11 +1,9 @@
 using System.Diagnostics;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using MealPlanner.ViewModels;
-using MealPlanner.Models;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using MealPlanner.Models;
 using MealPlanner.Services;
-using System.Security.Claims;
+using MealPlanner.ViewModels;
 using MealPlanner.DAL.Abstract;
 
 namespace MealPlanner.Controllers;
@@ -23,6 +21,15 @@ public class HomeController : Controller
         _loginService = loginService;
         _registrationService = registrationService;
         _mealRepo = mealRepo;
+    }
+    
+    [HttpGet("/")]
+    public IActionResult Landing()
+    {
+      if (User?.Identity?.IsAuthenticated == true)
+        return RedirectToAction(nameof(Index));
+
+      return RedirectToAction("Login", "Login");
     }
 
     public async Task<IActionResult> Index(string? date)
@@ -55,15 +62,9 @@ public class HomeController : Controller
         return View();
     }
 
-    //This is the specific admin view
+    // Admin view
     [Authorize(Roles = "Admin")]
     public IActionResult Admin()
-    {
-        return View();
-    }
-    // This is the specific user view or dashboard
-    [Authorize(Roles = "User")]
-    public IActionResult User()
     {
         return View();
     }
