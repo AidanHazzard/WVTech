@@ -55,10 +55,13 @@ public class RecipeViewModel
         return ingredientsFlat;
     }
 
+    // TODO: Change to constructor
     public static RecipeViewModel FromRecipe(Recipe recipe)
     {
         // Convert Ingredients list to strings
-        List<string> ingredients = [];
+
+        // Change to LINQ or list comprehension
+        List<string> ingredients = []; // new List<string>(recipe.Ingredients)
 
         foreach (Ingredient i in recipe.Ingredients)
         {

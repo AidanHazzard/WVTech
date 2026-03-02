@@ -27,9 +27,9 @@ public class RepositoryTests
         if (context.Database.EnsureCreated())
         {
             context.AddRange(
-                new Recipe { Name="R1", Directions="", Ingredients="" },
-                new Recipe { Name="R2", Directions="", Ingredients="" },
-                new Recipe { Name="R3", Directions="", Ingredients="" }
+                new Recipe { Name="R1", Directions="" },
+                new Recipe { Name="R2", Directions="" },
+                new Recipe { Name="R3", Directions="" }
             );
 
             context.SaveChanges();
@@ -97,7 +97,7 @@ public class RepositoryTests
         int lengthBefore = context.Set<Recipe>().ToList().Count;
 
         // Act
-        repo.CreateOrUpdate(new Recipe { Name="Test", Directions="", Ingredients="" });
+        repo.CreateOrUpdate(new Recipe { Name="Test", Directions="" });
         context.SaveChanges();
         int lengthAfter = context.Set<Recipe>().ToList().Count;
 

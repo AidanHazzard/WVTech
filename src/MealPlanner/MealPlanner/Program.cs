@@ -7,12 +7,9 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-
 builder.Services.AddControllersWithViews();
 
-
-// ✅ Configure the DbContext to use SQL Server
-var connectionString =
+string? connectionString =
     builder.Configuration.GetConnectionString("DefaultConnection")
     ?? builder.Configuration["ConnectionStrings:DefaultConnection"]
     ?? builder.Configuration["ConnectionString"];
@@ -39,26 +36,30 @@ builder.Services.AddIdentity<User, IdentityRole>(options =>
     options.Password.RequiredLength = 6;
     options.User.RequireUniqueEmail = true;
     options.SignIn.RequireConfirmedAccount = true;
-    options.SignIn.RequireConfirmedEmail = false;
+    options.SignIn.RequireConfirmedEmail = true;
     options.SignIn.RequireConfirmedPhoneNumber = false;
 })
 .AddEntityFrameworkStores<MealPlannerDBContext>()
 .AddDefaultTokenProviders();
 
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.LoginPath = "/Login";
+    options.AccessDeniedPath = "/Login";
+});
+
 builder.Services.AddScoped<INutritionProgressService, NutritionProgressService>();
-// Register LoginService for dependency injection
 builder.Services.AddScoped<ILoginService, LoginService>();
-// Register RegisterService for dependency injection
 builder.Services.AddScoped<IRegistrationService, RegistrationService>();
-// Register AccountSettingsService for dependency injection
 builder.Services.AddScoped<IAccountSettingsService, AccountSettingsService>();
 
+builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
+builder.Services.AddTransient<IEmailService, EmailService>();
 
 var app = builder.Build();
 
 await SeedService.SeedData(app.Services);
 
-// Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");

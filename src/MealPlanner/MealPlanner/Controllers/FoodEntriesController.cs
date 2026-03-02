@@ -23,7 +23,7 @@ public class FoodEntriesController : Controller
         _recipeRepository = recipeRepository;
         _context = context;
         _nutritionProgressService = nutritionProgressService;
-    }   
+    }
 
     public IActionResult SearchRecipes()
     {
@@ -34,29 +34,7 @@ public class FoodEntriesController : Controller
     {
         return View();
     }
-
-    [Route("/FoodEntries/Recipes")]
-    public IActionResult Recipes()
-    {
-        return View();
-    }
-
-    [HttpGet]
-    [Route("/FoodEntries/Recipes/{id}")]
-    public async Task<IActionResult> Recipes(int id)
-    {
-        Recipe? recipe = await _recipeRepository.ReadRecipeWithIngredientsAsync(id);
-        // Change to not-found error!
-        if (recipe == null) { return RedirectToAction("SelectType"); }
-        RecipeViewModel viewModel = RecipeViewModel.FromRecipe(recipe);
-        return View("SingleRecipe", viewModel);
-    }
-
-    public IActionResult AddNewRecipe()
-    {
-        return View();
-    }
-
+    
     [Authorize]
     public async Task<IActionResult> Nutrition()
     {
@@ -73,6 +51,33 @@ public class FoodEntriesController : Controller
         var progress = await _nutritionProgressService.GetDailyProgressAsync(userId, today);
 
         return View(progress);
+    }
+
+    [Route("/FoodEntries/Recipes")]
+    public IActionResult Recipes()
+    {
+        return View();
+    }
+
+    [HttpGet]
+    [Route("/FoodEntries/Recipes/{id}")]
+    public async Task<IActionResult> Recipes(int id)
+    {
+        Recipe? recipe = await _recipeRepository.ReadRecipeWithIngredientsAsync(id);
+        
+        // Change to not-found error!
+        if (recipe == null)
+        {
+            return RedirectToAction("SelectType");
+        }
+
+        RecipeViewModel viewModel = RecipeViewModel.FromRecipe(recipe);
+        return View("SingleRecipe", viewModel);
+    }
+
+    public IActionResult AddNewRecipe()
+    {
+        return View();
     }
 
     [HttpPost]

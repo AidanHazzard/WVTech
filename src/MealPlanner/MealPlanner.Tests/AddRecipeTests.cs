@@ -81,8 +81,9 @@ namespace MealPlanner.Tests
 
             var recipe = recipes.First();
             Assert.That(recipe.Name, Is.EqualTo("Test Recipe"));
-            Assert.That(recipe.Ingredients, Is.EqualTo("1 cup sugar\n2 cups flour"));
             Assert.That(recipe.Directions, Is.EqualTo("Mix ingredients and bake 20 mins"));
+            Assert.That(recipe.Ingredients[0].IngredientBase.Name, Is.EqualTo("1 cup sugar"));
+            Assert.That(recipe.Ingredients[1].IngredientBase.Name, Is.EqualTo("2 cups flour"));
             Assert.That(recipe.Calories, Is.EqualTo(0));
             Assert.That(recipe.Protein, Is.EqualTo(1));
             Assert.That(recipe.Carbs, Is.EqualTo(2));
@@ -248,8 +249,9 @@ namespace MealPlanner.Tests
 
             var recipe = recipes.First();
             Assert.That(recipe.Name, Is.EqualTo("1Name"));
-            Assert.That(recipe.Ingredients, Is.EqualTo("1Entry1\n1Entry2"));
             Assert.That(recipe.Directions, Is.EqualTo("1Directions"));
+            Assert.That(recipe.Ingredients[0].IngredientBase.Name, Is.EqualTo("1Entry1"));
+            Assert.That(recipe.Ingredients[1].IngredientBase.Name, Is.EqualTo("1Entry2"));
             Assert.That(recipe.Calories, Is.EqualTo(0));
             Assert.That(recipe.Protein, Is.EqualTo(1));
             Assert.That(recipe.Carbs, Is.EqualTo(2));
@@ -257,8 +259,9 @@ namespace MealPlanner.Tests
 
             var recipe2 = recipes.Last();
             Assert.That(recipe2.Name, Is.EqualTo("2Name"));
-            Assert.That(recipe2.Ingredients, Is.EqualTo("2Entry1\n2Entry2"));
             Assert.That(recipe2.Directions, Is.EqualTo("2Directions"));
+            Assert.That(recipe2.Ingredients[0].IngredientBase.Name, Is.EqualTo("2Entry1"));
+            Assert.That(recipe2.Ingredients[1].IngredientBase.Name, Is.EqualTo("2Entry2"));
             Assert.That(recipe2.Calories, Is.EqualTo(20));
             Assert.That(recipe2.Protein, Is.EqualTo(21));
             Assert.That(recipe2.Carbs, Is.EqualTo(22));
