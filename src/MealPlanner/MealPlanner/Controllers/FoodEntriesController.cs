@@ -68,7 +68,7 @@ public class FoodEntriesController : Controller
         // Change to not-found error!
         if (recipe == null)
         {
-            return RedirectToAction("SelectType");
+            return NotFound();
         }
 
         RecipeViewModel viewModel = ViewModelService.RecipeToRecipeVM(recipe);
