@@ -4,6 +4,9 @@ using MealPlanner.DAL.Abstract;
 using MealPlanner.DAL.Concrete;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Azure.Security.KeyVault.Secrets;
+using Azure.Identity;
+using Microsoft.AspNetCore.DataProtection;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,6 +22,17 @@ if (string.IsNullOrWhiteSpace(connectionString))
     throw new InvalidOperationException(
         "Missing connection string. Set user-secrets 'ConnectionStrings:DefaultConnection' or 'ConnectionString'."
     );
+}
+
+// Get Secrets from Azure Key Vault
+if (builder.Environment.IsProduction())
+{
+    var keyVaultUri = builder.Configuration["AzureKeyVault:VaultUri"];
+    if (!string.IsNullOrEmpty(keyVaultUri))
+    {
+        SecretClient secretClient = new SecretClient(new Uri(keyVaultUri), new DefaultAzureCredential());
+        builder.Configuration["EmailSettings:Password"] = secretClient.GetSecret("EmailSettings--Password").Value.Value;
+    }
 }
 
 Console.WriteLine("USING CONNECTION STRING: " + connectionString);
