@@ -7,14 +7,19 @@ using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-
 builder.Services.AddControllersWithViews();
 
-
-string connectionString =
+string? connectionString =
     builder.Configuration.GetConnectionString("DefaultConnection")
-    ?? builder.Configuration["ConnectionString"]
-    ?? throw new InvalidOperationException("Missing connection string. Set user-secrets 'ConnectionStrings:DefaultConnection' or 'ConnectionString'.");
+    ?? builder.Configuration["ConnectionStrings:DefaultConnection"]
+    ?? builder.Configuration["ConnectionString"];
+
+if (string.IsNullOrWhiteSpace(connectionString))
+{
+    throw new InvalidOperationException(
+        "Missing connection string. Set user-secrets 'ConnectionStrings:DefaultConnection' or 'ConnectionString'."
+    );
+}
 
 builder.Services.AddDbContext<MealPlannerDBContext>(options =>
     options.UseSqlServer(connectionString, options => options.EnableRetryOnFailure()));
@@ -37,23 +42,17 @@ builder.Services.AddIdentity<User, IdentityRole>(options =>
 .AddEntityFrameworkStores<MealPlannerDBContext>()
 .AddDefaultTokenProviders();
 
-//when an unauthorized user tries to access a protected resource, redirect them to the login page
 builder.Services.ConfigureApplicationCookie(options =>
 {
-    options.LoginPath = "/Login";           // must match your LoginController
-    options.AccessDeniedPath = "/Login";    // optional
+    options.LoginPath = "/Login";
+    options.AccessDeniedPath = "/Login";
 });
 
 builder.Services.AddScoped<INutritionProgressService, NutritionProgressService>();
-// Register LoginService for dependency injection
 builder.Services.AddScoped<ILoginService, LoginService>();
-// Register RegisterService for dependency injection
 builder.Services.AddScoped<IRegistrationService, RegistrationService>();
-// Register AccountSettingsService for dependency injection
 builder.Services.AddScoped<IAccountSettingsService, AccountSettingsService>();
 
-
-// Register EmailService for dependency injection
 builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
 builder.Services.AddTransient<IEmailService, EmailService>();
 
@@ -61,7 +60,6 @@ var app = builder.Build();
 
 await SeedService.SeedData(app.Services);
 
-// Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");

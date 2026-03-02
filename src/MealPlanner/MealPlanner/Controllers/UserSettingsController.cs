@@ -27,6 +27,10 @@ namespace MealPlanner.Controllers
         public async Task<IActionResult> Dietary()
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Challenge();
+            }
 
             var allRestrictions = await _db.DietaryRestrictions
                 .OrderBy(d => d.Name)
@@ -42,7 +46,7 @@ namespace MealPlanner.Controllers
                 Restrictions = allRestrictions.Select(r => new DietaryRestrictionOptionViewModel
                 {
                     DietaryRestrictionId = r.Id,
-                    Name = r.Name,
+                    Name = r.Name ?? "",
                     IsSelected = selectedIds.Contains(r.Id)
                 }).ToList()
             };
@@ -55,6 +59,10 @@ namespace MealPlanner.Controllers
         public async Task<IActionResult> Dietary(DietarySettingsViewModel vm)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Challenge();
+            }
 
             var chosen = vm.Restrictions
                 .Where(x => x.IsSelected)
@@ -84,6 +92,10 @@ namespace MealPlanner.Controllers
         public async Task<IActionResult> Nutrition()
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Challenge();
+            }
 
             var pref = await _db.UserNutritionPreferences
                 .FirstOrDefaultAsync(x => x.UserId == userId);
@@ -104,6 +116,10 @@ namespace MealPlanner.Controllers
         public async Task<IActionResult> Nutrition(NutritionSettingsViewModel vm)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Challenge();
+            }
 
             var pref = await _db.UserNutritionPreferences
                 .FirstOrDefaultAsync(x => x.UserId == userId);
