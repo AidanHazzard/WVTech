@@ -7,27 +7,14 @@
 }
 
 <!-- 
-    Main container for the Login / Landing page.
-    This now serves as the public-facing landing page for unauthenticated users.
+    Main container for the Login page.
     Provides consistent styling and layout for account-related pages.
 -->
 <div class="account-container">
     <div class="account-box">
+        <h2 class="text-center mb-4">Login</h2>
 
-        <!-- Page Title -->
-        <h2 class="text-center mb-2">Welcome to MealPlanner</h2>
-
-        <!-- 
-            Brief description of the application.
-            This satisfies the requirement that the landing page includes 
-            basic information about the application.
-        -->
-        <p class="text-center text-muted mb-4">
-            Plan meals, manage dietary restrictions, and track your nutrition goals —
-            all in one organized and easy-to-use platform.
-        </p>
-
-        <!-- 
+         <!-- 
             Form for user login.
             - Uses POST method for secure submission.
             - Anti-forgery token is included to prevent CSRF attacks.
@@ -54,9 +41,7 @@
 
             <!-- Forgot password link, floated to the right -->
             <div class="float-end">
-                <a asp-controller="Register" asp-action="VerifyEmail" class="text-decoration-none">
-                    Forgot your password?
-                </a>
+                <a asp-controller="Register" asp-action="VerifyEmail" class="text-decoration-none">Forgot your password?</a>
             </div>
 
             <!-- Remember Me checkbox -->
@@ -68,26 +53,25 @@
             </div>
 
             <!-- Submit button styled with Bootstrap classes for full-width and padding -->
-            <input type="submit" value="Login" class="btn btn-primary w-100 p-2" />
+            <Input type="submit" value="Login" class="btn btn-primary w-100 p-2" />
 
-            <!-- 
-                Link to register page for users without an account.
-                This supports new user onboarding from the landing page.
-            -->
-            <p class="text-center mt-3">
-                Don't have an account?
-                <a asp-controller="Register" asp-action="Register" class="text-decoration-none">
-                    Register here
-                </a>
+             <!-- Link to register page for users without an account -->
+            <p class="text-center mt-2">
+                Don't have an account? <a asp-controller="Register" asp-action="Register" class="text-decoration-none">Register here</a>
             </p>
 
+             <!-- Back link to navigate to home page -->
+            <div class="text-center">
+                <a asp-controller="Home" asp-action="Index" class="text-decoration-none">Back</a>
+            </div>
         </form>
     </div>
 </div>
 
 @section Scripts {
    @{
-       <!-- Include client-side validation scripts for unobtrusive validation -->
-       await Html.RenderPartialAsync("_ValidationScriptsPartial.cshtml");
+     <!-- Include client-side validation scripts for unobtrusive validation -->
+    await Html.RenderPartialAsync("_ValidationScriptsPartial.cshtml");
    }
 }
+   

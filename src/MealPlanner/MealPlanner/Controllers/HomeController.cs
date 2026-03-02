@@ -1,10 +1,10 @@
 using System.Diagnostics;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using MealPlanner.DAL.Abstract;
 using MealPlanner.Models;
 using MealPlanner.Services;
 using MealPlanner.ViewModels;
-using MealPlanner.DAL.Abstract;
 
 namespace MealPlanner.Controllers;
 
@@ -25,15 +25,6 @@ public class HomeController : Controller
         _loginService = loginService;
         _registrationService = registrationService;
         _mealRepo = mealRepo;
-    }
-    
-    [HttpGet("/")]
-    public IActionResult Landing()
-    {
-      if (User?.Identity?.IsAuthenticated == true)
-        return RedirectToAction(nameof(Index));
-
-      return RedirectToAction("Login", "Login");
     }
 
     [HttpGet("/")]
@@ -78,6 +69,12 @@ public class HomeController : Controller
 
     [Authorize(Roles = "Admin")]
     public IActionResult Admin()
+    {
+        return View();
+    }
+
+    [Authorize(Roles = "User")]
+    public IActionResult Dashboard()
     {
         return View();
     }
