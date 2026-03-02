@@ -110,6 +110,7 @@ body {
   padding: 0;
   border: none;
   position: relative;
+  overflow: hidden;
   transition: background-color 0.3s ease-in-out;
 }
 
@@ -124,6 +125,7 @@ body {
   height: 200px;
   margin: -40px auto 0 auto;
   object-fit: contain;
+  overflow: hidden;
   transition: transform 0.3s ease-in-out;
 }
 

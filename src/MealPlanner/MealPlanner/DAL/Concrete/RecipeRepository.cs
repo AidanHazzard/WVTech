@@ -35,7 +35,7 @@ public class RecipeRepository : Repository<Recipe>, IRecipeRepository
                 try
                 {
                     var found = _ingredientBaseSet.Where(b => b.Name == i.IngredientBase.Name).First();
-                    i.IngredientBase = found ?? i.IngredientBase;
+                    i.IngredientBase = found;
                 }
                 catch (InvalidOperationException)
                 {

@@ -27,7 +27,7 @@ public class FoodEntriesTests
         using var context = new MealPlannerDBContext(contextOptions);
 
         var _recipeRepo = new Mock<IRecipeRepository>();
-        _recipeRepo.Setup(_recipeRepo => _recipeRepo.Read(1)).Returns(new Recipe{Id=1, Name = "Oatmeal Cookies", Directions = "", Ingredients = ""});
+        _recipeRepo.Setup(_recipeRepo => _recipeRepo.ReadRecipeWithIngredientsAsync(1)).Returns(Task.FromResult<Recipe?>(new Recipe{Id=1, Name = "Oatmeal Cookies", Directions = ""}));
         var nutritionService = new Mock<INutritionProgressService>();
 
         _controller = new FoodEntriesController(_recipeRepo.Object, context, nutritionService.Object);
@@ -46,19 +46,21 @@ public class FoodEntriesTests
     }
 
     [Test]
-    public void RecipesSingular_ReturnsRecipeView_IfIdIsInRecipeRepo()
+    public async Task RecipesSingular_ReturnsRecipeView_IfIdIsInRecipeRepo()
     {
         // Act
-        var result = _controller.Recipes(1) as ViewResult;
+        var result = await _controller.Recipes(1);
+        Assert.That(result, Is.TypeOf<ViewResult>());
+        var view = result as ViewResult;
         // Assert
-        Assert.That(result?.ViewName, Is.EqualTo("SingleRecipe"));
+        Assert.That(view.ViewName, Is.EqualTo("SingleRecipe"));
     }
 
     [Test]
-    public void RecipesSingular_Redirects_IfIdNotInRecipeRepo()
+    public async Task RecipesSingular_Redirects_IfIdNotInRecipeRepo()
     {
         // Act
-        var result = _controller.Recipes(-1) as RedirectToActionResult;
+        var result = await _controller.Recipes(-1) as RedirectToActionResult;
         // Assert
         Assert.That(result?.ActionName, Is.EqualTo("SelectType"));
     }

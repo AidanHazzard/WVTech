@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using MealPlanner.Models;
 using MealPlanner.Services;
 using MealPlanner.ViewModels;
+using MealPlanner.DAL.Abstract;
 
 namespace MealPlanner.Controllers;
 
@@ -12,33 +13,48 @@ public class HomeController : Controller
     private readonly MealPlannerDBContext _context;
     private readonly ILoginService _loginService;
     private readonly IRegistrationService _registrationService;
+    private readonly IMealRepository _mealRepo;
 
-    public HomeController(MealPlannerDBContext context, ILoginService loginService, IRegistrationService registrationService)
+    public HomeController(MealPlannerDBContext context, ILoginService loginService, IRegistrationService registrationService, IMealRepository mealRepo)
     {
         _context = context;
         _loginService = loginService;
         _registrationService = registrationService;
+        _mealRepo = mealRepo;
+    }
+    
+    [HttpGet("/")]
+    public IActionResult Landing()
+    {
+      if (User?.Identity?.IsAuthenticated == true)
+        return RedirectToAction(nameof(Index));
+
+      return RedirectToAction("Login", "Login");
     }
 
-    // "/" route:
-    // - logged in -> Dashboard
-    // - not logged in -> Login page (acts as Landing)
-    public IActionResult Index()
+    public async Task<IActionResult> Index(string? date)
     {
-        if (User?.Identity?.IsAuthenticated == true)
+        if (!HttpContext.User.Identity?.IsAuthenticated ?? true)
+            return Redirect("/Login");
+
+        User user = await _registrationService.FindUserByClaimAsync(HttpContext.User);
+
+        DateTime selectedDate =
+            DateTime.TryParse(date, out var parsed)
+                ? parsed.Date
+                : DateTime.Today;
+
+        var meals = await _mealRepo.GetUserMealsByDateAsync(user, selectedDate);
+
+        var vm = new PlannerHomeViewModel
         {
-            return View(); // your original Home page (Views/Home/Index.cshtml)
-        }
+            SelectedDate = selectedDate,
+            Meals = meals
+        };
 
-        return RedirectToAction("Login", "Login"); // public landing
+        return View(vm);
     }
 
-    // Authenticated dashboard
-    [Authorize]
-    public IActionResult Dashboard()
-    {
-        return View();
-    }
 
     [Authorize]
     public IActionResult Privacy()

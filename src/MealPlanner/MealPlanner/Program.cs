@@ -35,11 +35,18 @@ builder.Services.AddIdentity<User, IdentityRole>(options =>
     options.Password.RequiredLength = 6;
     options.User.RequireUniqueEmail = true;
     options.SignIn.RequireConfirmedAccount = true;
-    options.SignIn.RequireConfirmedEmail = false;
+    options.SignIn.RequireConfirmedEmail = true;
     options.SignIn.RequireConfirmedPhoneNumber = false;
 })
 .AddEntityFrameworkStores<MealPlannerDBContext>()
 .AddDefaultTokenProviders();
+
+//when an unauthorized user tries to access a protected resource, redirect them to the login page
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.LoginPath = "/Login";           // must match your LoginController
+    options.AccessDeniedPath = "/Login";    // optional
+});
 
 builder.Services.AddScoped<INutritionProgressService, NutritionProgressService>();
 // Register LoginService for dependency injection
@@ -49,6 +56,10 @@ builder.Services.AddScoped<IRegistrationService, RegistrationService>();
 // Register AccountSettingsService for dependency injection
 builder.Services.AddScoped<IAccountSettingsService, AccountSettingsService>();
 
+
+// Register EmailService for dependency injection
+builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
+builder.Services.AddTransient<IEmailService, EmailService>();
 
 var app = builder.Build();
 
