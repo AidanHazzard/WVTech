@@ -55,4 +55,10 @@ public class FavoritesController : Controller
         var favorites = await _favoritesService.GetFavoritesAsync(user.Id);
         return View(favorites);
     }
+
+    [HttpGet]
+    public IActionResult Index()
+    {
+        return RedirectToAction(nameof(MyFavorites));
+    }
 }

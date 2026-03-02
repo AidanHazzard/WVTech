@@ -16,6 +16,7 @@ namespace MealPlanner.Models
         public DbSet<Recipe> Recipes { get; set; }
         public DbSet<DietaryRestriction> DietaryRestrictions { get; set; }
         public DbSet<UserDietaryRestriction> UserDietaryRestrictions { get; set; }
+        public DbSet<UserFavoriteRecipe> UserFavoriteRecipes { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -49,6 +50,21 @@ namespace MealPlanner.Models
                 .HasOne(udr => udr.DietaryRestriction)
                 .WithMany()
                 .HasForeignKey(udr => udr.DietaryRestrictionId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<UserFavoriteRecipe>()
+                .HasKey(ufr => new { ufr.UserId, ufr.RecipeId });
+
+            modelBuilder.Entity<UserFavoriteRecipe>()
+                .HasOne(ufr => ufr.User)
+                .WithMany()
+                .HasForeignKey(ufr => ufr.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<UserFavoriteRecipe>()
+                .HasOne(ufr => ufr.Recipe)
+                .WithMany()
+                .HasForeignKey(ufr => ufr.RecipeId)
                 .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<Ingredient>()
