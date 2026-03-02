@@ -26,6 +26,15 @@ public class HomeController : Controller
         _registrationService = registrationService;
         _mealRepo = mealRepo;
     }
+    
+    [HttpGet("/")]
+    public IActionResult Landing()
+    {
+      if (User?.Identity?.IsAuthenticated == true)
+        return RedirectToAction(nameof(Index));
+
+      return RedirectToAction("Login", "Login");
+    }
 
     [HttpGet("/")]
     public IActionResult Landing()
