@@ -1,4 +1,4 @@
-@model RecipeViewModel
+@model MealPlanner.ViewModels.RecipeViewModel
 
 <div class="back1 row container-fluid">
     <div class="col-3 mx-1">
@@ -7,9 +7,11 @@
         <h3 class="back1Title">Ingredients</h3>
         <ul>
             @{
-                foreach (string i in Model.Ingredients)
+                for(int i=0; i < Model.Ingredients.Count; i++)
                 {
-                    <li>@i</li>
+                    <li class="back2-textbox">
+                        @Model.IngredientAmounts[i] @Model.IngredientMeasurements[i] of @Model.Ingredients[i]
+                    </li>
                 }
             }
         </ul>
@@ -17,8 +19,9 @@
 
     <div class="col mx-1">
         <h2 class="back1Title">@Model.Name</h2>
-        <p>Quos id nesciunt sed odio. Fuga harum quo voluptatem soluta earum. Architecto inventore in est harum voluptatem. Corporis repellendus velit aspernatur minima veritatis ut numquam </p>
+        <!-- Description -->
+        <p class="back2-textbox">Quos id nesciunt sed odio. Fuga harum quo voluptatem soluta earum. Architecto inventore in est harum voluptatem. Corporis repellendus velit aspernatur minima veritatis ut numquam </p>
         <h3 class="back1Title">Instructions</h3>
-        <p>@Model.Directions</p>
+        <p class="back2-textbox">@Model.Directions</p>
     </div>
 </div>

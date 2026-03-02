@@ -96,6 +96,23 @@ body {
   box-sizing: border-box;
 }
 
+.back2-textbox-partial {
+  display: inline-block;
+  background-color: #919191ff;
+  color: #ffffff;
+
+  font-size: 1.5rem;
+  padding: 0rem 1rem;
+  margin-top: 5px;
+  margin-bottom: 5px;
+
+  border-radius: 20px;
+  border-color: #ffffff00;
+  box-shadow: none;
+  outline: none;
+  box-sizing: border-box;
+}
+
 
 /*Use this for if you want to have an image be a button*/
 .imageButton {

@@ -26,11 +26,20 @@ public class RecipeRepositoryTests
 
         if (context.Database.EnsureCreated())
         {
-            // Normally we'd add in test data here, but we will use the seed data definined in MealPlannerDBContext
-            // This is just to build the model in the first place
-            context.AddRange(
-                new Recipe { Name="R1", Directions="" }
-            );
+            // Normally we'd add more test data here, but we will use the seed data definined in MealPlannerDBContext as well
+            Ingredient ingredient = new Ingredient
+            {
+                IngredientBase = new IngredientBase { Name="Test" },
+                Measurement = new Measurement { Name="Test" },
+                Amount = 0
+            };
+            context.Add( new Recipe
+            {
+                Id = 10,
+                Name = "Test",
+                Ingredients = [ingredient],
+                Directions = ""
+            });
 
             context.SaveChanges();
         }
@@ -146,5 +155,290 @@ public class RecipeRepositoryTests
 
         // Assert
         Assert.That(results, Is.Empty);
+    }
+
+    [Test]
+    public async Task ReadRecipeWithIngredientsAsync_ReturnsNullIfRecipeNotFound()
+    {
+        // Arrange
+        MealPlannerDBContext context = CreateContext();
+        RecipeRepository repo = new RecipeRepository(context);
+
+        // Act
+        var result = await repo.ReadRecipeWithIngredientsAsync(0);
+
+        // Assert
+        Assert.That(result, Is.Null);
+    }
+
+    [Test]
+    public async Task ReadRecipeWithIngredientsAsync_ReturnsRecipeWithIngredients()
+    {
+        // Arrange
+        MealPlannerDBContext context = CreateContext();
+        RecipeRepository repo = new RecipeRepository(context);
+
+        // Act
+        var result = await repo.ReadRecipeWithIngredientsAsync(10);
+
+        // Assert
+        Assert.That(result?.Ingredients, Is.Not.Empty);
+    }
+
+    [Test]
+    public async Task ReadRecipeWithIngredientsAsync_IncludesMeasurement()
+    {
+        // Arrange
+        MealPlannerDBContext context = CreateContext();
+        RecipeRepository repo = new RecipeRepository(context);
+
+        // Act
+        var result = await repo.ReadRecipeWithIngredientsAsync(10);
+
+        // Assert
+        Assert.That(result?.Ingredients[0].Measurement.Name, Is.EqualTo("Test"));
+    }
+
+    [Test]
+    public async Task ReadRecipeWithIngredientsAsync_IncludesIngredientBase()
+    {
+        // Arrange
+        MealPlannerDBContext context = CreateContext();
+        RecipeRepository repo = new RecipeRepository(context);
+
+        // Act
+        var result = await repo.ReadRecipeWithIngredientsAsync(10);
+
+        // Assert
+        Assert.That(result?.Ingredients[0].IngredientBase.Name, Is.EqualTo("Test"));
+    }
+
+    [Test]
+    public void CreateOrUpdate_CreatesNewRecipe()
+    {
+        // Arrange
+        MealPlannerDBContext context = CreateContext();
+        RecipeRepository repo = new RecipeRepository(context);
+        Recipe toAdd = new Recipe
+        {
+            Name = "",
+            Directions = ""
+        };
+
+        // Act
+        int countBefore = context.Set<Recipe>().Count();
+        repo.CreateOrUpdate(toAdd);
+        context.SaveChanges();
+        int countAfter = context.Set<Recipe>().Count();
+
+        // Assert
+        Assert.That(countAfter, Is.EqualTo(countBefore + 1));
+    }
+
+    [Test]
+    public void CreateOrUpdate_UpdatesExistingRecipe()
+    {
+        // Arrange
+        MealPlannerDBContext context = CreateContext();
+        RecipeRepository repo = new RecipeRepository(context);
+        Recipe toChange = context.Find<Recipe>(10);
+
+        // Act
+        toChange.Name = "Changed";
+        repo.CreateOrUpdate(toChange);
+        context.SaveChanges();
+        Recipe result = context.Find<Recipe>(10);
+
+        // Assert
+        Assert.That(result.Name, Is.EqualTo("Changed"));
+    }
+
+    [Test]
+    public void CreateOrUpdate_DoesntCreateNewIngredients_WhenUpdatingName()
+    {
+        // Arrange
+        MealPlannerDBContext context = CreateContext();
+        RecipeRepository repo = new RecipeRepository(context);
+        Recipe toChange = context.Find<Recipe>(10);
+
+        // Act
+        int ingredientCountBefore = context.Set<Ingredient>().Count();
+        toChange.Name = "Changed";
+        repo.CreateOrUpdate(toChange);
+        context.SaveChanges();
+        int ingredientCountAfter = context.Set<Ingredient>().Count();
+
+        // Assert
+        Assert.That(ingredientCountAfter, Is.EqualTo(ingredientCountBefore));
+    }
+
+    [Test]
+    public void CreateOrUpdate_CreatesNewIngredients()
+    {
+        // Arrange
+        MealPlannerDBContext context = CreateContext();
+        RecipeRepository repo = new RecipeRepository(context);
+        Ingredient ingredient = new Ingredient
+        {
+            Amount = 1,
+            IngredientBase = new IngredientBase { Name = "" },
+            Measurement = new Measurement { Name = "" }
+        };
+        Recipe toAdd = new Recipe 
+        { 
+            Name = "",
+            Directions = "",
+            Ingredients = [ingredient]
+        };
+
+        // Act
+        int ingredientCountBefore = context.Set<Ingredient>().Count();
+        repo.CreateOrUpdate(toAdd);
+        context.SaveChanges();
+        int ingredientCountAfter = context.Set<Ingredient>().Count();
+
+        // Assert
+        Assert.That(ingredientCountAfter, Is.EqualTo(ingredientCountBefore + 1));
+    }
+
+    [Test]
+    public void CreateOrUpdate_CreatesNewIngredients_WhenUpdatedWithNewIngredients()
+    {
+        // Arrange
+        MealPlannerDBContext context = CreateContext();
+        RecipeRepository repo = new RecipeRepository(context);
+        Ingredient ingredient = new Ingredient
+        {
+            Amount = 1,
+            IngredientBase = new IngredientBase { Name = "" },
+            Measurement = new Measurement { Name = "" }
+        };
+        Recipe toChange = context.Find<Recipe>(10);
+
+        // Act
+        int ingredientCountBefore = context.Set<Ingredient>().Count();
+        toChange.Ingredients.Add(ingredient);
+        repo.CreateOrUpdate(toChange);
+        context.SaveChanges();
+        int ingredientCountAfter = context.Set<Ingredient>().Count();
+
+        // Assert
+        Assert.That(ingredientCountAfter, Is.EqualTo(ingredientCountBefore + 1));
+    }
+
+    [Test]
+    public void CreateOrUpdate_CreatesNewIngredientBase()
+    {
+        // Arrange
+        MealPlannerDBContext context = CreateContext();
+        RecipeRepository repo = new RecipeRepository(context);
+        Ingredient ingredient = new Ingredient
+        {
+            Amount = 1,
+            IngredientBase = new IngredientBase { Name = "Test2" },
+            Measurement = new Measurement { Name = "" }
+        };
+        Recipe toAdd = new Recipe 
+        { 
+            Name = "",
+            Directions = "",
+            Ingredients = [ingredient]
+        };
+
+        // Act
+        int baseCountBefore = context.Set<IngredientBase>().Count();
+        repo.CreateOrUpdate(toAdd);
+        context.SaveChanges();
+        int baseCountAfter = context.Set<IngredientBase>().Count();
+
+        // Assert
+        Assert.That(baseCountAfter, Is.EqualTo(baseCountBefore + 1));
+    }
+
+    [Test]
+    public void CreateOrUpdate_UsesExistingIngredientBase()
+    {
+        // Arrange
+        MealPlannerDBContext context = CreateContext();
+        RecipeRepository repo = new RecipeRepository(context);
+        Ingredient ingredient = new Ingredient
+        {
+            Amount = 1,
+            IngredientBase = new IngredientBase { Name = "Test" },
+            Measurement = new Measurement { Name = "" }
+        };
+        Recipe toAdd = new Recipe 
+        { 
+            Name = "",
+            Directions = "",
+            Ingredients = [ingredient]
+        };
+
+        // Act
+        int baseCountBefore = context.Set<IngredientBase>().Count();
+        repo.CreateOrUpdate(toAdd);
+        context.SaveChanges();
+        int baseCountAfter = context.Set<IngredientBase>().Count();
+
+        // Assert
+        Assert.That(baseCountAfter, Is.EqualTo(baseCountBefore));
+    }
+
+    [Test]
+    public void CreateOrUpdate_CreatesNewMeasurement()
+    {
+        // Arrange
+        MealPlannerDBContext context = CreateContext();
+        RecipeRepository repo = new RecipeRepository(context);
+        Ingredient ingredient = new Ingredient
+        {
+            Amount = 1,
+            IngredientBase = new IngredientBase { Name = "" },
+            Measurement = new Measurement { Name = "Test2" }
+        };
+        Recipe toAdd = new Recipe 
+        { 
+            Name = "",
+            Directions = "",
+            Ingredients = [ingredient]
+        };
+
+        // Act
+        int measurementCountBefore = context.Set<Measurement>().Count();
+        repo.CreateOrUpdate(toAdd);
+        context.SaveChanges();
+        int measurementCountAfter = context.Set<Measurement>().Count();
+
+        // Assert
+        Assert.That(measurementCountAfter, Is.EqualTo(measurementCountBefore + 1));
+    }
+
+    [Test]
+    public void CreateOrUpdate_UsesExistingMeasurement()
+    {
+        // Arrange
+        MealPlannerDBContext context = CreateContext();
+        RecipeRepository repo = new RecipeRepository(context);
+        Ingredient ingredient = new Ingredient
+        {
+            Amount = 1,
+            IngredientBase = new IngredientBase { Name = "" },
+            Measurement = new Measurement { Name = "Test" }
+        };
+        Recipe toAdd = new Recipe 
+        { 
+            Name = "",
+            Directions = "",
+            Ingredients = [ingredient]
+        };
+
+        // Act
+        int measurementCountBefore = context.Set<Measurement>().Count();
+        repo.CreateOrUpdate(toAdd);
+        context.SaveChanges();
+        int measurementCountAfter = context.Set<Measurement>().Count();
+
+        // Assert
+        Assert.That(measurementCountAfter, Is.EqualTo(measurementCountBefore));
     }
 }
