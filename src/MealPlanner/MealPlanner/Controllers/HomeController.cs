@@ -27,15 +27,6 @@ public class HomeController : Controller
         _mealRepo = mealRepo;
     }
 
-    [HttpGet("/")]
-    public IActionResult Landing()
-    {
-        if (User?.Identity?.IsAuthenticated == true)
-            return RedirectToAction(nameof(Index));
-
-        return RedirectToAction("Login", "Login");
-    }
-
     public async Task<IActionResult> Index(string? date)
     {
         if (!HttpContext.User.Identity?.IsAuthenticated ?? true)

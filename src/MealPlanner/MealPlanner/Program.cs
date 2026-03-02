@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Azure.Security.KeyVault.Secrets;
 using Azure.Identity;
-using Microsoft.AspNetCore.DataProtection;
+using MealPlanner.Services.Abstractions;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,13 +14,12 @@ builder.Services.AddControllersWithViews();
 
 string? connectionString =
     builder.Configuration.GetConnectionString("DefaultConnection")
-    ?? builder.Configuration["ConnectionStrings:DefaultConnection"]
     ?? builder.Configuration["ConnectionString"];
 
 if (string.IsNullOrWhiteSpace(connectionString))
 {
     throw new InvalidOperationException(
-        "Missing connection string. Set user-secrets 'ConnectionStrings:DefaultConnection' or 'ConnectionString'."
+        "Missing connection string. Set 'ConnectionStrings:DefaultConnection' or 'ConnectionString'."
     );
 }
 
@@ -35,8 +34,6 @@ if (builder.Environment.IsProduction())
             secretClient.GetSecret("EmailSettings--Password").Value.Value;
     }
 }
-
-Console.WriteLine("USING CONNECTION STRING: " + connectionString);
 
 builder.Services.AddDbContext<MealPlannerDBContext>(options =>
     options.UseSqlServer(connectionString, options => options.EnableRetryOnFailure()));
@@ -70,6 +67,7 @@ builder.Services.AddScoped<INutritionProgressService, NutritionProgressService>(
 builder.Services.AddScoped<ILoginService, LoginService>();
 builder.Services.AddScoped<IRegistrationService, RegistrationService>();
 builder.Services.AddScoped<IAccountSettingsService, AccountSettingsService>();
+builder.Services.AddScoped<IFavoritesService, FavoritesService>();
 
 builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
 builder.Services.AddTransient<IEmailService, EmailService>();

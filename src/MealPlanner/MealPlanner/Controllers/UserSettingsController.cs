@@ -7,6 +7,7 @@ using MealPlanner.ViewModels;
 
 namespace MealPlanner.Controllers
 {
+    // TODO: Remove business logic from controller
     [Authorize]
     public class UserSettingsController : Controller
     {
