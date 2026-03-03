@@ -2,6 +2,7 @@ using MealPlanner.Controllers;
 using MealPlanner.DAL.Abstract;
 using MealPlanner.Models;
 using MealPlanner.Services;
+using MealPlanner.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
@@ -23,14 +24,50 @@ public class FoodEntriesTests
         var contextOptions = new DbContextOptionsBuilder<MealPlannerDBContext>()
             .UseSqlite(connection)
             .Options;
-        
+
         using var context = new MealPlannerDBContext(contextOptions);
 
-        var _recipeRepo = new Mock<IRecipeRepository>();
-        _recipeRepo.Setup(_recipeRepo => _recipeRepo.ReadRecipeWithIngredientsAsync(1)).Returns(Task.FromResult<Recipe?>(new Recipe{Id=1, Name = "Oatmeal Cookies", Directions = ""}));
+        // Needed for SQLite in-memory: create schema
+        context.Database.EnsureCreated();
+
+        var recipeRepo = new Mock<IRecipeRepository>();
+
+        // Recipe WITH nutrition values
+        recipeRepo
+            .Setup(r => r.ReadRecipeWithIngredientsAsync(1))
+            .ReturnsAsync(new Recipe
+            {
+                Id = 1,
+                Name = "Oatmeal Cookies",
+                Directions = "",
+                Calories = 450,
+                Protein = 12,
+                Carbs = 60,
+                Fat = 18
+            });
+
+        // Recipe with NO nutrition (all defaults to 0)
+        recipeRepo
+            .Setup(r => r.ReadRecipeWithIngredientsAsync(2))
+            .ReturnsAsync(new Recipe
+            {
+                Id = 2,
+                Name = "Plain Rice",
+                Directions = ""
+                // Calories/Protein/Carbs/Fat default to 0
+            });
+
+        // Not found
+        recipeRepo
+            .Setup(r => r.ReadRecipeWithIngredientsAsync(It.Is<int>(id => id != 1 && id != 2)))
+            .ReturnsAsync((Recipe?)null);
+
         var nutritionService = new Mock<INutritionProgressService>();
 
-        _controller = new FoodEntriesController(_recipeRepo.Object, context, nutritionService.Object);
+        // New context instance for controller (same options)
+        var controllerContext = new MealPlannerDBContext(contextOptions);
+
+        _controller = new FoodEntriesController(recipeRepo.Object, controllerContext, nutritionService.Object);
     }
 
     [TearDown]
@@ -41,6 +78,7 @@ public class FoodEntriesTests
     {
         // Act
         var result = _controller.Recipes();
+
         // Assert
         Assert.That(result, Is.TypeOf<ViewResult>());
     }
@@ -50,18 +88,62 @@ public class FoodEntriesTests
     {
         // Act
         var result = await _controller.Recipes(1);
+
+        // Assert
         Assert.That(result, Is.TypeOf<ViewResult>());
         var view = result as ViewResult;
-        // Assert
-        Assert.That(view.ViewName, Is.EqualTo("SingleRecipe"));
+
+        Assert.That(view!.ViewName, Is.EqualTo("SingleRecipe"));
+        Assert.That(view.Model, Is.TypeOf<RecipeViewModel>());
     }
 
     [Test]
-    public async Task RecipesSingular_Redirects_IfIdNotInRecipeRepo()
+    public async Task RecipesSingular_ReturnsNotFound_IfIdNotInRecipeRepo()
     {
         // Act
-        var result = await _controller.Recipes(-1) as RedirectToActionResult;
+        var result = await _controller.Recipes(-1);
+
         // Assert
-        Assert.That(result?.ActionName, Is.EqualTo("SelectType"));
+        Assert.That(result, Is.TypeOf<NotFoundResult>());
+    }
+
+    [Test]
+    public async Task RecipesSingular_ModelContainsNutritionValues_WhenRecipeHasNutrition()
+    {
+        // Act
+        var result = await _controller.Recipes(1);
+
+        // Assert
+        Assert.That(result, Is.TypeOf<ViewResult>());
+        var view = (ViewResult)result;
+
+        Assert.That(view.ViewName, Is.EqualTo("SingleRecipe"));
+        Assert.That(view.Model, Is.TypeOf<RecipeViewModel>());
+
+        var model = (RecipeViewModel)view.Model!;
+        Assert.That(model.Calories, Is.EqualTo(450));
+        Assert.That(model.Protein, Is.EqualTo(12));
+        Assert.That(model.Carbs, Is.EqualTo(60));
+        Assert.That(model.Fat, Is.EqualTo(18));
+    }
+
+    [Test]
+    public async Task RecipesSingular_ModelNutritionDefaultsToZero_WhenRecipeNutritionIsMissing()
+    {
+        // Act
+        var result = await _controller.Recipes(2);
+
+        // Assert
+        Assert.That(result, Is.TypeOf<ViewResult>());
+        var view = (ViewResult)result;
+
+        Assert.That(view.ViewName, Is.EqualTo("SingleRecipe"));
+        Assert.That(view.Model, Is.TypeOf<RecipeViewModel>());
+
+        var model = (RecipeViewModel)view.Model!;
+        Assert.That(model.Calories, Is.EqualTo(0));
+        Assert.That(model.Protein, Is.EqualTo(0));
+        Assert.That(model.Carbs, Is.EqualTo(0));
+        Assert.That(model.Fat, Is.EqualTo(0));
     }
 }

@@ -4,6 +4,7 @@ using MealPlanner.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace MealPlanner.Migrations
 {
     [DbContext(typeof(MealPlannerDBContext))]
-    partial class MealPlannerDBContextModelSnapshot : ModelSnapshot
+    [Migration("20260301074123_AddUserFavoriteRecipe")]
+    partial class AddUserFavoriteRecipe
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -36,7 +39,7 @@ namespace MealPlanner.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("DietaryRestriction", (string)null);
+                    b.ToTable("DietaryRestriction");
                 });
 
             modelBuilder.Entity("MealPlanner.Models.Ingredient", b =>
@@ -67,7 +70,7 @@ namespace MealPlanner.Migrations
 
                     b.HasIndex("RecipeId");
 
-                    b.ToTable("Ingredient", (string)null);
+                    b.ToTable("Ingredient");
                 });
 
             modelBuilder.Entity("MealPlanner.Models.IngredientBase", b =>
@@ -88,7 +91,7 @@ namespace MealPlanner.Migrations
                     b.HasIndex("Name")
                         .IsUnique();
 
-                    b.ToTable("IngredientBase", (string)null);
+                    b.ToTable("IngredientBase");
                 });
 
             modelBuilder.Entity("MealPlanner.Models.Meal", b =>
@@ -116,7 +119,7 @@ namespace MealPlanner.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Meal", (string)null);
+                    b.ToTable("Meal");
                 });
 
             modelBuilder.Entity("MealPlanner.Models.Measurement", b =>
@@ -137,7 +140,7 @@ namespace MealPlanner.Migrations
                     b.HasIndex("Name")
                         .IsUnique();
 
-                    b.ToTable("Measurement", (string)null);
+                    b.ToTable("Measurement");
                 });
 
             modelBuilder.Entity("MealPlanner.Models.Recipe", b =>
@@ -170,7 +173,7 @@ namespace MealPlanner.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Recipe", (string)null);
+                    b.ToTable("Recipe");
 
                     b.HasData(
                         new
@@ -346,7 +349,7 @@ namespace MealPlanner.Migrations
 
                     b.HasIndex("DietaryRestrictionId");
 
-                    b.ToTable("UserDietaryRestriction", (string)null);
+                    b.ToTable("UserDietaryRestriction");
                 });
 
             modelBuilder.Entity("MealPlanner.Models.UserFavoriteRecipe", b =>
@@ -361,7 +364,7 @@ namespace MealPlanner.Migrations
 
                     b.HasIndex("RecipeId");
 
-                    b.ToTable("UserFavoriteRecipe", (string)null);
+                    b.ToTable("UserFavoriteRecipe");
                 });
 
             modelBuilder.Entity("MealPlanner.Models.UserNutritionPreference", b =>
@@ -392,7 +395,7 @@ namespace MealPlanner.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("UserNutritionPreference", (string)null);
+                    b.ToTable("UserNutritionPreference");
                 });
 
             modelBuilder.Entity("MealPlanner.Models.UserProfile", b =>
@@ -432,7 +435,7 @@ namespace MealPlanner.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("UserProfile", (string)null);
+                    b.ToTable("UserProfile");
                 });
 
             modelBuilder.Entity("MealRecipe", b =>
@@ -447,7 +450,7 @@ namespace MealPlanner.Migrations
 
                     b.HasIndex("RecipesId");
 
-                    b.ToTable("MealRecipe", (string)null);
+                    b.ToTable("MealRecipe");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>

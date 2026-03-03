@@ -68,10 +68,10 @@ public class FoodEntriesController : Controller
         // Change to not-found error!
         if (recipe == null)
         {
-            return RedirectToAction("SelectType");
+            return NotFound();
         }
 
-        RecipeViewModel viewModel = RecipeViewModel.FromRecipe(recipe);
+        RecipeViewModel viewModel = ViewModelService.RecipeToRecipeVM(recipe);
         return View("SingleRecipe", viewModel);
     }
 
@@ -84,34 +84,12 @@ public class FoodEntriesController : Controller
     public IActionResult RecipeAdded(RecipeViewModel newRecipeViewModel)
     {
         //error checking
-        if (!ModelState.IsValid || newRecipeViewModel.AnyErrors() == true)
+        if (!ModelState.IsValid)
         {
             return View("AddNewRecipe", newRecipeViewModel);
         }
-
-        //creates a new recipe model with the viewmodels information
-        Recipe recipe = new Recipe();
-        recipe.Name = newRecipeViewModel.Name;
-        recipe.Ingredients = [];
-        recipe.Directions = newRecipeViewModel.Directions;
-        recipe.Calories = newRecipeViewModel.Calories;
-        recipe.Protein = newRecipeViewModel.Protein;
-        recipe.Carbs = newRecipeViewModel.Carbs;
-        recipe.Fat = newRecipeViewModel.Fat;
-        recipe.Meals = new List<Meal>();
-
-        // Adds the ingredients to the recipe
-        foreach (string i in newRecipeViewModel.Ingredients)
-        {
-            Ingredient newIngredient = new Ingredient
-            {
-                IngredientBase = new IngredientBase { Name = i },
-                Measurement = new Measurement { Name = "count" },
-                Amount = 1
-            };
-
-            recipe.Ingredients.Add(newIngredient);
-        }
+        Console.WriteLine(newRecipeViewModel.Ingredients.Count);
+        Recipe recipe = ViewModelService.RecipeFromRecipeVM(newRecipeViewModel);
 
         //adds it to the database
         _recipeRepository.CreateOrUpdate(recipe);
