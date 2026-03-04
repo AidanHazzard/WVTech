@@ -1,6 +1,13 @@
+@model IEnumerable<MealPlanner.Models.Recipe>
 <div class="back1 backHasButton">
     <h1 class="back1Title">Your Recipes</h1>
-    <h1 class="back1Title">{A list of the users recipes here}</h1>
+    @foreach (Recipe r in Model)
+    {
+        var location = @Url.Action(action: "Recipes");
+        <button class="buttonGrey" onclick="location.href='@location/@r.Id'">
+            <h3 class="buttonText">@r.Name</h3>
+        </button>
+    }
     <form asp-controller="FoodEntries" asp-action="AddNewRecipe" method="get">
         <button class="buttonBlue">
             <h2 class="buttonText">Create a New Recipe</h2>

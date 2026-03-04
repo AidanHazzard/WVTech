@@ -1,8 +1,11 @@
 using MealPlanner.Controllers;
+using MealPlanner.DAL.Abstract;
 using MealPlanner.DAL.Concrete;
 using MealPlanner.Models;
+using MealPlanner.Services;
 using MealPlanner.ViewModels;
 using Microsoft.EntityFrameworkCore;
+using Moq;
 
 namespace MealPlanner.Tests
 {
@@ -23,7 +26,9 @@ namespace MealPlanner.Tests
 
             _context = new MealPlannerDBContext(options);
             _recipeRepository = new RecipeRepository(_context);
-            _controller = new FoodEntriesController(_recipeRepository, _context);
+            var userRepo = new Mock<IUserRepository>();
+            var registrationService = new Mock<IRegistrationService>();
+            _controller = new FoodEntriesController(_recipeRepository, userRepo.Object, _context, registrationService.Object);
         }
 
         //handels the cleaning up after every test

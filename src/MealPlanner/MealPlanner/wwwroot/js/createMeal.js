@@ -2,7 +2,7 @@ let recipes = []
 
 $(document).ready( () =>
     {
-        $(document).on("click", "#recipeSearchRow", addRecipe);
+        $(document).on("click", ".recipeSearchRow", addRecipe);
     }
 );
 
