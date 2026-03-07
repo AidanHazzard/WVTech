@@ -13,15 +13,21 @@ public class FoodEntriesController : Controller
 {
     private readonly MealPlannerDBContext _context;
     private readonly IRecipeRepository _recipeRepository;
+    private readonly IUserRepository _userRepository;
     private readonly INutritionProgressService? _nutritionProgressService;
+    private readonly IRegistrationService _registrationService;
 
     public FoodEntriesController(
         IRecipeRepository recipeRepository,
+        IUserRepository userRepository,
         MealPlannerDBContext context,
+        IRegistrationService registrationService,
         INutritionProgressService? nutritionProgressService = null)
     {
         _recipeRepository = recipeRepository;
+        _userRepository = userRepository;
         _context = context;
+        _registrationService = registrationService;
         _nutritionProgressService = nutritionProgressService;
     }
 
@@ -53,10 +59,17 @@ public class FoodEntriesController : Controller
         return View(progress);
     }
 
+    [Authorize]
     [Route("/FoodEntries/Recipes")]
-    public IActionResult Recipes()
+    public async Task<IActionResult> Recipes()
     {
-        return View();
+        User? user = await _registrationService.FindUserByClaimAsync(User);
+        IEnumerable<Recipe> userRecipes = [];
+        if (user != null)
+        {
+            userRecipes =  await _userRepository.GetUserOwnedRecipesByUserIdAsync(user.Id);
+        }
+        return View(userRecipes);
     }
 
     [HttpGet]
@@ -65,10 +78,10 @@ public class FoodEntriesController : Controller
     {
         Recipe? recipe = await _recipeRepository.ReadRecipeWithIngredientsAsync(id);
         
-        // Change to not-found error!
+        // Change to not-found view!
         if (recipe == null)
         {
-            return NotFound();
+            return RedirectToAction("SearchRecipes"); 
         }
 
         RecipeViewModel viewModel = ViewModelService.RecipeToRecipeVM(recipe);
@@ -81,15 +94,16 @@ public class FoodEntriesController : Controller
     }
 
     [HttpPost]
-    public IActionResult RecipeAdded(RecipeViewModel newRecipeViewModel)
+    public async Task<IActionResult> RecipeAdded(RecipeViewModel newRecipeViewModel)
     {
         //error checking
         if (!ModelState.IsValid)
         {
             return View("AddNewRecipe", newRecipeViewModel);
         }
-        Console.WriteLine(newRecipeViewModel.Ingredients.Count);
+
         Recipe recipe = ViewModelService.RecipeFromRecipeVM(newRecipeViewModel);
+        recipe.Owner = await _registrationService.FindUserByClaimAsync(User);
 
         //adds it to the database
         _recipeRepository.CreateOrUpdate(recipe);

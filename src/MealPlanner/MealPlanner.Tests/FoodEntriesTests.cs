@@ -31,6 +31,7 @@ public class FoodEntriesTests
         context.Database.EnsureCreated();
 
         var recipeRepo = new Mock<IRecipeRepository>();
+        var userRepo = new Mock<IUserRepository>();
 
         // Recipe WITH nutrition values
         recipeRepo
@@ -63,21 +64,26 @@ public class FoodEntriesTests
             .ReturnsAsync((Recipe?)null);
 
         var nutritionService = new Mock<INutritionProgressService>();
-
+        var registrationService = new Mock<IRegistrationService>();
         // New context instance for controller (same options)
         var controllerContext = new MealPlannerDBContext(contextOptions);
 
-        _controller = new FoodEntriesController(recipeRepo.Object, controllerContext, nutritionService.Object);
+        _controller = new FoodEntriesController(
+            recipeRepo.Object,
+            userRepo.Object,
+            controllerContext,
+            registrationService.Object,
+            nutritionService.Object);
     }
 
     [TearDown]
     public void TearDown() => _controller.Dispose();
 
     [Test]
-    public void RecipesPlural_ReturnsView()
+    public async Task RecipesPlural_ReturnsView()
     {
         // Act
-        var result = _controller.Recipes();
+        var result = await _controller.Recipes();
 
         // Assert
         Assert.That(result, Is.TypeOf<ViewResult>());
@@ -104,7 +110,7 @@ public class FoodEntriesTests
         var result = await _controller.Recipes(-1);
 
         // Assert
-        Assert.That(result, Is.TypeOf<NotFoundResult>());
+        Assert.That(result, Is.TypeOf<RedirectToActionResult>());
     }
 
     [Test]

@@ -18,4 +18,5 @@ public class Recipe
     public int Fat { get; set; } 
 
     public List<Meal> Meals { get; set; } = [];
+    public User? Owner { get; set; }
 }
