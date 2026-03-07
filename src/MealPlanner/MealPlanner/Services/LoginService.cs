@@ -23,6 +23,17 @@ namespace MealPlanner.Services
 
         public async Task<SignInResult> LoginUserAsync(LoginViewModel model)
         {
+            var user = await _userManager.FindByEmailAsync(model.Email);
+
+            if (user == null)
+            {
+                return SignInResult.Failed;
+            }
+
+            if (!user.EmailConfirmed)
+            {
+                return SignInResult.NotAllowed;
+            }
             return await _signInManager.PasswordSignInAsync(
                 model.Email,
                 model.Password,

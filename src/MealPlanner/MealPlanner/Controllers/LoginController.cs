@@ -26,6 +26,12 @@ public class LoginController : Controller
 
         if (result.Succeeded) return RedirectToAction("Index", "Home");
 
+        if (result.IsNotAllowed)
+        {
+            ModelState.AddModelError("", "You must confirm your email before logging in.");
+            return View(model);
+        }
+
         ModelState.AddModelError("", "Invalid login attempt.");
         return View(model);
     }

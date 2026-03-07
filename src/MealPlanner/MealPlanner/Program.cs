@@ -37,11 +37,24 @@ builder.Services.AddIdentity<User, IdentityRole>(options =>
 .AddEntityFrameworkStores<MealPlannerDBContext>()
 .AddDefaultTokenProviders();
 
+builder.Services.AddHttpContextAccessor();
+
 //when an unauthorized user tries to access a protected resource, redirect them to the login page
 builder.Services.ConfigureApplicationCookie(options =>
 {
     options.LoginPath = "/Login";           // must match your LoginController
     options.AccessDeniedPath = "/Login";    // optional
+
+     // Sliding expiration okay
+    options.SlidingExpiration = true;
+
+   options.Cookie.HttpOnly = true;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+    options.Cookie.SameSite = SameSiteMode.Strict;
+
+    options.ExpireTimeSpan = TimeSpan.FromDays(30);
+
+    options.Cookie.IsEssential = true;
 });
 
 builder.Services.AddScoped<INutritionProgressService, NutritionProgressService>();
