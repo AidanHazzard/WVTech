@@ -4,6 +4,7 @@ using MealPlanner.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace MealPlanner.Migrations
 {
     [DbContext(typeof(MealPlannerDBContext))]
-    partial class MealPlannerDBContextModelSnapshot : ModelSnapshot
+    [Migration("20260305190219_addInfoToUserRecipe")]
+    partial class addInfoToUserRecipe
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -349,6 +352,21 @@ namespace MealPlanner.Migrations
                     b.ToTable("UserDietaryRestriction");
                 });
 
+            modelBuilder.Entity("MealPlanner.Models.UserFavoriteRecipe", b =>
+                {
+                    b.Property<string>("UserId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int>("RecipeId")
+                        .HasColumnType("int");
+
+                    b.HasKey("UserId", "RecipeId");
+
+                    b.HasIndex("RecipeId");
+
+                    b.ToTable("UserFavoriteRecipe");
+                });
+
             modelBuilder.Entity("MealPlanner.Models.UserNutritionPreference", b =>
                 {
                     b.Property<int>("Id")
@@ -656,6 +674,25 @@ namespace MealPlanner.Migrations
                         .IsRequired();
 
                     b.Navigation("DietaryRestriction");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("MealPlanner.Models.UserFavoriteRecipe", b =>
+                {
+                    b.HasOne("MealPlanner.Models.Recipe", "Recipe")
+                        .WithMany()
+                        .HasForeignKey("RecipeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("MealPlanner.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Recipe");
 
                     b.Navigation("User");
                 });

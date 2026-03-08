@@ -1,5 +1,6 @@
+using MealPlanner.DAL.Abstract;
 using MealPlanner.Models;
-using MealPlanner.Services.Abstractions;
+using MealPlanner.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -9,23 +10,33 @@ namespace MealPlanner.Controllers;
 [Authorize]
 public class FavoritesController : Controller
 {
-    private readonly IFavoritesService _favoritesService;
-    private readonly UserManager<User> _userManager;
+    private readonly MealPlannerDBContext _context;
+    private readonly IUserRecipeRepository _userRecipeRepository;
+    private readonly IRegistrationService _registrationService;
+    private readonly IRecipeRepository _recipeRepository;
 
-    public FavoritesController(IFavoritesService favoritesService, UserManager<User> userManager)
+    public FavoritesController(
+        MealPlannerDBContext context, 
+        IUserRecipeRepository userRecipeRepository, 
+        IRegistrationService registrationService,
+        IRecipeRepository recipeRepository)
     {
-        _favoritesService = favoritesService;
-        _userManager = userManager;
+        _context = context;
+        _userRecipeRepository = userRecipeRepository;
+        _registrationService = registrationService;
+        _recipeRepository = recipeRepository;
     }
 
     [HttpPost]
     public async Task<IActionResult> Add(int recipeId, string? returnUrl = null)
     {
-        var user = await _userManager.GetUserAsync(User);
+        User? user = await _registrationService.FindUserByClaimAsync(User);
+        Recipe? recipe = _recipeRepository.Read(recipeId);
         if (user == null) return Unauthorized();
-
-        await _favoritesService.AddFavoriteAsync(user.Id, recipeId);
-
+        
+        await _userRecipeRepository.AddFavoriteAsync(user, recipe);
+        await _context.SaveChangesAsync();
+        
         if (!string.IsNullOrWhiteSpace(returnUrl) && Url.IsLocalUrl(returnUrl))
             return Redirect(returnUrl);
 
@@ -35,10 +46,11 @@ public class FavoritesController : Controller
     [HttpPost]
     public async Task<IActionResult> Remove(int recipeId, string? returnUrl = null)
     {
-        var user = await _userManager.GetUserAsync(User);
+        User? user = await _registrationService.FindUserByClaimAsync(User);
         if (user == null) return Unauthorized();
 
-        await _favoritesService.RemoveFavoriteAsync(user.Id, recipeId);
+        await _userRecipeRepository.RemoveFavoriteAsync(user.Id, recipeId);
+        await _context.SaveChangesAsync();
 
         if (!string.IsNullOrWhiteSpace(returnUrl) && Url.IsLocalUrl(returnUrl))
             return Redirect(returnUrl);
@@ -49,10 +61,10 @@ public class FavoritesController : Controller
     [HttpGet]
     public async Task<IActionResult> MyFavorites()
     {
-        var user = await _userManager.GetUserAsync(User);
+        User? user = await _registrationService.FindUserByClaimAsync(User);
         if (user == null) return Unauthorized();
-
-        var favorites = await _favoritesService.GetFavoritesAsync(user.Id);
+        
+        List<Recipe> favorites = await _userRecipeRepository.GetFavoritesAsync(user.Id);
         return View(favorites);
     }
 

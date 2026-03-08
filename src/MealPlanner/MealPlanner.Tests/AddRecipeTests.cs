@@ -15,7 +15,6 @@ namespace MealPlanner.Tests
         private MealPlannerDBContext _context;
         private RecipeRepository _recipeRepository;
         private FoodEntriesController _controller;
-        private List<IngredientViewModel> _ingredients;
 
         //sets up an in memory database to play with and sets the variables above to a new instance
         [SetUp]
@@ -26,9 +25,9 @@ namespace MealPlanner.Tests
 
             _context = new MealPlannerDBContext(options);
             _recipeRepository = new RecipeRepository(_context);
-            var userRepo = new Mock<IUserRepository>();
+            var userRecipeRepo = new Mock<IUserRecipeRepository>();
             var registrationService = new Mock<IRegistrationService>();
-            _controller = new FoodEntriesController(_recipeRepository, userRepo.Object, _context, registrationService.Object);
+            _controller = new FoodEntriesController(_recipeRepository, userRecipeRepo.Object, _context, registrationService.Object);
         }
 
         //handels the cleaning up after every test
@@ -40,7 +39,7 @@ namespace MealPlanner.Tests
         }
 
         [Test]
-        public void AddsRecipeToRepository()
+        public async Task AddsRecipeToRepository()
         {
             var vm = new RecipeViewModel
             {
@@ -55,7 +54,7 @@ namespace MealPlanner.Tests
                 Fat = 3,
             };
 
-            _controller.RecipeAdded(vm);
+            await _controller.RecipeAdded(vm);
 
             var recipes = _recipeRepository.ReadAll().ToList();
             Assert.That(recipes.Count, Is.EqualTo(1));
@@ -72,7 +71,7 @@ namespace MealPlanner.Tests
         }
 
         [Test]
-        public void InvalidModelState()
+        public async Task InvalidModelState()
         {
             var vm1 = new RecipeViewModel
             {
@@ -84,14 +83,14 @@ namespace MealPlanner.Tests
             };
 
             _controller.ModelState.AddModelError("Name", "Required");
-            _controller.RecipeAdded(vm1);
+            await _controller.RecipeAdded(vm1);
 
             var recipes = _recipeRepository.ReadAll().ToList();
             Assert.That(recipes.Count, Is.EqualTo(0));
         }
 
         [Test]
-        public void AddingMultipleRecipes()
+        public async Task AddingMultipleRecipes()
         {
             var vm1 = new RecipeViewModel
             {
@@ -119,8 +118,8 @@ namespace MealPlanner.Tests
                 Fat = 23,
             };
 
-            _controller.RecipeAdded(vm1);
-            _controller.RecipeAdded(vm2);
+            await _controller.RecipeAdded(vm1);
+            await _controller.RecipeAdded(vm2);
 
             var recipes = _recipeRepository.ReadAll().ToList();
             Assert.That(recipes.Count, Is.EqualTo(2));

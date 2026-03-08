@@ -6,5 +6,6 @@ public class User : IdentityUser
 {
     public string FullName { get; set; }
     
-    public List<Recipe> OwnedRecipes { get; set; } = [];
+    public List<Recipe> Recipes { get; } = [];
+    public List<UserRecipe> UserRecipes { get; } = [];
 }

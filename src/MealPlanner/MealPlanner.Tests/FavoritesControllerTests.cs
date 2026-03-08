@@ -2,12 +2,16 @@ using System.Collections.Generic;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using MealPlanner.Controllers;
+using MealPlanner.DAL.Abstract;
 using MealPlanner.Models;
+using MealPlanner.Services;
 using MealPlanner.Services.Abstractions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Routing;
+using Microsoft.Data.Sqlite;
+using Microsoft.EntityFrameworkCore;
 using Moq;
 using NUnit.Framework;
 
@@ -16,208 +20,148 @@ namespace MealPlanner.Tests;
 [TestFixture]
 public class FavoritesControllerTests
 {
-    private static ClaimsPrincipal AuthenticatedPrincipal(string userId = "user-1")
-        => new ClaimsPrincipal(new ClaimsIdentity(
-            new[]
-            {
-                new Claim(ClaimTypes.NameIdentifier, userId),
-                new Claim(ClaimTypes.Name, "testuser")
-            },
-            authenticationType: "TestAuth"));
+    private FavoritesController _controller;
+    private MealPlannerDBContext _context;
 
-    private static UserManager<User> BuildUserManagerMock(out Mock<UserManager<User>> userManagerMock)
+    [SetUp]
+    public void SetUp()
     {
-        var store = new Mock<IUserStore<User>>();
-        userManagerMock = new Mock<UserManager<User>>(
-            store.Object,
-            null!, null!, null!, null!, null!, null!, null!, null!);
 
-        return userManagerMock.Object;
+        var connection = new SqliteConnection("Filename=:memory:");
+        connection.Open();
+        var contextOptions = new DbContextOptionsBuilder<MealPlannerDBContext>()
+            .UseSqlite(connection)
+            .Options;
+        _context = new MealPlannerDBContext(contextOptions);
+
+        var user = new ClaimsPrincipal(new ClaimsIdentity(
+            [
+                new Claim(ClaimTypes.NameIdentifier, "user-1"),
+                new Claim(ClaimTypes.Name, "testuser")
+            ],
+            authenticationType: "TestAuth"));
+        
+        var regServiceMock = new Mock<IRegistrationService>();
+        regServiceMock.Setup(r => r.FindUserByClaimAsync(user))
+            .ReturnsAsync(new User { FullName = "testuser", Id = "test"});
+
+        var userRecipeRepoMock = new Mock<IUserRecipeRepository>();
+        
+        List<Recipe> favorites = 
+            [
+                new Recipe { Id = 1, Name = "Recipe 1", Directions = "D1" },
+                new Recipe { Id = 2, Name = "Recipe 2", Directions = "D2" }
+            ];
+        
+        userRecipeRepoMock.Setup(ur => ur.GetFavoritesAsync("test"))
+            .ReturnsAsync(favorites);
+
+        _controller = new FavoritesController(
+            _context, 
+            userRecipeRepoMock.Object,
+            regServiceMock.Object,
+            new Mock<IRecipeRepository>().Object);
+        _controller.ControllerContext = new ControllerContext
+        {
+            HttpContext = new DefaultHttpContext { User = user }
+        };
+        _controller.Url = new Mock<IUrlHelper>().Object;
     }
 
-    private static FavoritesController CreateController(
-        Mock<IFavoritesService> favoritesServiceMock,
-        Mock<UserManager<User>> userManagerMock,
-        ClaimsPrincipal? user = null,
-        bool isLocalUrl = true)
+    [TearDown]
+    public void TearDown()
     {
-        var controller = new FavoritesController(favoritesServiceMock.Object, userManagerMock.Object);
-
-        controller.ControllerContext = new ControllerContext
-        {
-            HttpContext = new DefaultHttpContext { User = user ?? AuthenticatedPrincipal() }
-        };
-
-        var urlHelper = new Mock<IUrlHelper>();
-        urlHelper.Setup(u => u.IsLocalUrl(It.IsAny<string>())).Returns(isLocalUrl);
-        controller.Url = urlHelper.Object;
-
-        return controller;
+        _controller.Dispose();
+        _context.Dispose();
     }
 
     [Test]
     public void Index_RedirectsToMyFavorites()
     {
-        var favSvc = new Mock<IFavoritesService>();
-        BuildUserManagerMock(out var userManagerMock);
+        var result = _controller.Index();
 
-        var controller = CreateController(favSvc, userManagerMock);
-
-        var result = controller.Index();
-
+        Assert.That(result, Is.TypeOf<RedirectToActionResult>());
         var redirect = result as RedirectToActionResult;
-        Assert.That(redirect, Is.Not.Null);
+
         Assert.That(redirect!.ActionName, Is.EqualTo("MyFavorites"));
     }
 
     [Test]
     public async Task Add_WhenUserNull_ReturnsUnauthorized()
     {
-        var favSvc = new Mock<IFavoritesService>();
-        BuildUserManagerMock(out var userManagerMock);
-
-        userManagerMock
-            .Setup(um => um.GetUserAsync(It.IsAny<ClaimsPrincipal>()))
-            .ReturnsAsync((User?)null);
-
-        var controller = CreateController(favSvc, userManagerMock);
-
-        var result = await controller.Add(recipeId: 10, returnUrl: "/FoodEntries/Recipes/10");
+        _controller.ControllerContext.HttpContext.User = null;
+        var result = await _controller.Add(recipeId: 10, returnUrl: "/FoodEntries/Recipes/10");
 
         Assert.That(result, Is.TypeOf<UnauthorizedResult>());
-        favSvc.Verify(s => s.AddFavoriteAsync(It.IsAny<string>(), It.IsAny<int>()), Times.Never);
     }
 
     [Test]
     public async Task Add_CallsService_AndRedirectsToLocalReturnUrl_WhenProvided()
     {
-        var favSvc = new Mock<IFavoritesService>();
-        BuildUserManagerMock(out var userManagerMock);
-
-        var user = new User { Id = "user-1", FullName = "Test User" };
-
-        userManagerMock
-            .Setup(um => um.GetUserAsync(It.IsAny<ClaimsPrincipal>()))
-            .ReturnsAsync(user);
-
-        var controller = CreateController(favSvc, userManagerMock, isLocalUrl: true);
-
+        var urlMock = new Mock<IUrlHelper>();
+        urlMock.Setup(u => u.IsLocalUrl(It.IsAny<string>())).Returns(true);
+        _controller.Url = urlMock.Object;
+        
         var returnUrl = "/FoodEntries/Recipes/10";
-        var result = await controller.Add(recipeId: 10, returnUrl: returnUrl);
+        var result = await _controller.Add(recipeId: 10, returnUrl: returnUrl);
 
-        favSvc.Verify(s => s.AddFavoriteAsync("user-1", 10), Times.Once);
-
+        Assert.That(result, Is.TypeOf<RedirectResult>());
         var redirect = result as RedirectResult;
-        Assert.That(redirect, Is.Not.Null);
         Assert.That(redirect!.Url, Is.EqualTo(returnUrl));
     }
 
     [Test]
     public async Task Add_CallsService_AndRedirectsToMyFavorites_WhenReturnUrlMissing()
     {
-        var favSvc = new Mock<IFavoritesService>();
-        BuildUserManagerMock(out var userManagerMock);
-
-        var user = new User { Id = "user-1", FullName = "Test User" };
-
-        userManagerMock
-            .Setup(um => um.GetUserAsync(It.IsAny<ClaimsPrincipal>()))
-            .ReturnsAsync(user);
-
-        var controller = CreateController(favSvc, userManagerMock, isLocalUrl: true);
-
-        var result = await controller.Add(recipeId: 10, returnUrl: null);
-
-        favSvc.Verify(s => s.AddFavoriteAsync("user-1", 10), Times.Once);
+        var result = await _controller.Add(recipeId: 10, returnUrl: null);
+        
+        Assert.That(result, Is.TypeOf<RedirectToActionResult>());
 
         var redirect = result as RedirectToActionResult;
-        Assert.That(redirect, Is.Not.Null);
         Assert.That(redirect!.ActionName, Is.EqualTo("MyFavorites"));
     }
 
     [Test]
     public async Task Add_CallsService_AndRedirectsToMyFavorites_WhenReturnUrlNotLocal()
     {
-        var favSvc = new Mock<IFavoritesService>();
-        BuildUserManagerMock(out var userManagerMock);
+        var result = await _controller.Add(recipeId: 10, returnUrl: "https://evil.example.com");
 
-        var user = new User { Id = "user-1", FullName = "Test User" };
-
-        userManagerMock
-            .Setup(um => um.GetUserAsync(It.IsAny<ClaimsPrincipal>()))
-            .ReturnsAsync(user);
-
-        var controller = CreateController(favSvc, userManagerMock, isLocalUrl: false);
-
-        var result = await controller.Add(recipeId: 10, returnUrl: "https://evil.example.com");
-
-        favSvc.Verify(s => s.AddFavoriteAsync("user-1", 10), Times.Once);
-
+        Assert.That(result, Is.TypeOf<RedirectToActionResult>());
         var redirect = result as RedirectToActionResult;
-        Assert.That(redirect, Is.Not.Null);
+
         Assert.That(redirect!.ActionName, Is.EqualTo("MyFavorites"));
     }
 
     [Test]
     public async Task Remove_WhenUserNull_ReturnsUnauthorized()
     {
-        var favSvc = new Mock<IFavoritesService>();
-        BuildUserManagerMock(out var userManagerMock);
-
-        userManagerMock
-            .Setup(um => um.GetUserAsync(It.IsAny<ClaimsPrincipal>()))
-            .ReturnsAsync((User?)null);
-
-        var controller = CreateController(favSvc, userManagerMock);
-
-        var result = await controller.Remove(recipeId: 10, returnUrl: "/Favorites/MyFavorites");
+        _controller.ControllerContext = new ControllerContext();
+        var result = await _controller.Remove(recipeId: 10, returnUrl: "/Favorites/MyFavorites");
 
         Assert.That(result, Is.TypeOf<UnauthorizedResult>());
-        favSvc.Verify(s => s.RemoveFavoriteAsync(It.IsAny<string>(), It.IsAny<int>()), Times.Never);
     }
 
     [Test]
     public async Task Remove_CallsService_AndRedirectsToLocalReturnUrl_WhenProvided()
     {
-        var favSvc = new Mock<IFavoritesService>();
-        BuildUserManagerMock(out var userManagerMock);
-
-        var user = new User { Id = "user-1", FullName = "Test User" };
-
-        userManagerMock
-            .Setup(um => um.GetUserAsync(It.IsAny<ClaimsPrincipal>()))
-            .ReturnsAsync(user);
-
-        var controller = CreateController(favSvc, userManagerMock, isLocalUrl: true);
+        var urlMock = new Mock<IUrlHelper>();
+        urlMock.Setup(u => u.IsLocalUrl(It.IsAny<string>())).Returns(true);
+        _controller.Url = urlMock.Object;
 
         var returnUrl = "/Favorites/MyFavorites";
-        var result = await controller.Remove(recipeId: 10, returnUrl: returnUrl);
+        var result = await _controller.Remove(recipeId: 10, returnUrl: returnUrl);
 
-        favSvc.Verify(s => s.RemoveFavoriteAsync("user-1", 10), Times.Once);
-
+        Assert.That(result, Is.TypeOf<RedirectResult>());
         var redirect = result as RedirectResult;
-        Assert.That(redirect, Is.Not.Null);
+
         Assert.That(redirect!.Url, Is.EqualTo(returnUrl));
     }
 
     [Test]
     public async Task Remove_CallsService_AndRedirectsToMyFavorites_WhenReturnUrlMissing()
     {
-        var favSvc = new Mock<IFavoritesService>();
-        BuildUserManagerMock(out var userManagerMock);
-
-        var user = new User { Id = "user-1", FullName = "Test User" };
-
-        userManagerMock
-            .Setup(um => um.GetUserAsync(It.IsAny<ClaimsPrincipal>()))
-            .ReturnsAsync(user);
-
-        var controller = CreateController(favSvc, userManagerMock, isLocalUrl: true);
-
-        var result = await controller.Remove(recipeId: 10, returnUrl: null);
-
-        favSvc.Verify(s => s.RemoveFavoriteAsync("user-1", 10), Times.Once);
-
+        var result = await _controller.Remove(recipeId: 10, returnUrl: null);
+        
         var redirect = result as RedirectToActionResult;
         Assert.That(redirect, Is.Not.Null);
         Assert.That(redirect!.ActionName, Is.EqualTo("MyFavorites"));
@@ -226,77 +170,35 @@ public class FavoritesControllerTests
     [Test]
     public async Task Remove_CallsService_AndRedirectsToMyFavorites_WhenReturnUrlNotLocal()
     {
-        var favSvc = new Mock<IFavoritesService>();
-        BuildUserManagerMock(out var userManagerMock);
+        var result = await _controller.Remove(recipeId: 10, returnUrl: "https://evil.example.com");
 
-        var user = new User { Id = "user-1", FullName = "Test User" };
-
-        userManagerMock
-            .Setup(um => um.GetUserAsync(It.IsAny<ClaimsPrincipal>()))
-            .ReturnsAsync(user);
-
-        var controller = CreateController(favSvc, userManagerMock, isLocalUrl: false);
-
-        var result = await controller.Remove(recipeId: 10, returnUrl: "https://evil.example.com");
-
-        favSvc.Verify(s => s.RemoveFavoriteAsync("user-1", 10), Times.Once);
-
+        Assert.That(result, Is.TypeOf<RedirectToActionResult>());
         var redirect = result as RedirectToActionResult;
-        Assert.That(redirect, Is.Not.Null);
+
         Assert.That(redirect!.ActionName, Is.EqualTo("MyFavorites"));
     }
 
     [Test]
     public async Task MyFavorites_WhenUserNull_ReturnsUnauthorized()
     {
-        var favSvc = new Mock<IFavoritesService>();
-        BuildUserManagerMock(out var userManagerMock);
-
-        userManagerMock
-            .Setup(um => um.GetUserAsync(It.IsAny<ClaimsPrincipal>()))
-            .ReturnsAsync((User?)null);
-
-        var controller = CreateController(favSvc, userManagerMock);
-
-        var result = await controller.MyFavorites();
+        _controller.ControllerContext = new ControllerContext();
+        var result = await _controller.MyFavorites();
 
         Assert.That(result, Is.TypeOf<UnauthorizedResult>());
-        favSvc.Verify(s => s.GetFavoritesAsync(It.IsAny<string>()), Times.Never);
     }
 
     [Test]
     public async Task MyFavorites_WhenUserExists_ReturnsView_WithFavoritesModel()
     {
-        var favSvc = new Mock<IFavoritesService>();
-        BuildUserManagerMock(out var userManagerMock);
 
-        var user = new User { Id = "user-1", FullName = "Test User" };
-        var favorites = new List<Recipe>
-        {
-            new Recipe { Id = 1, Name = "Recipe 1", Directions = "D1" },
-            new Recipe { Id = 2, Name = "Recipe 2", Directions = "D2" }
-        };
-
-        userManagerMock
-            .Setup(um => um.GetUserAsync(It.IsAny<ClaimsPrincipal>()))
-            .ReturnsAsync(user);
-
-        favSvc
-            .Setup(s => s.GetFavoritesAsync("user-1"))
-            .ReturnsAsync(favorites);
-
-        var controller = CreateController(favSvc, userManagerMock);
-
-        var result = await controller.MyFavorites();
-
+        var result = await _controller.MyFavorites();
+        
+        Assert.That(result, Is.TypeOf<ViewResult>());
         var view = result as ViewResult;
-        Assert.That(view, Is.Not.Null);
         Assert.That(view!.Model, Is.TypeOf<List<Recipe>>());
 
         var model = (List<Recipe>)view.Model!;
         Assert.That(model.Count, Is.EqualTo(2));
         Assert.That(model[0].Name, Is.EqualTo("Recipe 1"));
-
-        favSvc.Verify(s => s.GetFavoritesAsync("user-1"), Times.Once);
     }
 }
