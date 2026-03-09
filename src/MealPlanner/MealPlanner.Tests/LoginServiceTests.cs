@@ -74,5 +74,49 @@ namespace MealPlanner.Tests
 
             _mockSignInManager.Verify(s => s.SignOutAsync(), Times.Once);
         }
+
+         // ======= NEW REMEMBER ME TESTS =======
+
+        [Test]
+        public async Task LoginUserAsync_WithRememberMeFalse_CallsSignInWithFalse()
+        {
+            var model = new LoginViewModel
+            {
+                Email = "user@test.com",
+                Password = "Password123",
+                RememberMe = false
+            };
+
+            _mockSignInManager
+                .Setup(s => s.PasswordSignInAsync(model.Email, model.Password, false, false))
+                .ReturnsAsync(SignInResult.Success)
+                .Verifiable();
+
+            var result = await _loginService.LoginUserAsync(model);
+
+            Assert.That(result.Succeeded, Is.True);
+            _mockSignInManager.Verify();
+        }
+
+        [Test]
+        public async Task LoginUserAsync_WithRememberMeTrue_CallsSignInWithTrue()
+        {
+            var model = new LoginViewModel
+            {
+                Email = "user@test.com",
+                Password = "Password123",
+                RememberMe = true
+            };
+
+            _mockSignInManager
+                .Setup(s => s.PasswordSignInAsync(model.Email, model.Password, true, false))
+                .ReturnsAsync(SignInResult.Success)
+                .Verifiable();
+
+            var result = await _loginService.LoginUserAsync(model);
+
+            Assert.That(result.Succeeded, Is.True);
+            _mockSignInManager.Verify();
+        }
     }
 }

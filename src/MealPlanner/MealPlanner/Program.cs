@@ -42,6 +42,7 @@ builder.Services.AddHttpContextAccessor();
 //when an unauthorized user tries to access a protected resource, redirect them to the login page
 builder.Services.ConfigureApplicationCookie(options =>
 {
+    Console.WriteLine("Auth Cookie Configuration Loaded");
     options.LoginPath = "/Login";           // must match your LoginController
     options.AccessDeniedPath = "/Login";    // optional
 

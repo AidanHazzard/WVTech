@@ -117,5 +117,59 @@ namespace MealPlanner.Tests
             Assert.That(redirectResult.ActionName, Is.EqualTo("Index"));
             Assert.That(redirectResult.ControllerName, Is.EqualTo("Home"));
         }
+
+        [Test]
+public async Task Login_Post_CallsLoginServiceWithCorrectRememberMe()
+{
+    // Arrange
+    var model = new LoginViewModel
+    {
+        Email = "test@test.com",
+        Password = "Password123",
+        RememberMe = true
+    };
+
+    _mockAccountService
+        .Setup(s => s.LoginUserAsync(It.Is<LoginViewModel>(m => m.RememberMe == true)))
+        .ReturnsAsync(SignInResult.Success)
+        .Verifiable();
+
+    // Act
+    var result = await _controller.Login(model);
+
+    // Assert
+    var redirectResult = result as RedirectToActionResult;
+    Assert.That(redirectResult, Is.Not.Null);
+    Assert.That(redirectResult.ActionName, Is.EqualTo("Index"));
+    Assert.That(redirectResult.ControllerName, Is.EqualTo("Home"));
+    _mockAccountService.Verify();
+}
+
+[Test]
+public async Task Login_Post_CallsLoginServiceWithRememberMeFalse()
+{
+    // Arrange
+    var model = new LoginViewModel
+    {
+        Email = "test@test.com",
+        Password = "Password123",
+        RememberMe = false
+    };
+
+    _mockAccountService
+        .Setup(s => s.LoginUserAsync(It.Is<LoginViewModel>(m => m.RememberMe == false)))
+        .ReturnsAsync(SignInResult.Success)
+        .Verifiable();
+
+    // Act
+    var result = await _controller.Login(model);
+
+    // Assert
+    var redirectResult = result as RedirectToActionResult;
+    Assert.That(redirectResult, Is.Not.Null);
+    Assert.That(redirectResult.ActionName, Is.EqualTo("Index"));
+    Assert.That(redirectResult.ControllerName, Is.EqualTo("Home"));
+    _mockAccountService.Verify();
+}
     }
 }
