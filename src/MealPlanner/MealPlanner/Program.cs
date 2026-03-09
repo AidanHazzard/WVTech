@@ -6,7 +6,6 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Azure.Security.KeyVault.Secrets;
 using Azure.Identity;
-using MealPlanner.Services.Abstractions;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -46,7 +45,7 @@ builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 builder.Services.AddScoped<IRecipeRepository, RecipeRepository>();
 builder.Services.AddScoped<IUserDietaryRestrictionRepository, UserDietaryRestrictionRepository>();
 builder.Services.AddScoped<IMealRepository, MealRepository>();
-builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IUserRecipeRepository, UserRecipeRepository>();
 
 // Add Identity
 builder.Services.AddIdentity<User, IdentityRole>(options =>
@@ -74,7 +73,6 @@ builder.Services.AddScoped<INutritionProgressService, NutritionProgressService>(
 builder.Services.AddScoped<ILoginService, LoginService>();
 builder.Services.AddScoped<IRegistrationService, RegistrationService>();
 builder.Services.AddScoped<IAccountSettingsService, AccountSettingsService>();
-builder.Services.AddScoped<IFavoritesService, FavoritesService>();
 
 // Configure emailer
 builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));

@@ -16,7 +16,7 @@ public class Recipe
     public int Protein { get; set; }
     public int Carbs { get; set; }
     public int Fat { get; set; } 
-
     public List<Meal> Meals { get; set; } = [];
-    public User? Owner { get; set; }
+    public List<User> Users { get; } = [];
+    public List<UserRecipe> UserRecipes { get; } = [];
 }

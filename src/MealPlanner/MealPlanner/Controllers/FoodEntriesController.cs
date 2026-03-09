@@ -13,22 +13,22 @@ public class FoodEntriesController : Controller
 {
     private readonly MealPlannerDBContext _context;
     private readonly IRecipeRepository _recipeRepository;
-    private readonly IUserRepository _userRepository;
+    private readonly IUserRecipeRepository _userRecipeRepository;
     private readonly INutritionProgressService? _nutritionProgressService;
     private readonly IRegistrationService _registrationService;
 
     public FoodEntriesController(
         IRecipeRepository recipeRepository,
-        IUserRepository userRepository,
+        IUserRecipeRepository userRecipeRepository,
         MealPlannerDBContext context,
         IRegistrationService registrationService,
         INutritionProgressService? nutritionProgressService = null)
     {
         _recipeRepository = recipeRepository;
-        _userRepository = userRepository;
         _context = context;
         _registrationService = registrationService;
         _nutritionProgressService = nutritionProgressService;
+        _userRecipeRepository = userRecipeRepository;
     }
 
     public IActionResult SearchRecipes()
@@ -59,7 +59,6 @@ public class FoodEntriesController : Controller
         return View(progress);
     }
 
-    [Authorize]
     [Route("/FoodEntries/Recipes")]
     public async Task<IActionResult> Recipes()
     {
@@ -67,7 +66,7 @@ public class FoodEntriesController : Controller
         IEnumerable<Recipe> userRecipes = [];
         if (user != null)
         {
-            userRecipes =  await _userRepository.GetUserOwnedRecipesByUserIdAsync(user.Id);
+            userRecipes =  await _userRecipeRepository.GetUserOwnedRecipesByUserIdAsync(user.Id);
         }
         return View(userRecipes);
     }
@@ -103,13 +102,18 @@ public class FoodEntriesController : Controller
         }
 
         Recipe recipe = ViewModelService.RecipeFromRecipeVM(newRecipeViewModel);
-        recipe.Owner = await _registrationService.FindUserByClaimAsync(User);
-
-        //adds it to the database
         _recipeRepository.CreateOrUpdate(recipe);
+
+        User? user = await _registrationService.FindUserByClaimAsync(User);
+        if (user != null)
+        {
+            UserRecipe userRecipe = new UserRecipe { User = user, Recipe = recipe, UserOwner = true, UserVote = UserVoteType.UpVote };
+            _userRecipeRepository.CreateOrUpdate(userRecipe);
+        }
+
         _context.SaveChanges();
 
-        return View("Recipes");
+        return RedirectToAction("Recipes");
     }
 
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]

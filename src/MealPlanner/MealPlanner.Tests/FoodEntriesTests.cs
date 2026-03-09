@@ -31,7 +31,7 @@ public class FoodEntriesTests
         context.Database.EnsureCreated();
 
         var recipeRepo = new Mock<IRecipeRepository>();
-        var userRepo = new Mock<IUserRepository>();
+        var userRecipeRepo = new Mock<IUserRecipeRepository>();
 
         // Recipe WITH nutrition values
         recipeRepo
@@ -70,7 +70,7 @@ public class FoodEntriesTests
 
         _controller = new FoodEntriesController(
             recipeRepo.Object,
-            userRepo.Object,
+            userRecipeRepo.Object,
             controllerContext,
             registrationService.Object,
             nutritionService.Object);
