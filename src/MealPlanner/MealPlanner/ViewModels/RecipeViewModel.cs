@@ -35,6 +35,7 @@ public class RecipeViewModel
     }
 
     public int ID { get; set;}
+    public bool isOwned { get; set;} = false;
     [Required(ErrorMessage = "A recipe needs a name")]
     public string Name { get; set; }
     public List<string> Ingredients { get; set; } = [];

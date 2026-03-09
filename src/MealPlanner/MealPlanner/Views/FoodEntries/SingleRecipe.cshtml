@@ -47,7 +47,10 @@
         <p class="back2-textbox">@Model.Directions</p>
     </div>
 
-<button class="buttonBlue" type="button" onclick="window.location='/FoodEntries/EditRecipe/@Model.ID'">
-    <h2 class="buttonText">Edit Recipe</h2>
-</button>
+    @if (Model.isOwned)
+    {
+        <button class="buttonBlue" type="button" onclick="window.location='/FoodEntries/EditRecipe/@Model.ID'">
+            <h2 class="buttonText">Edit Recipe</h2>
+        </button>
+    }
 </div>
