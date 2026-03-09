@@ -40,7 +40,7 @@ public class FoodEntriesController : Controller
     {
         return View();
     }
-    
+
     [Authorize]
     public async Task<IActionResult> Nutrition()
     {
@@ -66,7 +66,7 @@ public class FoodEntriesController : Controller
         IEnumerable<Recipe> userRecipes = [];
         if (user != null)
         {
-            userRecipes =  await _userRecipeRepository.GetUserOwnedRecipesByUserIdAsync(user.Id);
+            userRecipes = await _userRecipeRepository.GetUserOwnedRecipesByUserIdAsync(user.Id);
         }
         return View(userRecipes);
     }
@@ -76,11 +76,11 @@ public class FoodEntriesController : Controller
     public async Task<IActionResult> Recipes(int id)
     {
         Recipe? recipe = await _recipeRepository.ReadRecipeWithIngredientsAsync(id);
-        
+
         // Change to not-found view!
         if (recipe == null)
         {
-            return RedirectToAction("SearchRecipes"); 
+            return RedirectToAction("SearchRecipes");
         }
 
         RecipeViewModel viewModel = ViewModelService.RecipeToRecipeVM(recipe);
@@ -110,6 +110,40 @@ public class FoodEntriesController : Controller
             UserRecipe userRecipe = new UserRecipe { User = user, Recipe = recipe, UserOwner = true, UserVote = UserVoteType.UpVote };
             _userRecipeRepository.CreateOrUpdate(userRecipe);
         }
+
+        _context.SaveChanges();
+
+        return RedirectToAction("Recipes");
+    }
+
+    [HttpGet]
+    [Route("/FoodEntries/EditRecipe/{id}")]
+    public async Task<IActionResult> EditRecipe(int id)
+    {
+        Recipe? recipe = await _recipeRepository.ReadRecipeWithIngredientsAsync(id);
+
+        // Change to not-found view!
+        if (recipe == null)
+        {
+            return RedirectToAction("SearchRecipes");
+        }
+
+        RecipeViewModel viewModel = ViewModelService.RecipeToRecipeVM(recipe);
+        return View("EditRecipe", viewModel);
+    }
+
+    [HttpPost]
+    [Route("/FoodEntries/EditRecipe/{id}")]
+    public async Task<IActionResult> RecipeEditFinshed(RecipeViewModel newRecipeViewModel, int id)
+    {
+        if (!ModelState.IsValid)
+        {
+            return View("AddNewRecipe", newRecipeViewModel);
+        }
+
+        Recipe recipe = ViewModelService.RecipeFromRecipeVM(newRecipeViewModel);
+        recipe.Id = id;
+        _recipeRepository.CreateOrUpdate(recipe);
 
         _context.SaveChanges();
 

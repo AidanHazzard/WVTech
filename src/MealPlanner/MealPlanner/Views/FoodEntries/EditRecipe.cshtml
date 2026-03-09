@@ -1,0 +1,86 @@
+@model MealPlanner.ViewModels.RecipeViewModel
+
+<link rel="stylesheet" href="~/css/AddNewRecipe.css" asp-append-version="true" />
+
+
+<div class="back1 backHasButton">
+    <h1 class="back1Title">Edit Recipe</h1>
+
+    <form asp-controller="FoodEntries" asp-action="RecipeEditFinished" method="post" asp-for>
+        <input asp-for="ID" hidden>@Model.ID
+
+        <h2 class="back1Title left">
+            <span>Name:</span>
+            <input class="back2-textbox" type="text" placeholder="Enter Recipe Name" asp-for="Name" value="@Model.Name" required>
+            </h2>
+
+
+            <div class="back2 backHasButton" id="AppendHere">
+                <h2 class="back1Title">Ingredients</h2>
+                @for (int i = 0; i < Model.Ingredients.Count; i++)
+                {
+                    <div class="row input-wrapper">
+                        <div class="row">
+                            <input type="number" class="col-1 back2-textbox-partial mx-1" name="IngredientAmounts" placeholder="0" value="@Model.IngredientAmounts[i]">
+                            <select class="col-2 back2-textbox-partial mx-1" name="IngredientMeasurements">
+                                <option>Select</option>
+                                <option value="Count"    selected="@(Model.IngredientMeasurements[i] == "Count"    ? "selected" : null)">Count</option>
+                                <option value="Cup(s)"   selected="@(Model.IngredientMeasurements[i] == "Cup(s)"   ? "selected" : null)">Cup(s)</option>
+                                <option value="Ounce(s)" selected="@(Model.IngredientMeasurements[i] == "Ounce(s)" ? "selected" : null)">Ounce(s)</option>
+                                <option value="Pound(s)" selected="@(Model.IngredientMeasurements[i] == "Pound(s)" ? "selected" : null)">Pounds</option>
+                                <option value="L"        selected="@(Model.IngredientMeasurements[i] == "L"        ? "selected" : null)">L</option>
+                                <option value="KG"       selected="@(Model.IngredientMeasurements[i] == "KG"       ? "selected" : null)">KG</option>
+                            </select>
+                            <input type="text" class="col back2-textbox-partial mx-1" placeholder="Enter Ingredient" name="Ingredients" value="@Model.Ingredients[i]" required>
+                        </div>
+                        <button type="button" class="deleteButton">
+                            <img src="/images/icons/delete.png" alt="delete" class="deleteImage">
+                        </button>
+                    </div>
+                }
+
+                
+                <button class="buttonGreen" id="buttonAppend">
+                    <h2 class="buttonText">Add Ingredient</h2>
+                </button>
+            </div>
+
+            <div class="back2">
+                <h2 class="back1Title">Instructions</h2>
+                <textarea class="back2-textbox instructionsBox" placeholder="Enter Instructions" asp-for="Directions" value="@Model.Directions" required></textarea>
+            </div>
+
+            <div class="back2">
+                <h2 class="back1Title">Nutrients</h2>
+                
+                <h2 class="back1Title left">
+                    <span>Calories:</span>
+                    <input type="number" class="back2-textbox" placeholder="Enter Calories" min="0" max="32767" step="1" asp-for="Calories" value="@Model.Calories" required>
+                </h2>
+
+                <h2 class="back1Title left">
+                    <span>Protein:</span>
+                    <input type="number" class="back2-textbox" placeholder="Enter Protein" min="0" max="32767" step="1" asp-for="Protein" value="@Model.Protein" required>
+                </h2>
+
+                <h2 class="back1Title left">
+                    <span>Carbs:</span>
+                    <input type="number" class="back2-textbox" placeholder="Enter Carbs" min="0" max="32767" step="1" asp-for="Carbs" value="@Model.Carbs" required>
+                </h2>
+
+                <h2 class="back1Title left">
+                    <span>Fat:</span>
+                    <input type="number" class="back2-textbox" placeholder="Enter Fat" min="0" max="32767" step="1" asp-for="Fat" value="@Model.Fat" required>
+                </h2>
+            </div>
+
+            <button class="buttonBlue" type="submit">
+                <h2 class="buttonText">Finish</h2>
+            </button>
+    </form>
+</div>
+
+
+@section Scripts {
+    <script src="~/js/newrecipepage.js"></script>
+}

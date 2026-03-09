@@ -1,6 +1,6 @@
 @model MealPlanner.ViewModels.RecipeViewModel
 
-<div class="back1 row container-fluid">
+<div class="back1 backHasButton row container-fluid">
     <div class="col-3 mx-1">
 
         <h3 class="back1Title">Nutrition</h3>
@@ -46,4 +46,8 @@
         <h3 class="back1Title">Instructions</h3>
         <p class="back2-textbox">@Model.Directions</p>
     </div>
+
+<button class="buttonBlue" type="button" onclick="window.location='/FoodEntries/EditRecipe/@Model.ID'">
+    <h2 class="buttonText">Edit Recipe</h2>
+</button>
 </div>

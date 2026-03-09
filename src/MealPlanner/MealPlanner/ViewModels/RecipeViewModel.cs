@@ -23,6 +23,7 @@ public class RecipeViewModel
         }
 
         Name = recipe.Name;
+        ID = recipe.Id;
         Ingredients = recipe.Ingredients.Select(i => i.IngredientBase.Name).ToList();
         IngredientAmounts = recipe.Ingredients.Select(i => i.Amount).ToList();
         IngredientMeasurements = recipe.Ingredients.Select(i => i.Measurement.Name).ToList();
@@ -33,9 +34,9 @@ public class RecipeViewModel
         Fat = recipe.Fat;
     }
 
+    public int ID { get; set;}
     [Required(ErrorMessage = "A recipe needs a name")]
     public string Name { get; set; }
-
     public List<string> Ingredients { get; set; } = [];
     public List<float> IngredientAmounts { get; set; } = [];
     public List<string> IngredientMeasurements { get; set; } = [];
@@ -43,15 +44,15 @@ public class RecipeViewModel
     [Required(ErrorMessage = "A recipe needs directions")]
     public string Directions { get; set; }
 
-    [Range(0, 4000)]
+    [Range(0, 32767)]
     public int Calories { get; set; }
 
-    [Range(0, 4000)]
+    [Range(0, 32767)]
     public int Protein { get; set; }
 
-    [Range(0, 4000)]
+    [Range(0, 32767)]
     public int Carbs { get; set; }
     
-    [Range(0, 4000)]
+    [Range(0, 32767)]
     public int Fat { get; set; }
 }
