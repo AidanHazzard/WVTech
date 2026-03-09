@@ -6,8 +6,7 @@
 <div class="back1 backHasButton">
     <h1 class="back1Title">Edit Recipe</h1>
 
-    <form asp-controller="FoodEntries" asp-action="RecipeEditFinished" method="post" asp-for>
-        <input asp-for="ID" hidden>@Model.ID
+<form asp-controller="FoodEntries" asp-action="RecipeEditFinished" asp-route-id="@Model.ID" method="post">
 
         <h2 class="back1Title left">
             <span>Name:</span>

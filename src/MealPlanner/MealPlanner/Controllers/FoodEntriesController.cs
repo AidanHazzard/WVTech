@@ -134,17 +134,18 @@ public class FoodEntriesController : Controller
 
     [HttpPost]
     [Route("/FoodEntries/EditRecipe/{id}")]
-    public async Task<IActionResult> RecipeEditFinshed(RecipeViewModel newRecipeViewModel, int id)
+    public async Task<IActionResult> RecipeEditFinished(RecipeViewModel editedRecipeViewModel, int id)
     {
         if (!ModelState.IsValid)
         {
-            return View("AddNewRecipe", newRecipeViewModel);
+            return View("AddNewRecipe", editedRecipeViewModel);
         }
 
-        Recipe recipe = ViewModelService.RecipeFromRecipeVM(newRecipeViewModel);
-        recipe.Id = id;
-        _recipeRepository.CreateOrUpdate(recipe);
+        Recipe? existing = await _recipeRepository.ReadRecipeWithIngredientsAsync(id);
+        if (existing == null)
+            return RedirectToAction("SearchRecipes");
 
+        _recipeRepository.CreateOrUpdate(ViewModelService.EditRecipeVMToModel(existing, editedRecipeViewModel));
         _context.SaveChanges();
 
         return RedirectToAction("Recipes");
