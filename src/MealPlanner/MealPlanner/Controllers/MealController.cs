@@ -4,6 +4,7 @@ using MealPlanner.Services;
 using MealPlanner.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace MealPlanner.Controllers;
 
@@ -77,4 +78,22 @@ public class MealController : Controller
 
         return RedirectToAction("PlannerHome");
     }
+
+   [HttpGet]
+public async Task<IActionResult> ViewMeal(int id)
+{
+    // Get logged-in user
+    User user = await _registrationService.FindUserByClaimAsync(User);
+
+    // Load the meal including its recipes
+    Meal meal = await _context.Meals
+        .Where(m => m.UserId == user.Id && m.Id == id)
+        .Include(m => m.Recipes)
+        .FirstOrDefaultAsync();
+
+    if (meal == null)
+        return NotFound();
+
+    return View(meal); // Pass the meal to the view
+}
 }
