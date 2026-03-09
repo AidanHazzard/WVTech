@@ -1,5 +1,6 @@
 using MealPlanner.DAL.Abstract;
 using MealPlanner.Models;
+using MealPlanner.Models.DTO;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 
@@ -21,7 +22,7 @@ public class RecipeAPIController : ControllerBase
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public IActionResult SearchRecipesByName(string name)
     {
-        IEnumerable<Recipe> results = _recipeRepo.GetRecipesByName(name);
+        IEnumerable<RecipeDTO> results = _recipeRepo.GetRecipesByName(name).Select(r => new RecipeDTO(r));
         if (results.IsNullOrEmpty())
         {
             return NotFound();
