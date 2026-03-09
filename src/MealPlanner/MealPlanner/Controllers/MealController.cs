@@ -15,7 +15,11 @@ public class MealController : Controller
     private readonly IMealRepository _mealRepo;
     private readonly MealPlannerDBContext _context;
 
-    public MealController(IRegistrationService registrationService, IRecipeRepository recipeRepo, IMealRepository mealRepo, MealPlannerDBContext context)
+    public MealController(
+        IRegistrationService registrationService,
+        IRecipeRepository recipeRepo,
+        IMealRepository mealRepo,
+        MealPlannerDBContext context)
     {
         _registrationService = registrationService;
         _recipeRepo = recipeRepo;
@@ -25,7 +29,11 @@ public class MealController : Controller
 
     public async Task<IActionResult> PlannerHome(string? date)
     {
-        User user = await _registrationService.FindUserByClaimAsync(User);
+        var user = await _registrationService.FindUserByClaimAsync(User);
+        if (user == null)
+        {
+            return Challenge();
+        }
 
         DateTime selectedDate =
             DateTime.TryParse(date, out var parsed)
@@ -57,20 +65,29 @@ public class MealController : Controller
             return View(model);
         }
 
-        Meal newMeal = new Meal();
-
-        foreach (int i in model.RecipeIds)
+        var user = await _registrationService.FindUserByClaimAsync(User);
+        if (user == null)
         {
-            Recipe recipe = _recipeRepo.Read(i);
-            newMeal.Recipes.Add(recipe);
+            return Challenge();
         }
 
-        User user = await _registrationService.FindUserByClaimAsync(User);
-        newMeal.User = user;
-        newMeal.UserId = user.Id;
+        Meal newMeal = new Meal
+        {
+            User = user,
+            UserId = user.Id,
+            Title = model.Title.Trim(),
+            StartTime = model.Date.Date,
+            RepeatRule = model.RepeatWeekly ? "Weekly" : null
+        };
 
-        newMeal.StartTime = model.Date.Date.Add(model.Time);
-        newMeal.RepeatRule = model.RepeatWeekly ? "Weekly" : null;
+        foreach (int id in model.RecipeIds)
+        {
+            var recipe = _recipeRepo.Read(id);
+            if (recipe != null)
+            {
+                newMeal.Recipes.Add(recipe);
+            }
+        }
 
         _mealRepo.CreateOrUpdate(newMeal);
         _context.SaveChanges();
