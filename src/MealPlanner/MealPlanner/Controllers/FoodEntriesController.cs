@@ -40,7 +40,7 @@ public class FoodEntriesController : Controller
     {
         return View();
     }
-    
+
     [Authorize]
     public async Task<IActionResult> Nutrition()
     {
@@ -66,7 +66,7 @@ public class FoodEntriesController : Controller
         IEnumerable<Recipe> userRecipes = [];
         if (user != null)
         {
-            userRecipes =  await _userRecipeRepository.GetUserOwnedRecipesByUserIdAsync(user.Id);
+            userRecipes = await _userRecipeRepository.GetUserOwnedRecipesByUserIdAsync(user.Id);
         }
         return View(userRecipes);
     }
@@ -76,14 +76,23 @@ public class FoodEntriesController : Controller
     public async Task<IActionResult> Recipes(int id)
     {
         Recipe? recipe = await _recipeRepository.ReadRecipeWithIngredientsAsync(id);
-        
+
         // Change to not-found view!
         if (recipe == null)
         {
-            return RedirectToAction("SearchRecipes"); 
+            return RedirectToAction("SearchRecipes");
         }
 
         RecipeViewModel viewModel = ViewModelService.RecipeToRecipeVM(recipe);
+
+        //if you do not own the recipe
+        User? user = await _registrationService.FindUserByClaimAsync(User);
+        if (user != null)
+        {
+            var ownedRecipes = await _userRecipeRepository.GetUserOwnedRecipesByUserIdAsync(user.Id);
+            viewModel.isOwned = ownedRecipes.Any(r => r.Id == id);
+        }
+
         return View("SingleRecipe", viewModel);
     }
 
@@ -111,6 +120,67 @@ public class FoodEntriesController : Controller
             _userRecipeRepository.CreateOrUpdate(userRecipe);
         }
 
+        _context.SaveChanges();
+
+        return RedirectToAction("Recipes");
+    }
+
+    [HttpGet]
+    [Route("/FoodEntries/EditRecipe/{id}")]
+    public async Task<IActionResult> EditRecipe(int id)
+    {
+        Recipe? recipe = await _recipeRepository.ReadRecipeWithIngredientsAsync(id);
+
+        // Change to not-found view!
+        if (recipe == null)
+        {
+            return RedirectToAction("Recipes");
+        }
+
+        //if you do not own the recipe redirect
+        User? user = await _registrationService.FindUserByClaimAsync(User);
+        if (user != null)
+        {
+            var ownedRecipes = await _userRecipeRepository.GetUserOwnedRecipesByUserIdAsync(user.Id);
+            if(ownedRecipes.Any(r => r.Id == id) == false)
+            {
+                return RedirectToAction("Recipes");
+            }
+        }
+
+        RecipeViewModel viewModel = ViewModelService.RecipeToRecipeVM(recipe);
+        return View("EditRecipe", viewModel);
+    }
+
+    [HttpPost]
+    [Route("/FoodEntries/EditRecipe/{id}")]
+    public async Task<IActionResult> RecipeEditFinished(RecipeViewModel editedRecipeViewModel, int id)
+    {
+        if (!ModelState.IsValid)
+        {
+            return View("AddNewRecipe", editedRecipeViewModel);
+        }
+
+        //if you do not own the recipe redirect
+        User? user = await _registrationService.FindUserByClaimAsync(User);
+        if (user != null)
+        {
+            var ownedRecipes = await _userRecipeRepository.GetUserOwnedRecipesByUserIdAsync(user.Id);
+            if(ownedRecipes.Any(r => r.Id == id) == false)
+            {
+                return RedirectToAction("Recipes");
+            }
+        }
+
+        //gets the existing recipe by id
+        Recipe? existing = await _recipeRepository.ReadRecipeWithIngredientsAsync(id);
+        if (existing == null)
+        {
+            return RedirectToAction("SearchRecipes");
+        }
+
+        //updates the databse with the new and improved existing
+        _recipeRepository.CreateOrUpdate(ViewModelService.EditRecipeVMToModel(existing, editedRecipeViewModel));
         _context.SaveChanges();
 
         return RedirectToAction("Recipes");

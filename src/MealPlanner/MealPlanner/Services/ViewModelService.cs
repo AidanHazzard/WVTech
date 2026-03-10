@@ -38,4 +38,19 @@ public class ViewModelService
 
         return recipe;
     }
+
+    public static Recipe EditRecipeVMToModel(Recipe recipeFromDataBase, RecipeViewModel vm)
+    {
+        Recipe updated = RecipeFromRecipeVM(vm);
+
+        recipeFromDataBase.Ingredients.Clear();
+        recipeFromDataBase.Name = updated.Name;
+        recipeFromDataBase.Directions = updated.Directions;
+        recipeFromDataBase.Calories = updated.Calories;
+        recipeFromDataBase.Protein = updated.Protein;
+        recipeFromDataBase.Carbs = updated.Carbs;
+        recipeFromDataBase.Fat = updated.Fat;
+        recipeFromDataBase.Ingredients = updated.Ingredients;
+        return recipeFromDataBase;
+    }
 }
