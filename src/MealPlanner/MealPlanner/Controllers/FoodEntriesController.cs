@@ -13,16 +13,22 @@ public class FoodEntriesController : Controller
 {
     private readonly MealPlannerDBContext _context;
     private readonly IRecipeRepository _recipeRepository;
+    private readonly IUserRecipeRepository _userRecipeRepository;
     private readonly INutritionProgressService? _nutritionProgressService;
+    private readonly IRegistrationService _registrationService;
 
     public FoodEntriesController(
         IRecipeRepository recipeRepository,
+        IUserRecipeRepository userRecipeRepository,
         MealPlannerDBContext context,
+        IRegistrationService registrationService,
         INutritionProgressService? nutritionProgressService = null)
     {
         _recipeRepository = recipeRepository;
         _context = context;
+        _registrationService = registrationService;
         _nutritionProgressService = nutritionProgressService;
+        _userRecipeRepository = userRecipeRepository;
     }
 
     public IActionResult SearchRecipes()
@@ -34,7 +40,7 @@ public class FoodEntriesController : Controller
     {
         return View();
     }
-    
+
     [Authorize]
     public async Task<IActionResult> Nutrition()
     {
@@ -54,9 +60,15 @@ public class FoodEntriesController : Controller
     }
 
     [Route("/FoodEntries/Recipes")]
-    public IActionResult Recipes()
+    public async Task<IActionResult> Recipes()
     {
-        return View();
+        User? user = await _registrationService.FindUserByClaimAsync(User);
+        IEnumerable<Recipe> userRecipes = [];
+        if (user != null)
+        {
+            userRecipes = await _userRecipeRepository.GetUserOwnedRecipesByUserIdAsync(user.Id);
+        }
+        return View(userRecipes);
     }
 
     [HttpGet]
@@ -64,14 +76,23 @@ public class FoodEntriesController : Controller
     public async Task<IActionResult> Recipes(int id)
     {
         Recipe? recipe = await _recipeRepository.ReadRecipeWithIngredientsAsync(id);
-        
-        // Change to not-found error!
+
+        // Change to not-found view!
         if (recipe == null)
         {
-            return RedirectToAction("SelectType");
+            return RedirectToAction("SearchRecipes");
         }
 
-        RecipeViewModel viewModel = RecipeViewModel.FromRecipe(recipe);
+        RecipeViewModel viewModel = ViewModelService.RecipeToRecipeVM(recipe);
+
+        //if you do not own the recipe
+        User? user = await _registrationService.FindUserByClaimAsync(User);
+        if (user != null)
+        {
+            var ownedRecipes = await _userRecipeRepository.GetUserOwnedRecipesByUserIdAsync(user.Id);
+            viewModel.isOwned = ownedRecipes.Any(r => r.Id == id);
+        }
+
         return View("SingleRecipe", viewModel);
     }
 
@@ -81,43 +102,88 @@ public class FoodEntriesController : Controller
     }
 
     [HttpPost]
-    public IActionResult RecipeAdded(RecipeViewModel newRecipeViewModel)
+    public async Task<IActionResult> RecipeAdded(RecipeViewModel newRecipeViewModel)
     {
         //error checking
-        if (!ModelState.IsValid || newRecipeViewModel.AnyErrors() == true)
+        if (!ModelState.IsValid)
         {
             return View("AddNewRecipe", newRecipeViewModel);
         }
 
-        //creates a new recipe model with the viewmodels information
-        Recipe recipe = new Recipe();
-        recipe.Name = newRecipeViewModel.Name;
-        recipe.Ingredients = [];
-        recipe.Directions = newRecipeViewModel.Directions;
-        recipe.Calories = newRecipeViewModel.Calories;
-        recipe.Protein = newRecipeViewModel.Protein;
-        recipe.Carbs = newRecipeViewModel.Carbs;
-        recipe.Fat = newRecipeViewModel.Fat;
-        recipe.Meals = new List<Meal>();
+        Recipe recipe = ViewModelService.RecipeFromRecipeVM(newRecipeViewModel);
+        _recipeRepository.CreateOrUpdate(recipe);
 
-        // Adds the ingredients to the recipe
-        foreach (string i in newRecipeViewModel.Ingredients)
+        User? user = await _registrationService.FindUserByClaimAsync(User);
+        if (user != null)
         {
-            Ingredient newIngredient = new Ingredient
-            {
-                IngredientBase = new IngredientBase { Name = i },
-                Measurement = new Measurement { Name = "count" },
-                Amount = 1
-            };
-
-            recipe.Ingredients.Add(newIngredient);
+            UserRecipe userRecipe = new UserRecipe { User = user, Recipe = recipe, UserOwner = true, UserVote = UserVoteType.UpVote };
+            _userRecipeRepository.CreateOrUpdate(userRecipe);
         }
 
-        //adds it to the database
-        _recipeRepository.CreateOrUpdate(recipe);
         _context.SaveChanges();
 
-        return View("Recipes");
+        return RedirectToAction("Recipes");
+    }
+
+    [HttpGet]
+    [Route("/FoodEntries/EditRecipe/{id}")]
+    public async Task<IActionResult> EditRecipe(int id)
+    {
+        Recipe? recipe = await _recipeRepository.ReadRecipeWithIngredientsAsync(id);
+
+        // Change to not-found view!
+        if (recipe == null)
+        {
+            return RedirectToAction("Recipes");
+        }
+
+        //if you do not own the recipe redirect
+        User? user = await _registrationService.FindUserByClaimAsync(User);
+        if (user != null)
+        {
+            var ownedRecipes = await _userRecipeRepository.GetUserOwnedRecipesByUserIdAsync(user.Id);
+            if(ownedRecipes.Any(r => r.Id == id) == false)
+            {
+                return RedirectToAction("Recipes");
+            }
+        }
+
+        RecipeViewModel viewModel = ViewModelService.RecipeToRecipeVM(recipe);
+        return View("EditRecipe", viewModel);
+    }
+
+    [HttpPost]
+    [Route("/FoodEntries/EditRecipe/{id}")]
+    public async Task<IActionResult> RecipeEditFinished(RecipeViewModel editedRecipeViewModel, int id)
+    {
+        if (!ModelState.IsValid)
+        {
+            return View("AddNewRecipe", editedRecipeViewModel);
+        }
+
+        //if you do not own the recipe redirect
+        User? user = await _registrationService.FindUserByClaimAsync(User);
+        if (user != null)
+        {
+            var ownedRecipes = await _userRecipeRepository.GetUserOwnedRecipesByUserIdAsync(user.Id);
+            if(ownedRecipes.Any(r => r.Id == id) == false)
+            {
+                return RedirectToAction("Recipes");
+            }
+        }
+
+        //gets the existing recipe by id
+        Recipe? existing = await _recipeRepository.ReadRecipeWithIngredientsAsync(id);
+        if (existing == null)
+        {
+            return RedirectToAction("SearchRecipes");
+        }
+
+        //updates the databse with the new and improved existing
+        _recipeRepository.CreateOrUpdate(ViewModelService.EditRecipeVMToModel(existing, editedRecipeViewModel));
+        _context.SaveChanges();
+
+        return RedirectToAction("Recipes");
     }
 
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]

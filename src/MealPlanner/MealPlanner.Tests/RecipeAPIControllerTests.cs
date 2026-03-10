@@ -1,6 +1,7 @@
 using MealPlanner.Controllers;
 using MealPlanner.DAL.Abstract;
 using MealPlanner.Models;
+using MealPlanner.Models.DTO;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
 
@@ -55,10 +56,10 @@ public class RecipeAPIControllerTests
         
         // Act
         var result = controller.SearchRecipesByName(searchTerm) as OkObjectResult;
-        var recipe = result?.Value as List<Recipe>;
+        var recipe = result?.Value as IEnumerable<RecipeDTO>;
 
         // Assert
-        Assert.That(recipe?[0].Name, Is.EqualTo("Oatmeal Cookies"));
+        Assert.That(recipe?.First().Name, Is.EqualTo("Oatmeal Cookies"));
     }
 
     [Test]
@@ -79,9 +80,9 @@ public class RecipeAPIControllerTests
 
         // Act
         var result = controller.SearchRecipesByName(searchTerm) as OkObjectResult;
-        var recipes = result?.Value as List<Recipe>;
+        var recipes = result?.Value as IEnumerable<RecipeDTO>;
 
         // Assert
-        Assert.That(recipes?.Count, Is.EqualTo(4));
+        Assert.That(recipes?.Count(), Is.EqualTo(4));
     }
 }
