@@ -3,11 +3,20 @@ let numIngredients = 0;
 // TODO: Change to JQuery
 document.addEventListener('DOMContentLoaded', function () {
     const addButton = document.querySelector('#buttonAppend');
+    const container = document.querySelector('#AppendHere');
 
     //adds a new wrapper with the entrys in it
     addButton.addEventListener('click', function (e) {
         e.preventDefault();
         createInput();
+    });
+
+    //delete button
+    container.addEventListener('click', function (e) {
+        const deleteButton = e.target.closest('.deleteButton');
+        if (deleteButton) {
+            deleteButton.closest('.input-wrapper').remove();
+        }
     });
 });
 
@@ -30,7 +39,8 @@ function createInput() {
                     <option value="KG">KG</option>
                 </select>
                 <input type="text" class="col back2-textbox-partial mx-1" placeholder="Enter Ingredient" name="Ingredients" required>
-            </div>`
+            </div>
+            `
 
     //adds the delete button
     const deleteButton = document.createElement('button');
@@ -43,11 +53,6 @@ function createInput() {
     deleteImg.alt = 'delete';
     deleteImg.className = 'deleteImage';
     deleteButton.appendChild(deleteImg);
-
-    //when you click the delete button it deletes its wrapper
-    deleteButton.addEventListener('click', function () {
-        container.removeChild(inputWrapper);
-    });
 
     //sets up the hierarchy
     inputWrapper.appendChild(deleteButton);
