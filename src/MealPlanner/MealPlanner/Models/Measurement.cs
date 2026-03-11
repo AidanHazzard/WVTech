@@ -14,4 +14,23 @@ public class Measurement
     [Required]
     [MaxLength(32)]
     public string Name { get; set; }
+
+    public override int GetHashCode()
+    {
+        return this.Name.GetHashCode();
+    }
+    
+    public override bool Equals(object? obj)
+    {
+        if (obj == null || obj is not Measurement)
+        {
+            return false;
+        }
+        if (this.Name != ((Measurement) obj).Name)
+        {
+            return false;
+        }
+
+        return true;
+    }
 }
