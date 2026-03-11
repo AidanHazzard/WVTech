@@ -4,29 +4,33 @@
 
     <!-- Header -->
     <div class="back2">
-        <h2 class="text-center">Meal Details</h2>
+        <div class="d-flex align-items-center">
+
+          
+
+            <!-- Title + time -->
+            <div class="flex-grow-1 text-center">
+                <h2 class="mb-1">Meal Details</h2>
+
+                <div class="text-muted small">
+                    @(Model.StartTime?.ToString("h:mm tt") ?? "No time set")
+
+                    @if (Model.EndTime.HasValue)
+                    {
+                        <span>– @Model.EndTime.Value.ToString("h:mm tt")</span>
+                    }
+
+                    @if (Model.RepeatRule == "Weekly")
+                    {
+                        <span class="badge bg-info ms-2">Weekly</span>
+                    }
+                </div>
+            </div>
+
+        </div>
     </div>
 
     <!-- Meal info -->
-    <div class="back2 mt-3 p-3">
-        <div class="fw-bold fs-5">
-            @(Model.StartTime?.ToString("h:mm tt") ?? "No time set")
-
-            @if (Model.RepeatRule == "Weekly")
-            {
-                <span class="badge bg-info ms-2">Weekly</span>
-            }
-        </div>
-
-        @if (Model.EndTime.HasValue)
-        {
-            <div class="text-muted mt-1">
-                Ends at @Model.EndTime.Value.ToString("h:mm tt")
-            </div>
-        }
-    </div>
-
-    <!-- Recipes -->
     <div class="back2 mt-3 p-3">
         <h4 class="mb-3">Recipes</h4>
 
@@ -38,15 +42,12 @@
                     <div class="list-group-item d-flex justify-content-between align-items-center">
                         <span class="fw-semibold">@recipe.Name</span>
 
-                        @* Optional: future edit/view button *@
-                        @* 
                         <a asp-controller="Recipe"
                            asp-action="Details"
                            asp-route-id="@recipe.Id"
                            class="btn btn-sm btn-outline-secondary">
                             View
                         </a>
-                        *@
                     </div>
                 }
             </div>
@@ -55,20 +56,6 @@
         {
             <p class="text-muted mb-0">No recipes attached to this meal.</p>
         }
-    </div>
-
-    <!-- Actions -->
-    <div class="row align-items-center mt-4">
-        <div class="col d-flex justify-content-center">
-            <a asp-controller="Meal"
-               asp-action="PlannerHome"
-               class="imageButton">
-                <img src="~/images/icons/back.png" alt="back" class="imageButtonimage">
-                <div class="buttonBlue">
-                    <h2 class="buttonText">Back to Planner</h2>
-                </div>
-            </a>
-        </div>
     </div>
 
 </div>
