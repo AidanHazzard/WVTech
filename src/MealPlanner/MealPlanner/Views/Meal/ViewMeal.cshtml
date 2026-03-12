@@ -1,0 +1,45 @@
+@model MealPlanner.Models.Meal
+
+<!-- Title-->
+<div class="back1">
+    <div class="flex-grow-1 text-center">
+        <h2 class="back1Title">Meal Details</h2>
+        <div class="back1Title">
+            <!-- Show date first -->
+            @(Model.StartTime?.ToString("MMM dd, yyyy") ?? "No date set")
+
+            <!-- Show time -->
+            @(Model.StartTime?.ToString("h:mm tt") ?? "No time set")
+
+            @if (Model.EndTime.HasValue)
+            {
+                <span>– @Model.EndTime.Value.ToString("h:mm tt")</span>
+            }
+            <!-- Show repeat badge -->
+            @if (!string.IsNullOrWhiteSpace(Model.RepeatRule))
+            {
+                <span class="badge bg-info ms-2">@Model.RepeatRule</span>
+            }
+        </div>
+        <hr>
+    </div>
+
+    <!-- Meal info -->
+    @if (Model.Recipes != null && Model.Recipes.Any())
+    {
+        <div class="list-group">
+            @foreach (var recipe in Model.Recipes)
+            {
+                var location = Url.Action("Recipes", "FoodEntries", new { id = recipe.Id });
+                <button class="buttonGrey" onclick="location.href='@location'">
+                    <h3 class="buttonText">@recipe.Name</h3>
+                </button>
+            }
+        </div>
+    }
+    else
+    {
+        <p class="text-muted mb-0">There are no recipes in this meal.</p>
+    }
+
+</div>
