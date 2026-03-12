@@ -14,4 +14,23 @@ public class IngredientBase
     [Required]
     [MaxLength(64)]
     public string Name { get; set; }
+
+    public override int GetHashCode()
+    {
+        return this.Name.GetHashCode();
+    }
+    
+    public override bool Equals(object? obj)
+    {
+        if (obj == null || obj is not IngredientBase)
+        {
+            return false;
+        }
+        if (this.Name != ((IngredientBase) obj).Name)
+        {
+            return false;
+        }
+
+        return true;
+    }
 }

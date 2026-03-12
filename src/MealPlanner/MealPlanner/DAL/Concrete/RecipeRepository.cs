@@ -1,6 +1,7 @@
 using MealPlanner.DAL.Abstract;
 using MealPlanner.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 
 namespace MealPlanner.DAL.Concrete;
 
@@ -27,6 +28,9 @@ public class RecipeRepository : Repository<Recipe>, IRecipeRepository
 
     public override void CreateOrUpdate(Recipe recipe)
     {
+        HashSet<IngredientBase> newIngredientBases = [];
+        HashSet<Measurement> newMeasurements = [];
+
         foreach (Ingredient i in recipe.Ingredients)
         {
             if (i.IngredientBase.Id == 0)
@@ -39,7 +43,12 @@ public class RecipeRepository : Repository<Recipe>, IRecipeRepository
                 }
                 catch (InvalidOperationException)
                 {
-                    _ingredientBaseSet.Add(i.IngredientBase);
+                    var duplicate = !newIngredientBases.Add(i.IngredientBase);
+                    if (duplicate)
+                    {
+                        // Make Object reference the same so EF knows that they're the same
+                        i.IngredientBase = newIngredientBases.First(b => b.Name == i.IngredientBase.Name);
+                    }
                 }
             }
 
@@ -53,10 +62,23 @@ public class RecipeRepository : Repository<Recipe>, IRecipeRepository
                 }
                 catch (InvalidOperationException)
                 {
-                    _measurementSet.Add(i.Measurement);
+                    var duplicate = !newMeasurements.Add(i.Measurement);
+                    if (duplicate)
+                    {
+                        // Make Object reference the same so EF knows that they're the same
+                        i.Measurement = newMeasurements.First(m => m.Name == i.Measurement.Name);
+                    }
                 }
             }
         }
+        Console.WriteLine("Ingredient Base");
+        newIngredientBases.ToList().ForEach(i => Console.WriteLine(i.Name));
+        
+        Console.WriteLine("Measurements");
+        newMeasurements.ToList().ForEach(m => Console.WriteLine(m.Name));
+        if (!newIngredientBases.IsNullOrEmpty())  _ingredientBaseSet.AddRange(newIngredientBases); 
+        if (!newMeasurements.IsNullOrEmpty())  _measurementSet.AddRange(newMeasurements); 
+
         base.CreateOrUpdate(recipe);
     }
 

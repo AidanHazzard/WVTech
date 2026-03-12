@@ -5,7 +5,6 @@ using MealPlanner.Controllers;
 using MealPlanner.DAL.Abstract;
 using MealPlanner.Models;
 using MealPlanner.Services;
-using MealPlanner.Services.Abstractions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
