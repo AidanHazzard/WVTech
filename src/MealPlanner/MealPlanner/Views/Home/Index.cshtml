@@ -40,30 +40,35 @@
                     </div>
                 </button>
             </form>
+        } *@
+       
+
+        @foreach (Meal meal in Model.Meals)
+        {
+            <form asp-controller="Meal" asp-action="ViewMeal" method="get">
+               
+
+                <input type="hidden" name="id" value="@meal.Id" />
+
+                <button type="submit" class="imageButton mealButton">
+
+                    <!-- Checkbox -->
+                    <input type="checkbox"
+                        class="MealCheckBox"
+                        onclick="event.stopPropagation();" />
+
+                    <img src="~/images/placeholder/apples.avif"
+                        alt="apples"
+                        class="fullImage">
+
+                    <div class="buttonGreen noBevelTop">
+                        <h2 class="buttonText">{Meals Name}</h2>
+                    </div>
+
+                </button>
+            </form>
         }
-        </div> *@
-
-
-@foreach (Meal meal in Model.Meals)
-{
-    <div class="mealContainer" style="position: relative; display: inline-block; margin: 10px;">
-        <!-- Checkbox for marking meal as done -->
-        <input type="checkbox" class="MealCheckBox" style="position: absolute; top: 5px; left: 5px; z-index: 10;" />
-
-        <!-- Button to view the meal -->
-        <form asp-controller="Meal" asp-action="ViewMeal" method="get">
-            <input type="hidden" name="id" value="@meal.Id" />
-            <button type="submit" class="imageButton" style="position: relative;">
-                <img src="~/images/placeholder/apples.avif" alt="@meal.Id" class="fullImage">
-                <div class="buttonGreen noBevelTop">
-                    <h2 class="buttonText">Meal @meal.Id</h2>
-                </div>
-            </button>
-        </form>
-    </div>
-}
-
-
+ </div>
 
         <!-- Holds a display of the statistics so far today. Will populate this with info when the nutrient info is done -->
         <div class="back2">
