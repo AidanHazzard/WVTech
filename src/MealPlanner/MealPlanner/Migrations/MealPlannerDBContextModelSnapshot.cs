@@ -420,6 +420,30 @@ namespace MealPlanner.Migrations
                     b.ToTable("UserProfile");
                 });
 
+            modelBuilder.Entity("MealPlanner.Models.UserRecipe", b =>
+                {
+                    b.Property<string>("UserId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int>("RecipeId")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("UserFavorite")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("UserOwner")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("UserVote")
+                        .HasColumnType("int");
+
+                    b.HasKey("UserId", "RecipeId");
+
+                    b.HasIndex("RecipeId");
+
+                    b.ToTable("UserRecipe");
+                });
+
             modelBuilder.Entity("MealRecipe", b =>
                 {
                     b.Property<int>("MealsId")
@@ -568,6 +592,21 @@ namespace MealPlanner.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("RecipeUser", b =>
+                {
+                    b.Property<int>("RecipesId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("UsersId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("RecipesId", "UsersId");
+
+                    b.HasIndex("UsersId");
+
+                    b.ToTable("RecipeUser");
+                });
+
             modelBuilder.Entity("MealPlanner.Models.Ingredient", b =>
                 {
                     b.HasOne("MealPlanner.Models.IngredientBase", "IngredientBase")
@@ -643,6 +682,25 @@ namespace MealPlanner.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("MealPlanner.Models.UserRecipe", b =>
+                {
+                    b.HasOne("MealPlanner.Models.Recipe", "Recipe")
+                        .WithMany("UserRecipes")
+                        .HasForeignKey("RecipeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("MealPlanner.Models.User", "User")
+                        .WithMany("UserRecipes")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Recipe");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("MealRecipe", b =>
                 {
                     b.HasOne("MealPlanner.Models.Meal", null)
@@ -709,9 +767,31 @@ namespace MealPlanner.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("RecipeUser", b =>
+                {
+                    b.HasOne("MealPlanner.Models.Recipe", null)
+                        .WithMany()
+                        .HasForeignKey("RecipesId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("MealPlanner.Models.User", null)
+                        .WithMany()
+                        .HasForeignKey("UsersId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("MealPlanner.Models.Recipe", b =>
                 {
                     b.Navigation("Ingredients");
+
+                    b.Navigation("UserRecipes");
+                });
+
+            modelBuilder.Entity("MealPlanner.Models.User", b =>
+                {
+                    b.Navigation("UserRecipes");
                 });
 #pragma warning restore 612, 618
         }

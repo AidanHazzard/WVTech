@@ -1,82 +1,59 @@
 using System.ComponentModel.DataAnnotations;
 using MealPlanner.Models;
+
+namespace MealPlanner.ViewModels;
+
+
 public class RecipeViewModel
 {
-    public string Name { get; set; }
-
-    public List<string> Ingredients { get; set; }
-
-    public string Directions { get; set; }
-
-    public int Calories { get; set; }
-    public int Protein { get; set; }
-    public int Carbs { get; set; }
-    public int Fat { get; set; }
-
-
-    // REFACTOR: Really should move these to an extension class, but that's a later me problem
-    //loops through edge cases to look for errors
-    public bool AnyErrors()
+    public RecipeViewModel()
     {
-        if (Directions == null || Directions.Trim() == "" ||
-            Ingredients == null || Ingredients.Count == 0 ||
-            Name == null || Name.Trim() == "" ||
-            Calories < 0 || Protein < 0 || Carbs < 0 || Fat < 0)
-        {
-            return true;
-        }
-        foreach (string entry in Ingredients)
-        {
-            if (entry.Trim() == "")
-            {
-                return true;
-            }
-        }
-        return false;
     }
 
-    //creates a flattend string of all the entrys from the ingredients list
-    //no need to error check the ingredient list because that will have already been ran above
-    public string FlattenList()
-    {
-        string ingredientsFlat = "";
-        for (int i = 0; i < Ingredients.Count; i++)
-        {
-            //if statemnt so the first entry doesnt have an \n above it
-            if (i == 0)
-            {
-                ingredientsFlat = $"{Ingredients[i]}";
-            }
-            else
-            {
-                ingredientsFlat = $"{ingredientsFlat}\n{Ingredients[i]}";
-            }
-        }
-        return ingredientsFlat;
-    }
-
-    // TODO: Change to constructor
-    public static RecipeViewModel FromRecipe(Recipe recipe)
+    public RecipeViewModel(Recipe recipe)
     {
         // Convert Ingredients list to strings
 
         // Change to LINQ or list comprehension
-        List<string> ingredients = []; // new List<string>(recipe.Ingredients)
+        List<IngredientViewModel> ingredients = []; // new List<string>(recipe.Ingredients)
 
         foreach (Ingredient i in recipe.Ingredients)
         {
-            ingredients.Add(i.IngredientBase.Name);
+            ingredients.Add(new IngredientViewModel(i));
         }
 
-        return new RecipeViewModel
-        {
-            Name = recipe.Name,
-            Ingredients = ingredients,
-            Directions = recipe.Directions,
-            Calories = recipe.Calories,
-            Protein = recipe.Protein,
-            Carbs = recipe.Carbs,
-            Fat = recipe.Fat
-        };
+        Name = recipe.Name;
+        ID = recipe.Id;
+        Ingredients = recipe.Ingredients.Select(i => i.IngredientBase.Name).ToList();
+        IngredientAmounts = recipe.Ingredients.Select(i => i.Amount).ToList();
+        IngredientMeasurements = recipe.Ingredients.Select(i => i.Measurement.Name).ToList();
+        Directions = recipe.Directions;
+        Calories = recipe.Calories;
+        Protein = recipe.Protein;
+        Carbs = recipe.Carbs;
+        Fat = recipe.Fat;
     }
+
+    public int ID { get; set;}
+    public bool isOwned { get; set;} = false;
+    [Required(ErrorMessage = "A recipe needs a name")]
+    public string Name { get; set; }
+    public List<string> Ingredients { get; set; } = [];
+    public List<float> IngredientAmounts { get; set; } = [];
+    public List<string> IngredientMeasurements { get; set; } = [];
+
+    [Required(ErrorMessage = "A recipe needs directions")]
+    public string Directions { get; set; }
+
+    [Range(0, 32767)]
+    public int Calories { get; set; }
+
+    [Range(0, 32767)]
+    public int Protein { get; set; }
+
+    [Range(0, 32767)]
+    public int Carbs { get; set; }
+    
+    [Range(0, 32767)]
+    public int Fat { get; set; }
 }
