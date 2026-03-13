@@ -79,21 +79,83 @@ public class MealController : Controller
         return RedirectToAction("PlannerHome");
     }
 
-   [HttpGet]
-public async Task<IActionResult> ViewMeal(int id)
-{
-    // Get logged-in user
-    User user = await _registrationService.FindUserByClaimAsync(User);
+    [HttpGet]
+    public async Task<IActionResult> ViewMeal(int id)
+    {
+        User user = await _registrationService.FindUserByClaimAsync(User);
 
-    // Load the meal including its recipes
-    Meal meal = await _context.Meals
-        .Where(m => m.UserId == user.Id && m.Id == id)
-        .Include(m => m.Recipes)
-        .FirstOrDefaultAsync();
+        var meal = await _mealRepo.ReadAsync(id);
+        if (meal == null || meal.UserId != user.Id)
+            return NotFound();
 
-    if (meal == null)
-        return NotFound();
+        await _mealRepo.LoadRecipesAsync(meal);
 
-    return View(meal); // Pass the meal to the view
-}
+        return View(meal);
+    }
+
+
+    [HttpGet]
+    public async Task<IActionResult> EditMeal(int id)
+    {
+        var meal = await _mealRepo.ReadAsync(id);
+        if (meal == null) return NotFound();
+
+        var viewModel = new EditMealViewModel
+        {
+            Id = meal.Id,
+            Date = meal.StartTime?.Date ?? DateTime.Today,
+            Time = meal.StartTime?.TimeOfDay ?? TimeSpan.Zero,
+            RepeatWeekly = meal.RepeatRule == "Weekly",
+            RecipeIds = meal.Recipes?.Select(r => r.Id).ToList() ?? new List<int>()
+        };
+
+        return View(viewModel);
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> EditMeal(EditMealViewModel model)
+    {
+        if (!ModelState.IsValid)
+        {
+            return View(model);
+        }
+
+        var meal = await _mealRepo.ReadAsync(model.Id);
+        if (meal == null) return NotFound();
+
+        meal.StartTime = model.Date.Date + model.Time;
+        meal.RepeatRule = model.RepeatWeekly ? "Weekly" : null;
+
+        // Clear old recipes
+        meal.Recipes.Clear();
+
+        foreach (var recipeId in model.RecipeIds ?? new List<int>())
+        {
+            var recipe = _recipeRepo.Read(recipeId); // <- sync version
+            if (recipe != null)
+                meal.Recipes.Add(recipe);
+        }
+
+        _mealRepo.CreateOrUpdate(meal);
+        _context.SaveChanges(); // sync save
+
+        return RedirectToAction("ViewMeal", new { id = meal.Id });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public IActionResult DeleteMeal(int id)
+    {
+        var meal = _mealRepo.Read(id);
+        if (meal == null)
+        {
+            return NotFound();
+        }
+
+        _mealRepo.Delete(meal);
+        _context.SaveChanges(); // or _context.SaveChanges() if you prefer
+
+        // Redirect to your main page after deletion
+        return RedirectToAction("Index", "Home");
+    }
 }
