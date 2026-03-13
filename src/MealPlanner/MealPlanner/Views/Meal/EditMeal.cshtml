@@ -1,0 +1,66 @@
+@model MealPlanner.ViewModels.EditMealViewModel
+
+<div class="back1">
+
+    <!-- Back Button Top Left, inline with layout -->
+    <div class="mb-3">
+        <a href="javascript:history.back()" class="btn btn-outline-secondary">
+            &larr; Back
+        </a>
+    </div>
+
+    <h2 class="back1Title">Edit Meal</h2>
+    <hr>
+
+    <div id="createMealList">
+        <template id="addRecipeRow">
+            <div class="back2 text-center back2-textbox">
+                <h4 id="recipeName">{Recipe Name}</h4>
+                <input type="hidden" name="RecipeIds" class="recipeIdInput" />
+            </div>
+        </template>
+    </div>
+
+    <div class="row align-items-center">
+        <div class="text-danger" asp-validation-summary="All"></div>
+
+        <form id="createMealForm" class="col d-flex flex-column mx-1" asp-action="EditMeal" method="POST">
+            <input type="hidden" asp-for="Id" />
+
+            <div class="row g-3 mb-3">
+                <div class="col-md-4">
+                    <label asp-for="Date" class="form-label"></label>
+                    <input asp-for="Date" type="date" class="form-control" />
+                    <span asp-validation-for="Date" class="text-danger"></span>
+                </div>
+
+                <div class="col-md-4">
+                    <label asp-for="Time" class="form-label"></label>
+                    <input asp-for="Time" type="time" class="form-control" />
+                    <span asp-validation-for="Time" class="text-danger"></span>
+                </div>
+
+                <div class="col-md-4 d-flex align-items-end">
+                    <div class="form-check">
+                        <input asp-for="RepeatWeekly" class="form-check-input" />
+                        <label asp-for="RepeatWeekly" class="form-check-label">Repeat Weekly</label>
+                    </div>
+                </div>
+            </div>
+
+            <button type="submit" class="col d-flex mx-1 btn btn-success justify-content-center">
+                <h4>Save Changes</h4>
+            </button>
+        </form>
+    </div>
+
+    <div class="back2 pe-5">
+        <h3 class="back1Title">Search for Recipes to Add</h3>
+        @await Html.PartialAsync("_RecipeSearchPartial")
+    </div>
+</div>
+
+@section Scripts {
+    <script type="module" src="~/js/recipeSearch.js"></script>
+    <script type="module" src="~/js/createMeal.js"></script>
+}
