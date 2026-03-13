@@ -441,4 +441,47 @@ public class RecipeRepositoryTests
         // Assert
         Assert.That(measurementCountAfter, Is.EqualTo(measurementCountBefore));
     }
+
+    [TestCase(new [] {"Same", "Same"}, new [] {"New 1", "New 2"}, new [] {1,2})]
+    [TestCase(new [] {"New 1", "New 2"}, new [] {"Same", "Same"}, new [] {2,1})]
+    public void CreateOrUpdate_DoesntDuplicateRow_IfMultipleOfSameUniqueEntry(string[] measurements, string[] ingredientBases, int[] expected)
+    {
+        // Arrange
+        MealPlannerDBContext context = CreateContext();
+        RecipeRepository repo = new RecipeRepository(context);
+        Ingredient i1 = new Ingredient
+        {
+            Amount = 1,
+            IngredientBase = new IngredientBase { Name = ingredientBases[0] },
+            Measurement = new Measurement { Name = measurements[0] }
+        };
+        Ingredient i2 = new Ingredient
+        {
+            Amount = 1,
+            IngredientBase = new IngredientBase { Name = ingredientBases[1] },
+            Measurement = new Measurement { Name = measurements[1] }
+        };
+        Recipe toAdd = new Recipe 
+        { 
+            Name = "",
+            Directions = "",
+            Ingredients = [i1, i2]
+        };
+
+        // Act
+        int measurementCountBefore = context.Set<Measurement>().Count();
+        int baseCountBefore = context.Set<IngredientBase>().Count();
+        repo.CreateOrUpdate(toAdd);
+        context.SaveChanges();
+        int measurementCountAfter = context.Set<Measurement>().Count();
+        int baseCountAfter = context.Set<IngredientBase>().Count();
+
+        // Assert
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(measurementCountAfter, Is.EqualTo(measurementCountBefore + expected[0]));
+            Assert.That(baseCountAfter, Is.EqualTo(baseCountBefore + expected[1]));
+        }
+        context.Dispose();
+    }
 }
