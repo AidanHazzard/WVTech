@@ -29,7 +29,7 @@
                     <span class="nav-text">Home</span>
                 </button>
             </li>
-
+<!--
             <li class="nav-item">
                 <button
                     class="nav-button @(currentController == "Meal" && currentAction == "PlannerHome" ? "active" : "")"
@@ -37,7 +37,7 @@
                     <span class="nav-text">Planner</span>
                 </button>
             </li>
-
+-->
             <li class="nav-item">
                 <button
                     class="nav-button @(currentController == "FoodEntries" ? "active" : "")"
@@ -50,9 +50,10 @@
                 <button
                     class="nav-button @(currentController == "FoodEntries" && currentAction == "Nutrition" ? "active" : "")"
                     onclick="location.href='@Url.Action("Nutrition", "FoodEntries")'">
-                    <span class="nav-text">Nutrition</span>
+                    <span class="nav-text">Statistics</span>
                 </button>
             </li>
+<!--
 
             <li class="nav-item">
                 <button
@@ -61,6 +62,7 @@
                     <span class="nav-text">Statistics</span>
                 </button>
             </li>
+-->
 
             <li class="nav-item">
                 <button
@@ -69,7 +71,7 @@
                     <span class="nav-text">MyCart</span>
                 </button>
             </li>
-
+<!--
             @if (User.IsInRole("Admin"))
             {
                 <li class="nav-item">
@@ -96,6 +98,7 @@
             }
 
             <partial name="_LoginPartial" />
+-->
 
         </ul>
 
