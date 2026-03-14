@@ -40,7 +40,7 @@
 -->
             <li class="nav-item">
                 <button
-                    class="nav-button @(currentController == "FoodEntries" ? "active" : "")"
+                    class="nav-button @(currentController == "FoodEntries" && currentAction != "Nutrition" ? "active" : "")"
                     onclick="location.href='@Url.Action("SelectType", "FoodEntries")'">
                     <span class="nav-text">Food Entries</span>
                 </button>
