@@ -1,7 +1,7 @@
 ﻿.custom-navbar {
   display: flex;
   align-items: stretch;
-  background-color: #4a4a4a;
+  background-color: var(--layer1-bg);
   min-height: 60px;
   box-sizing: border-box;
   padding: 0 0 0 1rem;
@@ -13,7 +13,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
+  color: var(--text-primary);
   font-weight: bold;
   margin-right: 1rem;
   text-decoration: none;
@@ -38,15 +38,14 @@
   margin: 0;
 }
 
-
 .nav-button {
   flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: #4a4a4a;
+  background-color: var(--layer1-bg);
   border: none;
-  color: white;
+  color: var(--text-primary);
   font-size: 1rem;
   cursor: pointer;
   transition: background-color 0.3s, transform 0.2s;
@@ -55,12 +54,12 @@
 }
 
 .nav-button:hover {
-  background-color: #373737;
+  background-color: var(--nav-button-hover-bg);
 }
 
 .nav-button.active {
-  background-color: rgb(21, 21, 21);
-  color: white;
+  background-color: var(--nav-button-active-bg);
+  color: var(--text-primary);
   z-index: 1;
   position: relative;
   box-shadow: 4px 0 8px rgba(0, 0, 0, 0.3), -4px 0 8px rgba(0, 0, 0, 0.3);
@@ -96,13 +95,11 @@
   border-radius: 180px;
   width: 80px;
   height: 80px;
-
   padding: 0;
   border: none;
   position: relative;
   transition: background-color 0.3s ease-in-out;
 }
-
 
 /*When the page is below this width then put it into verticle mode*/
 @media (max-width: 900px) {

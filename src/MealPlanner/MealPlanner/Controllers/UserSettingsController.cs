@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MealPlanner.Models;
 using MealPlanner.ViewModels;
+using MealPlanner.DAL.Abstract;
+using MealPlanner.DAL.Concrete;
 
 namespace MealPlanner.Controllers
 {
@@ -12,10 +14,12 @@ namespace MealPlanner.Controllers
     public class UserSettingsController : Controller
     {
         private readonly MealPlannerDBContext _db;
+        private readonly IUserSettingsRepository _userSettings;
 
-        public UserSettingsController(MealPlannerDBContext db)
+        public UserSettingsController(MealPlannerDBContext db, IUserSettingsRepository userSettings)
         {
             _db = db;
+            _userSettings = userSettings;
         }
 
         [HttpGet]
@@ -24,6 +28,19 @@ namespace MealPlanner.Controllers
             return View();
         }
 
+        [HttpGet]
+        public async Task<IActionResult> ThemeChange()
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Challenge();
+            }
+
+            await _userSettings.ToggleDarkThemeAsync(userId);
+
+            return RedirectToAction(nameof(Index));
+        }
         [HttpGet]
         public async Task<IActionResult> Dietary()
         {
