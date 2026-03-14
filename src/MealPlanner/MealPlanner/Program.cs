@@ -2,6 +2,7 @@ using MealPlanner.Models;
 using MealPlanner.Services;
 using MealPlanner.DAL.Abstract;
 using MealPlanner.DAL.Concrete;
+using MealPlanner.Filters;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Azure.Security.KeyVault.Secrets;
@@ -9,8 +10,10 @@ using Azure.Identity;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddControllersWithViews();
-
+builder.Services.AddControllersWithViews(options =>
+{
+    options.Filters.Add<ThemeFilter>();
+});
 // Create connection string
 string? connectionString =
     builder.Configuration.GetConnectionString("DefaultConnection")
@@ -46,6 +49,8 @@ builder.Services.AddScoped<IRecipeRepository, RecipeRepository>();
 builder.Services.AddScoped<IUserDietaryRestrictionRepository, UserDietaryRestrictionRepository>();
 builder.Services.AddScoped<IMealRepository, MealRepository>();
 builder.Services.AddScoped<IUserRecipeRepository, UserRecipeRepository>();
+builder.Services.AddScoped<IUserSettingsRepository, UserSettingsRepository>();
+builder.Services.AddScoped<ThemeFilter>(); // add this
 
 // Add Identity
 builder.Services.AddIdentity<User, IdentityRole>(options =>
