@@ -27,30 +27,31 @@ public class HomeController : Controller
         _mealRepo = mealRepo;
     }
 
-    public async Task<IActionResult> Index(string? date)
+   public async Task<IActionResult> Index(string? date)
+{
+    if (!HttpContext.User.Identity?.IsAuthenticated ?? true)
+        return Redirect("/Login");
+
+    User? user = await _registrationService.FindUserByClaimAsync(HttpContext.User);
+
+    if (user == null)
+        return Redirect("/Login");
+
+    DateTime selectedDate =
+        DateTime.TryParse(date, out var parsed)
+            ? parsed.Date
+            : DateTime.Today;
+
+    var meals = await _mealRepo.GetUserMealsByDateAsync(user, selectedDate);
+
+    var vm = new PlannerHomeViewModel
     {
-        if (!HttpContext.User.Identity?.IsAuthenticated ?? true)
-            return Redirect("/Login");
+        SelectedDate = selectedDate,
+        Meals = meals
+    };
 
-        var user = await _registrationService.FindUserByClaimAsync(HttpContext.User);
-        if (user is null)
-            return Redirect("/Login");
-
-        DateTime selectedDate =
-            DateTime.TryParse(date, out var parsed)
-                ? parsed.Date
-                : DateTime.Today;
-
-        var meals = await _mealRepo.GetUserMealsByDateAsync(user, selectedDate);
-
-        var vm = new PlannerHomeViewModel
-        {
-            SelectedDate = selectedDate,
-            Meals = meals
-        };
-
-        return View(vm);
-    }
+    return View(vm);
+}
 
     [Authorize]
     public Task<IActionResult> Dashboard(string? date)

@@ -52,8 +52,7 @@ namespace MealPlanner.Services
             }
 
             await _userManager.AddToRoleAsync(user, "User");
-            //await _signInManager.SignInAsync(user, isPersistent: false);
-
+           
             return result;
         }
 
