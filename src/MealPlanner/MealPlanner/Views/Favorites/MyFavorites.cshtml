@@ -13,6 +13,7 @@
     }
     else
     {
+        <!--
         <table class="table">
             <thead>
                 <tr>
@@ -44,5 +45,13 @@
             }
             </tbody>
         </table>
+        -->
+        @foreach (Recipe r in Model)
+        {
+            var location = @Url.Action(action: "Recipes");
+            <button class="buttonGrey" onclick="location.href='@Url.Action("Recipes", "FoodEntries", new { id = r.Id })'">
+                <h3 class="buttonText">@r.Name</h3>
+            </button>
+        }
     }
 </div>

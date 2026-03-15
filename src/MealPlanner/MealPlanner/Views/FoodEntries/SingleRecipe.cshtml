@@ -2,7 +2,6 @@
 
 <div id="recipe" class="back1 backHasButton row container-fluid" recipe-id="@Model.Id">
 <div class="back1 backHasButton row container-fluid">
-    <h1 class="back1Title">@Model.Name</h1>
     <div class="col-3 mx-1">
         <div class="back2">
             <h3 class="back1Title">Nutrition</h3>
@@ -44,7 +43,7 @@
 
     <div class="col mx-1">
         <div class="row mb-5">
-            <h2 class="back1Title col-8">@Model.Name</h2>
+            <h1 class="back1Title col-8">@Model.Name</h1>
             @if (@Model.VotePercentage != null)
             {
                 string voterPercentage = $"{(int)@Model.VotePercentage * 100}%";
