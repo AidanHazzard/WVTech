@@ -10,15 +10,17 @@ namespace MealPlanner.Services
         private readonly UserManager<User> _userManager;
         private readonly SignInManager<User> _signInManager;
         private readonly RoleManager<IdentityRole> _roleManager;
+        private readonly MealPlannerDBContext _db;
 
         public RegistrationService(
             UserManager<User> userManager,
             SignInManager<User> signInManager,
-            RoleManager<IdentityRole> roleManager)
+            RoleManager<IdentityRole> roleManager, MealPlannerDBContext db)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _roleManager = roleManager;
+            _db = db;
         }
 
         public async Task<IdentityResult> RegisterUserAsync(RegisterViewModel model)
@@ -30,11 +32,19 @@ namespace MealPlanner.Services
                 Email = model.Email,
                 NormalizedEmail = model.Email.ToUpper(),
                 NormalizedUserName = model.Email.ToUpper(),
-                EmailConfirmed = true
+                EmailConfirmed = false
             };
 
             var result = await _userManager.CreateAsync(user, model.Password);
             if (!result.Succeeded) return result;
+
+            //creates the UserProfile row automatically for every new user
+            _db.UserProfiles.Add(new UserProfile
+            {
+                UserId = user.Id,
+                IsDarkTheme = false
+            });
+            await _db.SaveChangesAsync();
 
             if (!await _roleManager.RoleExistsAsync("User"))
             {
@@ -42,7 +52,7 @@ namespace MealPlanner.Services
             }
 
             await _userManager.AddToRoleAsync(user, "User");
-            await _signInManager.SignInAsync(user, isPersistent: false);
+            //await _signInManager.SignInAsync(user, isPersistent: false);
 
             return result;
         }
@@ -67,10 +77,44 @@ namespace MealPlanner.Services
             return await _userManager.AddPasswordAsync(user, newPassword);
         }
 
+        public async Task<string> GeneratePasswordResetTokenAsync(User user)
+        {
+            return await _userManager.GeneratePasswordResetTokenAsync(user);
+        }
+
+        // already have one of these this needs to be moved to change password
+        public async Task<IdentityResult> ResetPasswordAsync(
+            User user,
+            string token,
+            string newPassword)
+        {
+            return await _userManager.ResetPasswordAsync(user, token, newPassword);
+        }
+
+
         public async Task<User?> FindUserByClaimAsync(ClaimsPrincipal claim)
         {
             return await _userManager.GetUserAsync(claim);
         }
-        
+
+
+        public async Task<IdentityResult> ConfirmEmailAsync(User user, string token)
+        {
+            return await _userManager.ConfirmEmailAsync(user, token);
+        }
+
+
+        public async Task<string> GenerateEmailConfirmationTokenAsync(User user)
+        {
+            return await _userManager.GenerateEmailConfirmationTokenAsync(user);
+        }
+
+        public async Task<User?> FindUserByIdAsync(string userId)
+        {
+            return await _userManager.FindByIdAsync(userId);
+        }
+
+
+
     }
 }

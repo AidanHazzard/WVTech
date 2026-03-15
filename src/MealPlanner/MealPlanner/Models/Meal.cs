@@ -24,6 +24,19 @@ public class Meal
     public DateTime? EndTime { get; set; }
 
     public string? RepeatRule { get; set; }
-    
+
     public List<Recipe> Recipes { get; set; } = [];
+
+    public void UpdateFromEdit(Meal editedMeal, IEnumerable<Recipe> selectedRecipes)
+    {
+        StartTime = editedMeal.StartTime;
+        EndTime = editedMeal.EndTime;
+        RepeatRule = editedMeal.RepeatRule;
+
+        Recipes.Clear();
+        if (selectedRecipes != null)
+        {
+            Recipes.AddRange(selectedRecipes);
+        }
+    }
 }

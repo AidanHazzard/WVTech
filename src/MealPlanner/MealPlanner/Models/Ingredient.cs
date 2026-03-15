@@ -15,4 +15,9 @@ public class Ingredient
     [Required]
     public Measurement Measurement { get; set; }
     public float Amount { get; set; }
+
+    public override string ToString()
+    {
+        return $"{Amount} {Measurement.Name} of {IngredientBase.Name}";
+    }
 }

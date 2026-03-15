@@ -1,11 +1,10 @@
 using System.Diagnostics;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using MealPlanner.ViewModels;
-using MealPlanner.Models;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using MealPlanner.DAL.Abstract;
+using MealPlanner.Models;
 using MealPlanner.Services;
-using System.Security.Claims;
+using MealPlanner.ViewModels;
 
 namespace MealPlanner.Controllers;
 
@@ -14,18 +13,49 @@ public class HomeController : Controller
     private readonly MealPlannerDBContext _context;
     private readonly ILoginService _loginService;
     private readonly IRegistrationService _registrationService;
+    private readonly IMealRepository _mealRepo;
 
-    public HomeController(MealPlannerDBContext context, ILoginService loginService, IRegistrationService registrationService)
+    public HomeController(
+        MealPlannerDBContext context,
+        ILoginService loginService,
+        IRegistrationService registrationService,
+        IMealRepository mealRepo)
     {
         _context = context;
         _loginService = loginService;
         _registrationService = registrationService;
+        _mealRepo = mealRepo;
     }
 
-    public async Task<IActionResult> Index()
+    public async Task<IActionResult> Index(string? date)
     {
+        if (!HttpContext.User.Identity?.IsAuthenticated ?? true)
+            return Redirect("/Login");
 
-        return View();
+        var user = await _registrationService.FindUserByClaimAsync(HttpContext.User);
+        if (user is null)
+            return Redirect("/Login");
+
+        DateTime selectedDate =
+            DateTime.TryParse(date, out var parsed)
+                ? parsed.Date
+                : DateTime.Today;
+
+        var meals = await _mealRepo.GetUserMealsByDateAsync(user, selectedDate);
+
+        var vm = new PlannerHomeViewModel
+        {
+            SelectedDate = selectedDate,
+            Meals = meals
+        };
+
+        return View(vm);
+    }
+
+    [Authorize]
+    public Task<IActionResult> Dashboard(string? date)
+    {
+        return Index(date);
     }
 
     [Authorize]
@@ -34,15 +64,8 @@ public class HomeController : Controller
         return View();
     }
 
-    //This is the specific admin view
     [Authorize(Roles = "Admin")]
     public IActionResult Admin()
-    {
-        return View();
-    }
-    // This is the specific user view or dashboard
-    [Authorize(Roles = "User")]
-    public IActionResult User()
     {
         return View();
     }

@@ -4,6 +4,7 @@ using MealPlanner.Services;
 using MealPlanner.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace MealPlanner.Controllers;
 
@@ -98,8 +99,95 @@ public class MealController : Controller
         return RedirectToAction("PlannerHome");
     }
 
+    [HttpGet]
+    public async Task<IActionResult> ViewMeal(int id)
+    {
+        var user = await _registrationService.FindUserByClaimAsync(User);
+        if (user == null)
+        {
+            return Challenge();
+        }
+
+        var meal = await _mealRepo.ReadAsync(id);
+        if (meal == null || meal.UserId != user.Id)
+        {
+            return NotFound();
+        }
+
+        await _mealRepo.LoadRecipesAsync(meal);
+
+        return View(meal);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> EditMeal(int id)
+    {
+        var user = await _registrationService.FindUserByClaimAsync(User);
+        if (user == null)
+        {
+            return Challenge();
+        }
+
+        var meal = await _mealRepo.ReadAsync(id);
+        if (meal == null || meal.UserId != user.Id)
+        {
+            return NotFound();
+        }
+
+        var viewModel = new EditMealViewModel
+        {
+            Id = meal.Id,
+            Date = meal.StartTime?.Date ?? DateTime.Today,
+            Time = meal.StartTime?.TimeOfDay ?? TimeSpan.Zero,
+            RepeatWeekly = meal.RepeatRule == "Weekly",
+            RecipeIds = meal.Recipes?.Select(r => r.Id).ToList() ?? new List<int>()
+        };
+
+        return View(viewModel);
+    }
 
     [HttpPost]
+    public async Task<IActionResult> EditMeal(EditMealViewModel model)
+    {
+        if (!ModelState.IsValid)
+        {
+            return View(model);
+        }
+
+        var user = await _registrationService.FindUserByClaimAsync(User);
+        if (user == null)
+        {
+            return Challenge();
+        }
+
+        var meal = await _mealRepo.ReadAsync(model.Id);
+        if (meal == null || meal.UserId != user.Id)
+        {
+            return NotFound();
+        }
+
+        meal.StartTime = model.Date.Date + model.Time;
+        meal.RepeatRule = model.RepeatWeekly ? "Weekly" : null;
+
+        meal.Recipes.Clear();
+
+        foreach (var recipeId in model.RecipeIds ?? new List<int>())
+        {
+            var recipe = _recipeRepo.Read(recipeId);
+            if (recipe != null)
+            {
+                meal.Recipes.Add(recipe);
+            }
+        }
+
+        _mealRepo.CreateOrUpdate(meal);
+        _context.SaveChanges();
+
+        return RedirectToAction("ViewMeal", new { id = meal.Id });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteMeal(int id, string? date)
     {
         var user = await _registrationService.FindUserByClaimAsync(User);

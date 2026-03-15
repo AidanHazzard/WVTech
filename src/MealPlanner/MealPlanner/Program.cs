@@ -2,30 +2,62 @@ using MealPlanner.Models;
 using MealPlanner.Services;
 using MealPlanner.DAL.Abstract;
 using MealPlanner.DAL.Concrete;
+using MealPlanner.Filters;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Azure.Security.KeyVault.Secrets;
+using Azure.Identity;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddControllersWithViews(options =>
+{
+    options.Filters.Add<ThemeFilter>();
+});
 
-builder.Services.AddControllersWithViews();
-
-
-string connectionString =
+// Create connection string
+string? connectionString =
     builder.Configuration.GetConnectionString("DefaultConnection")
-    ?? builder.Configuration["ConnectionString"]
-    ?? throw new InvalidOperationException("Missing connection string. Set user-secrets 'ConnectionStrings:DefaultConnection' or 'ConnectionString'.");
+    ?? builder.Configuration["ConnectionString"];
 
+// Debug output
 Console.WriteLine("USING CONNECTION STRING: " + connectionString);
 
+// Validate connection string
+if (string.IsNullOrWhiteSpace(connectionString))
+{
+    throw new InvalidOperationException(
+        "Missing connection string. Set 'ConnectionStrings:DefaultConnection' or 'ConnectionString'."
+    );
+}
+
+// Get Secrets from Azure Key Vault (production only)
+if (builder.Environment.IsProduction())
+{
+    var keyVaultUri = builder.Configuration["AzureKeyVault:VaultUri"];
+    if (!string.IsNullOrEmpty(keyVaultUri))
+    {
+        SecretClient secretClient = new SecretClient(new Uri(keyVaultUri), new DefaultAzureCredential());
+        builder.Configuration["EmailSettings:Password"] =
+            secretClient.GetSecret("EmailSettings--Password").Value.Value;
+    }
+}
+
+// Create db context
 builder.Services.AddDbContext<MealPlannerDBContext>(options =>
     options.UseSqlServer(connectionString, options => options.EnableRetryOnFailure()));
-
 builder.Services.AddScoped<DbContext, MealPlannerDBContext>();
+
+// Add Repositories
 builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 builder.Services.AddScoped<IRecipeRepository, RecipeRepository>();
 builder.Services.AddScoped<IUserDietaryRestrictionRepository, UserDietaryRestrictionRepository>();
 builder.Services.AddScoped<IMealRepository, MealRepository>();
+builder.Services.AddScoped<IUserRecipeRepository, UserRecipeRepository>();
+builder.Services.AddScoped<IUserSettingsRepository, UserSettingsRepository>();
+builder.Services.AddScoped<ThemeFilter>(); // add this
+
+// Add Identity
 builder.Services.AddIdentity<User, IdentityRole>(options =>
 {
     options.Password.RequireDigit = true;
@@ -33,26 +65,33 @@ builder.Services.AddIdentity<User, IdentityRole>(options =>
     options.Password.RequiredLength = 6;
     options.User.RequireUniqueEmail = true;
     options.SignIn.RequireConfirmedAccount = true;
-    options.SignIn.RequireConfirmedEmail = false;
+    options.SignIn.RequireConfirmedEmail = true;
     options.SignIn.RequireConfirmedPhoneNumber = false;
 })
 .AddEntityFrameworkStores<MealPlannerDBContext>()
 .AddDefaultTokenProviders();
 
+// Create login redirect route
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.LoginPath = "/Login";
+    options.AccessDeniedPath = "/Login";
+});
+
+// Add services
 builder.Services.AddScoped<INutritionProgressService, NutritionProgressService>();
-// Register LoginService for dependency injection
 builder.Services.AddScoped<ILoginService, LoginService>();
-// Register RegisterService for dependency injection
 builder.Services.AddScoped<IRegistrationService, RegistrationService>();
-// Register AccountSettingsService for dependency injection
 builder.Services.AddScoped<IAccountSettingsService, AccountSettingsService>();
 
+// Configure emailer
+builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
+builder.Services.AddTransient<IEmailService, EmailService>();
 
 var app = builder.Build();
 
 await SeedService.SeedData(app.Services);
 
-// Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");

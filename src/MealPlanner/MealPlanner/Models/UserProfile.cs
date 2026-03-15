@@ -25,7 +25,8 @@ public class UserProfile
     public decimal? Weight { get; set; }
 
     public string? ActivityLevel { get; set; }
-    
+
     public string? ProfilePictureUrl { get; set; }
 
+    public bool IsDarkTheme { get; set; } = false;
 }

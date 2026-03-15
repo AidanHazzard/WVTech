@@ -1,5 +1,51 @@
+:root {
+  --body-bg: rgb(21, 21, 21);
+  --layer1-bg: #4a4a4a;
+  --layer2-bg: #737373;
+  --textbox-bg: #919191;
+  --button-grey-bg: #919191;
+  --text-primary: #ffffff;
+  --image-button-hover-bg: rgb(97, 97, 97);
+  --nav-button-hover-bg: #373737;
+  --nav-button-active-bg: var(--body-bg);
+  --button-blue-bg: #80eef6;
+  --button-blue-hover-bg: rgb(104, 192, 198);
+  --button-green-bg: #69ff90;
+  --button-green-hover-bg: rgb(87, 212, 120);
+  --button-grey-hover-bg: rgb(137, 150, 136);
+  --search-result-hover-bg: #3a3a3a;
+  --date-hover-bg: rgb(153, 153, 153);
+  --arrow-hover-bg: #6d6d6d;
+  --arrow-shadow: rgba(0, 0, 0, 0.65);
+  --image-filter: none;
+}
+
+[data-theme="light"] {
+  --body-bg: rgb(240, 240, 240);
+  --layer1-bg: #e0e0e0;
+  --layer2-bg: #c8c8c8;
+  --textbox-bg: #f0f0f0;
+  --button-grey-bg: #d0d0d0;
+  --text-primary: #1a1a1a;
+  --image-button-hover-bg: rgb(180, 180, 180);
+  --nav-button-hover-bg: #c8c8c8;
+  --nav-button-active-bg: var(--body-bg);
+  --button-blue-bg: #80eef6;
+  --button-blue-hover-bg: rgb(104, 192, 198);
+  --button-green-bg: #69ff90;
+  --button-green-hover-bg: rgb(87, 212, 120);
+  --button-grey-hover-bg: rgb(180, 180, 180);
+  --search-result-hover-bg: var(--layer1-bg);
+  --date-hover-bg: rgb(180, 180, 180);
+  --arrow-hover-bg: #b0b0b0;
+  --arrow-shadow: rgba(255, 255, 255, 0.65);
+  --image-filter: invert(1);
+}
+
 html {
   font-size: 14px;
+  position: relative;
+  min-height: 100%;
 }
 
 @media (min-width: 768px) {
@@ -8,23 +54,17 @@ html {
   }
 }
 
+body {
+  margin-bottom: 60px;
+  background-color: var(--body-bg);
+}
+
 .btn:focus,
 .btn:active:focus,
 .btn-link.nav-link:focus,
 .form-control:focus,
 .form-check-input:focus {
   box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
-}
-
-
-html {
-  position: relative;
-  min-height: 100%;
-}
-
-body {
-  margin-bottom: 60px;
-  background-color: rgb(21, 21, 21);
 }
 
 .form-floating>.form-control-plaintext::placeholder,
@@ -40,37 +80,33 @@ body {
 
 /*Use this for the first background layer*/
 .back1 {
-  background-color: #4a4a4a;
+  background-color: var(--layer1-bg);
   border-radius: 20px;
-
   margin: 24px 0;
   padding: 24px;
-
   width: 100%;
-
   box-sizing: border-box;
   position: relative;
 }
 
 /*Used for the text on the 1st background layer*/
 .back1Title {
-  color: white;
+  color: var(--text-primary);
   text-align: center;
   position: relative;
 }
+
 .left {
   text-align: left;
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  
 }
 
 /*Use this for the second background layer*/
 .back2 {
-  background-color: #737373ff;
+  background-color: var(--layer2-bg);
   border-radius: 20px;
-
   margin-top: 30px;
   margin-bottom: 10px;
   padding: 24px;
@@ -79,16 +115,13 @@ body {
 
 .back2-textbox {
   display: inline-block;
-  background-color: #919191ff;
-  color: #ffffff;
-
+  background-color: var(--textbox-bg);
+  color: var(--text-primary);
   font-size: 1.5rem;
   padding: 0.75rem 1rem;
   width: 100%;
-
   margin-top: 5px;
   margin-bottom: 5px;
-
   border-radius: 20px;
   border-color: #ffffff00;
   box-shadow: none;
@@ -96,25 +129,37 @@ body {
   box-sizing: border-box;
 }
 
+.back2-textbox-partial {
+  display: inline-block;
+  background-color: var(--textbox-bg);
+  color: var(--text-primary);
+  font-size: 1.5rem;
+  padding: 0rem 1rem;
+  margin-top: 5px;
+  margin-bottom: 5px;
+  border-radius: 20px;
+  border-color: #ffffff00;
+  box-shadow: none;
+  outline: none;
+  box-sizing: border-box;
+}
 
 /*Use this for if you want to have an image be a button*/
 .imageButton {
-  background-color: #737373ff;
+  background-color: var(--layer2-bg);
   border-radius: 20px;
-
   width: 300px;
   height: 300px;
-
   margin: 24px;
-
   padding: 0;
   border: none;
   position: relative;
+  overflow: hidden;
   transition: background-color 0.3s ease-in-out;
 }
 
 .imageButton:hover {
-  background-color: rgb(97, 97, 97);
+  background-color: var(--image-button-hover-bg);
 }
 
 /*Used for the image that is contained in the button image*/
@@ -124,7 +169,9 @@ body {
   height: 200px;
   margin: -40px auto 0 auto;
   object-fit: contain;
+  overflow: hidden;
   transition: transform 0.3s ease-in-out;
+  filter: var(--image-filter);
 }
 
 .imageScaleDown {
@@ -136,56 +183,68 @@ body {
   transform: scale(1.08);
 }
 
+/* List button for search results */
+.buttonGrey {
+  display: inline-block;
+  background-color: var(--button-grey-bg);
+  color: var(--text-primary);
+  font-size: 1.5rem;
+  padding: 0.5rem 1rem;
+  width: 100%;
+  margin-top: 5px;
+  margin-bottom: 5px;
+  border-radius: 20px;
+  border-color: #ffffff00;
+  box-shadow: none;
+  outline: none;
+  box-sizing: border-box;
+  transition: background-color 0.3s ease-in-out;
+}
+
+.buttonGrey:hover {
+  background-color: var(--button-grey-hover-bg);
+}
+
 /*Use this for blue buttons*/
 .buttonBlue {
   border-radius: 20px;
-  background-color: #80eef6ff;
-
+  background-color: var(--button-blue-bg);
   margin-top: 24px;
-
   padding: 4px;
   width: 100%;
   box-sizing: border-box;
-
   position: absolute;
   bottom: 0;
   left: 0;
-  width: 100%;
-
   border: none;
   transition: background-color 0.3s ease-in-out;
 }
 
 .buttonBlue:hover {
-  background-color: rgb(104, 192, 198);
+  background-color: var(--button-blue-hover-bg);
 }
 
 .imageButton:hover .buttonBlue {
-  background-color: rgb(104, 192, 198);
+  background-color: var(--button-blue-hover-bg);
 }
 
 /*Use this for green buttons*/
 .buttonGreen {
   border-radius: 20px;
-  background-color: #69ff90ff;
-
+  background-color: var(--button-green-bg);
   margin-top: 24px;
-
   padding: 4px;
   width: 100%;
   box-sizing: border-box;
-
   position: absolute;
   bottom: 0;
   left: 0;
-  width: 100%;
-
   border: none;
   transition: background-color 0.3s ease-in-out;
 }
 
 .buttonGreen:hover {
-  background-color: rgb(87, 212, 120);
+  background-color: var(--button-green-hover-bg);
 }
 
 /*Used for buttons text so it can increase and decrease in size*/
@@ -193,15 +252,10 @@ body {
   transition: transform 0.3s ease-in-out;
 }
 
-.imageButton:hover .buttonText {
-  transform: scale(1.08);
-}
-
-.buttonBlue:hover .buttonText {
-  transform: scale(1.08);
-}
-
-.buttonGreen:hover .buttonText {
+.imageButton:hover .buttonText,
+.buttonBlue:hover .buttonText,
+.buttonGreen:hover .buttonText,
+.buttonGrey:hover .buttonText {
   transform: scale(1.08);
 }
 
@@ -213,21 +267,16 @@ body {
 /*Use this to make any image centered and autoscaled*/
 .imageFit {
   display: block;
-
   max-width: 100%;
   max-height: 100%;
-
   width: auto;
   height: auto;
-
   margin: auto auto;
-
   object-fit: contain;
-
   transition: transform 0.3s ease-in-out;
 }
 
 /* Styling for search results */
 .search-result:hover {
-  background-color: #f3f3f3 !important;
+  background-color: var(--search-result-hover-bg) !important;
 }

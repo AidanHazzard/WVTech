@@ -6,9 +6,10 @@ namespace MealPlanner.DAL.Concrete;
 
 public class MealRepository : Repository<Meal>, IMealRepository
 {
+    private readonly MealPlannerDBContext _context;
     public MealRepository(MealPlannerDBContext context) : base(context)
     {
-        
+        _context = context;
     }
 
     public async Task<List<Meal>> GetUserMealsByDateAsync(User user, DateTime date)
@@ -41,4 +42,39 @@ public class MealRepository : Repository<Meal>, IMealRepository
 
             return meals;
     }
+
+    // Load recipes for a meal
+    public async Task LoadRecipesAsync(Meal meal)
+    {
+        if (meal == null) return;
+        await _context.Entry(meal).Collection(m => m.Recipes).LoadAsync();
+    }
+
+    // Update meal properties & recipes
+    public async Task UpdateMealAsync(Meal meal, Meal updatedData, IEnumerable<int> recipeIds)
+{
+    // Update basic properties
+    meal.StartTime = updatedData.StartTime;
+    meal.RepeatRule = updatedData.RepeatRule;
+
+    // Load current recipes
+    await _context.Entry(meal).Collection(m => m.Recipes).LoadAsync();
+
+    // Clear old recipes
+    meal.Recipes.Clear();
+
+    // Add selected recipes
+    var recipes = await _context.Recipes
+        .Where(r => recipeIds.Contains(r.Id))
+        .ToListAsync();
+
+    meal.Recipes.AddRange(recipes);
+
+    await _context.SaveChangesAsync();
+}
+
+    public async Task<Meal> ReadAsync(int id)
+{
+    return await _dbset.FindAsync(id);
+}
 }
