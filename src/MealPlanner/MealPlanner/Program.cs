@@ -61,7 +61,6 @@ builder.Services.AddIdentity<User, IdentityRole>(options =>
 .AddEntityFrameworkStores<MealPlannerDBContext>()
 .AddDefaultTokenProviders();
 
-<<<<<<< HEAD
 builder.Services.AddHttpContextAccessor();
 
 //when an unauthorized user tries to access a protected resource, redirect them to the login page
@@ -81,13 +80,6 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.ExpireTimeSpan = TimeSpan.FromDays(30);
 
     options.Cookie.IsEssential = true;
-=======
-// Create login redirect route
-builder.Services.ConfigureApplicationCookie(options =>
-{
-    options.LoginPath = "/Login";
-    options.AccessDeniedPath = "/Login";
->>>>>>> dev
 });
 
 // Add services

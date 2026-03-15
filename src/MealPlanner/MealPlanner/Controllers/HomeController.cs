@@ -50,30 +50,8 @@ public class HomeController : Controller
         Meals = meals
     };
 
-<<<<<<< HEAD
     return View(vm);
 }
-=======
-        var user = await _registrationService.FindUserByClaimAsync(HttpContext.User);
-        if (user is null)
-            return Redirect("/Login");
-
-        DateTime selectedDate =
-            DateTime.TryParse(date, out var parsed)
-                ? parsed.Date
-                : DateTime.Today;
-
-        var meals = await _mealRepo.GetUserMealsByDateAsync(user, selectedDate);
-
-        var vm = new PlannerHomeViewModel
-        {
-            SelectedDate = selectedDate,
-            Meals = meals
-        };
-
-        return View(vm);
-    }
->>>>>>> dev
 
     [Authorize]
     public Task<IActionResult> Dashboard(string? date)
