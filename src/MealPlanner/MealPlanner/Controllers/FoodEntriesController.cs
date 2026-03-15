@@ -68,7 +68,13 @@ public class FoodEntriesController : Controller
         {
             userRecipes = await _userRecipeRepository.GetUserOwnedRecipesByUserIdAsync(user.Id);
         }
-        return View(userRecipes);
+        IEnumerable<RecipeViewModel> userRecipeVMs = userRecipes.Select(ViewModelService.RecipeToRecipeVM);
+        foreach (RecipeViewModel vm in userRecipeVMs)
+        {
+            if (vm.Id == null) continue;
+            vm.VotePercentage = await _userRecipeRepository.GetRecipeVotePercentage(vm.Id ?? 0);
+        }
+        return View(userRecipeVMs);
     }
 
     [HttpGet]
@@ -84,15 +90,17 @@ public class FoodEntriesController : Controller
         }
 
         RecipeViewModel viewModel = ViewModelService.RecipeToRecipeVM(recipe);
-
+        viewModel.VotePercentage = await _userRecipeRepository.GetRecipeVotePercentage(id);
+        
         //if you do not own the recipe
         User? user = await _registrationService.FindUserByClaimAsync(User);
         if (user != null)
         {
+            viewModel.UserVote = await _userRecipeRepository.GetUserRecipeVoteAsync(user.Id, id);
             var ownedRecipes = await _userRecipeRepository.GetUserOwnedRecipesByUserIdAsync(user.Id);
-            viewModel.isOwned = ownedRecipes.Any(r => r.Id == id);
+            viewModel.IsOwned = ownedRecipes.Any(r => r.Id == id);
         }
-
+        
         return View("SingleRecipe", viewModel);
     }
 

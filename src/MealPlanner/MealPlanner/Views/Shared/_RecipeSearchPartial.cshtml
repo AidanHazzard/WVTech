@@ -1,27 +1,28 @@
-<div class="container-sm m-3 p-3 bg-secondary rounded border border-dark-subtle">
-    <form action="javascript:void(0)">
-        <input id="searchText" class="form-control" type="text">
-    </form>
-    <hr />
+<div class="back2">
+    <h1 class="back1Title">Search for Recipes</h1>
+    <input id="searchText" class="back2-textbox" type="text" placeholder="Oatmeal Cookies">
+    <hr>
     <h3 id="error" class="text-center"></h3>
     <div id="recipeResults" class="container-fluid my-3 ">
     </div>
 
     <template id="recipeResult">
-        <div class="row border border-dark bg-secondary-subtle pt-1 rounded my-1 search-result recipeSearchRow">
-            <h4 class="recipeName"></h4>
-            <div class="recipeId" hidden></div>
-
+        <div class="buttonGrey position-relative px-5 py-3 recipeSearchRow">
+            <h3 class="buttonText recipeName"></h3>
+            <div hidden class="recipeId"></div>
             @if (User.Identity != null && User.Identity.IsAuthenticated)
             {
-                <div class="mt-2">
+                <div class="position-absolute top-50 end-0 translate-middle pe-3">
                     <form class="favoriteForm" asp-controller="Favorites" asp-action="Add" method="post">
                         <input type="hidden" name="recipeId" class="recipeIdInput" value="" />
                         <input type="hidden" name="returnUrl" value="@Context.Request.Path@Context.Request.QueryString" />
-                        <button type="submit" class="btn btn-sm btn-outline-primary favoriteBtn">♡ Favorite</button>
+                        <button type="submit" class="favoriteBtn growOnHover">
+                            <img src="~/images/icons/heart.svg" width="30" height="30">
+                        </button>
                     </form>
                 </div>
             }
+            <h4 class="buttonText recipeRating" ></h4>
         </div>
     </template>
 </div>

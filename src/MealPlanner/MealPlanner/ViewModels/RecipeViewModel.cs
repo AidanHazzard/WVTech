@@ -23,7 +23,7 @@ public class RecipeViewModel
         }
 
         Name = recipe.Name;
-        ID = recipe.Id;
+        Id = recipe.Id;
         Ingredients = recipe.Ingredients.Select(i => i.IngredientBase.Name).ToList();
         IngredientAmounts = recipe.Ingredients.Select(i => i.Amount).ToList();
         IngredientMeasurements = recipe.Ingredients.Select(i => i.Measurement.Name).ToList();
@@ -34,10 +34,9 @@ public class RecipeViewModel
         Fat = recipe.Fat;
     }
 
-    public int ID { get; set;}
-    public bool isOwned { get; set;} = false;
     [Required(ErrorMessage = "A recipe needs a name")]
     public string Name { get; set; }
+    public int? Id { get; set; }
     public List<string> Ingredients { get; set; } = [];
     public List<float> IngredientAmounts { get; set; } = [];
     public List<string> IngredientMeasurements { get; set; } = [];
@@ -56,4 +55,7 @@ public class RecipeViewModel
     
     [Range(0, 32767)]
     public int Fat { get; set; }
+    public bool IsOwned { get; set;} = false;
+    public UserVoteType UserVote { get; set; } = UserVoteType.NoVote;
+    public float? VotePercentage { get; set; }
 }

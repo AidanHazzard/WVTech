@@ -53,6 +53,8 @@ public class MealController : Controller
     [HttpPost]
     public async Task<IActionResult> NewMeal(CreateMealViewModel model)
     {
+        Console.WriteLine(model.Date);
+        Console.WriteLine(model.Time);
         if (!ModelState.IsValid)
         {
             return View(model);
