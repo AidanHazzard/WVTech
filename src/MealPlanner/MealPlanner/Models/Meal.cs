@@ -9,10 +9,15 @@ public class Meal
     [Key]
     public int Id { get; set; }
 
-    public string UserId { get; set; }
+    [Required]
+    public string UserId { get; set; } = string.Empty;
 
     [ForeignKey("UserId")]
-    public User User { get; set; }  
+    public User User { get; set; } = null!;
+
+    [Required]
+    [StringLength(100)]
+    public string Title { get; set; } = string.Empty;
 
     public DateTime? StartTime { get; set; }
 
@@ -21,5 +26,4 @@ public class Meal
     public string? RepeatRule { get; set; }
     
     public List<Recipe> Recipes { get; set; } = [];
-    
 }
