@@ -169,9 +169,9 @@ button {
 
 .MealCheckBox {
     position: absolute;
-    top: 0;
-    left: 0;
-    margin: 10px;
+    top: 10px;
+    left: 10px;
+    margin: 0;
     width: 50px;
     height: 50px;
     z-index: 1;
@@ -215,6 +215,56 @@ button {
 
 .imageButton:has(.MealCheckBox:checked):hover {
     cursor: default;
+}
+
+.mealCardWrapper {
+    position: relative;
+    display: inline-block;
+    line-height: 0;
+    border-radius: 20px;
+    overflow: hidden;
+}
+
+.mealViewForm {
+    margin: 0;
+    display: block;
+}
+
+.mealButton {
+    position: relative;
+    display: block;
+}
+
+.mealDeleteForm {
+    position: absolute;
+    top: 34px;
+    right: 34px;
+    margin: 0;
+    z-index: 2;
+}
+
+.mealDeleteButton {
+    width: 50px;
+    height: 50px;
+    margin: 0;
+    padding: 0;
+    cursor: pointer;
+    transition: transform 0.3s ease-in-out, background-color 0.3s ease-in-out;
+    background-color: #ff4d4f;
+    color: white;
+    font-size: 30px;
+    font-weight: bold;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    outline: none;
+}
+
+.mealDeleteButton:hover {
+    background-color: #e53935;
+    transform: scale(1.08);
 }
 
 /*When the page is below this width then put it into verticle mode*/

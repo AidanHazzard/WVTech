@@ -57,6 +57,7 @@ builder.Services.AddScoped<IUserRecipeRepository, UserRecipeRepository>();
 builder.Services.AddScoped<IUserSettingsRepository, UserSettingsRepository>();
 builder.Services.AddScoped<IShoppingListRepository, ShoppingListRepository>();
 builder.Services.AddScoped<ThemeFilter>();
+builder.Services.AddScoped<ShoppingListService>();
 
 // Add Identity
 builder.Services.AddIdentity<User, IdentityRole>(options =>

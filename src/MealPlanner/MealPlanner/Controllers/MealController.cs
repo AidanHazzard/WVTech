@@ -199,7 +199,7 @@ public class MealController : Controller
         var meal = await _context.Meals.FindAsync(id);
         if (meal == null)
         {
-            return RedirectToAction("PlannerHome", new { date });
+            return RedirectToAction("Index", "Home", new { selectedDate = date });
         }
 
         if (meal.UserId != user.Id)
@@ -210,6 +210,6 @@ public class MealController : Controller
         _context.Meals.Remove(meal);
         await _context.SaveChangesAsync();
 
-        return RedirectToAction("PlannerHome", new { date });
+        return RedirectToAction("Index", "Home", new { selectedDate = date });
     }
 }
