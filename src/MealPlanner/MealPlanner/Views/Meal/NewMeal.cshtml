@@ -15,7 +15,7 @@
     <div class="row align-items-center">
         <div class="text-danger" asp-validation-summary="All"></div>
 
-        <form id="createMealForm" class="col d-flex flex-column mx-1" asp-action="NewMeal" method="POST">
+        <form id="createMealForm" class="col d-flex flex-column mx-1" asp-action="NewMeal" method="post">
 
             <div class="row g-3 mb-3">
                 <div class="col-md-6">
@@ -35,9 +35,7 @@
                 <div class="col-md-4 d-flex align-items-end">
                     <div class="form-check">
                         <input asp-for="RepeatWeekly" class="form-check-input" />
-                        <label asp-for="RepeatWeekly" class="form-check-label">
-                            Repeat Weekly
-                        </label>
+                        <label asp-for="RepeatWeekly" class="form-check-label">Repeat Weekly</label>
                     </div>
                 </div>
             </div>
@@ -56,6 +54,7 @@
 </div>
 
 @section Scripts {
+    <partial name="_ValidationScriptsPartial" />
     <script type="module" src="~/js/recipeSearch.js"></script>
     <script type="module" src="~/js/createMeal.js"></script>
 }

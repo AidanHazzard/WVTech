@@ -54,7 +54,10 @@ public class MealController : Controller
     [HttpGet]
     public IActionResult NewMeal()
     {
-        return View();
+        return View(new CreateMealViewModel
+        {
+            Date = DateTime.Today
+        });
     }
 
     [HttpPost]
