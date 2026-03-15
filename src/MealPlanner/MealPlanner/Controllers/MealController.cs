@@ -97,4 +97,31 @@ public class MealController : Controller
 
         return RedirectToAction("PlannerHome");
     }
+
+
+    [HttpPost]
+    public async Task<IActionResult> DeleteMeal(int id, string? date)
+    {
+        var user = await _registrationService.FindUserByClaimAsync(User);
+        if (user == null)
+        {
+            return Challenge();
+        }
+
+        var meal = await _context.Meals.FindAsync(id);
+        if (meal == null)
+        {
+            return RedirectToAction("PlannerHome", new { date });
+        }
+
+        if (meal.UserId != user.Id)
+        {
+            return Forbid();
+        }
+
+        _context.Meals.Remove(meal);
+        await _context.SaveChangesAsync();
+
+        return RedirectToAction("PlannerHome", new { date });
+    }
 }

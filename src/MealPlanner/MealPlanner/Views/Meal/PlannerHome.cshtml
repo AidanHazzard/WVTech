@@ -57,6 +57,12 @@
                                     }
                                 </div>
                             </div>
+
+                            <form asp-action="DeleteMeal" method="post" class="ms-3">
+                                <input type="hidden" name="id" value="@meal.Id" />
+                                <input type="hidden" name="date" value="@Model.SelectedDate.ToString("yyyy-MM-dd")" />
+                                <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                            </form>
                         </div>
                     </div>
                 }
