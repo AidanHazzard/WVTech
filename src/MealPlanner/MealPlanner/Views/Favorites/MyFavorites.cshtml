@@ -4,43 +4,45 @@
     ViewData["Title"] = "My Favorite Recipes";
 }
 
-<h2>My Favorite Recipes</h2>
+<div class="back1">
+    <h1 class="back1Title">Favorites</h1>
 
-@if (Model == null || !Model.Any())
-{
-    <p>You have no favorited recipes yet.</p>
-}
-else
-{
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Name</th>
-                <th>Calories</th>
-                <th>Protein</th>
-                <th>Carbs</th>
-                <th>Fat</th>
-                <th></th>
-            </tr>
-        </thead>
-        <tbody>
-        @foreach (var r in Model)
-        {
-            <tr>
-                <td>@r.Name</td>
-                <td>@r.Calories</td>
-                <td>@r.Protein</td>
-                <td>@r.Carbs</td>
-                <td>@r.Fat</td>
-                <td>
-                    <form asp-controller="Favorites" asp-action="Remove" method="post" style="display:inline;">
-                        <input type="hidden" name="recipeId" value="@r.Id" />
-                        <input type="hidden" name="returnUrl" value="@Context.Request.Path" />
-                        <button type="submit" class="btn btn-sm btn-danger">Unfavorite</button>
-                    </form>
-                </td>
-            </tr>
-        }
-        </tbody>
-    </table>
-}
+    @if (Model == null || !Model.Any())
+    {
+        <p>You have no favorited recipes yet.</p>
+    }
+    else
+    {
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Calories</th>
+                    <th>Protein</th>
+                    <th>Carbs</th>
+                    <th>Fat</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var r in Model)
+            {
+                <tr>
+                    <td>@r.Name</td>
+                    <td>@r.Calories</td>
+                    <td>@r.Protein</td>
+                    <td>@r.Carbs</td>
+                    <td>@r.Fat</td>
+                    <td>
+                        <form asp-controller="Favorites" asp-action="Remove" method="post" style="display:inline;">
+                            <input type="hidden" name="recipeId" value="@r.Id" />
+                            <input type="hidden" name="returnUrl" value="@Context.Request.Path" />
+                            <button type="submit" class="btn btn-sm btn-danger">Unfavorite</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    }
+</div>

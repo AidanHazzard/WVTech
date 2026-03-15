@@ -90,7 +90,7 @@ li {
 
 .linkListBack {
   transition: background-color 0.3s ease-in-out;
-  background-color: var(--textbox-bg);
+  background-color: var(--layer2-bg);
 }
 
 .linkListBack:hover {
@@ -113,6 +113,10 @@ li {
   color: var(--text-primary);
   text-align: center;
   position: relative;
+}
+
+p {
+  color: var(--text-primary);
 }
 
 .buttonText {

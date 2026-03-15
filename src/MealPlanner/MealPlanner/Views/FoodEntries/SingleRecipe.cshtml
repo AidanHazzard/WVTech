@@ -1,50 +1,54 @@
 @model MealPlanner.ViewModels.RecipeViewModel
 
 <div class="back1 backHasButton row container-fluid">
+    <h1 class="back1Title">@Model.Name</h1>
     <div class="col-3 mx-1">
+        <div class="back2">
+            <h3 class="back1Title">Nutrition</h3>
 
-        <h3 class="back1Title">Nutrition</h3>
-
-        @{
-            bool hasNutrition =
-                !(Model.Calories == 0 && Model.Protein == 0 && Model.Carbs == 0 && Model.Fat == 0);
-        }
-
-        @if (hasNutrition)
-        {
-            <ul>
-                <li><strong>Calories:</strong> @Model.Calories kcal</li>
-                <li><strong>Protein:</strong> @Model.Protein g</li>
-                <li><strong>Carbs:</strong> @Model.Carbs g</li>
-                <li><strong>Fat:</strong> @Model.Fat g</li>
-            </ul>
-        }
-        else
-        {
-            <p>Nutrition information is not available for this recipe yet.</p>
-        }
-
-        <h3 class="back1Title">Ingredients</h3>
-        <ul>
             @{
-                for (int i = 0; i < Model.Ingredients.Count; i++)
-                {
-                    <li class="back2-textbox">
-                        @Model.IngredientAmounts[i] @Model.IngredientMeasurements[i] of @Model.Ingredients[i]
-                    </li>
-                }
+                bool hasNutrition =
+                    !(Model.Calories == 0 && Model.Protein == 0 && Model.Carbs == 0 && Model.Fat == 0);
             }
-        </ul>
+
+            @if (hasNutrition)
+            {
+                <ul>
+                    <li><strong>Calories:</strong> @Model.Calories kcal</li>
+                    <li><strong>Protein:</strong> @Model.Protein g</li>
+                    <li><strong>Carbs:</strong> @Model.Carbs g</li>
+                    <li><strong>Fat:</strong> @Model.Fat g</li>
+                </ul>
+            }
+            else
+            {
+                <p>Nutrition information is not available for this recipe yet.</p>
+            }
+        </div>
+
+        <div class="back2">
+            <h3 class="back1Title">Ingredients</h3>
+            <ul>
+                @{
+                    for (int i = 0; i < Model.Ingredients.Count; i++)
+                    {
+                        <li class="back2-textbox">
+                            @Model.IngredientAmounts[i] @Model.IngredientMeasurements[i] of @Model.Ingredients[i]
+                        </li>
+                    }
+                }
+            </ul>
+        </div>
     </div>
 
     <div class="col mx-1">
-        <h2 class="back1Title">@Model.Name</h2>
-
         <!-- Description -->
         <!-- Add recipe description here if implemented in the future -->
+        <div class="back2">
 
-        <h3 class="back1Title">Instructions</h3>
-        <p class="back2-textbox">@Model.Directions</p>
+            <h3 class="back1Title">Instructions</h3>
+            <p class="back2-textbox">@Model.Directions</p>
+        </div>
     </div>
 
     @if (Model.isOwned)
