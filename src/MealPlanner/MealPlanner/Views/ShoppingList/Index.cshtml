@@ -1,0 +1,46 @@
+@model IEnumerable<MealPlanner.Models.ShoppingListItem>
+
+@{
+    ViewData["Title"] = "Shopping List";
+}
+
+<h2>Shopping List</h2>
+
+@if (TempData["ShoppingListError"] != null)
+{
+    <div class="text-danger">
+        @TempData["ShoppingListError"]
+    </div>
+}
+
+<form asp-action="AddItem" method="post">
+    @Html.AntiForgeryToken()
+    
+    <input type="text" name="itemName" placeholder="Enter grocery item" />
+
+    <button type="submit">Add Item</button>
+</form>
+
+<hr />
+
+@if (Model.Any())
+{
+    <ul>
+        @foreach (var item in Model)
+        {
+            <li>
+                @item.Name
+
+                <form asp-action="RemoveItem" method="post" style="display:inline;">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="itemId" value="@item.Id" />
+                    <button type="submit">Remove</button>
+                </form>
+            </li>
+        }
+    </ul>
+}
+else
+{
+    <p>No items in your shopping list yet.</p>
+}

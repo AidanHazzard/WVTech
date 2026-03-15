@@ -12,7 +12,7 @@ public class ShoppingListService
         _shoppingListRepository = shoppingListRepository;
     }
 
-    public void AddItem(int userId, string itemName)
+    public void AddItem(string userId, string itemName)
     {
         if (string.IsNullOrWhiteSpace(itemName))
         {
@@ -28,7 +28,7 @@ public class ShoppingListService
         _shoppingListRepository.Add(item);
     }
 
-    public void RemoveItem(int itemId, int userId)
+    public void RemoveItem(int itemId, string userId)
     {
         if (itemId <= 0)
         {
@@ -38,7 +38,7 @@ public class ShoppingListService
         _shoppingListRepository.Remove(itemId, userId);
     }
 
-    public IEnumerable<ShoppingListItem> GetItemsForUser(int userId)
+    public IEnumerable<ShoppingListItem> GetItemsForUser(string userId)
     {
         return _shoppingListRepository.GetByUserId(userId);
     }

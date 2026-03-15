@@ -55,7 +55,8 @@ builder.Services.AddScoped<IUserDietaryRestrictionRepository, UserDietaryRestric
 builder.Services.AddScoped<IMealRepository, MealRepository>();
 builder.Services.AddScoped<IUserRecipeRepository, UserRecipeRepository>();
 builder.Services.AddScoped<IUserSettingsRepository, UserSettingsRepository>();
-builder.Services.AddScoped<ThemeFilter>(); // add this
+builder.Services.AddScoped<IShoppingListRepository, ShoppingListRepository>();
+builder.Services.AddScoped<ThemeFilter>();
 
 // Add Identity
 builder.Services.AddIdentity<User, IdentityRole>(options =>
