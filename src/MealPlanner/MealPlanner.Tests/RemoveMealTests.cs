@@ -5,13 +5,13 @@ using MealPlanner.Models;
 using MealPlanner.Services;
 using MealPlanner.DAL.Abstract;
 using Moq;
-using Xunit;
+using NUnit.Framework;
 
 namespace MealPlanner.Tests;
 
 public class MealPlannerServiceTests
 {
-    [Fact]
+    [Test]
     public void RemoveMealOccurrence_ShouldRemoveOnlySelectedMealOccurrence_WhenMealExists()
     {
         var repo = new Mock<IMealRepository>();
@@ -26,7 +26,7 @@ public class MealPlannerServiceTests
         repo.Verify(r => r.RemoveMealOccurrence(mealId, userId, mealDate), Times.Once);
     }
 
-    [Fact]
+    [Test]
     public void RemoveMealOccurrence_ShouldThrowArgumentException_WhenMealIdIsInvalid()
     {
         var repo = new Mock<IMealRepository>();
@@ -38,7 +38,7 @@ public class MealPlannerServiceTests
         repo.Verify(r => r.RemoveMealOccurrence(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<DateOnly>()), Times.Never);
     }
 
-    [Fact]
+    [Test]
     public void RemoveMealOccurrence_ShouldThrowArgumentException_WhenUserIdIsInvalid()
     {
         var repo = new Mock<IMealRepository>();
@@ -50,7 +50,7 @@ public class MealPlannerServiceTests
         repo.Verify(r => r.RemoveMealOccurrence(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<DateOnly>()), Times.Never);
     }
 
-    [Fact]
+    [Test]
     public void RemoveMealOccurrence_ShouldNotRemoveFutureRepeatedMeals_WhenMealHasRepeatRule()
     {
         var repo = new Mock<IMealRepository>();
@@ -66,7 +66,7 @@ public class MealPlannerServiceTests
         repo.Verify(r => r.RemoveFutureRepeatedMeals(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<DateOnly>()), Times.Never);
     }
 
-    [Fact]
+    [Test]
     public void GetMealsForDate_ShouldReturnMealsScheduledForThatDate()
     {
         var repo = new Mock<IMealRepository>();
@@ -84,11 +84,11 @@ public class MealPlannerServiceTests
 
         var result = service.GetMealsForDate(1, targetDate);
 
-        Assert.Equal(2, result.Count());
-        Assert.All(result, meal => Assert.Equal(targetDate, meal.Date));
+        Assert.That(result.Count(), Is.EqualTo(2));
+        Assert.That(result.All(meal => meal.Date == targetDate), Is.True);
     }
 
-    [Fact]
+    [Test]
     public void RemoveMealOccurrence_ShouldCallRepositoryOnce_WhenConfirmed()
     {
         var repo = new Mock<IMealRepository>();

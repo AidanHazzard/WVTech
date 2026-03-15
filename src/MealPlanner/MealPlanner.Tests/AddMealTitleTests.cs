@@ -3,13 +3,13 @@ using MealPlanner.Models;
 using MealPlanner.Services;
 using MealPlanner.DAL.Abstract;
 using Moq;
-using Xunit;
+using NUnit.Framework;
 
 namespace MealPlanner.Tests;
 
 public class MealCreationServiceTests
 {
-    [Fact]
+    [Test]
     public void CreateMeal_ShouldCreateMeal_WhenTitleAndDateAreValid()
     {
         var repo = new Mock<IMealRepository>();
@@ -28,7 +28,7 @@ public class MealCreationServiceTests
         )), Times.Once);
     }
 
-    [Fact]
+    [Test]
     public void CreateMeal_ShouldTrimTitle_WhenTitleHasExtraSpaces()
     {
         var repo = new Mock<IMealRepository>();
@@ -47,7 +47,7 @@ public class MealCreationServiceTests
         )), Times.Once);
     }
 
-    [Fact]
+    [Test]
     public void CreateMeal_ShouldThrowArgumentException_WhenTitleIsEmpty()
     {
         var repo = new Mock<IMealRepository>();
@@ -59,7 +59,7 @@ public class MealCreationServiceTests
         repo.Verify(r => r.Add(It.IsAny<Meal>()), Times.Never);
     }
 
-    [Fact]
+    [Test]
     public void CreateMeal_ShouldThrowArgumentException_WhenTitleIsWhitespace()
     {
         var repo = new Mock<IMealRepository>();
@@ -71,7 +71,7 @@ public class MealCreationServiceTests
         repo.Verify(r => r.Add(It.IsAny<Meal>()), Times.Never);
     }
 
-    [Fact]
+    [Test]
     public void CreateMeal_ShouldThrowArgumentException_WhenUserIdIsInvalid()
     {
         var repo = new Mock<IMealRepository>();
@@ -83,7 +83,7 @@ public class MealCreationServiceTests
         repo.Verify(r => r.Add(It.IsAny<Meal>()), Times.Never);
     }
 
-    [Fact]
+    [Test]
     public void CreateMeal_ShouldStoreOnlyDateAndTitle_WhenMealIsCreated()
     {
         var repo = new Mock<IMealRepository>();
@@ -102,7 +102,7 @@ public class MealCreationServiceTests
         )), Times.Once);
     }
 
-    [Fact]
+    [Test]
     public void CreateMeal_ShouldDisplayMealByTitle_WhenReturnedToPlanner()
     {
         var repo = new Mock<IMealRepository>();
@@ -120,7 +120,7 @@ public class MealCreationServiceTests
 
         var result = service.GetMealById(5);
 
-        Assert.NotNull(result);
-        Assert.Equal("Dinner", result.Title);
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result.Title, Is.EqualTo("Dinner"));
     }
 }
