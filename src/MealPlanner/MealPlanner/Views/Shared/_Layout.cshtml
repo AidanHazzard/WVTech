@@ -29,7 +29,7 @@
                     <span class="nav-text">Home</span>
                 </button>
             </li>
-
+<!--
             <li class="nav-item">
                 <button
                     class="nav-button @(currentController == "Meal" && currentAction == "PlannerHome" ? "active" : "")"
@@ -37,12 +37,12 @@
                     <span class="nav-text">Planner</span>
                 </button>
             </li>
-
+-->
             <li class="nav-item">
                 <button
-                    class="nav-button @(currentController == "FoodEntries" ? "active" : "")"
-                    onclick="location.href='@Url.Action("SelectType", "FoodEntries")'">
-                    <span class="nav-text">Food Entries</span>
+                    class="nav-button @(currentController == "FoodEntries" && currentAction != "Nutrition" ? "active" : "")"
+                    onclick="location.href='@Url.Action("Recipes", "FoodEntries")'">
+                    <span class="nav-text">Recipes</span>
                 </button>
             </li>
 
@@ -50,9 +50,10 @@
                 <button
                     class="nav-button @(currentController == "FoodEntries" && currentAction == "Nutrition" ? "active" : "")"
                     onclick="location.href='@Url.Action("Nutrition", "FoodEntries")'">
-                    <span class="nav-text">Nutrition</span>
+                    <span class="nav-text">Nutrients</span>
                 </button>
             </li>
+<!--
 
             <li class="nav-item">
                 <button
@@ -61,6 +62,7 @@
                     <span class="nav-text">Statistics</span>
                 </button>
             </li>
+-->
 
             <li class="nav-item">
                 <button
@@ -69,7 +71,7 @@
                     <span class="nav-text">MyCart</span>
                 </button>
             </li>
-
+<!--
             @if (User.IsInRole("Admin"))
             {
                 <li class="nav-item">
@@ -96,12 +98,12 @@
             }
 
             <partial name="_LoginPartial" />
-
+-->
         </ul>
 
         @if (isAuthed)
         {
-            <button class="profile-button" type="button">
+            <button class="profile-button" type="button" onclick="location.href='@Url.Action("Index", "UserSettings")'">
                 <img src="~/images/icons/profiledefault.webp" alt="profiledefault" class="imageFit" />
             </button>
         }
