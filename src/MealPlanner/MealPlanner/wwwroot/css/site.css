@@ -18,6 +18,7 @@
   --arrow-hover-bg: #6d6d6d;
   --arrow-shadow: rgba(0, 0, 0, 0.65);
   --image-filter: none;
+  --button-text: black;
 }
 
 [data-theme="light"] {
@@ -40,6 +41,7 @@
   --arrow-hover-bg: #b0b0b0;
   --arrow-shadow: rgba(255, 255, 255, 0.65);
   --image-filter: invert(1);
+  --button-text: black;
 }
 
 html {
@@ -78,6 +80,10 @@ body {
   text-align: start;
 }
 
+li {
+  color: var(--text-primary);
+}
+
 /*Use this for the first background layer*/
 .back1 {
   background-color: var(--layer1-bg);
@@ -94,6 +100,10 @@ body {
   color: var(--text-primary);
   text-align: center;
   position: relative;
+}
+
+.buttonText {
+  color: var(--button-text);
 }
 
 .left {
@@ -245,11 +255,6 @@ body {
 
 .buttonGreen:hover {
   background-color: var(--button-green-hover-bg);
-}
-
-/*Used for buttons text so it can increase and decrease in size*/
-.buttonText {
-  transition: transform 0.3s ease-in-out;
 }
 
 .imageButton:hover .buttonText,
