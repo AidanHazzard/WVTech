@@ -41,8 +41,8 @@
             <li class="nav-item">
                 <button
                     class="nav-button @(currentController == "FoodEntries" && currentAction != "Nutrition" ? "active" : "")"
-                    onclick="location.href='@Url.Action("SelectType", "FoodEntries")'">
-                    <span class="nav-text">Food Entries</span>
+                    onclick="location.href='@Url.Action("Recipes", "FoodEntries")'">
+                    <span class="nav-text">Recipes</span>
                 </button>
             </li>
 
@@ -50,7 +50,7 @@
                 <button
                     class="nav-button @(currentController == "FoodEntries" && currentAction == "Nutrition" ? "active" : "")"
                     onclick="location.href='@Url.Action("Nutrition", "FoodEntries")'">
-                    <span class="nav-text">Statistics</span>
+                    <span class="nav-text">Nutrients</span>
                 </button>
             </li>
 <!--
