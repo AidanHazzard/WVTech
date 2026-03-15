@@ -1,121 +1,153 @@
 using System.Threading.Tasks;
 using MealPlanner.Controllers;
-using MealPlanner.Models;
 using MealPlanner.Services;
 using MealPlanner.ViewModels;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using Moq;
 using NUnit.Framework;
+using IdentitySignInResult = Microsoft.AspNetCore.Identity.SignInResult;
 
 namespace MealPlanner.Tests
 {
     [TestFixture]
     public class LoginControllerTests
     {
-        private Mock<ILoginService> _mockAccountService;
+        private Mock<ILoginService> _mockLoginService;
+        private Mock<ILogger<LoginController>> _mockLogger;
         private LoginController _controller;
 
         [SetUp]
         public void SetUp()
         {
-            // Arrange: create mock and controller
-            _mockAccountService = new Mock<ILoginService>();
-            _controller = new LoginController(_mockAccountService.Object);
+            _mockLoginService = new Mock<ILoginService>();
+            _mockLogger = new Mock<ILogger<LoginController>>();
+
+            _controller = new LoginController(
+                _mockLoginService.Object,
+                _mockLogger.Object);
         }
 
         [TearDown]
         public void TearDown()
         {
-            _controller.Dispose();
+            _controller?.Dispose();
         }
 
-        // ===================== LOGIN =====================
+        // ===================== LOGIN (GET) =====================
+
         [Test]
         public void Login_Get_ReturnsView()
         {
-            // Act
             var result = _controller.Login();
 
-            // Assert
             Assert.That(result, Is.InstanceOf<ViewResult>());
         }
+
+        // ===================== LOGIN (POST) =====================
 
         [Test]
         public async Task Login_Post_ReturnsView_WhenModelStateInvalid()
         {
-            // Arrange
             _controller.ModelState.AddModelError("Email", "Required");
-            var model = new LoginViewModel();
 
-            // Act
-            var result = await _controller.Login(model);
+            var result = await _controller.Login(new LoginViewModel());
 
-            // Assert
             Assert.That(result, Is.InstanceOf<ViewResult>());
         }
 
         [Test]
         public async Task Login_Post_RedirectsToHome_WhenLoginSucceeds()
         {
-            // Arrange
             var model = new LoginViewModel
             {
                 Email = "test@test.com",
                 Password = "Password123",
                 RememberMe = false
             };
-            _mockAccountService.Setup(s => s.LoginUserAsync(model))
-                .ReturnsAsync(Microsoft.AspNetCore.Identity.SignInResult.Success);
 
-            // Act
+            _mockLoginService
+                .Setup(s => s.LoginUserAsync(It.IsAny<LoginViewModel>()))
+                .ReturnsAsync(IdentitySignInResult.Success);
+
             var result = await _controller.Login(model);
 
-            // Assert
-            var redirectResult = result as RedirectToActionResult;
-            Assert.That(redirectResult, Is.Not.Null);
-            Assert.That(redirectResult.ActionName, Is.EqualTo("Index"));
-            Assert.That(redirectResult.ControllerName, Is.EqualTo("Home"));
+            var redirect = result as RedirectToActionResult;
+            Assert.That(redirect, Is.Not.Null);
+            Assert.That(redirect.ActionName, Is.EqualTo("Index"));
+            Assert.That(redirect.ControllerName, Is.EqualTo("Home"));
         }
 
         [Test]
         public async Task Login_Post_ReturnsView_WhenLoginFails()
         {
-            // Arrange
+            _mockLoginService
+                .Setup(s => s.LoginUserAsync(It.IsAny<LoginViewModel>()))
+                .ReturnsAsync(IdentitySignInResult.Failed);
+
+            var result = await _controller.Login(new LoginViewModel());
+
+            Assert.That(result, Is.InstanceOf<ViewResult>());
+            Assert.That(_controller.ModelState.ContainsKey(""), Is.True);
+        }
+
+        // ===================== REMEMBER ME =====================
+
+        [Test]
+        public async Task Login_Post_PassesRememberMeTrue_ToLoginService()
+        {
+            var model = new LoginViewModel
+            {
+                Email = "test@test.com",
+                Password = "Password123",
+                RememberMe = true
+            };
+
+            _mockLoginService
+                .Setup(s => s.LoginUserAsync(It.Is<LoginViewModel>(m => m.RememberMe)))
+                .ReturnsAsync(IdentitySignInResult.Success)
+                .Verifiable();
+
+            await _controller.Login(model);
+
+            _mockLoginService.Verify();
+        }
+
+        [Test]
+        public async Task Login_Post_PassesRememberMeFalse_ToLoginService()
+        {
             var model = new LoginViewModel
             {
                 Email = "test@test.com",
                 Password = "Password123",
                 RememberMe = false
             };
-            _mockAccountService.Setup(s => s.LoginUserAsync(model))
-                .ReturnsAsync(Microsoft.AspNetCore.Identity.SignInResult.Failed);
 
-            // Act
-            var result = await _controller.Login(model);
+            _mockLoginService
+                .Setup(s => s.LoginUserAsync(It.Is<LoginViewModel>(m => !m.RememberMe)))
+                .ReturnsAsync(IdentitySignInResult.Success)
+                .Verifiable();
 
-            // Assert
-            var viewResult = result as ViewResult;
-            Assert.That(viewResult, Is.Not.Null);
-            Assert.That(_controller.ModelState.ContainsKey(""), Is.True);
+            await _controller.Login(model);
+
+            _mockLoginService.Verify();
         }
 
         // ===================== LOGOUT =====================
+
         [Test]
         public async Task Logout_Post_RedirectsToHome()
         {
-            // Arrange
-            _mockAccountService.Setup(s => s.LogoutUserAsync())
+            _mockLoginService
+                .Setup(s => s.LogoutUserAsync())
                 .Returns(Task.CompletedTask);
 
-            // Act
             var result = await _controller.Logout();
 
-            // Assert
-            var redirectResult = result as RedirectToActionResult;
-            Assert.That(redirectResult, Is.Not.Null);
-            Assert.That(redirectResult.ActionName, Is.EqualTo("Index"));
-            Assert.That(redirectResult.ControllerName, Is.EqualTo("Home"));
+            var redirect = result as RedirectToActionResult;
+            Assert.That(redirect, Is.Not.Null);
+            Assert.That(redirect.ActionName, Is.EqualTo("Index"));
+            Assert.That(redirect.ControllerName, Is.EqualTo("Home"));
         }
     }
 }
