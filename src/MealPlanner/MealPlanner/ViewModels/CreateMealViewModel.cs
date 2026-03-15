@@ -11,7 +11,7 @@ public class CreateMealViewModel
     public DateTime Date { get; set; }
 
     [Required]
-    [DataType(DataType.Date)]
+    [DataType(DataType.Time)]
     public TimeSpan Time { get; set; }
 
     public bool RepeatWeekly { get; set; }

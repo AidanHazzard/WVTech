@@ -1,5 +1,6 @@
 @model MealPlanner.ViewModels.RecipeViewModel
 
+<div id="recipe" class="back1 backHasButton row container-fluid" recipe-id="@Model.Id">
 <div class="back1 backHasButton row container-fluid">
     <h1 class="back1Title">@Model.Name</h1>
     <div class="col-3 mx-1">
@@ -42,19 +43,49 @@
     </div>
 
     <div class="col mx-1">
+        <div class="row mb-5">
+            <h2 class="back1Title col-8">@Model.Name</h2>
+            @if (@Model.VotePercentage != null)
+            {
+                string voterPercentage = $"{(int)@Model.VotePercentage * 100}%";
+                <h4 id="votePercent" class="col-2" style="color: color-mix(in oklch, red, green @voterPercentage);">@voterPercentage</h4>
+            }
+            <div class="col-2">
+                
+                @if (Model.UserVote == UserVoteType.UpVote)
+                {
+                    <img id="thumbs-up" src="~/images/icons/hand-thumbs-up-fill.svg" width="30" height="30" class="growOnHover vote" vote-type="NoVote" base-vote="UpVote">
+                }
+                else
+                {
+                    <img id="thumbs-up" src="~/images/icons/hand-thumbs-up.svg" width="30" height="30" class="growOnHover vote" vote-type="UpVote" base-vote="UpVote">
+                }
+                @if (Model.UserVote == UserVoteType.DownVote)
+                {
+                    <img id="thumbs-down" src="~/images/icons/hand-thumbs-down-fill.svg" width="30" height="30" class="growOnHover vote" vote-type="NoVote" base-vote="DownVote">
+                }
+                else
+                {
+                    <img id="thumbs-down" src="~/images/icons/hand-thumbs-down.svg" width="30" height="30" class="growOnHover vote" vote-type="DownVote" base-vote="DownVote">
+                }
+            </div>
+        </div>
+
         <!-- Description -->
         <!-- Add recipe description here if implemented in the future -->
         <div class="back2">
 
-            <h3 class="back1Title">Instructions</h3>
-            <p class="back2-textbox">@Model.Directions</p>
-        </div>
+        <h3 class="back1Title">Instructions</h3>
+        <p class="back2-textbox">@Model.Directions</p>
     </div>
-
-    @if (Model.isOwned)
+    @if (Model.IsOwned)
     {
-        <button class="buttonBlue" type="button" onclick="window.location='/FoodEntries/EditRecipe/@Model.ID'">
-            <h2 class="buttonText">Edit Recipe</h2>
-        </button>
+    <button class="buttonBlue" type="button" onclick="window.location='/FoodEntries/EditRecipe/@Model.Id'">
+        <h2 class="buttonText">Edit Recipe</h2>
+    </button>
     }
 </div>
+
+@section Scripts{
+    <script type="module" src="~/js/recipeVote.js"></script>
+}

@@ -227,9 +227,10 @@ p {
   outline: none;
   box-sizing: border-box;
   transition: background-color 0.3s ease-in-out;
+  cursor: pointer;
 }
 
-.buttonGrey:hover {
+.buttonGrey:not(:has(.growOnHover:hover)):hover {
   background-color: var(--button-grey-hover-bg);
 }
 
@@ -282,6 +283,25 @@ p {
   transform: scale(1.08);
 }
 
+/* Bouncy Icon Buttons, removes all base button styling */
+.growOnHover{
+  background: none;
+  color: inherit;
+  border: none;
+  padding: 0;
+  font: inherit;
+  outline: inherit;
+  transition: transform 0.1s ease-in-out;
+  filter: var(--image-filter);
+}
+.growOnHover:hover {
+  transform: scale(1.12);
+  cursor: pointer;
+}
+.growOnHover:active {
+  transform: scale(0.92);
+  cursor: pointer;
+}
 /*Use this class if the background div has a button attatched to it*/
 .backHasButton {
   padding-bottom: 70px;
