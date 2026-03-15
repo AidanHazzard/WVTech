@@ -99,12 +99,11 @@
 
             <partial name="_LoginPartial" />
 -->
-
         </ul>
 
         @if (isAuthed)
         {
-            <button class="profile-button" type="button">
+            <button class="profile-button" type="button" onclick="location.href='@Url.Action("Index", "UserSettings")'">
                 <img src="~/images/icons/profiledefault.webp" alt="profiledefault" class="imageFit" />
             </button>
         }

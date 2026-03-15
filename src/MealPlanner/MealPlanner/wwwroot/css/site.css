@@ -84,6 +84,19 @@ li {
   color: var(--text-primary);
 }
 
+.baseText {
+  color: var(--text-primary);
+}
+
+.linkListBack {
+  transition: background-color 0.3s ease-in-out;
+  background-color: var(--textbox-bg);
+}
+
+.linkListBack:hover {
+  background-color: var(--button-grey-hover-bg);
+}
+
 /*Use this for the first background layer*/
 .back1 {
   background-color: var(--layer1-bg);
@@ -103,6 +116,7 @@ li {
 }
 
 .buttonText {
+  transition: transform 0.3s ease-in-out;
   color: var(--button-text);
 }
 
