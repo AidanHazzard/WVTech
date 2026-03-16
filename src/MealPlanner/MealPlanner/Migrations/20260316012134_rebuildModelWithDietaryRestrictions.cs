@@ -3,10 +3,12 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
+#pragma warning disable CA1814 // Prefer jagged arrays over multidimensional
+
 namespace MealPlanner.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialIdentitySetup : Migration
+    public partial class rebuildModelWithDietaryRestrictions : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -52,6 +54,45 @@ namespace MealPlanner.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "DietaryRestriction",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Name = table.Column<string>(type: "nvarchar(2048)", maxLength: 2048, nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_DietaryRestriction", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "IngredientBase",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Name = table.Column<string>(type: "nvarchar(64)", maxLength: 64, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_IngredientBase", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Measurement",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Name = table.Column<string>(type: "nvarchar(32)", maxLength: 32, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Measurement", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Recipe",
                 columns: table => new
                 {
@@ -59,11 +100,28 @@ namespace MealPlanner.Migrations
                         .Annotation("SqlServer:Identity", "1, 1"),
                     Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Directions = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Ingredients = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                    Calories = table.Column<int>(type: "int", nullable: false),
+                    Protein = table.Column<int>(type: "int", nullable: false),
+                    Carbs = table.Column<int>(type: "int", nullable: false),
+                    Fat = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Recipe", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ShoppingListItems",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    UserId = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ShoppingListItems", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -179,6 +237,7 @@ namespace MealPlanner.Migrations
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     UserId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    Title = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
                     StartTime = table.Column<DateTime>(type: "datetime2", nullable: true),
                     EndTime = table.Column<DateTime>(type: "datetime2", nullable: true),
                     RepeatRule = table.Column<string>(type: "nvarchar(max)", nullable: true)
@@ -195,25 +254,6 @@ namespace MealPlanner.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "UserDietaryRestriction",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    UserId = table.Column<string>(type: "nvarchar(450)", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_UserDietaryRestriction", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_UserDietaryRestriction_AspNetUsers_UserId",
-                        column: x => x.UserId,
-                        principalTable: "AspNetUsers",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "UserNutritionPreference",
                 columns: table => new
                 {
@@ -223,15 +263,7 @@ namespace MealPlanner.Migrations
                     CalorieTarget = table.Column<int>(type: "int", nullable: true),
                     ProteinTarget = table.Column<int>(type: "int", nullable: true),
                     CarbTarget = table.Column<int>(type: "int", nullable: true),
-                    FatTarget = table.Column<int>(type: "int", nullable: true),
-                    IronTarget = table.Column<int>(type: "int", nullable: true),
-                    FiberTarget = table.Column<int>(type: "int", nullable: true),
-                    CalciumTarget = table.Column<int>(type: "int", nullable: true),
-                    VitaminATarget = table.Column<int>(type: "int", nullable: true),
-                    VitaminCTarget = table.Column<int>(type: "int", nullable: true),
-                    B12Target = table.Column<int>(type: "int", nullable: true),
-                    FolateTarget = table.Column<int>(type: "int", nullable: true),
-                    PotassiumTarget = table.Column<int>(type: "int", nullable: true)
+                    FatTarget = table.Column<int>(type: "int", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -257,7 +289,8 @@ namespace MealPlanner.Migrations
                     HeightInInches = table.Column<decimal>(type: "decimal(18,2)", nullable: true),
                     Weight = table.Column<decimal>(type: "decimal(18,2)", nullable: true),
                     ActivityLevel = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    ProfilePictureUrl = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                    ProfilePictureUrl = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    IsDarkTheme = table.Column<bool>(type: "bit", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -266,6 +299,114 @@ namespace MealPlanner.Migrations
                         name: "FK_UserProfile_AspNetUsers_UserId",
                         column: x => x.UserId,
                         principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "UserDietaryRestriction",
+                columns: table => new
+                {
+                    UserId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    DietaryRestrictionId = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_UserDietaryRestriction", x => new { x.UserId, x.DietaryRestrictionId });
+                    table.ForeignKey(
+                        name: "FK_UserDietaryRestriction_AspNetUsers_UserId",
+                        column: x => x.UserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_UserDietaryRestriction_DietaryRestriction_DietaryRestrictionId",
+                        column: x => x.DietaryRestrictionId,
+                        principalTable: "DietaryRestriction",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Ingredient",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    IngredientBaseId = table.Column<int>(type: "int", nullable: false),
+                    MeasurementId = table.Column<int>(type: "int", nullable: false),
+                    Amount = table.Column<float>(type: "real", nullable: false),
+                    RecipeId = table.Column<int>(type: "int", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Ingredient", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Ingredient_IngredientBase_IngredientBaseId",
+                        column: x => x.IngredientBaseId,
+                        principalTable: "IngredientBase",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Ingredient_Measurement_MeasurementId",
+                        column: x => x.MeasurementId,
+                        principalTable: "Measurement",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Ingredient_Recipe_RecipeId",
+                        column: x => x.RecipeId,
+                        principalTable: "Recipe",
+                        principalColumn: "Id");
+                });
+
+            migrationBuilder.CreateTable(
+                name: "RecipeUser",
+                columns: table => new
+                {
+                    RecipesId = table.Column<int>(type: "int", nullable: false),
+                    UsersId = table.Column<string>(type: "nvarchar(450)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_RecipeUser", x => new { x.RecipesId, x.UsersId });
+                    table.ForeignKey(
+                        name: "FK_RecipeUser_AspNetUsers_UsersId",
+                        column: x => x.UsersId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_RecipeUser_Recipe_RecipesId",
+                        column: x => x.RecipesId,
+                        principalTable: "Recipe",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "UserRecipe",
+                columns: table => new
+                {
+                    UserId = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    RecipeId = table.Column<int>(type: "int", nullable: false),
+                    UserFavorite = table.Column<bool>(type: "bit", nullable: false),
+                    UserOwner = table.Column<bool>(type: "bit", nullable: false),
+                    UserVote = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_UserRecipe", x => new { x.UserId, x.RecipeId });
+                    table.ForeignKey(
+                        name: "FK_UserRecipe_AspNetUsers_UserId",
+                        column: x => x.UserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_UserRecipe_Recipe_RecipeId",
+                        column: x => x.RecipeId,
+                        principalTable: "Recipe",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -292,6 +433,22 @@ namespace MealPlanner.Migrations
                         principalTable: "Recipe",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.InsertData(
+                table: "Recipe",
+                columns: new[] { "Id", "Calories", "Carbs", "Directions", "Fat", "Name", "Protein" },
+                values: new object[,]
+                {
+                    { -9, 0, 0, "", 0, "Ceasar Salad", 0 },
+                    { -8, 0, 0, "", 0, "Mushroom Steak Salad", 0 },
+                    { -7, 0, 0, "", 0, "Homemade Mac 'n Cheese", 0 },
+                    { -6, 0, 0, "", 0, "Mac 'n Cheese Casserole", 0 },
+                    { -5, 0, 0, "", 0, "Baked Spaghetti Casserole", 0 },
+                    { -4, 0, 0, "", 0, "Vegan Spaghetti with Mushrooms", 0 },
+                    { -3, 0, 0, "", 0, "Spaghetti and Meatballs", 0 },
+                    { -2, 0, 0, "", 0, "Spaghetti All'assassina", 0 },
+                    { -1, 0, 0, "", 0, "Oatmeal Cookies", 0 }
                 });
 
             migrationBuilder.CreateIndex(
@@ -334,6 +491,27 @@ namespace MealPlanner.Migrations
                 filter: "[NormalizedUserName] IS NOT NULL");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Ingredient_IngredientBaseId",
+                table: "Ingredient",
+                column: "IngredientBaseId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Ingredient_MeasurementId",
+                table: "Ingredient",
+                column: "MeasurementId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Ingredient_RecipeId",
+                table: "Ingredient",
+                column: "RecipeId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_IngredientBase_Name",
+                table: "IngredientBase",
+                column: "Name",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Meal_UserId",
                 table: "Meal",
                 column: "UserId");
@@ -344,9 +522,20 @@ namespace MealPlanner.Migrations
                 column: "RecipesId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_UserDietaryRestriction_UserId",
+                name: "IX_Measurement_Name",
+                table: "Measurement",
+                column: "Name",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_RecipeUser_UsersId",
+                table: "RecipeUser",
+                column: "UsersId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_UserDietaryRestriction_DietaryRestrictionId",
                 table: "UserDietaryRestriction",
-                column: "UserId");
+                column: "DietaryRestrictionId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_UserNutritionPreference_UserId",
@@ -357,6 +546,11 @@ namespace MealPlanner.Migrations
                 name: "IX_UserProfile_UserId",
                 table: "UserProfile",
                 column: "UserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_UserRecipe_RecipeId",
+                table: "UserRecipe",
+                column: "RecipeId");
         }
 
         /// <inheritdoc />
@@ -378,7 +572,16 @@ namespace MealPlanner.Migrations
                 name: "AspNetUserTokens");
 
             migrationBuilder.DropTable(
+                name: "Ingredient");
+
+            migrationBuilder.DropTable(
                 name: "MealRecipe");
+
+            migrationBuilder.DropTable(
+                name: "RecipeUser");
+
+            migrationBuilder.DropTable(
+                name: "ShoppingListItems");
 
             migrationBuilder.DropTable(
                 name: "UserDietaryRestriction");
@@ -390,10 +593,22 @@ namespace MealPlanner.Migrations
                 name: "UserProfile");
 
             migrationBuilder.DropTable(
+                name: "UserRecipe");
+
+            migrationBuilder.DropTable(
                 name: "AspNetRoles");
 
             migrationBuilder.DropTable(
+                name: "IngredientBase");
+
+            migrationBuilder.DropTable(
+                name: "Measurement");
+
+            migrationBuilder.DropTable(
                 name: "Meal");
+
+            migrationBuilder.DropTable(
+                name: "DietaryRestriction");
 
             migrationBuilder.DropTable(
                 name: "Recipe");
