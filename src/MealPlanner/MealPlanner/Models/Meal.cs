@@ -9,31 +9,34 @@ public class Meal
     [Key]
     public int Id { get; set; }
 
-    public string UserId { get; set; }
+    [Required]
+    public string UserId { get; set; } = string.Empty;
 
     [ForeignKey("UserId")]
-    public User User { get; set; }  
+    public User User { get; set; } = null!;
+
+    [Required]
+    [StringLength(100)]
+    public string Title { get; set; } = string.Empty;
 
     public DateTime? StartTime { get; set; }
 
     public DateTime? EndTime { get; set; }
 
     public string? RepeatRule { get; set; }
-    
-    public List<Recipe> Recipes { get; set; } = [];
 
+    public List<Recipe> Recipes { get; set; } = [];
 
     public void UpdateFromEdit(Meal editedMeal, IEnumerable<Recipe> selectedRecipes)
     {
-        this.StartTime = editedMeal.StartTime;
-        this.EndTime = editedMeal.EndTime;
-        this.RepeatRule = editedMeal.RepeatRule;
+        StartTime = editedMeal.StartTime;
+        EndTime = editedMeal.EndTime;
+        RepeatRule = editedMeal.RepeatRule;
 
-        this.Recipes.Clear();
+        Recipes.Clear();
         if (selectedRecipes != null)
         {
-            this.Recipes.AddRange(selectedRecipes);
+            Recipes.AddRange(selectedRecipes);
         }
     }
-    
 }

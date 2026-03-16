@@ -66,19 +66,19 @@
 
             <li class="nav-item">
                 <button
-                    class="nav-button @(currentController == "Cart" && currentAction == "Index" ? "active" : "")"
-                    onclick="location.href='/'">
+                    class="nav-button @(currentController == "ShoppingList" && currentAction == "Index" ? "active" : "")"
+                    onclick="location.href='@Url.Action("Index", "ShoppingList")'">
                     <span class="nav-text">MyCart</span>
                 </button>
             </li>
-<!--
-            @if (User.IsInRole("Admin"))
+
+            @if (User?.IsInRole("Admin") == true)
             {
                 <li class="nav-item">
                     <a class="nav-link text-dark" asp-controller="Home" asp-action="Admin">Admin</a>
                 </li>
             }
-            else if (User.IsInRole("User"))
+            else if (User?.IsInRole("User") == true)
             {
                 <li class="nav-item">
                     <button
@@ -98,7 +98,6 @@
             }
 
             <partial name="_LoginPartial" />
--->
         </ul>
 
         @if (isAuthed)

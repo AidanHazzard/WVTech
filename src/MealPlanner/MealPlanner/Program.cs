@@ -14,11 +14,16 @@ builder.Services.AddControllersWithViews(options =>
 {
     options.Filters.Add<ThemeFilter>();
 });
+
 // Create connection string
 string? connectionString =
     builder.Configuration.GetConnectionString("DefaultConnection")
     ?? builder.Configuration["ConnectionString"];
 
+// Debug output
+Console.WriteLine("USING CONNECTION STRING: " + connectionString);
+
+// Validate connection string
 if (string.IsNullOrWhiteSpace(connectionString))
 {
     throw new InvalidOperationException(
@@ -50,7 +55,9 @@ builder.Services.AddScoped<IUserDietaryRestrictionRepository, UserDietaryRestric
 builder.Services.AddScoped<IMealRepository, MealRepository>();
 builder.Services.AddScoped<IUserRecipeRepository, UserRecipeRepository>();
 builder.Services.AddScoped<IUserSettingsRepository, UserSettingsRepository>();
-builder.Services.AddScoped<ThemeFilter>(); // add this
+builder.Services.AddScoped<IShoppingListRepository, ShoppingListRepository>();
+builder.Services.AddScoped<ThemeFilter>();
+builder.Services.AddScoped<ShoppingListService>();
 
 // Add Identity
 builder.Services.AddIdentity<User, IdentityRole>(options =>
@@ -94,10 +101,6 @@ builder.Services.AddScoped<IRegistrationService, RegistrationService>();
 builder.Services.AddScoped<IAccountSettingsService, AccountSettingsService>();
 
 // Configure emailer
-builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
-builder.Services.AddTransient<IEmailService, EmailService>();
-
-// Register EmailService for dependency injection
 builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
 builder.Services.AddTransient<IEmailService, EmailService>();
 
