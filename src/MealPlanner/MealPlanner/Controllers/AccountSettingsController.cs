@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Identity;
 
 namespace MealPlanner.Controllers
 {
-    [Authorize(Roles = "User")]
+    [Authorize]
     public class AccountSettingsController : Controller
     {
         private readonly IAccountSettingsService _accountSettingsService;
