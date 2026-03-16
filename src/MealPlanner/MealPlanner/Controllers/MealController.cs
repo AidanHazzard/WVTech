@@ -98,7 +98,7 @@ public class MealController : Controller
         _mealRepo.CreateOrUpdate(newMeal);
         _context.SaveChanges();
 
-        return RedirectToAction("PlannerHome");
+        return RedirectToAction("Index", "Home");
     }
 
     [HttpGet]

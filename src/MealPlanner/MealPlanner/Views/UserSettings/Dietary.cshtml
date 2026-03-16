@@ -4,9 +4,9 @@
     ViewData["Title"] = "Dietary Restrictions";
 }
 
-<div class="container mt-4">
-    <div class="p-4 rounded-4" style="background-color: #d9d9d9;">
-        <h2 class="text-center mb-4">Dietary Restrictions</h2>
+    <div class="back1 backHasButton">
+        <a class="btn btn-secondary px-4 rounded-4" asp-action="Index">Back</a>
+        <h1 class="back1Title">Dietary Restrictions</h1>
 
         @if (TempData["Message"] != null)
         {
@@ -18,7 +18,7 @@
         <form asp-action="Dietary" method="post">
             @Html.AntiForgeryToken()
 
-            <div class="p-4 rounded-4" style="background-color: #efefef;">
+            <div class="back2">
                 <div class="row">
                     @for (int i = 0; i < Model.Restrictions.Count; i++)
                     {
@@ -27,17 +27,15 @@
                                 <input class="form-check-input" type="checkbox" asp-for="Restrictions[i].IsSelected" />
                                 <input type="hidden" asp-for="Restrictions[i].DietaryRestrictionId" />
                                 <input type="hidden" asp-for="Restrictions[i].Name" />
-                                <label class="form-check-label ms-2">@Model.Restrictions[i].Name</label>
+                                <label>@Model.Restrictions[i].Name</label>
                             </div>
                         </div>
                     }
                 </div>
             </div>
 
-            <div class="mt-4 d-flex gap-3">
-                <button type="submit" class="btn btn-primary px-4 rounded-4">Save</button>
-                <a class="btn btn-secondary px-4 rounded-4" asp-action="Index">Back</a>
-            </div>
+            <button type="submit" class="buttonBlue">
+                <h2 class="ButtonText">Save</h2>
+            </button>
         </form>
     </div>
-</div>
