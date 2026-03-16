@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Azure.Security.KeyVault.Secrets;
 using Azure.Identity;
+using System.Net.Http.Headers;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -40,6 +41,8 @@ if (builder.Environment.IsProduction())
         SecretClient secretClient = new SecretClient(new Uri(keyVaultUri), new DefaultAzureCredential());
         builder.Configuration["EmailSettings:Password"] =
             secretClient.GetSecret("EmailSettings--Password").Value.Value;
+        builder.Configuration["Edamam:AppId"] = secretClient.GetSecret("Edamam--AppId").Value.Value;
+        builder.Configuration["Edamam:ApiKey"] = secretClient.GetSecret("Edamam--ApiKey").Value.Value;
     }
 }
 
@@ -85,7 +88,7 @@ builder.Services.ConfigureApplicationCookie(options =>
      // Sliding expiration okay
     options.SlidingExpiration = true;
 
-   options.Cookie.HttpOnly = true;
+    options.Cookie.HttpOnly = true;
     options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
     options.Cookie.SameSite = SameSiteMode.Strict;
 
@@ -99,6 +102,18 @@ builder.Services.AddScoped<INutritionProgressService, NutritionProgressService>(
 builder.Services.AddScoped<ILoginService, LoginService>();
 builder.Services.AddScoped<IRegistrationService, RegistrationService>();
 builder.Services.AddScoped<IAccountSettingsService, AccountSettingsService>();
+
+// External APIs
+string edamamAppId = builder.Configuration.GetSection("Edamam")["AppId"];
+string edamamAPIKey = builder.Configuration.GetSection("Edamam")["ApiKey"];
+string edamamAPIUrl = "https://api.edamam.com/api/";
+builder.Services.AddHttpClient<IExternalRecipeService, EdamamService>(httpClient =>
+{
+    httpClient.BaseAddress = new Uri(edamamAPIUrl);
+    httpClient.DefaultRequestHeaders.Add("accept", "application/json");
+    httpClient.DefaultRequestHeaders.Add("Accept-Language", "en");
+    return new EdamamService(httpClient, edamamAppId, edamamAPIKey);
+});
 
 // Configure emailer
 builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));

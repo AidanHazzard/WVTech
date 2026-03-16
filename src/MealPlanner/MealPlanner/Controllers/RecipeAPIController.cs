@@ -3,6 +3,7 @@ using MealPlanner.Models;
 using MealPlanner.Models.DTO;
 using MealPlanner.Services;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 
@@ -16,25 +17,40 @@ public class RecipeAPIController : ControllerBase
     private readonly IUserRecipeRepository _userRecipeRepository;
     private readonly IRegistrationService _registrationSerivice;
     private readonly MealPlannerDBContext _context;
+    private readonly IExternalRecipeService _recipeService;
 
     public RecipeAPIController(
         MealPlannerDBContext context,
         IRecipeRepository recipeRepository,
         IUserRecipeRepository userRecipeRepository,
-        IRegistrationService registrationService)
+        IRegistrationService registrationService,
+        IExternalRecipeService recipeService)
     {
         _context = context;
         _recipeRepository = recipeRepository;
         _userRecipeRepository = userRecipeRepository;
         _registrationSerivice = registrationService;
+        _recipeService = recipeService;
     }
 
     [HttpGet("search")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<RecipeDTO>))]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> SearchRecipesByName(string name)
+    public async Task<IActionResult> SearchRecipesByName(string name, int count=10)
     {
-        List<RecipeDTO> results = _recipeRepository.GetRecipesByName(name).Select(r => new RecipeDTO(r)).ToList();
+        var results = _recipeRepository.GetRecipesByName(name).Select(r => new RecipeDTO(r));
+        if (results.Count() < count)
+        {
+            try
+            {
+                var externalResults = await _recipeService.SearchExternalRecipesByName(name);
+                results = results.Concat(externalResults).Take(20).ToList();
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+            }
+        }
         if (results.IsNullOrEmpty())
         {
             return NotFound();
@@ -78,4 +94,22 @@ public class RecipeAPIController : ControllerBase
 
         return Ok(await _userRecipeRepository.GetRecipeVotePercentage(recipeId));
     }
+
+    [HttpGet("external")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(int))]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public async Task<IActionResult> GetExternalRecipePage(string externalUri, string recipeName)
+    {
+        Console.WriteLine(externalUri);
+        Recipe? recipe = _recipeRepository.ReadRecipeByExternalUri(externalUri);
+        if (recipe != null) return Ok(recipe.Id);
+        recipe = new Recipe { Name = recipeName, ExternalUri = externalUri, Directions = "" };
+        _recipeRepository.CreateOrUpdate(recipe);
+        await _context.SaveChangesAsync();
+
+        recipe = _recipeRepository.ReadRecipeByExternalUri(externalUri);
+        if (recipe == null) return StatusCode(500);
+        return Ok(recipe.Id);
+    }
+    
 }
