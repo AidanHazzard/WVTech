@@ -1,7 +1,16 @@
 @model MealPlanner.Models.Meal
 
 <!-- Title-->
-<div class="back1">
+<div class="back1 backHasButton">
+
+    <!-- Back Button Top Left, inline with layout -->
+    <div class="mb-3">
+       <a href="@Url.Action("Index", "Home", new { id = Model.Id })" 
+   class="btn btn-outline-secondary back1Title">
+    &larr; Back
+</a>
+    </div>
+
     <div class="flex-grow-1 text-center">
         <h2 class="back1Title">Meal Details</h2>
         <div class="back1Title">
@@ -41,5 +50,12 @@
     {
         <p class="text-muted mb-0">There are no recipes in this meal.</p>
     }
+
+    <form asp-controller="Meal" asp-action="EditMeal" method="get">
+        <input type="hidden" name="id" value="@Model.Id" />
+        <button type="submit" class="buttonBlue">
+            <h2 class="buttonText">Edit Meal</h2>
+        </button>
+    </form>
 
 </div>

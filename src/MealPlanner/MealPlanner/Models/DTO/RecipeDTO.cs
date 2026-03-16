@@ -10,4 +10,5 @@ public class RecipeDTO
     
     public string Name { get; set; }
     public int Id { get; set; }
+    public float VotePercentage { get; set; }
 }

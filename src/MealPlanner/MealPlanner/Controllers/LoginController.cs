@@ -1,16 +1,19 @@
 using Microsoft.AspNetCore.Mvc;
 using MealPlanner.Services;
 using MealPlanner.ViewModels;
+using Microsoft.Extensions.Logging;
 
 namespace MealPlanner.Controllers;
 
 public class LoginController : Controller
 {
     private readonly ILoginService _loginService;
+    private readonly ILogger<LoginController> _logger;
 
-    public LoginController(ILoginService loginService)
+    public LoginController(ILoginService loginService, ILogger<LoginController> logger)
     {
         _loginService = loginService;
+        _logger = logger;
     }
 
     [HttpGet("Login")]
@@ -20,11 +23,26 @@ public class LoginController : Controller
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Login(LoginViewModel model)
     {
-        if (!ModelState.IsValid) return View(model);
+        _logger.LogInformation("--------------------Login POST received. Email: {Email}, RememberMe: {RememberMe}---------------------", model.Email, model.RememberMe);
+
+        if (!ModelState.IsValid)
+        {
+            _logger.LogWarning("Login model invalid.");
+            return View(model);
+        }
 
         var result = await _loginService.LoginUserAsync(model);
 
-        if (result.Succeeded) return RedirectToAction("Index", "Home");
+        _logger.LogInformation("--------------------Login result returned: {Result}---------------------", result.ToString());
+
+        if (result.Succeeded)
+            return RedirectToAction("Index", "Home");
+
+        if (result.IsNotAllowed)
+        {
+            ModelState.AddModelError("", "You must confirm your email before logging in. Please check your inbox.");
+            return View(model);
+        }
 
         ModelState.AddModelError("", "Invalid login attempt.");
         return View(model);

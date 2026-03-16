@@ -1,10 +1,13 @@
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using MealPlanner.Controllers;
 using MealPlanner.DAL.Abstract;
 using MealPlanner.Models;
 using MealPlanner.Services;
+using MealPlanner.ViewModels;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.Sqlite;
@@ -21,10 +24,14 @@ public class MealControllerTests
     private MealPlannerDBContext _context;
     private ClaimsPrincipal _user;
 
+    private Mock<IMealRepository> _mealRepoMock;
+    private Mock<IRecipeRepository> _recipeRepoMock;
+    private Mock<IRegistrationService> _registrationServiceMock;
+
     [SetUp]
     public void SetUp()
     {
-        // Use an in-memory SQLite DB for testing
+        // In-memory SQLite for any DB operations
         var connection = new SqliteConnection("Filename=:memory:");
         connection.Open();
 
@@ -35,38 +42,28 @@ public class MealControllerTests
         _context = new MealPlannerDBContext(contextOptions);
         _context.Database.EnsureCreated();
 
-        // Add a test user to satisfy FK constraints for Meals
-        var testUser = new User
-        {
-            Id = "user-1",
-            FullName = "testuser"
-        };
-        _context.Users.Add(testUser);
-        _context.SaveChanges();
-
-        // Fake logged-in user for ControllerContext
+        // Fake logged-in user
         _user = new ClaimsPrincipal(new ClaimsIdentity(
             new[]
             {
                 new Claim(ClaimTypes.NameIdentifier, "user-1"),
                 new Claim(ClaimTypes.Name, "testuser")
             },
-            authenticationType: "TestAuth"));
+            "TestAuth"));
 
         // Mock services
-        var registrationServiceMock = new Mock<IRegistrationService>();
-        registrationServiceMock
-            .Setup(r => r.FindUserByClaimAsync(_user))
-            .ReturnsAsync(testUser);
+        _registrationServiceMock = new Mock<IRegistrationService>();
+        _registrationServiceMock.Setup(r => r.FindUserByClaimAsync(_user))
+            .ReturnsAsync(new User { Id = "user-1", FullName = "testuser" });
 
-        var recipeRepoMock = new Mock<IRecipeRepository>();
-        var mealRepoMock = new Mock<IMealRepository>();
+        _recipeRepoMock = new Mock<IRecipeRepository>();
+        _mealRepoMock = new Mock<IMealRepository>();
 
-        // Instantiate controller with mocks and context
+        // Instantiate controller
         _controller = new MealController(
-            registrationServiceMock.Object,
-            recipeRepoMock.Object,
-            mealRepoMock.Object,
+            _registrationServiceMock.Object,
+            _recipeRepoMock.Object,
+            _mealRepoMock.Object,
             _context);
 
         _controller.ControllerContext = new ControllerContext
@@ -89,37 +86,28 @@ public class MealControllerTests
     [Test]
     public async Task ViewMeal_WhenMealExistsForUser_ReturnsViewResult()
     {
-        // Meal must reference existing user
-        var meal = new Meal
-        {
-            Id = 1,
-            UserId = "user-1",
-            Recipes = new List<Recipe>() // Empty recipe list is fine
-        };
-        _context.Meals.Add(meal);
-        _context.SaveChanges();
+        var meal = new Meal { Id = 1, UserId = "user-1", Recipes = new List<Recipe>() };
+
+        _mealRepoMock.Setup(r => r.ReadAsync(1)).ReturnsAsync(meal);
+        _mealRepoMock.Setup(r => r.LoadRecipesAsync(meal)).Returns(Task.CompletedTask);
 
         var result = await _controller.ViewMeal(1);
 
-        Assert.That(result, Is.TypeOf<ViewResult>(), "Expected a ViewResult when the meal exists for the user");
+        Assert.That(result, Is.TypeOf<ViewResult>());
     }
 
     [Test]
     public async Task ViewMeal_WhenMealExistsForUser_ReturnsMealAsModel()
     {
-        var meal = new Meal
-        {
-            Id = 1,
-            UserId = "user-1",
-            Recipes = new List<Recipe>()
-        };
-        _context.Meals.Add(meal);
-        _context.SaveChanges();
+        var meal = new Meal { Id = 1, UserId = "user-1", Recipes = new List<Recipe>() };
+
+        _mealRepoMock.Setup(r => r.ReadAsync(1)).ReturnsAsync(meal);
+        _mealRepoMock.Setup(r => r.LoadRecipesAsync(meal)).Returns(Task.CompletedTask);
 
         var result = await _controller.ViewMeal(1) as ViewResult;
 
-        Assert.That(result, Is.Not.Null, "ViewResult should not be null");
-        Assert.That(result!.Model, Is.TypeOf<Meal>(), "View model should be of type Meal");
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result!.Model, Is.TypeOf<Meal>());
 
         var model = (Meal)result.Model!;
         Assert.That(model.Id, Is.EqualTo(1));
@@ -129,27 +117,20 @@ public class MealControllerTests
     [Test]
     public async Task ViewMeal_IncludesRecipes()
     {
-        // Add recipes to DB to satisfy FK
         var recipe1 = new Recipe { Id = 1, Name = "Recipe 1", Directions = "D1" };
         var recipe2 = new Recipe { Id = 2, Name = "Recipe 2", Directions = "D2" };
-        _context.Recipes.AddRange(recipe1, recipe2);
-        _context.SaveChanges();
+        var meal = new Meal { Id = 1, UserId = "user-1" };
 
-        // Meal referencing the recipes
-        var meal = new Meal
-        {
-            Id = 1,
-            UserId = "user-1",
-            Recipes = new List<Recipe> { recipe1, recipe2 }
-        };
-        _context.Meals.Add(meal);
-        _context.SaveChanges();
+        _mealRepoMock.Setup(r => r.ReadAsync(1)).ReturnsAsync(meal);
+        _mealRepoMock.Setup(r => r.LoadRecipesAsync(meal))
+            .Callback(() => meal.Recipes = new List<Recipe> { recipe1, recipe2 })
+            .Returns(Task.CompletedTask);
 
         var result = await _controller.ViewMeal(1) as ViewResult;
         var model = (Meal)result!.Model!;
 
-        Assert.That(model.Recipes, Is.Not.Null, "Meal recipes should not be null");
-        Assert.That(model.Recipes.Count, Is.EqualTo(2), "Meal should include both recipes");
+        Assert.That(model.Recipes, Is.Not.Null);
+        Assert.That(model.Recipes.Count, Is.EqualTo(2));
         Assert.That(model.Recipes[0].Name, Is.EqualTo("Recipe 1"));
         Assert.That(model.Recipes[1].Name, Is.EqualTo("Recipe 2"));
     }
@@ -157,30 +138,56 @@ public class MealControllerTests
     [Test]
     public async Task ViewMeal_WhenMealDoesNotExist_ReturnsNotFound()
     {
+        _mealRepoMock.Setup(r => r.ReadAsync(999)).ReturnsAsync((Meal)null);
+
         var result = await _controller.ViewMeal(999);
 
-        Assert.That(result, Is.TypeOf<NotFoundResult>(), "Nonexistent meal should return NotFoundResult");
+        Assert.That(result, Is.TypeOf<NotFoundResult>());
     }
 
     [Test]
     public async Task ViewMeal_WhenMealBelongsToDifferentUser_ReturnsNotFound()
     {
-        // Add a different user for FK constraint
-        var otherUser = new User { Id = "other-user", FullName = "Other User" };
-        _context.Users.Add(otherUser);
-        _context.SaveChanges();
+        var meal = new Meal { Id = 1, UserId = "other-user", Recipes = new List<Recipe>() };
 
-        var meal = new Meal
-        {
-            Id = 1,
-            UserId = "other-user",
-            Recipes = new List<Recipe>()
-        };
-        _context.Meals.Add(meal);
-        _context.SaveChanges();
+        _mealRepoMock.Setup(r => r.ReadAsync(1)).ReturnsAsync(meal);
 
         var result = await _controller.ViewMeal(1);
 
-        Assert.That(result, Is.TypeOf<NotFoundResult>(), "Meal belonging to another user should return NotFoundResult");
+        Assert.That(result, Is.TypeOf<NotFoundResult>());
+    }
+
+    // -----------------------------
+    // EditMeal tests
+    // -----------------------------
+
+    [Test]
+    public async Task EditMeal_Get_WhenMealExistsForUser_ReturnsViewResult()
+    {
+        var meal = new Meal
+        {
+            Id = 10,
+            UserId = "user-1",
+            Recipes = new List<Recipe>()
+        };
+
+        _mealRepoMock.Setup(r => r.ReadAsync(10)).ReturnsAsync(meal);
+
+        var result = await _controller.EditMeal(10);
+
+        Assert.That(result, Is.TypeOf<ViewResult>());
+        var viewResult = (ViewResult)result;
+        Assert.That(viewResult.Model, Is.TypeOf<EditMealViewModel>());
+        var model = (EditMealViewModel)viewResult.Model!;
+        Assert.That(model.Id, Is.EqualTo(10));
+    }
+
+    [Test]
+    public async Task EditMeal_Get_WhenMealDoesNotExist_ReturnsNotFound()
+    {
+        _mealRepoMock.Setup(r => r.ReadAsync(999)).ReturnsAsync((Meal)null);
+
+        var result = await _controller.EditMeal(999);
+        Assert.That(result, Is.TypeOf<NotFoundResult>());
     }
 }

@@ -1,6 +1,6 @@
 @model MealPlanner.ViewModels.CreateMealViewModel
 
-<div class="back1">
+<div class="back1 backHasButton">
     <h2 class="back1Title">Create a Meal</h2>
     <hr>
 
@@ -16,35 +16,30 @@
     <div class="row align-items-center">
         <div class="text-danger" asp-validation-summary="All"></div>
 
-        <form id="createMealForm" class="col d-flex flex-column mx-1" asp-action="NewMeal" method="POST">
+        <form id="createMealForm" class="col d-flex flex-column mx-1" asp-action="NewMeal" method="post">
 
             <div class="row g-3 mb-3">
-                <div class="col-md-4">
+                <div class="col-md-6">
+                    <label asp-for="Title" class="form-label"></label>
+                    <input asp-for="Title" class="form-control" />
+                    <span asp-validation-for="Title" class="text-danger"></span>
+                </div>
+
+                <div class="col-md-6">
                     <label asp-for="Date" class="form-label"></label>
                     <input asp-for="Date" type="date" class="form-control" />
                     <span asp-validation-for="Date" class="text-danger"></span>
                 </div>
+            </div>
 
-                <div class="col-md-4">
-                    <label asp-for="Time" class="form-label"></label>
-                    <input asp-for="Time" type="time" class="form-control" />
-                    <span asp-validation-for="Time" class="text-danger"></span>
-                </div>
-
+            <div class="row g-3 mb-3">
                 <div class="col-md-4 d-flex align-items-end">
                     <div class="form-check">
                         <input asp-for="RepeatWeekly" class="form-check-input" />
-                        <label asp-for="RepeatWeekly" class="form-check-label">
-                            Repeat Weekly
-                        </label>
+                        <label asp-for="RepeatWeekly" class="form-check-label">Repeat Weekly</label>
                     </div>
                 </div>
             </div>
-
-            <button type="submit" class="col d-flex mx-1 btn btn-success justify-content-center">
-                <h4>Create Meal</h4>
-            </button>
-
         </form>
     </div>
 
@@ -52,9 +47,14 @@
         <h3 class="back1Title">Search for Recipes to Add</h3>
         @await Html.PartialAsync("_RecipeSearchPartial")
     </div>
+
+    <button type="submit" form="createMealForm" class="buttonBlue">
+        <h4>Create Meal</h4>
+    </button>
 </div>
 
 @section Scripts {
+    <partial name="_ValidationScriptsPartial" />
     <script type="module" src="~/js/recipeSearch.js"></script>
     <script type="module" src="~/js/createMeal.js"></script>
 }

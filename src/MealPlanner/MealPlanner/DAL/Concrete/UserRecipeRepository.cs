@@ -18,10 +18,9 @@ public class UserRecipeRepository :  Repository<UserRecipe>, IUserRecipeReposito
             .ToListAsync();
     }
 
-    public async Task<bool> IsUserRecipeOwner(string userId, int recipeId)
+    public async Task<bool> IsUserRecipeOwnerAsync(string userId, int recipeId)
     {
-        var ur = await _dbset.FindAsync(userId, recipeId);
-        return ur?.UserOwner ?? false;
+        return (await _dbset.FindAsync(userId, recipeId))?.UserOwner ?? false;
     }
 
     public async Task<List<Recipe>> GetFavoritesAsync(string userId)
@@ -79,5 +78,35 @@ public class UserRecipeRepository :  Repository<UserRecipe>, IUserRecipeReposito
             .CountAsync();
         
         return upVotes / (float) totalVotes;
+    }
+
+    public async Task ChangeRecipeVoteAsync(User user, Recipe recipe, UserVoteType voteType)
+    {
+        UserRecipe? userRecipe = await _dbset.FindAsync(user.Id, recipe.Id);
+        
+        if (userRecipe == null && voteType == UserVoteType.NoVote) return;
+
+        userRecipe ??= new UserRecipe
+        {
+            User = user,
+            Recipe = recipe
+        };
+        
+        userRecipe.UserVote = voteType;
+
+        if (userRecipe.Redundant())
+        {
+            Delete(userRecipe);
+        }
+        else
+        {
+            CreateOrUpdate(userRecipe);
+        }
+    }
+
+    public async Task<UserVoteType> GetUserRecipeVoteAsync(string userId, int recipeId)
+    {
+        UserRecipe? userRecipe = await _dbset.FindAsync(userId, recipeId);
+        return userRecipe?.UserVote ?? UserVoteType.NoVote;
     }
 }

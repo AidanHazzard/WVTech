@@ -2,18 +2,39 @@
     ViewData["Title"] = "User Settings";
 }
 
-<div class="container mt-4">
-    <h2>User Settings</h2>
+<div class="back1">
+    <h2 class="back1Title">User Settings</h2>
 
-    <div class="list-group mt-3">
-        <a class="list-group-item list-group-item-action"
-           asp-controller="UserSettings" asp-action="Dietary">
-            Dietary Restrictions
+    <div class="list-group mt-3" style="border-radius: 20px 20px 0 0;">
+        <a class="list-group-item list-group-item-action linkListBack"
+            asp-controller="UserSettings" asp-action="Dietary">
+            <h5 class="baseText">Dietary Restrictions</h5>
         </a>
 
-        <a class="list-group-item list-group-item-action"
-           asp-controller="UserSettings" asp-action="Nutrition">
-            Nutrition Goals
+        <a class="list-group-item list-group-item-action linkListBack"
+        asp-controller="UserSettings" asp-action="Nutrition">
+            <h5 class="baseText">Nutrition Goals</h5>
         </a>
+
+        <a class="list-group-item list-group-item-action linkListBack"
+        asp-controller="UserSettings" asp-action="ThemeChange">
+            <h5 class="baseText">Change Theme</h5>
+        </a>
+
+        @if (User.IsInRole("Admin"))
+            {
+                <a class="list-group-item list-group-item-action linkListBack"
+                asp-controller="Home" asp-action="Admin">
+                    <h5 class="baseText">Admin</h5>
+                </a>
+            }
+            else if (User.IsInRole("User"))
+            {
+                <a class="list-group-item list-group-item-action linkListBack"
+                asp-controller="Favorites" asp-action="Index">
+                    <h5 class="baseText">Favorites</h5>
+                </a>
+            }
+            <partial name="_LoginPartial" />
     </div>
 </div>

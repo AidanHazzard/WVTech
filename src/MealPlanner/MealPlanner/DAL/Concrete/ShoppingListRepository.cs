@@ -1,0 +1,40 @@
+using MealPlanner.DAL.Abstract;
+using MealPlanner.Models;
+
+namespace MealPlanner.DAL.Concrete;
+
+public class ShoppingListRepository : IShoppingListRepository
+{
+    private readonly MealPlannerDBContext _context;
+
+    public ShoppingListRepository(MealPlannerDBContext context)
+    {
+        _context = context;
+    }
+
+    public void Add(ShoppingListItem item)
+    {
+        _context.ShoppingListItems.Add(item);
+        _context.SaveChanges();
+    }
+
+    public void Remove(int itemId, string userId)
+    {
+        ShoppingListItem? item = _context.ShoppingListItems
+            .FirstOrDefault(i => i.Id == itemId && i.UserId == userId);
+
+        if (item != null)
+        {
+            _context.ShoppingListItems.Remove(item);
+            _context.SaveChanges();
+        }
+    }
+
+    public IEnumerable<ShoppingListItem> GetByUserId(string userId)
+    {
+        return _context.ShoppingListItems
+            .Where(i => i.UserId == userId)
+            .OrderBy(i => i.Name)
+            .ToList();
+    }
+}

@@ -10,15 +10,17 @@ namespace MealPlanner.Services
         private readonly UserManager<User> _userManager;
         private readonly SignInManager<User> _signInManager;
         private readonly RoleManager<IdentityRole> _roleManager;
+        private readonly MealPlannerDBContext _db;
 
         public RegistrationService(
             UserManager<User> userManager,
             SignInManager<User> signInManager,
-            RoleManager<IdentityRole> roleManager)
+            RoleManager<IdentityRole> roleManager, MealPlannerDBContext db)
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _roleManager = roleManager;
+            _db = db;
         }
 
         public async Task<IdentityResult> RegisterUserAsync(RegisterViewModel model)
@@ -36,14 +38,21 @@ namespace MealPlanner.Services
             var result = await _userManager.CreateAsync(user, model.Password);
             if (!result.Succeeded) return result;
 
+            //creates the UserProfile row automatically for every new user
+            _db.UserProfiles.Add(new UserProfile
+            {
+                UserId = user.Id,
+                IsDarkTheme = false
+            });
+            await _db.SaveChangesAsync();
+
             if (!await _roleManager.RoleExistsAsync("User"))
             {
                 await _roleManager.CreateAsync(new IdentityRole("User"));
             }
 
             await _userManager.AddToRoleAsync(user, "User");
-            //await _signInManager.SignInAsync(user, isPersistent: false);
-
+           
             return result;
         }
 
