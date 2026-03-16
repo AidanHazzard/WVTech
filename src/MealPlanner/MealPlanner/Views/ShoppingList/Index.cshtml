@@ -4,9 +4,8 @@
     ViewData["Title"] = "Shopping List";
 }
 
-<div class="container mt-4">
-    <div class="p-4 rounded-4" style="background-color: #d9d9d9;">
-        <h2 class="text-center mb-4">Shopping List</h2>
+    <div class="back1">
+        <h1 class="back1Title">Shopping List</h1>
 
         @if (TempData["ShoppingListError"] != null)
         {
@@ -21,19 +20,19 @@
             <div class="d-flex gap-3 align-items-center">
                 <input type="text"
                        name="itemName"
-                       class="form-control rounded-4"
+                       class="back2-textbox"
                        placeholder="Enter grocery item" />
                 <button type="submit" class="btn btn-success px-4 rounded-4">Add Item</button>
             </div>
         </form>
 
-        <div class="p-4 rounded-4" style="background-color: #efefef;">
+        <div class="back2">
             @if (Model.Any())
             {
                 <div class="d-flex flex-column gap-3">
                     @foreach (var item in Model)
                     {
-                        <div class="d-flex justify-content-between align-items-center p-3 rounded-4 bg-white">
+                        <div class="d-flex justify-content-between align-items-center back2-textbox">
                             <span class="fs-5">@item.Name</span>
 
                             <form asp-action="RemoveItem" method="post" class="m-0">
@@ -51,4 +50,3 @@
             }
         </div>
     </div>
-</div>
