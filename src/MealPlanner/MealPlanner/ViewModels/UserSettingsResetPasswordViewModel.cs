@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace MealPlanner.ViewModels;
 
-public class AccountSettingsResetPasswordViewModel
+public class UserSettingsResetPasswordViewModel
 {
     [Required(ErrorMessage = "Current Password is required")]
     [DataType(DataType.Password)]
