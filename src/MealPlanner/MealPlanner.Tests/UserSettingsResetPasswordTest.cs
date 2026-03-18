@@ -12,17 +12,17 @@ using NUnit.Framework;
 namespace MealPlanner.Tests
 {
     [TestFixture]
-    public class AccountSettingsControllerTests
+    public class UserSettingsResetPasswordTests
     {
-        private Mock<IAccountSettingsService> _mockAccountService;
-        private AccountSettingsController _controller;
+        private Mock<IUserSettingsService> _mockUserSettingsService;
+        private UserSettingsController _controller;
 
         [SetUp]
         public void SetUp()
         {
             // Arrange: create mock service and controller
-            _mockAccountService = new Mock<IAccountSettingsService>();
-            _controller = new AccountSettingsController(_mockAccountService.Object);
+            _mockUserSettingsService = new Mock<IUserSettingsService>();
+            _controller = new UserSettingsController(null, null, _mockUserSettingsService.Object);
 
             // Add a fake authenticated user for the controller
             var user = new ClaimsPrincipal(new ClaimsIdentity(
@@ -52,7 +52,7 @@ namespace MealPlanner.Tests
             // Assert
             var viewResult = result as ViewResult;
             Assert.That(viewResult, Is.Not.Null);
-            Assert.That(viewResult.Model, Is.InstanceOf<AccountSettingsResetPasswordViewModel>());
+            Assert.That(viewResult.Model, Is.InstanceOf<UserSettingsResetPasswordViewModel>());
         }
 
         // ===================== POST RESET PASSWORD =====================
@@ -62,7 +62,7 @@ namespace MealPlanner.Tests
         {
             // Arrange
             _controller.ModelState.AddModelError("Password", "Required");
-            var model = new AccountSettingsResetPasswordViewModel();
+            var model = new UserSettingsResetPasswordViewModel();
 
             // Act
             var result = await _controller.ResetPassword(model);
@@ -75,14 +75,14 @@ namespace MealPlanner.Tests
         public async Task ResetPassword_Post_WhenPasswordResetSucceeds_ReturnsEmptyFormWithSuccessMessage()
         {
             // Arrange
-            var model = new AccountSettingsResetPasswordViewModel
+            var model = new UserSettingsResetPasswordViewModel
             {
                 Password = "OldPassword123!",
                 NewPassword = "NewPassword123!",
                 ConfirmPassword = "NewPassword123!"
             };
 
-            _mockAccountService
+            _mockUserSettingsService
                 .Setup(s => s.ResetPasswordAsync(
                     It.IsAny<ClaimsPrincipal>(),
                     model.Password,
@@ -96,14 +96,14 @@ namespace MealPlanner.Tests
             var viewResult = result as ViewResult;
             Assert.That(viewResult, Is.Not.Null);
             Assert.That(_controller.ViewBag.StatusMessage, Is.EqualTo("Your password has been reset successfully."));
-            Assert.That(viewResult.Model, Is.InstanceOf<AccountSettingsResetPasswordViewModel>());
+            Assert.That(viewResult.Model, Is.InstanceOf<UserSettingsResetPasswordViewModel>());
         }
 
         [Test]
         public async Task ResetPassword_Post_WhenCurrentPasswordIncorrect_ReturnsViewWithError()
         {
             // Arrange
-            var model = new AccountSettingsResetPasswordViewModel
+            var model = new UserSettingsResetPasswordViewModel
             {
                 Password = "WrongPassword",
                 NewPassword = "NewPassword123!",
@@ -115,7 +115,7 @@ namespace MealPlanner.Tests
                 new IdentityError { Description = "Incorrect current password" }
             };
 
-            _mockAccountService
+            _mockUserSettingsService
                 .Setup(s => s.ResetPasswordAsync(
                     It.IsAny<ClaimsPrincipal>(),
                     model.Password,
