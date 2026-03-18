@@ -101,7 +101,7 @@ builder.Services.ConfigureApplicationCookie(options =>
 builder.Services.AddScoped<INutritionProgressService, NutritionProgressService>();
 builder.Services.AddScoped<ILoginService, LoginService>();
 builder.Services.AddScoped<IRegistrationService, RegistrationService>();
-builder.Services.AddScoped<IAccountSettingsService, AccountSettingsService>();
+builder.Services.AddScoped<IUserSettingsService, UserSettingsService>();
 
 // External APIs
 string edamamAppId = builder.Configuration.GetSection("Edamam")["AppId"];

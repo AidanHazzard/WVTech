@@ -17,13 +17,13 @@ namespace MealPlanner.Controllers
     {
         private readonly MealPlannerDBContext _db;
         private readonly IUserSettingsRepository _userSettings;
-         private readonly IAccountSettingsService _accountSettingsService;
+         private readonly IUserSettingsService _userSettingsService;
 
-        public UserSettingsController(MealPlannerDBContext db, IUserSettingsRepository userSettings, IAccountSettingsService accountSettingsService)
+        public UserSettingsController(MealPlannerDBContext db, IUserSettingsRepository userSettings, IUserSettingsService userSettingsService)
         {
             _db = db;
             _userSettings = userSettings;
-            _accountSettingsService = accountSettingsService;
+            _userSettingsService = userSettingsService;
         }
 
         [HttpGet]
@@ -180,7 +180,7 @@ namespace MealPlanner.Controllers
             if (!ModelState.IsValid)
                 return View(model);
 
-            var result = await _accountSettingsService.ResetPasswordAsync(
+            var result = await _userSettingsService.ResetPasswordAsync(
                 User,
                 model.Password,
                 model.NewPassword);

@@ -3,7 +3,7 @@ using System.Security.Claims;
 
 namespace MealPlanner.Services
 {
-    public interface IAccountSettingsService
+    public interface IUserSettingsService
     {
        Task<IdentityResult> ResetPasswordAsync(ClaimsPrincipal userPrincipal, string currentPassword, string newPassword);
     }
