@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Azure.Security.KeyVault.Secrets;
 using Azure.Identity;
+using System.Net.Http.Headers;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,11 +15,16 @@ builder.Services.AddControllersWithViews(options =>
 {
     options.Filters.Add<ThemeFilter>();
 });
+
 // Create connection string
 string? connectionString =
     builder.Configuration.GetConnectionString("DefaultConnection")
     ?? builder.Configuration["ConnectionString"];
 
+// Debug output
+Console.WriteLine("USING CONNECTION STRING: " + connectionString);
+
+// Validate connection string
 if (string.IsNullOrWhiteSpace(connectionString))
 {
     throw new InvalidOperationException(
@@ -35,6 +41,8 @@ if (builder.Environment.IsProduction())
         SecretClient secretClient = new SecretClient(new Uri(keyVaultUri), new DefaultAzureCredential());
         builder.Configuration["EmailSettings:Password"] =
             secretClient.GetSecret("EmailSettings--Password").Value.Value;
+        builder.Configuration["Edamam:AppId"] = secretClient.GetSecret("Edamam--AppId").Value.Value;
+        builder.Configuration["Edamam:ApiKey"] = secretClient.GetSecret("Edamam--ApiKey").Value.Value;
     }
 }
 
@@ -50,7 +58,9 @@ builder.Services.AddScoped<IUserDietaryRestrictionRepository, UserDietaryRestric
 builder.Services.AddScoped<IMealRepository, MealRepository>();
 builder.Services.AddScoped<IUserRecipeRepository, UserRecipeRepository>();
 builder.Services.AddScoped<IUserSettingsRepository, UserSettingsRepository>();
-builder.Services.AddScoped<ThemeFilter>(); // add this
+builder.Services.AddScoped<IShoppingListRepository, ShoppingListRepository>();
+builder.Services.AddScoped<ThemeFilter>();
+builder.Services.AddScoped<ShoppingListService>();
 
 // Add Identity
 builder.Services.AddIdentity<User, IdentityRole>(options =>
@@ -78,7 +88,7 @@ builder.Services.ConfigureApplicationCookie(options =>
      // Sliding expiration okay
     options.SlidingExpiration = true;
 
-   options.Cookie.HttpOnly = true;
+    options.Cookie.HttpOnly = true;
     options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
     options.Cookie.SameSite = SameSiteMode.Strict;
 
@@ -93,11 +103,19 @@ builder.Services.AddScoped<ILoginService, LoginService>();
 builder.Services.AddScoped<IRegistrationService, RegistrationService>();
 builder.Services.AddScoped<IAccountSettingsService, AccountSettingsService>();
 
-// Configure emailer
-builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
-builder.Services.AddTransient<IEmailService, EmailService>();
+// External APIs
+string edamamAppId = builder.Configuration.GetSection("Edamam")["AppId"];
+string edamamAPIKey = builder.Configuration.GetSection("Edamam")["ApiKey"];
+string edamamAPIUrl = "https://api.edamam.com/api/";
+builder.Services.AddHttpClient<IExternalRecipeService, EdamamService>(httpClient =>
+{
+    httpClient.BaseAddress = new Uri(edamamAPIUrl);
+    httpClient.DefaultRequestHeaders.Add("accept", "application/json");
+    httpClient.DefaultRequestHeaders.Add("Accept-Language", "en");
+    return new EdamamService(httpClient, edamamAppId, edamamAPIKey);
+});
 
-// Register EmailService for dependency injection
+// Configure emailer
 builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
 builder.Services.AddTransient<IEmailService, EmailService>();
 

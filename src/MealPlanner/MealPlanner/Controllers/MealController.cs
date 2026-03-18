@@ -16,7 +16,11 @@ public class MealController : Controller
     private readonly IMealRepository _mealRepo;
     private readonly MealPlannerDBContext _context;
 
-    public MealController(IRegistrationService registrationService, IRecipeRepository recipeRepo, IMealRepository mealRepo, MealPlannerDBContext context)
+    public MealController(
+        IRegistrationService registrationService,
+        IRecipeRepository recipeRepo,
+        IMealRepository mealRepo,
+        MealPlannerDBContext context)
     {
         _registrationService = registrationService;
         _recipeRepo = recipeRepo;
@@ -26,7 +30,11 @@ public class MealController : Controller
 
     public async Task<IActionResult> PlannerHome(string? date)
     {
-        User user = await _registrationService.FindUserByClaimAsync(User);
+        var user = await _registrationService.FindUserByClaimAsync(User);
+        if (user == null)
+        {
+            return Challenge();
+        }
 
         DateTime selectedDate =
             DateTime.TryParse(date, out var parsed)
@@ -47,58 +55,86 @@ public class MealController : Controller
     [HttpGet]
     public IActionResult NewMeal()
     {
-        return View();
+        return View(new CreateMealViewModel
+        {
+            Date = DateTime.Today
+        });
     }
 
     [HttpPost]
     public async Task<IActionResult> NewMeal(CreateMealViewModel model)
     {
+        Console.WriteLine(model.Date);
+        Console.WriteLine(model.Time);
         if (!ModelState.IsValid)
         {
             return View(model);
         }
 
-        Meal newMeal = new Meal();
-
-        foreach (int i in model.RecipeIds)
+        var user = await _registrationService.FindUserByClaimAsync(User);
+        if (user == null)
         {
-            Recipe recipe = _recipeRepo.Read(i);
-            newMeal.Recipes.Add(recipe);
+            return Challenge();
         }
 
-        User user = await _registrationService.FindUserByClaimAsync(User);
-        newMeal.User = user;
-        newMeal.UserId = user.Id;
+        Meal newMeal = new Meal
+        {
+            User = user,
+            UserId = user.Id,
+            Title = model.Title.Trim(),
+            StartTime = model.Date.Date,
+            RepeatRule = model.RepeatWeekly ? "Weekly" : null
+        };
 
-        newMeal.StartTime = model.Date.Date.Add(model.Time);
-        newMeal.RepeatRule = model.RepeatWeekly ? "Weekly" : null;
+        foreach (int id in model.RecipeIds)
+        {
+            var recipe = _recipeRepo.Read(id);
+            if (recipe != null)
+            {
+                newMeal.Recipes.Add(recipe);
+            }
+        }
 
         _mealRepo.CreateOrUpdate(newMeal);
         _context.SaveChanges();
 
-        return RedirectToAction("PlannerHome");
+        return RedirectToAction("Index", "Home");
     }
 
     [HttpGet]
     public async Task<IActionResult> ViewMeal(int id)
     {
-        User user = await _registrationService.FindUserByClaimAsync(User);
+        var user = await _registrationService.FindUserByClaimAsync(User);
+        if (user == null)
+        {
+            return Challenge();
+        }
 
         var meal = await _mealRepo.ReadAsync(id);
         if (meal == null || meal.UserId != user.Id)
+        {
             return NotFound();
+        }
 
         await _mealRepo.LoadRecipesAsync(meal);
 
         return View(meal);
     }
 
-
     [HttpGet]
     public async Task<IActionResult> EditMeal(int id)
     {
+        var user = await _registrationService.FindUserByClaimAsync(User);
+        if (user == null)
+        {
+            return Challenge();
+        }
+
         var meal = await _mealRepo.ReadAsync(id);
-        if (meal == null) return NotFound();
+        if (meal == null || meal.UserId != user.Id)
+        {
+            return NotFound();
+        }
 
         var viewModel = new EditMealViewModel
         {
@@ -120,42 +156,62 @@ public class MealController : Controller
             return View(model);
         }
 
+        var user = await _registrationService.FindUserByClaimAsync(User);
+        if (user == null)
+        {
+            return Challenge();
+        }
+
         var meal = await _mealRepo.ReadAsync(model.Id);
-        if (meal == null) return NotFound();
+        if (meal == null || meal.UserId != user.Id)
+        {
+            return NotFound();
+        }
 
         meal.StartTime = model.Date.Date + model.Time;
         meal.RepeatRule = model.RepeatWeekly ? "Weekly" : null;
 
-        // Clear old recipes
         meal.Recipes.Clear();
 
         foreach (var recipeId in model.RecipeIds ?? new List<int>())
         {
-            var recipe = _recipeRepo.Read(recipeId); // <- sync version
+            var recipe = _recipeRepo.Read(recipeId);
             if (recipe != null)
+            {
                 meal.Recipes.Add(recipe);
+            }
         }
 
         _mealRepo.CreateOrUpdate(meal);
-        _context.SaveChanges(); // sync save
+        _context.SaveChanges();
 
         return RedirectToAction("ViewMeal", new { id = meal.Id });
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public IActionResult DeleteMeal(int id)
+    public async Task<IActionResult> DeleteMeal(int id, string? date)
     {
-        var meal = _mealRepo.Read(id);
-        if (meal == null)
+        var user = await _registrationService.FindUserByClaimAsync(User);
+        if (user == null)
         {
-            return NotFound();
+            return Challenge();
         }
 
-        _mealRepo.Delete(meal);
-        _context.SaveChanges(); // or _context.SaveChanges() if you prefer
+        var meal = await _context.Meals.FindAsync(id);
+        if (meal == null)
+        {
+            return RedirectToAction("Index", "Home", new { selectedDate = date });
+        }
 
-        // Redirect to your main page after deletion
-        return RedirectToAction("Index", "Home");
+        if (meal.UserId != user.Id)
+        {
+            return Forbid();
+        }
+
+        _context.Meals.Remove(meal);
+        await _context.SaveChangesAsync();
+
+        return RedirectToAction("Index", "Home", new { selectedDate = date });
     }
 }

@@ -1,7 +1,8 @@
-@model IEnumerable<MealPlanner.Models.Recipe>
+@using MealPlanner.ViewModels
+@model IEnumerable<MealPlanner.ViewModels.RecipeViewModel>
 <div class="back1 backHasButton">
     <h1 class="back1Title">Your Recipes</h1>
-    @foreach (Recipe r in Model)
+    @foreach (RecipeViewModel r in Model)
     {
         var location = @Url.Action(action: "Recipes");
         <button class="buttonGrey" onclick="location.href='@location/@r.Id'">
@@ -14,3 +15,11 @@
         </button>
     </form>
 </div>
+
+@await Html.PartialAsync("_RecipeSearchPartial")
+
+
+@section Scripts{
+    <script type="module" src="~/js/recipeSearch.js"></script>
+    <script type="module" src="~/js/recipeSearchToView.js"></script>
+}

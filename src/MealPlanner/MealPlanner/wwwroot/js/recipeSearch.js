@@ -1,3 +1,5 @@
+const LOW_RATING_COLOR = "red";
+const HIGH_RATING_COLOR = "green";
 $(document).ready(
     () => $("#searchText").on("input", throttle(recipeSearchHandler, 1000))
 );
@@ -44,11 +46,14 @@ async function recipeSearchHandler(event)
     {
         const recipe = recipes[i];
         const row = rowTemplate.contents().clone(true);
-    
+        const rating = (recipe.votePercentage * 100).toFixed(0) + "%";
+        $(row).attr("externalUri", recipe.externalUri);
+        if (recipe.externalUri) $(".row-end", row).text("");
         $(".recipeName", row).text(recipe.name);
         $(".recipeId", row).text(recipe.id);
         $(".recipeIdInput", row).val(recipe.id);
-    
+        $(".recipeRating", row).text(rating);
+        $(".recipeRating", row).attr("style", `color: color-mix(in oklch, ${LOW_RATING_COLOR}, ${HIGH_RATING_COLOR} ${rating});`)
         $("#recipeResults").append(row);
     }
 }

@@ -6,6 +6,7 @@ using MealPlanner.DAL.Abstract;
 using MealPlanner.Services;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
+using Microsoft.IdentityModel.Tokens;
 
 namespace MealPlanner.Controllers;
 
@@ -16,12 +17,14 @@ public class FoodEntriesController : Controller
     private readonly IUserRecipeRepository _userRecipeRepository;
     private readonly INutritionProgressService? _nutritionProgressService;
     private readonly IRegistrationService _registrationService;
+    private readonly IExternalRecipeService _externalRecipeService;
 
     public FoodEntriesController(
         IRecipeRepository recipeRepository,
         IUserRecipeRepository userRecipeRepository,
         MealPlannerDBContext context,
         IRegistrationService registrationService,
+        IExternalRecipeService externalRecipeService,
         INutritionProgressService? nutritionProgressService = null)
     {
         _recipeRepository = recipeRepository;
@@ -29,6 +32,7 @@ public class FoodEntriesController : Controller
         _registrationService = registrationService;
         _nutritionProgressService = nutritionProgressService;
         _userRecipeRepository = userRecipeRepository;
+        _externalRecipeService = externalRecipeService;
     }
 
     public IActionResult SearchRecipes()
@@ -68,7 +72,13 @@ public class FoodEntriesController : Controller
         {
             userRecipes = await _userRecipeRepository.GetUserOwnedRecipesByUserIdAsync(user.Id);
         }
-        return View(userRecipes);
+        IEnumerable<RecipeViewModel> userRecipeVMs = userRecipes.Select(ViewModelService.RecipeToRecipeVM);
+        foreach (RecipeViewModel vm in userRecipeVMs)
+        {
+            if (vm.Id == null) continue;
+            vm.VotePercentage = await _userRecipeRepository.GetRecipeVotePercentage(vm.Id ?? 0);
+        }
+        return View(userRecipeVMs);
     }
 
     [HttpGet]
@@ -76,23 +86,38 @@ public class FoodEntriesController : Controller
     public async Task<IActionResult> Recipes(int id)
     {
         Recipe? recipe = await _recipeRepository.ReadRecipeWithIngredientsAsync(id);
-
+        
+        // Get info for external recipe
+        if (!recipe?.ExternalUri.IsNullOrEmpty() ?? false)
+        {
+            try
+            {
+                recipe = await _externalRecipeService.GetExternalRecipeByURI(recipe.ExternalUri!);
+                recipe.Id = id;
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+            }
+        }
+        
         // Change to not-found view!
         if (recipe == null)
         {
             return RedirectToAction("SearchRecipes");
         }
-
         RecipeViewModel viewModel = ViewModelService.RecipeToRecipeVM(recipe);
-
+        viewModel.VotePercentage = await _userRecipeRepository.GetRecipeVotePercentage(id);
+        
         //if you do not own the recipe
         User? user = await _registrationService.FindUserByClaimAsync(User);
         if (user != null)
         {
+            viewModel.UserVote = await _userRecipeRepository.GetUserRecipeVoteAsync(user.Id, id);
             var ownedRecipes = await _userRecipeRepository.GetUserOwnedRecipesByUserIdAsync(user.Id);
-            viewModel.isOwned = ownedRecipes.Any(r => r.Id == id);
+            viewModel.IsOwned = ownedRecipes.Any(r => r.Id == id);
         }
-
+        
         return View("SingleRecipe", viewModel);
     }
 

@@ -3,36 +3,41 @@
 @{
     ViewData["Title"] = "Nutrition Goals";
 }
+<link rel="stylesheet" href="~/css/AddNewRecipe.css" asp-append-version="true" />
 
-<h2>Nutrition Goals</h2>
+<div class="back1 backHasButton">
+    <h2 class="back1Title">Nutrition Goals</h2>
 
-@if (TempData["Message"] != null)
-{
-    <div class="alert alert-success">@TempData["Message"]</div>
-}
+    @if (TempData["Message"] != null)
+    {
+        <div class="alert alert-success">@TempData["Message"]</div>
+    }
 
-<form asp-action="Nutrition" method="post">
-    @Html.AntiForgeryToken()
+    <form asp-action="Nutrition" method="post">
+        @Html.AntiForgeryToken()
 
-    <div class="mb-3">
-        <label class="form-label">Calorie Target</label>
-        <input asp-for="CalorieTarget" class="form-control" type="number" />
-    </div>
+        <h2 class="back1Title left">
+            <span style="white-space: nowrap;">Calories:</span>
+            <input asp-for="CalorieTarget" class="back2-textbox" type="number" placeholder="Enter Calorie Target" min="0" max="32767" step="1" required>
+        </h2>
 
-    <div class="mb-3">
-        <label class="form-label">Protein Target (g)</label>
-        <input asp-for="ProteinTarget" class="form-control" type="number" />
-    </div>
+        <h2 class="back1Title left">
+            <span style="white-space: nowrap;">Protein:</span>
+            <input asp-for="ProteinTarget" class="back2-textbox" type="number" placeholder="Enter Protein Target" min="0" max="32767" step="1" required>
+        </h2>
 
-    <div class="mb-3">
-        <label class="form-label">Carb Target (g)</label>
-        <input asp-for="CarbTarget" class="form-control" type="number" />
-    </div>
+        <h2 class="back1Title left">
+            <span style="white-space: nowrap;">Carbs:</span>
+            <input asp-for="CarbTarget" class="back2-textbox" type="number" placeholder="Enter Carb Target" min="0" max="32767" step="1" required>
+        </h2>
 
-    <div class="mb-3">
-        <label class="form-label">Fat Target (g)</label>
-        <input asp-for="FatTarget" class="form-control" type="number" />
-    </div>
+        <h2 class="back1Title left">
+            <span style="white-space: nowrap;">Fats:</span>
+            <input asp-for="FatTarget" class="back2-textbox" type="number" placeholder="Enter Fat Target" min="0" max="32767" step="1" required>
+        </h2>
 
-    <button type="submit" class="btn btn-primary">Save</button>
-</form>
+        <button class="buttonBlue" type="submit">
+            <h2 class="buttonText">Finish</h2>
+        </button>
+    </form>
+</div>

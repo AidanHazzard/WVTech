@@ -27,7 +27,8 @@ namespace MealPlanner.Tests
             _recipeRepository = new RecipeRepository(_context);
             var userRecipeRepo = new Mock<IUserRecipeRepository>();
             var registrationService = new Mock<IRegistrationService>();
-            _controller = new FoodEntriesController(_recipeRepository, userRecipeRepo.Object, _context, registrationService.Object);
+            var externalRecipeService = new Mock<IExternalRecipeService>();
+            _controller = new FoodEntriesController(_recipeRepository, userRecipeRepo.Object, _context, registrationService.Object, externalRecipeService.Object);
         }
 
         //handels the cleaning up after every test

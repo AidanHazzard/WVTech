@@ -1,56 +1,90 @@
 @model MealPlanner.ViewModels.RecipeViewModel
 
-<div class="back1 backHasButton row container-fluid">
+<div id="recipe" class="back1 backHasButton row container-fluid" recipe-id="@Model.Id">
+<div class="backHasButton row container-fluid">
     <div class="col-3 mx-1">
+        <div class="back2">
+            <h3 class="back1Title">Nutrition</h3>
 
-        <h3 class="back1Title">Nutrition</h3>
-
-        @{
-            bool hasNutrition =
-                !(Model.Calories == 0 && Model.Protein == 0 && Model.Carbs == 0 && Model.Fat == 0);
-        }
-
-        @if (hasNutrition)
-        {
-            <ul>
-                <li><strong>Calories:</strong> @Model.Calories kcal</li>
-                <li><strong>Protein:</strong> @Model.Protein g</li>
-                <li><strong>Carbs:</strong> @Model.Carbs g</li>
-                <li><strong>Fat:</strong> @Model.Fat g</li>
-            </ul>
-        }
-        else
-        {
-            <p>Nutrition information is not available for this recipe yet.</p>
-        }
-
-        <h3 class="back1Title">Ingredients</h3>
-        <ul>
             @{
-                for (int i = 0; i < Model.Ingredients.Count; i++)
-                {
-                    <li class="back2-textbox">
-                        @Model.IngredientAmounts[i] @Model.IngredientMeasurements[i] of @Model.Ingredients[i]
-                    </li>
-                }
+                bool hasNutrition =
+                    !(Model.Calories == 0 && Model.Protein == 0 && Model.Carbs == 0 && Model.Fat == 0);
             }
-        </ul>
+
+            @if (hasNutrition)
+            {
+                <ul>
+                    <li><strong>Calories:</strong> @Model.Calories kcal</li>
+                    <li><strong>Protein:</strong> @Model.Protein g</li>
+                    <li><strong>Carbs:</strong> @Model.Carbs g</li>
+                    <li><strong>Fat:</strong> @Model.Fat g</li>
+                </ul>
+            }
+            else
+            {
+                <p>Nutrition information is not available for this recipe yet.</p>
+            }
+        </div>
+
+        <div class="back2">
+            <h3 class="back1Title">Ingredients</h3>
+            <ul>
+                @{
+                    for (int i = 0; i < Model.Ingredients.Count; i++)
+                    {
+                        <li class="back2-textbox">
+                            @Model.IngredientAmounts[i] @Model.IngredientMeasurements[i] of @Model.Ingredients[i]
+                        </li>
+                    }
+                }
+            </ul>
+        </div>
     </div>
 
     <div class="col mx-1">
-        <h2 class="back1Title">@Model.Name</h2>
+        <div class="row mb-5">
+            <h1 class="back1Title col-8">@Model.Name</h1>
+            @if (@Model.VotePercentage != null)
+            {
+                string voterPercentage = $"{(int)@Model.VotePercentage * 100}%";
+                <h4 id="votePercent" class="col-2" style="color: color-mix(in oklch, red, green @voterPercentage);">@voterPercentage</h4>
+            }
+            <div class="col-2">
+                
+                @if (Model.UserVote == UserVoteType.UpVote)
+                {
+                    <img id="thumbs-up" src="~/images/icons/hand-thumbs-up-fill.svg" width="30" height="30" class="growOnHover vote" vote-type="NoVote" base-vote="UpVote">
+                }
+                else
+                {
+                    <img id="thumbs-up" src="~/images/icons/hand-thumbs-up.svg" width="30" height="30" class="growOnHover vote" vote-type="UpVote" base-vote="UpVote">
+                }
+                @if (Model.UserVote == UserVoteType.DownVote)
+                {
+                    <img id="thumbs-down" src="~/images/icons/hand-thumbs-down-fill.svg" width="30" height="30" class="growOnHover vote" vote-type="NoVote" base-vote="DownVote">
+                }
+                else
+                {
+                    <img id="thumbs-down" src="~/images/icons/hand-thumbs-down.svg" width="30" height="30" class="growOnHover vote" vote-type="DownVote" base-vote="DownVote">
+                }
+            </div>
+        </div>
 
         <!-- Description -->
         <!-- Add recipe description here if implemented in the future -->
+        <div class="back2">
 
         <h3 class="back1Title">Instructions</h3>
         <p class="back2-textbox">@Model.Directions</p>
     </div>
-
-    @if (Model.isOwned)
+    @if (Model.IsOwned)
     {
-        <button class="buttonBlue" type="button" onclick="window.location='/FoodEntries/EditRecipe/@Model.ID'">
-            <h2 class="buttonText">Edit Recipe</h2>
-        </button>
+    <button class="buttonBlue" type="button" onclick="window.location='/FoodEntries/EditRecipe/@Model.Id'">
+        <h2 class="buttonText">Edit Recipe</h2>
+    </button>
     }
 </div>
+
+@section Scripts{
+    <script type="module" src="~/js/recipeVote.js"></script>
+}

@@ -4,8 +4,11 @@ using MealPlanner.DAL.Concrete;
 using MealPlanner.Models;
 using MealPlanner.Services;
 using MealPlanner.ViewModels;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Moq;
+using System.Security.Claims;
 
 namespace MealPlanner.Tests
 {
@@ -15,8 +18,9 @@ namespace MealPlanner.Tests
         private MealPlannerDBContext _context;
         private RecipeRepository _recipeRepository;
         private FoodEntriesController _controller;
+        private Mock<IUserRecipeRepository> _userRecipeRepo;
+        private Mock<IRegistrationService> _registrationService;
 
-        //sets up an in memory database to play with and sets the variables above to a new instance
         [SetUp]
         public async Task Setup()
         {
@@ -25,9 +29,17 @@ namespace MealPlanner.Tests
 
             _context = new MealPlannerDBContext(options);
             _recipeRepository = new RecipeRepository(_context);
-            var userRecipeRepo = new Mock<IUserRecipeRepository>();
-            var registrationService = new Mock<IRegistrationService>();
-            _controller = new FoodEntriesController(_recipeRepository, userRecipeRepo.Object, _context, registrationService.Object);
+            _userRecipeRepo = new Mock<IUserRecipeRepository>();
+            _registrationService = new Mock<IRegistrationService>();
+            var externalRecipeService = new Mock<IExternalRecipeService>();
+            _controller = new FoodEntriesController(_recipeRepository, _userRecipeRepo.Object, _context, _registrationService.Object, externalRecipeService.Object);
+
+            var claims = new List<Claim> { new Claim(ClaimTypes.NameIdentifier, "test-user-id") };
+            var identity = new ClaimsIdentity(claims, "TestAuth");
+            _controller.ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext { User = new ClaimsPrincipal(identity) }
+            };
 
             var vm = new RecipeViewModel
             {
@@ -45,7 +57,6 @@ namespace MealPlanner.Tests
             await _controller.RecipeAdded(vm);
         }
 
-        //handels the cleaning up after every test
         [TearDown]
         public void Cleanup()
         {
@@ -88,6 +99,7 @@ namespace MealPlanner.Tests
             Assert.That(recipe.Fat, Is.EqualTo(4));
         }
 
+        [Test]
         public async Task InvalidModelState()
         {
             var vm = new RecipeViewModel
@@ -111,6 +123,75 @@ namespace MealPlanner.Tests
 
             var recipe = recipes.First();
             Assert.That(recipe.Name, Is.EqualTo("Test Recipe"));
+        }
+
+        [Test]
+        public async Task RedirectsIfUserDoesNotOwnRecipe()
+        {
+            var mockUser = new User { Id = "test-user-id" };
+            _registrationService.Setup(r => r.FindUserByClaimAsync(It.IsAny<ClaimsPrincipal>()))
+                .ReturnsAsync(mockUser);
+            _userRecipeRepo.Setup(r => r.GetUserOwnedRecipesByUserIdAsync("test-user-id"))
+                .ReturnsAsync(new List<Recipe>());
+
+            var result = await _controller.EditRecipe(1);
+
+            var redirect = result as RedirectToActionResult;
+            Assert.That(redirect, Is.Not.Null);
+            Assert.That(redirect.ActionName, Is.EqualTo("Recipes"));
+        }
+
+        [Test]
+        public async Task LetsUserInIfUserOwnsRecipe()
+        {
+            var mockUser = new User { Id = "test-user-id" };
+            var ownedRecipe = new Recipe { Id = 1 };
+
+            _registrationService.Setup(r => r.FindUserByClaimAsync(It.IsAny<ClaimsPrincipal>()))
+                .ReturnsAsync(mockUser);
+            _userRecipeRepo.Setup(r => r.GetUserOwnedRecipesByUserIdAsync("test-user-id"))
+                .ReturnsAsync(new List<Recipe> { ownedRecipe });
+
+            var result = await _controller.EditRecipe(1);
+
+            Assert.That(result, Is.InstanceOf<ViewResult>());
+        }
+
+        [Test]
+        public async Task UserDoesOwnShowButton()
+        {
+            var mockUser = new User { Id = "test-user-id" };
+            var ownedRecipe = new Recipe { Id = 1 };
+
+            _registrationService.Setup(r => r.FindUserByClaimAsync(It.IsAny<ClaimsPrincipal>()))
+                .ReturnsAsync(mockUser);
+            _userRecipeRepo.Setup(r => r.GetUserOwnedRecipesByUserIdAsync("test-user-id"))
+                .ReturnsAsync(new List<Recipe> { ownedRecipe });
+
+            var result = await _controller.Recipes(1) as ViewResult;
+
+            Assert.That(result, Is.Not.Null);
+            var vm = result.Model as RecipeViewModel;
+            Assert.That(vm, Is.Not.Null);
+            Assert.That(vm.IsOwned, Is.True);
+        }
+
+        [Test]
+        public async Task UserDoesntOwnNoButton()
+        {
+            var mockUser = new User { Id = "test-user-id" };
+
+            _registrationService.Setup(r => r.FindUserByClaimAsync(It.IsAny<ClaimsPrincipal>()))
+                .ReturnsAsync(mockUser);
+            _userRecipeRepo.Setup(r => r.GetUserOwnedRecipesByUserIdAsync("test-user-id"))
+                .ReturnsAsync(new List<Recipe>());
+
+            var result = await _controller.Recipes(1) as ViewResult;
+
+            Assert.That(result, Is.Not.Null);
+            var vm = result.Model as RecipeViewModel;
+            Assert.That(vm, Is.Not.Null);
+            Assert.That(vm.IsOwned, Is.False);
         }
     }
 }

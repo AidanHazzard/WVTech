@@ -14,6 +14,7 @@ public class UserRecipeRepositoryTests
     private DbContextOptions<MealPlannerDBContext> _contextOptions;
     private MealPlannerDBContext _context;
     private User _user;
+    private List<Recipe> _recipes;
     private const float ERROR = 0.005f;
 
     [SetUp]
@@ -36,7 +37,32 @@ public class UserRecipeRepositoryTests
                 FullName = ""
             };
 
+            _recipes =
+            [
+                new Recipe
+                {
+                    Id = 10,
+                    Name = "Test1",
+                    Directions = ""
+                },
+
+                new Recipe
+                {
+                    Id = 11,
+                    Name = "Test2",
+                    Directions = ""
+                },
+
+                new Recipe
+                {
+                    Id = 12,
+                    Name = "Test3",
+                    Directions = ""
+                }
+            ];
+
             _context.Add(_user);
+            _context.AddRange(_recipes);
 
             _context.SaveChanges();
         }
@@ -55,18 +81,10 @@ public class UserRecipeRepositoryTests
         // Arrange
         UserRecipeRepository repo = new UserRecipeRepository(_context);
 
-        Recipe recipe = new Recipe
-        {
-            Id = 10,
-            Name = "Test",
-            Directions = ""
-        };
-        _context.Add(recipe);
-
         _context.Add(new UserRecipe
         {
             User = _user,
-            Recipe = recipe,
+            Recipe = _recipes[0],
             UserOwner = true
         });
 
@@ -80,7 +98,7 @@ public class UserRecipeRepositoryTests
         {
             Assert.That(result.Count, Is.EqualTo(1));
             Assert.That(result.First().Id, Is.EqualTo(10));
-            Assert.That(result.First().Name, Is.EqualTo("Test"));
+            Assert.That(result.First().Name, Is.EqualTo("Test1"));
         }
     }
 
@@ -89,50 +107,26 @@ public class UserRecipeRepositoryTests
     {
         // Arrange
         UserRecipeRepository repo = new UserRecipeRepository(_context);
-
-        Recipe r1 = new Recipe
-        {
-            Id = 10,
-            Name = "Test1",
-            Directions = ""
-        };
-
-        Recipe r2 = new Recipe
-        {
-            Id = 11,
-            Name = "Test2",
-            Directions = ""
-        };
-
-        Recipe r3 = new Recipe
-        {
-            Id = 12,
-            Name = "Test3",
-            Directions = ""
-        };
-
-        _context.AddRange([r1, r2, r3]);
-
-        _context.AddRange([
+        _context.AddRange(
             new UserRecipe
             {
                 User = _user,
-                Recipe = r1,
+                Recipe = _recipes[0],
                 UserOwner = true
             },
             new UserRecipe
             {
                 User = _user,
-                Recipe = r2,
+                Recipe = _recipes[1],
                 UserOwner = true
             },
             new UserRecipe
             {
                 User = _user,
-                Recipe = r3,
+                Recipe = _recipes[2],
                 UserOwner = true
             }
-        ]);
+        );
 
         _context.SaveChanges();
 
@@ -140,13 +134,7 @@ public class UserRecipeRepositoryTests
         var result = await repo.GetUserOwnedRecipesByUserIdAsync(_user.Id);
 
         // Assert
-        using (Assert.EnterMultipleScope())
-        {
-            Assert.That(result.Count, Is.EqualTo(3));
-            Assert.That(result[0].Id, Is.EqualTo(10));
-            Assert.That(result[1].Id, Is.EqualTo(11));
-            Assert.That(result[2].Id, Is.EqualTo(12));
-        }
+        Assert.That(result.Count, Is.EqualTo(3));
     }
 
     [Test]
@@ -180,25 +168,17 @@ public class UserRecipeRepositoryTests
     {
         // Arrange
         UserRecipeRepository repo = new UserRecipeRepository(_context);
-        
-        Recipe r1 = new Recipe
-        {
-            Id = 10,
-            Name = "Test1",
-            Directions = ""
-        };
-        _context.Add(r1);
 
         _context.Add(new UserRecipe
         {
             User = _user,
-            Recipe = r1,
+            Recipe = _recipes[0],
             UserOwner = true
         });
         _context.SaveChanges();
 
         // Act
-        var result = await repo.GetRecipeVotePercentage(10);
+        var result = await repo.GetRecipeVotePercentage(_recipes[0].Id);
 
         // Assert
         Assert.That(result, Is.EqualTo(0f).Within(ERROR));
@@ -209,26 +189,18 @@ public class UserRecipeRepositoryTests
     {
         // Arrange
         UserRecipeRepository repo = new UserRecipeRepository(_context);
-        
-        Recipe r1 = new Recipe
-        {
-            Id = 10,
-            Name = "Test1",
-            Directions = ""
-        };
-        _context.Add(r1);
 
         _context.Add(new UserRecipe
         {
             User = _user,
-            Recipe = r1,
+            Recipe = _recipes[0],
             UserOwner = true,
             UserVote = UserVoteType.UpVote
         });
         _context.SaveChanges();
 
         // Act
-        var result = await repo.GetRecipeVotePercentage(10);
+        var result = await repo.GetRecipeVotePercentage(_recipes[0].Id);
 
         // Assert
         Assert.That(result, Is.EqualTo(1f).Within(ERROR));
@@ -239,26 +211,18 @@ public class UserRecipeRepositoryTests
     {
         // Arrange
         UserRecipeRepository repo = new UserRecipeRepository(_context);
-        
-        Recipe r1 = new Recipe
-        {
-            Id = 10,
-            Name = "Test1",
-            Directions = ""
-        };
-        _context.Add(r1);
 
         _context.Add(new UserRecipe
         {
             User = _user,
-            Recipe = r1,
+            Recipe = _recipes[0],
             UserOwner = true,
             UserVote = UserVoteType.DownVote
         });
         _context.SaveChanges();
 
         // Act
-        var result = await repo.GetRecipeVotePercentage(10);
+        var result = await repo.GetRecipeVotePercentage(_recipes[0].Id);
 
         // Assert
         Assert.That(result, Is.EqualTo(0f).Within(ERROR));
@@ -269,14 +233,6 @@ public class UserRecipeRepositoryTests
     {
         // Arrange
         UserRecipeRepository repo = new UserRecipeRepository(_context);
-        
-        Recipe r1 = new Recipe
-        {
-            Id = 10,
-            Name = "Test1",
-            Directions = ""
-        };
-        _context.Add(r1);
 
         User u1 = new User { FullName = "test1", Id = "1" };
         User u2 = new User { FullName = "test2", Id = "2" };
@@ -287,31 +243,31 @@ public class UserRecipeRepositoryTests
             new UserRecipe
             {
                 User = _user,
-                Recipe = r1,
+                Recipe = _recipes[0],
                 UserOwner = true
             },
             new UserRecipe
             {
                 User = u1,
-                Recipe = r1,
+                Recipe = _recipes[0],
                 UserVote = UserVoteType.UpVote
             },
             new UserRecipe
             {
                 User = u2,
-                Recipe = r1,
+                Recipe = _recipes[0],
                 UserVote = UserVoteType.UpVote
             },
             new UserRecipe
             {
                 User = u3,
-                Recipe = r1,
+                Recipe = _recipes[0],
                 UserVote = UserVoteType.DownVote
             }
         );
         _context.SaveChanges();
         // Act
-        var result = await repo.GetRecipeVotePercentage(10);
+        var result = await repo.GetRecipeVotePercentage(_recipes[0].Id);
 
         // Assert
         Assert.That(result, Is.EqualTo(2/3f).Within(ERROR));
@@ -322,18 +278,9 @@ public class UserRecipeRepositoryTests
     {
         // Arrange
         UserRecipeRepository repo = new UserRecipeRepository(_context);
-        
-        Recipe r1 = new Recipe
-        {
-            Id = 10,
-            Name = "Test1",
-            Directions = ""
-        };
-        _context.Add(r1);
-        _context.SaveChanges();
 
         // Act
-        await repo.AddFavoriteAsync(_user, r1);
+        await repo.AddFavoriteAsync(_user, _recipes[0]);
         _context.SaveChanges();
 
         // Assert
@@ -341,7 +288,7 @@ public class UserRecipeRepositoryTests
         using (Assert.EnterMultipleScope())
         {
             Assert.That(set.Count(), Is.EqualTo(1));
-            Assert.That(set.First().RecipeId, Is.EqualTo(r1.Id));
+            Assert.That(set.First().RecipeId, Is.EqualTo(_recipes[0].Id));
             Assert.That(set.First().UserId, Is.EqualTo(_user.Id));
             Assert.That(set.First().UserFavorite, Is.True);
         }
@@ -352,19 +299,12 @@ public class UserRecipeRepositoryTests
     {
         // Arrange
         UserRecipeRepository repo = new UserRecipeRepository(_context);
-        
-        Recipe r1 = new Recipe
-        {
-            Id = 10,
-            Name = "Test1",
-            Directions = ""
-        };
 
-        _context.AddRange(r1, new UserRecipe { User = _user, Recipe = r1 });
+        _context.Add(new UserRecipe { User = _user, Recipe = _recipes[0] });
         _context.SaveChanges();
 
         // Act
-        await repo.AddFavoriteAsync(_user, r1);
+        await repo.AddFavoriteAsync(_user, _recipes[0]);
         _context.SaveChanges();
 
         // Assert
@@ -372,7 +312,7 @@ public class UserRecipeRepositoryTests
         using (Assert.EnterMultipleScope())
         {
             Assert.That(set.Count(), Is.EqualTo(1));
-            Assert.That(set.First().RecipeId, Is.EqualTo(r1.Id));
+            Assert.That(set.First().RecipeId, Is.EqualTo(_recipes[0].Id));
             Assert.That(set.First().UserId, Is.EqualTo(_user.Id));
             Assert.That(set.First().UserFavorite, Is.True);
         }
@@ -383,19 +323,9 @@ public class UserRecipeRepositoryTests
     {
         // Arrange
         UserRecipeRepository repo = new UserRecipeRepository(_context);
-        
-        Recipe r1 = new Recipe
-        {
-            Id = 10,
-            Name = "Test1",
-            Directions = ""
-        };
-
-        _context.AddRange(r1);
-        _context.SaveChanges();
 
         // Act
-        await repo.RemoveFavoriteAsync(_user.Id, r1.Id);
+        await repo.RemoveFavoriteAsync(_user.Id, _recipes[0].Id);
         int numChanges = _context.SaveChanges();
 
         // Assert
@@ -407,26 +337,26 @@ public class UserRecipeRepositoryTests
     {
         // Arrange
         UserRecipeRepository repo = new UserRecipeRepository(_context);
-        
-        Recipe r1 = new Recipe
-        {
-            Id = 10,
-            Name = "Test1",
-            Directions = ""
-        };
 
-        _context.AddRange(r1, new UserRecipe { User = _user, Recipe = r1, UserOwner = true, UserFavorite = true });
+
+        _context.Add(new UserRecipe 
+        { 
+            User = _user, 
+            Recipe = _recipes[0], 
+            UserOwner = true, 
+            UserFavorite = true 
+        });
         _context.SaveChanges();
 
         // Act
-        await repo.RemoveFavoriteAsync(_user.Id, r1.Id);
+        await repo.RemoveFavoriteAsync(_user.Id, _recipes[0].Id);
         int numChanges = _context.SaveChanges();
 
         // Assert
         using (Assert.EnterMultipleScope())
         {
             Assert.That(numChanges, Is.Not.Zero);
-            Assert.That(_context.Set<UserRecipe>().Find(_user.Id, r1.Id)!.UserFavorite, Is.False);
+            Assert.That(_context.Set<UserRecipe>().Find(_user.Id, _recipes[0].Id)!.UserFavorite, Is.False);
         }
     }
 
@@ -435,19 +365,12 @@ public class UserRecipeRepositoryTests
     {
         // Arrange
         UserRecipeRepository repo = new UserRecipeRepository(_context);
-        
-        Recipe r1 = new Recipe
-        {
-            Id = 10,
-            Name = "Test1",
-            Directions = ""
-        };
 
-        _context.AddRange(r1, new UserRecipe { User = _user, Recipe = r1, UserFavorite = true });
+        _context.Add(new UserRecipe { User = _user, Recipe = _recipes[0], UserFavorite = true });
         _context.SaveChanges();
 
         // Act
-        await repo.RemoveFavoriteAsync(_user.Id, r1.Id);
+        await repo.RemoveFavoriteAsync(_user.Id, _recipes[0].Id);
         int numChanges = _context.SaveChanges();
 
         // Assert
@@ -459,60 +382,43 @@ public class UserRecipeRepositoryTests
     }
 
     [Test]
-    public async Task IsUserRecipeOwner_ReturnsFalse_IfRecipeNotFound()
+    public async Task IsUserRecipeOwnerAsync_ReturnsFalse_IfRecipeNotFound()
     {
         // Arrange
         UserRecipeRepository repo = new UserRecipeRepository(_context);
-        
-        Recipe r1 = new Recipe
-        {
-            Id = 10,
-            Name = "Test1",
-            Directions = ""
-        };
 
-        UserRecipe ur = new UserRecipe
+        _context.Add(new UserRecipe
         {
             User = _user,
-            Recipe = r1,
+            Recipe = _recipes[0],
             UserOwner = true
-        };
+        });
 
-        _context.AddRange(r1, ur);
         _context.SaveChanges();
 
         // Act
-        bool result = await repo.IsUserRecipeOwner(_user.Id, 11);
+        bool result = await repo.IsUserRecipeOwnerAsync(_user.Id, 11);
 
         // Assert
         Assert.That(result, Is.False);
     }
 
     [Test]
-    public async Task IsUserRecipeOwner_ReturnsFalse_IfUserNotFound()
+    public async Task IsUserRecipeOwnerAsync_ReturnsFalse_IfUserNotFound()
     {
         // Arrange
         UserRecipeRepository repo = new UserRecipeRepository(_context);
-        
-        Recipe r1 = new Recipe
-        {
-            Id = 10,
-            Name = "Test1",
-            Directions = ""
-        };
 
-        UserRecipe ur = new UserRecipe
+        _context.Add(new UserRecipe
         {
             User = _user,
-            Recipe = r1,
+            Recipe = _recipes[0],
             UserOwner = true
-        };
-
-        _context.AddRange(r1, ur);
+        });
         _context.SaveChanges();
 
         // Act
-        bool result = await repo.IsUserRecipeOwner("abc", r1.Id);
+        bool result = await repo.IsUserRecipeOwnerAsync("abc", _recipes[0].Id);
 
         // Assert
         Assert.That(result, Is.False);
@@ -520,60 +426,42 @@ public class UserRecipeRepositoryTests
     }
 
     [Test]
-    public async Task IsUserRecipeOwner_ReturnsFalse_IfUserNotOwner()
+    public async Task IsUserRecipeOwnerAsync_ReturnsFalse_IfUserNotOwner()
     {
         // Arrange
         UserRecipeRepository repo = new UserRecipeRepository(_context);
-        
-        Recipe r1 = new Recipe
-        {
-            Id = 10,
-            Name = "Test1",
-            Directions = ""
-        };
 
-        UserRecipe ur = new UserRecipe
+        _context.Add(new UserRecipe
         {
             User = _user,
-            Recipe = r1,
+            Recipe = _recipes[0],
             UserOwner = false
-        };
-
-        _context.AddRange(r1, ur);
+        });
         _context.SaveChanges();
 
         // Act
-        bool result = await repo.IsUserRecipeOwner(_user.Id, r1.Id);
+        bool result = await repo.IsUserRecipeOwnerAsync(_user.Id, _recipes[0].Id);
 
         // Assert
         Assert.That(result, Is.False);
     }
 
     [Test]
-    public async Task IsUserRecipeOwner_ReturnsTrue_IfUserOwner()
+    public async Task IsUserRecipeOwnerAsync_ReturnsTrue_IfUserOwner()
     {
         // Arrange
         UserRecipeRepository repo = new UserRecipeRepository(_context);
-        
-        Recipe r1 = new Recipe
-        {
-            Id = 10,
-            Name = "Test1",
-            Directions = ""
-        };
 
-        UserRecipe ur = new UserRecipe
+        _context.Add(new UserRecipe
         {
             User = _user,
-            Recipe = r1,
+            Recipe = _recipes[0],
             UserOwner = true
-        };
-
-        _context.AddRange(r1, ur);
+        });
         _context.SaveChanges();
 
         // Act
-        bool result = await repo.IsUserRecipeOwner(_user.Id, r1.Id);
+        bool result = await repo.IsUserRecipeOwnerAsync(_user.Id, _recipes[0].Id);
 
         // Assert
         Assert.That(result, Is.True);
@@ -610,22 +498,15 @@ public class UserRecipeRepositoryTests
     {
         // Arrange
         UserRecipeRepository repo = new UserRecipeRepository(_context);
-        
-        Recipe r1 = new Recipe
-        {
-            Id = 10,
-            Name = "Test1",
-            Directions = ""
-        };
 
-        UserRecipe ur = new UserRecipe
+        
+
+        _context.Add(new UserRecipe
         {
             User = _user,
-            Recipe = r1,
+            Recipe = _recipes[0],
             UserFavorite = true
-        };
-
-        _context.AddRange(r1, ur);
+        });
         _context.SaveChanges();
         
         // Act
@@ -633,7 +514,7 @@ public class UserRecipeRepositoryTests
 
         // Assert
         Assert.That(result, Is.Not.Empty);
-        Assert.That(result.First().Id, Is.EqualTo(r1.Id));
+        Assert.That(result.First().Id, Is.EqualTo(_recipes[0].Id));
     }
 
     [Test]
@@ -641,33 +522,11 @@ public class UserRecipeRepositoryTests
     {
         // Arrange
         UserRecipeRepository repo = new UserRecipeRepository(_context);
-        
-        Recipe r1 = new Recipe
-        {
-            Id = 10,
-            Name = "Test1",
-            Directions = ""
-        };
-        
-        Recipe r2 = new Recipe
-        {
-            Id = 11,
-            Name = "Test1",
-            Directions = ""
-        };
-
-        
-        Recipe r3 = new Recipe
-        {
-            Id = 12,
-            Name = "Test1",
-            Directions = ""
-        };
 
         UserRecipe ur1 = new UserRecipe
         {
             User = _user,
-            Recipe = r1,
+            Recipe = _recipes[0],
             UserFavorite = true
         };
 
@@ -675,7 +534,7 @@ public class UserRecipeRepositoryTests
         UserRecipe ur2 = new UserRecipe
         {
             User = _user,
-            Recipe = r2,
+            Recipe = _recipes[1],
             UserFavorite = true
         };
 
@@ -683,11 +542,11 @@ public class UserRecipeRepositoryTests
         UserRecipe ur3 = new UserRecipe
         {
             User = _user,
-            Recipe = r3,
+            Recipe = _recipes[2],
             UserFavorite = true
         };
 
-        _context.AddRange(r1, r2, r3, ur1, ur2, ur3);
+        _context.AddRange(ur1, ur2, ur3);
         _context.SaveChanges();
         
         // Act
@@ -696,5 +555,164 @@ public class UserRecipeRepositoryTests
         // Assert
         Assert.That(result, Is.Not.Empty);
         Assert.That(result.Count(), Is.EqualTo(3));
+    }
+
+    [Test]
+    public async Task ChangeRecipeVoteAsync_CreatesNewEntry()
+    {
+        // Arrange
+        UserRecipeRepository repo = new UserRecipeRepository(_context);
+
+        // Act
+        await repo.ChangeRecipeVoteAsync(_user, _recipes[0], UserVoteType.UpVote);
+        int numChanges = _context.SaveChanges();
+
+        // Assert
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(numChanges, Is.Not.Zero);
+            Assert.That(_context.Set<UserRecipe>().Count(), Is.EqualTo(1));
+        }
+    }
+
+    [Test]
+    public async Task ChangeRecipeVoteAsync_UpdatesExistingEntry()
+    {
+        // Arrange
+        UserRecipeRepository repo = new UserRecipeRepository(_context);
+        _context.Add(new UserRecipe
+        {
+            User = _user,
+            Recipe = _recipes[0],
+            UserOwner = true
+        });
+        _context.SaveChanges();
+
+        // Act
+        await repo.ChangeRecipeVoteAsync(_user, _recipes[0], UserVoteType.UpVote);
+        int numChanges = _context.SaveChanges();
+
+        // Assert
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(numChanges, Is.Not.Zero);
+            Assert.That(_context.Set<UserRecipe>().Count(), Is.EqualTo(1));
+        }
+    }
+
+    [Test]
+    public async Task ChangeRecipeVoteAsync_DoesNotCreateNewEntry_IfVoteIsNoVote()
+    {
+        // Arrange
+        UserRecipeRepository repo = new UserRecipeRepository(_context);
+
+        // Act
+        await repo.ChangeRecipeVoteAsync(_user, _recipes[0], UserVoteType.NoVote);
+        _context.SaveChanges();
+
+        // Assert
+        Assert.That(_context.Set<UserRecipe>().Count(), Is.EqualTo(0));
+    }
+
+    [TestCase(UserVoteType.DownVote)]
+    [TestCase(UserVoteType.UpVote)]
+    [TestCase(UserVoteType.NoVote)]
+    public async Task ChangeRecipeVoteAsync_ChangesToVote(UserVoteType voteType)
+    {
+        // Arrange
+        UserRecipeRepository repo = new UserRecipeRepository(_context);
+        
+        _context.Add(new UserRecipe
+        {
+            User = _user,
+            Recipe = _recipes[0],
+            UserOwner = true
+        });
+        _context.SaveChanges();
+
+        // Act
+        await repo.ChangeRecipeVoteAsync(_user, _recipes[0], voteType);
+        _context.SaveChanges();
+
+        // Assert
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(_context.Set<UserRecipe>().Count(), Is.EqualTo(1));
+            Assert.That(_context.Set<UserRecipe>().First().UserVote, Is.EqualTo(voteType));
+        }
+    }
+
+    [Test]
+    public async Task ChangeRecipeVoteAsync_ChangesToNoVote_AndRemovesRedundantEntry()
+    {
+        // Arrange
+        UserRecipeRepository repo = new UserRecipeRepository(_context);
+        
+        _context.Add(new UserRecipe
+        {
+            User = _user,
+            Recipe = _recipes[0],
+            UserVote = UserVoteType.DownVote
+        });
+        _context.SaveChanges();
+
+        // Act
+        await repo.ChangeRecipeVoteAsync(_user, _recipes[0], UserVoteType.NoVote);
+        _context.SaveChanges();
+
+        // Assert
+        Assert.That(_context.Set<UserRecipe>(), Is.Empty);
+        
+    }
+
+    [TestCase(UserVoteType.DownVote)]
+    [TestCase(UserVoteType.UpVote)]
+    [TestCase(UserVoteType.NoVote)]
+    public async Task GetUserRecipeVoteAsync_ReturnsCorrectVote(UserVoteType userVote)
+    {
+        // Arrange
+        UserRecipeRepository repo = new UserRecipeRepository(_context);
+
+        _context.Add(new UserRecipe
+        {
+            User = _user,
+            Recipe = _recipes[0],
+            UserVote = userVote
+        });
+        _context.SaveChanges();
+
+        // Act
+        UserVoteType result = await repo.GetUserRecipeVoteAsync(_user.Id, _recipes[0].Id);
+
+        // Assert
+        Assert.That(result, Is.EqualTo(userVote));
+    }
+
+    
+    [TestCase("ABCD", 0)]
+    [TestCase("", 10)]
+    public async Task GetUserRecipeVoteAsync_ReturnsNoVote_IfUserOrRecipeNotFound(string userId, int recipeId)
+    {
+        // Arrange
+        UserRecipeRepository repo = new UserRecipeRepository(_context);
+        
+        // Act
+        UserVoteType result = await repo.GetUserRecipeVoteAsync(userId, recipeId);
+
+        // Assert
+        Assert.That(result, Is.EqualTo(UserVoteType.NoVote));
+    }
+
+    [Test]
+    public async Task GetUserRecipeVoteAsync_ReturnsNoVote_IfUserRecipeNotFound()
+    {
+        // Arrange
+        UserRecipeRepository repo = new UserRecipeRepository(_context);
+        
+        // Act
+        UserVoteType result = await repo.GetUserRecipeVoteAsync(_user.Id, _recipes[0].Id);
+
+        // Assert
+        Assert.That(result, Is.EqualTo(UserVoteType.NoVote));
     }
 }

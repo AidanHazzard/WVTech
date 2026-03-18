@@ -40,7 +40,7 @@ namespace MealPlanner.Services
 
             if (!user.EmailConfirmed)
             {
-                _logger.LogWarning("Login blocked. Email not confirmed: {Email}", model.Email);
+               _logger.LogWarning("Login blocked. Email not confirmed: {Email}", model.Email);
                 return SignInResult.NotAllowed;
             }
 
