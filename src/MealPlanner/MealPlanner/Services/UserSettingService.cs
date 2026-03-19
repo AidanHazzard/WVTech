@@ -4,11 +4,11 @@ using System.Security.Claims;
 
 namespace MealPlanner.Services
 {
-    public class AccountSettingsService : IAccountSettingsService
+    public class UserSettingsService : IUserSettingsService
     {
         private readonly UserManager<User> _userManager;
 
-        public AccountSettingsService(UserManager<User> userManager)
+        public UserSettingsService(UserManager<User> userManager)
         {
             _userManager = userManager;
         }
