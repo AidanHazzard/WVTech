@@ -67,12 +67,13 @@ public class FoodEntriesTests
         var registrationService = new Mock<IRegistrationService>();
         // New context instance for controller (same options)
         var controllerContext = new MealPlannerDBContext(contextOptions);
-
+        var externalRecipeService = new Mock<IExternalRecipeService>();
         _controller = new FoodEntriesController(
             recipeRepo.Object,
             userRecipeRepo.Object,
             controllerContext,
             registrationService.Object,
+            externalRecipeService.Object,
             nutritionService.Object);
     }
 

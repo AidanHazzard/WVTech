@@ -19,9 +19,12 @@ public class RecipeRepository : Repository<Recipe>, IRecipeRepository
 
     public List<Recipe> GetRecipesByName(string name)
     {        
-        List<Recipe> results = _dbset.Where(
-            r => r.Name.ToLower().Contains($" {name.ToLower()}") || r.Name.ToLower().StartsWith($"{name.ToLower()}")
-            ).ToList();
+        List<Recipe> results = _dbset
+            .Where(r => 
+                r.ExternalUri == null && 
+                (r.Name.ToLower().Contains($" {name.ToLower()}") || 
+                r.Name.ToLower().StartsWith($"{name.ToLower()}")))
+            .ToList();
         
         return results;
     }
@@ -71,11 +74,7 @@ public class RecipeRepository : Repository<Recipe>, IRecipeRepository
                 }
             }
         }
-        Console.WriteLine("Ingredient Base");
-        newIngredientBases.ToList().ForEach(i => Console.WriteLine(i.Name));
-        
-        Console.WriteLine("Measurements");
-        newMeasurements.ToList().ForEach(m => Console.WriteLine(m.Name));
+
         if (!newIngredientBases.IsNullOrEmpty())  _ingredientBaseSet.AddRange(newIngredientBases); 
         if (!newMeasurements.IsNullOrEmpty())  _measurementSet.AddRange(newMeasurements); 
 
@@ -87,5 +86,10 @@ public class RecipeRepository : Repository<Recipe>, IRecipeRepository
         return await _dbset
             .Include(r => r.Ingredients)
             .FirstOrDefaultAsync(r => r.Id == id);
+    }
+
+    public Recipe? ReadRecipeByExternalUri(string uri)
+    {
+        return _dbset.FirstOrDefault(r => r.ExternalUri == uri);
     }
 }

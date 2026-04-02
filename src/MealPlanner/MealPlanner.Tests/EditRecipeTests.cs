@@ -31,7 +31,8 @@ namespace MealPlanner.Tests
             _recipeRepository = new RecipeRepository(_context);
             _userRecipeRepo = new Mock<IUserRecipeRepository>();
             _registrationService = new Mock<IRegistrationService>();
-            _controller = new FoodEntriesController(_recipeRepository, _userRecipeRepo.Object, _context, _registrationService.Object);
+            var externalRecipeService = new Mock<IExternalRecipeService>();
+            _controller = new FoodEntriesController(_recipeRepository, _userRecipeRepo.Object, _context, _registrationService.Object, externalRecipeService.Object);
 
             var claims = new List<Claim> { new Claim(ClaimTypes.NameIdentifier, "test-user-id") };
             var identity = new ClaimsIdentity(claims, "TestAuth");
@@ -172,7 +173,7 @@ namespace MealPlanner.Tests
             Assert.That(result, Is.Not.Null);
             var vm = result.Model as RecipeViewModel;
             Assert.That(vm, Is.Not.Null);
-            Assert.That(vm.isOwned, Is.True);
+            Assert.That(vm.IsOwned, Is.True);
         }
 
         [Test]
@@ -190,7 +191,7 @@ namespace MealPlanner.Tests
             Assert.That(result, Is.Not.Null);
             var vm = result.Model as RecipeViewModel;
             Assert.That(vm, Is.Not.Null);
-            Assert.That(vm.isOwned, Is.False);
+            Assert.That(vm.IsOwned, Is.False);
         }
     }
 }

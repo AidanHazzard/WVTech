@@ -66,7 +66,8 @@ public class RecipeAPIControllerTests
             _context,
             recipeRepo ?? new Mock<IRecipeRepository>().Object,
             urRepo ?? new Mock<IUserRecipeRepository>().Object,
-            regService ?? mockRegService.Object
+            regService ?? mockRegService.Object,
+            new Mock<IExternalRecipeService>().Object
         );
         
         controller.ControllerContext = new ControllerContext
