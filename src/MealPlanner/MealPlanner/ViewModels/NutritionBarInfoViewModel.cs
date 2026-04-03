@@ -5,16 +5,16 @@ public class NutritionBarInfoViewModel
     {
         CaloriesCurrent = calCur;
         CaloriesMax = calMax;
-        CaloriesAverage = NutritionBarService.BarAverage(calCur, calMax);
+        CaloriesAverage = NutritionBarService.GetBarPercent(calCur, calMax);
         ProteinCurrent = proCur;
         ProteinMax = proMax;
-        ProteinAverage = NutritionBarService.BarAverage(proCur, proMax);
+        ProteinAverage = NutritionBarService.GetBarPercent(proCur, proMax);
         FatsCurrent = fatCur;
         FatsMax = fatMax;
-        FatsAverage = NutritionBarService.BarAverage(fatCur, fatMax);
+        FatsAverage = NutritionBarService.GetBarPercent(fatCur, fatMax);
         CarbsCurrent = carbCur;
         CarbsMax = carbMax;
-        CarbsAverage = NutritionBarService.BarAverage(carbCur, carbMax);
+        CarbsAverage = NutritionBarService.GetBarPercent(carbCur, carbMax);
     }
     public int CaloriesCurrent { get; set; }
     public int CaloriesMax { get; set; }

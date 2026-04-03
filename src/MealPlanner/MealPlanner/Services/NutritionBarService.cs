@@ -1,6 +1,6 @@
 public class NutritionBarService
 {
-    public static float BarAverage(int cur, int max)
+    public static float GetBarPercent(int cur, int max)
     {
         float average = (float)cur / max * 100;
 
