@@ -47,3 +47,13 @@
         </div>
     </div>
 </div>
+
+<div class="back1">
+    <h1 class="back1Text">Your Progress</h1>
+    @await Html.PartialAsync("_NutritionBarDisplayPartial", model: new NutritionBarInfoViewModel(
+        Model.Totals.Calories, Model.Targets.Calories,
+        Model.Totals.Protein, Model.Targets.Protein,
+        Model.Totals.Fat, Model.Targets.Fat,
+        Model.Totals.Carbs, Model.Targets.Carbs
+    ))
+</div>
