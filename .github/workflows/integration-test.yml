@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ./src/MealPlanner/MealPlanner.Tests
+        working-directory: ./src/MealPlanner
     steps:
       - uses: actions/checkout@v5
       - name: Setup dotnet
@@ -23,9 +23,9 @@ jobs:
         with:
           dotnet-version: '10.x'
       - name: Install dependencies
-        run: dotnet restore
+        run: dotnet restore ./MealPlanner.Tests
       - name: Build test project
-        run: dotnet build --no-restore
+        run: dotnet build ./MealPlanner.Tests --no-restore
       - name: Test
-        run: dotnet test --no-build
+        run: dotnet test ./MealPlanner.Tests --no-build
   
