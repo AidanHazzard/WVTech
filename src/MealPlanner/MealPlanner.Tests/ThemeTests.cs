@@ -1,9 +1,11 @@
 using MealPlanner.Controllers;
 using MealPlanner.DAL.Concrete;
 using MealPlanner.Models;
+using MealPlanner.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Moq;
 using System.Security.Claims;
 
 namespace MealPlanner.Tests
@@ -24,7 +26,7 @@ namespace MealPlanner.Tests
             _context = new MealPlannerDBContext(options);
             _userProfileRepository = new UserSettingsRepository(_context);
 
-            _controller = new UserSettingsController(_context, _userProfileRepository);
+            _controller = new UserSettingsController(_context, _userProfileRepository, new Mock<IUserSettingsService>().Object);
 
             var claims = new List<Claim>
             {
