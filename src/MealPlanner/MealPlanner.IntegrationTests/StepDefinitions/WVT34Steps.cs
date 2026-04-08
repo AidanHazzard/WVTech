@@ -1,54 +1,55 @@
 using Reqnroll;
 
 [Binding]
-public class ViewRecipeSteps
+public class WVT34Steps
 {
     // This step definition uses Cucumber Expressions. See https://github.com/gasparnagy/CucumberExpressions.SpecFlow
-    [Given("the user is on the Search Recipes page")]
-    public void GivenTheUserIsOnTheSearchRecipesPage()
+    [Given("There is a user named {string}")]
+    public void GivenThereIsAUserNamed(string s)
     {
         // Write code here that turns the phrase above into concrete actions
     }
 
     // This step definition uses Cucumber Expressions. See https://github.com/gasparnagy/CucumberExpressions.SpecFlow
-    [Given("the user searchs for {string}")]
-    public void GivenTheUserSearchsFor(string s)
+    [Given("There is a recipe page {string}")]
+    public void GivenThereIsARecipePage(string s)
     {
         // Write code here that turns the phrase above into concrete actions
     }
 
     // This step definition uses Cucumber Expressions. See https://github.com/gasparnagy/CucumberExpressions.SpecFlow
-    [When("the user clicks on the first search result")]
-    public void WhenTheUserClicksOnTheFirstSearchResult()
+    [Then("They see the recipe has a rating of {string}")]
+    public void ThenTheySeeTheRecipeHasARatingOf(string s)
     {
         // Write code here that turns the phrase above into concrete actions
     }
 
     // This step definition uses Cucumber Expressions. See https://github.com/gasparnagy/CucumberExpressions.SpecFlow
-    [Then("the user navigates to the {string} recipe page")]
-    public void ThenTheUserNavigatesToTheRecipePage(string s)
+    [Given("They are on the {string} page")]
+    public void GivenTheyAreOnThePage(string s)
     {
         // Write code here that turns the phrase above into concrete actions
     }
 
     // This step definition uses Cucumber Expressions. See https://github.com/gasparnagy/CucumberExpressions.SpecFlow
-    [Given("the recipe with id {int} doesnt exist")]
-    public void GivenTheRecipeWithIdDoesntExist(int i)
+    [Given("{string} is logged into Onebite")]
+    public void GivenIsLoggedIntoOnebite(string s)
     {
         // Write code here that turns the phrase above into concrete actions
     }
 
     // This step definition uses Cucumber Expressions. See https://github.com/gasparnagy/CucumberExpressions.SpecFlow
-    [Then("the user is redirected to SelectType")]
-    public void ThenTheUserIsRedirectedToSelectType()
+    [When("{string} upvotes the recipe")]
+    public void WhenUpvotesTheRecipe(string s)
     {
         // Write code here that turns the phrase above into concrete actions
     }
 
     // This step definition uses Cucumber Expressions. See https://github.com/gasparnagy/CucumberExpressions.SpecFlow
-    [When("the user navigates to {string}")]
-    public void WhenTheUserNavigatesTo(string s)
+    [When("{string} downvotes the recipe")]
+    public void WhenDownvotesTheRecipe(string s)
     {
         // Write code here that turns the phrase above into concrete actions
     }
+
 }

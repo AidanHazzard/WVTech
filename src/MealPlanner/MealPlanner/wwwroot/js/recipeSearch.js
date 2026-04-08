@@ -10,6 +10,9 @@ function throttle(func, delay)
     let last = 0;
     return function (...args)
     {
+        const search = $("#searchText").val();
+
+        if (search.length < 3) return;
         let now = Date.now();
         if (now - last >= delay)
         {
@@ -22,12 +25,8 @@ function throttle(func, delay)
 async function recipeSearchHandler(event)
 {
     $("#error").hide();
-    const search = $("#searchText").val();
 
-    if (search.length < 3)
-    {
-        return;
-    }
+    const search = $("#searchText").val();
 
     const response = await fetch(`/api/recipe/search?name=${search}`);
 
