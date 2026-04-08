@@ -13,6 +13,8 @@ jobs:
         uses: actions/setup-dotnet@v5
         with:
           dotnet-version: '10.x'
+      - name: Setup Base Project
+        run: dotnet build ./src/MealPlanner/MealPlanner
       - name: Install dependencies
         run: dotnet restore ./src/MealPlanner/MealPlanner.Tests
       - name: Build test project
