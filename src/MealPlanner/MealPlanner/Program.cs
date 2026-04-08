@@ -104,16 +104,20 @@ builder.Services.AddScoped<IRegistrationService, RegistrationService>();
 builder.Services.AddScoped<IUserSettingsService, UserSettingsService>();
 
 // External APIs
-string edamamAppId = builder.Configuration.GetSection("Edamam")["AppId"];
-string edamamAPIKey = builder.Configuration.GetSection("Edamam")["ApiKey"];
-string edamamAPIUrl = "https://api.edamam.com/api/";
-builder.Services.AddHttpClient<IExternalRecipeService, EdamamService>(httpClient =>
+if (Environment.GetEnvironmentVariable("NO-API") != "true")
 {
-    httpClient.BaseAddress = new Uri(edamamAPIUrl);
-    httpClient.DefaultRequestHeaders.Add("accept", "application/json");
-    httpClient.DefaultRequestHeaders.Add("Accept-Language", "en");
-    return new EdamamService(httpClient, edamamAppId, edamamAPIKey);
-});
+    
+    string edamamAppId = builder.Configuration.GetSection("Edamam")["AppId"];
+    string edamamAPIKey = builder.Configuration.GetSection("Edamam")["ApiKey"];
+    string edamamAPIUrl = "https://api.edamam.com/api/";
+    builder.Services.AddHttpClient<IExternalRecipeService, EdamamService>(httpClient =>
+    {
+        httpClient.BaseAddress = new Uri(edamamAPIUrl);
+        httpClient.DefaultRequestHeaders.Add("accept", "application/json");
+        httpClient.DefaultRequestHeaders.Add("Accept-Language", "en");
+        return new EdamamService(httpClient, edamamAppId, edamamAPIKey);
+    });
+}
 
 // Configure emailer
 builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
