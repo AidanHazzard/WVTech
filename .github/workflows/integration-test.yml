@@ -7,18 +7,19 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./src/MealPlanner/MealPlanner.Tests
     steps:
       - uses: actions/checkout@v5
       - name: Setup dotnet
-        uses: actions/setup-dotnet@v5
+        uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '10.x'
-      - name: Setup Base Project
-        run: dotnet build ./src/MealPlanner/MealPlanner
       - name: Install dependencies
-        run: dotnet restore ./src/MealPlanner/MealPlanner.Tests
+        run: dotnet restore
       - name: Build test project
-        run: dotnet build ./src/MealPlanner/MealPlanner.Tests --no-restore
+        run: dotnet build --no-restore
       - name: Test
-        run: dotnet test ./src/MealPlanner/MealPlanner.Tests --no-build
+        run: dotnet test --no-build
   
