@@ -121,7 +121,7 @@ public class MealController : Controller
         return View(meal);
     }
 
-    [HttpGet]
+   [HttpGet]
     public async Task<IActionResult> EditMeal(int id)
     {
         var user = await _registrationService.FindUserByClaimAsync(User);
@@ -136,56 +136,103 @@ public class MealController : Controller
             return NotFound();
         }
 
+        // Ensure recipes are loaded
+        await _mealRepo.LoadRecipesAsync(meal);
+
         var viewModel = new EditMealViewModel
         {
             Id = meal.Id,
+            Title = meal.Title,
             Date = meal.StartTime?.Date ?? DateTime.Today,
             Time = meal.StartTime?.TimeOfDay ?? TimeSpan.Zero,
             RepeatWeekly = meal.RepeatRule == "Weekly",
-            RecipeIds = meal.Recipes?.Select(r => r.Id).ToList() ?? new List<int>()
+            RecipeIds = meal.Recipes?.Select(r => r.Id).ToList() ?? new List<int>(),
+
+            // Populate the list for display
+            Recipes = meal.Recipes?.Select(r => new RecipeDisplayViewModel
+            {
+                Id = r.Id,
+                Name = r.Name
+            }).ToList() ?? new List<RecipeDisplayViewModel>()
         };
 
         return View(viewModel);
     }
 
-    [HttpPost]
+     [HttpPost]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> EditMeal(EditMealViewModel model)
     {
         if (!ModelState.IsValid)
-        {
             return View(model);
-        }
 
         var user = await _registrationService.FindUserByClaimAsync(User);
         if (user == null)
-        {
             return Challenge();
-        }
 
-        var meal = await _mealRepo.ReadAsync(model.Id);
+        var meal = await _context.Meals
+            .Include(m => m.Recipes)
+            .FirstOrDefaultAsync(m => m.Id == model.Id);
+
         if (meal == null || meal.UserId != user.Id)
-        {
             return NotFound();
-        }
 
+        meal.Title = model.Title.Trim();
         meal.StartTime = model.Date.Date + model.Time;
         meal.RepeatRule = model.RepeatWeekly ? "Weekly" : null;
 
-        meal.Recipes.Clear();
+        // Normalize incoming IDs
+        var incomingRecipeIds = model.RecipeIds
+            .Distinct()
+            .ToList();
 
-        foreach (var recipeId in model.RecipeIds ?? new List<int>())
+        // Remove recipes that were unselected
+        meal.Recipes.RemoveAll(r => !incomingRecipeIds.Contains(r.Id));
+
+        // Add newly selected recipes
+        foreach (var recipeId in incomingRecipeIds)
         {
-            var recipe = _recipeRepo.Read(recipeId);
-            if (recipe != null)
+            if (!meal.Recipes.Any(r => r.Id == recipeId))
             {
-                meal.Recipes.Add(recipe);
+                var recipe = await _context.Recipes.FindAsync(recipeId);
+                if (recipe != null)
+                {
+                    meal.Recipes.Add(recipe);
+                }
             }
         }
 
-        _mealRepo.CreateOrUpdate(meal);
-        _context.SaveChanges();
+        await _context.SaveChangesAsync();
 
         return RedirectToAction("ViewMeal", new { id = meal.Id });
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> AddRecipeToMeal(int mealId, int recipeId)
+    {
+        var user = await _registrationService.FindUserByClaimAsync(User);
+        if (user == null) return Challenge();
+
+        var meal = await _mealRepo.ReadAsync(mealId);
+        if (meal == null || meal.UserId != user.Id) return NotFound();
+
+        // Ensure recipes are loaded
+        await _mealRepo.LoadRecipesAsync(meal);
+
+        // Prevent duplicates if necessary
+        // if (!meal.Recipes.Any(r => r.Id == recipeId))
+        // {
+        //     var recipe = _recipeRepo.Read(recipeId);
+        //     if (recipe != null)
+        //     {
+        //         meal.Recipes.Add(recipe);
+        //         _mealRepo.CreateOrUpdate(meal);
+        //         _context.SaveChanges();
+        //     }
+        // }
+
+        // Redirect back to EditMeal with updated list
+        return RedirectToAction("EditMeal", new { id = meal.Id });
     }
 
     [HttpPost]
