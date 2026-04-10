@@ -1,90 +1,207 @@
-using System.Collections.ObjectModel;
+using System;
+using System.Linq;
+using System.Threading;
 using OpenQA.Selenium;
-using OpenQA.Selenium.Chrome;
 using OpenQA.Selenium.Support.UI;
 using Reqnroll;
-using NUnit.Framework;
 
 [Binding]
 public class WVT127Steps
 {
-     IWebDriver _driver;
-     string _updatedTitle = "Updated Meal Title";
+    private readonly SharedDriver _shared;
+    private IWebElement _titleInput = null!;
+    private int _mealId;
+    private string _updatedTitle = null!;
+    private string _addedRecipeName = null!;
 
-    // Runs before each scenario
-    [BeforeScenario]
-    public void SetUp()
+    public WVT127Steps(SharedDriver shared)
     {
-        ChromeOptions options = new ChromeOptions();
-        options.AddArgument("--headless");
-        options.AddArgument("--disable-dev-shm-usage");
-        options.AddArgument("--no-sandbox");
-
-        _driver = new ChromeDriver(options);
-        _driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(2);
+        _shared = shared;
     }
 
-    // Runs after each scenario
-    [AfterScenario]
-    public void TearDown()
+    // Given
+
+    [Given("a user is on the edit meal page for meal id {int}")]
+    public void GivenAUserIsOnTheEditMealPageForMealId(int mealId)
     {
-        _driver.Quit();
-    }
+        _mealId = mealId;
+        _shared.Driver.Navigate().GoToUrl($"{SharedDriver.BaseUrl}/Meal/EditMeal?id={mealId}");
 
-    [Given("a user is on the edit meal page")]
-    public void GivenAUserIsOnTheEditMealPage()
-    {
-        // Adjust ID or route as needed
-        _driver.Navigate().GoToUrl("http://localhost:5124/Meals/EditMeal/{mealId}");
-    }
+        _shared.Wait.Until(driver =>
+            ((IJavaScriptExecutor)driver)
+                .ExecuteScript("return document.readyState")
+                .ToString() == "complete");
 
-    [Then("all associated recipes are displayed")]
-    public void ThenAllAssociatedRecipesAreDisplayed()
-    {
-        ReadOnlyCollection<IWebElement> recipes =
-            _driver.FindElements(By.ClassName("meal-recipe-row"));
-
-        Assert.That(recipes, Is.Not.Empty);
-
-        foreach (var recipe in recipes)
+        _titleInput = _shared.Wait.Until(driver =>
         {
-            Assert.That(recipe.Displayed, Is.True);
-        }
+            try
+            {
+                var el = driver.FindElement(By.CssSelector("#mealTitle"));
+                return (el.Displayed && el.Enabled) ? el : null;
+            }
+            catch (NoSuchElementException)
+            {
+                return null;
+            }
+        })!;
+
+        ((IJavaScriptExecutor)_shared.Driver)
+            .ExecuteScript("arguments[0].scrollIntoView(true);", _titleInput);
     }
+
+    // When
 
     [When("User updates the meal title")]
     public void WhenUserUpdatesTheMealTitle()
     {
-        IWebElement titleInput = _driver.FindElement(By.Id("mealTitle"));
-        titleInput.Clear();
-        titleInput.SendKeys(_updatedTitle);
-    }
-
-    [Then("the updated meal title is shown immediately")]
-    public void ThenTheUpdatedMealTitleIsShownImmediately()
-    {
-        IWebElement titleInput = _driver.FindElement(By.Id("mealTitle"));
-        string currentValue = titleInput.GetAttribute("value");
-
-        Assert.That(currentValue, Is.EqualTo(_updatedTitle));
+        _updatedTitle = "New Meal Title " + DateTime.Now.Ticks;
+        _titleInput.Clear();
+        _titleInput.SendKeys(_updatedTitle);
     }
 
     [When("User saves the meal")]
     public void WhenUserSavesTheMeal()
     {
-        IWebElement saveButton = _driver.FindElement(By.Id("saveMealButton"));
+        var saveButton = _shared.Wait.Until(driver =>
+        {
+            try
+            {
+                var el = driver.FindElement(By.CssSelector("#editMealForm button[type='submit']"));
+                return (el.Displayed && el.Enabled) ? el : null;
+            }
+            catch (NoSuchElementException)
+            {
+                return null;
+            }
+        })!;
+
+        ((IJavaScriptExecutor)_shared.Driver)
+            .ExecuteScript("arguments[0].scrollIntoView(true);", saveButton);
+
+        Thread.Sleep(300);
         saveButton.Click();
+
+        _shared.Wait.Until(driver =>
+            ((IJavaScriptExecutor)driver)
+                .ExecuteScript("return document.readyState")
+                .ToString() == "complete");
+    }
+
+    [When("User searches for a recipe {string}")]
+    public void WhenUserSearchesForARecipe(string searchTerm)
+    {
+        var searchInput = _shared.Wait.Until(driver =>
+        {
+            try
+            {
+                var el = driver.FindElement(By.CssSelector("#searchText"));
+                return (el.Displayed && el.Enabled) ? el : null;
+            }
+            catch (NoSuchElementException)
+            {
+                return null;
+            }
+        })!;
+
+        ((IJavaScriptExecutor)_shared.Driver)
+            .ExecuteScript("arguments[0].scrollIntoView(true);", searchInput);
+
+        searchInput.Clear();
+        searchInput.SendKeys(searchTerm);
+
+        Thread.Sleep(1100); // wait for throttled search to fire
+    }
+
+    [When("User clicks the first search result")]
+    public void WhenUserClicksTheFirstSearchResult()
+    {
+        var firstResult = _shared.Wait.Until(driver =>
+        {
+            try
+            {
+                var el = driver.FindElement(By.CssSelector(".recipeSearchRow"));
+                return el.Displayed ? el : null;
+            }
+            catch (NoSuchElementException)
+            {
+                return null;
+            }
+        })!;
+
+        ((IJavaScriptExecutor)_shared.Driver)
+            .ExecuteScript("arguments[0].scrollIntoView(true);", firstResult);
+
+        Thread.Sleep(300);
+
+        _addedRecipeName = firstResult.FindElement(By.CssSelector(".recipeName")).Text;
+        firstResult.Click();
+    }
+
+    // Then
+
+    [Then("the updated meal title is shown immediately")]
+    public void ThenTheUpdatedMealTitleIsShownImmediately()
+    {
+        _shared.Wait.Until(driver =>
+        {
+            try
+            {
+                var el = driver.FindElement(By.CssSelector("#mealTitle"));
+                return (el.Displayed && el.GetAttribute("value") == _updatedTitle) ? el : null;
+            }
+            catch (NoSuchElementException)
+            {
+                return null;
+            }
+        });
     }
 
     [Then("the meal is saved with the updated title")]
     public void ThenTheMealIsSavedWithTheUpdatedTitle()
     {
-        WebDriverWait wait = new WebDriverWait(_driver, TimeSpan.FromSeconds(5));
-        wait.Until(d => d.FindElement(By.Id("mealTitle")).Displayed);
+        _shared.Driver.Navigate().GoToUrl($"{SharedDriver.BaseUrl}/Meal/EditMeal?id={_mealId}");
 
-        IWebElement titleInput = _driver.FindElement(By.Id("mealTitle"));
-        string savedTitle = titleInput.GetAttribute("value");
+        _shared.Wait.Until(driver =>
+            ((IJavaScriptExecutor)driver)
+                .ExecuteScript("return document.readyState")
+                .ToString() == "complete");
 
-        Assert.That(savedTitle, Is.EqualTo(_updatedTitle));
+        _shared.Wait.Until(driver =>
+        {
+            try
+            {
+                var el = driver.FindElement(By.CssSelector("#mealTitle"));
+                return (el.Displayed && el.GetAttribute("value") == _updatedTitle) ? el : null;
+            }
+            catch (NoSuchElementException)
+            {
+                return null;
+            }
+        });
+    }
+
+    [Then("the recipe is shown in the meal recipe list")]
+    public void ThenTheRecipeIsShownInTheMealRecipeList()
+    {
+        _shared.Wait.Until(driver =>
+        {
+            var items = driver.FindElements(By.CssSelector("#mealRecipeList .mealRecipeItem"));
+            return items.Any(item => item.Text.Contains(_addedRecipeName));
+        });
+    }
+
+    [Then("the recipe is saved with the meal")]
+    public void ThenTheRecipeIsSavedWithTheMeal()
+    {
+        _shared.Wait.Until(driver =>
+            ((IJavaScriptExecutor)driver)
+                .ExecuteScript("return document.readyState")
+                .ToString() == "complete");
+
+        _shared.Wait.Until(driver =>
+        {
+            var items = driver.FindElements(By.CssSelector(".list-group .buttonGrey h3"));
+            return items.Any(item => item.Text.Contains(_addedRecipeName));
+        });
     }
 }
