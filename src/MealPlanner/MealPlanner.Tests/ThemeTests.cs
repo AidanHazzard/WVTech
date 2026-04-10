@@ -28,7 +28,11 @@ namespace MealPlanner.Tests
             _userProfileRepository = new UserSettingsRepository(_context);
             _mockUserSettingsService = new Mock<IUserSettingsService>();
 
+<<<<<<< HEAD
             _controller = new UserSettingsController(_context, _userProfileRepository, _mockUserSettingsService.Object);
+=======
+            _controller = new UserSettingsController(_context, _userProfileRepository, new Mock<IUserSettingsService>().Object);
+>>>>>>> upstream/dev
 
             var claims = new List<Claim>
             {

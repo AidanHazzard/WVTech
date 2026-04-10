@@ -31,8 +31,7 @@ public class EdamamService:IExternalRecipeService
             throw new Exception($"Error accessing Edamam Recipe Search API: {response.StatusCode}");
         }
         string responseBody = await response.Content.ReadAsStringAsync();
-        Console.WriteLine("Edamam Response");
-        Console.WriteLine(responseBody);
+
         EdamamRecipeSearchResponse? edamamResponse = JsonSerializer.Deserialize<EdamamRecipeSearchResponse>
         (
             responseBody,
@@ -46,7 +45,6 @@ public class EdamamService:IExternalRecipeService
         uri = WebUtility.UrlEncode(uri);
         string endpoint = $"recipes/v2/by-uri?uri={uri}&app_id={_appId}&app_key={_apiKey}";
         
-        Console.WriteLine(endpoint);
         HttpResponseMessage response = await _httpClient.GetAsync(endpoint);
         if (!response.IsSuccessStatusCode)
         {
@@ -54,8 +52,7 @@ public class EdamamService:IExternalRecipeService
             throw new Exception($"Error accessing Edamam Recipe Search API: {response.StatusCode}");
         }
         string responseBody = await response.Content.ReadAsStringAsync();
-        Console.WriteLine("Edamam Response");
-        Console.WriteLine(responseBody);
+        
         EdamamRecipeSearchResponse? edamamResponse = JsonSerializer.Deserialize<EdamamRecipeSearchResponse>
         (
             responseBody,
