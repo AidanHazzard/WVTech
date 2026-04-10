@@ -4,40 +4,29 @@ using OpenQA.Selenium.Chrome;
 using OpenQA.Selenium.Support.UI;
 using Reqnroll;
 
+namespace Mealplanner.IntegrationTests;
+
 [Binding]
 public class WVT43Steps
 {
     IWebDriver _driver;
+    string _baseUrl;
     string _noRecipeFoundMessage = "No recipes found, sorry!";
     ReadOnlyCollection<IWebElement> _oldResults;
-
+    
     // Runs before each scenerio
     [BeforeScenario]
     public void SetUp()
     {
-        ChromeOptions options = new ChromeOptions();
-        options.AddArgument("--headless");
-        options.AddArgument("--disable-dev-shm-usage");
-        options.AddArgument("--no-sandbox");
-
-
-        _driver = new ChromeDriver(options);
-
-        _driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(2);
-    }
-
-    // Runs after each scenerio
-    [AfterScenario]
-    public void TearDown()
-    {
-        _driver.Quit();
+        _driver = BDDSetup.Driver;
+        _baseUrl = AUTHost.BaseUrl;
     }
 
     // This step definition uses Cucumber Expressions. See https://github.com/gasparnagy/CucumberExpressions.SpecFlow
     [Given("User is on recipe page")]
     public void GivenUserIsOnRecipePage()
     {
-        _driver.Navigate().GoToUrl("http://localhost:5124/FoodEntries/Recipes");
+        _driver.Navigate().GoToUrl($"{_baseUrl}/FoodEntries/Recipes");
     }
 
     // This step definition uses Cucumber Expressions. See https://github.com/gasparnagy/CucumberExpressions.SpecFlow
