@@ -1,8 +1,14 @@
 Feature: WVT-127
 
   Background:
-    Given a user is logged in
-    And a user is on the edit meal page
+     Given there is a user named 'Jack'
+      And 'Jack' is logged into Onebite
+      And 'Jack' has a meal created
+      And the edit meal page is open
+
+  Scenario: 'Jack' can edit a meal
+    When 'Jack' clicks the edit button
+    Then the meal edit form is shown 
 
   Scenario: Meal title updates immediately when edited
     When User updates the meal title

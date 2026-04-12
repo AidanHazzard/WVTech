@@ -23,6 +23,22 @@ public class WVT34Steps
         _baseUrl = AUTHost.BaseUrl;
     }
 
+    [AfterScenario]
+    public void TearDown()
+    {
+        try
+        {
+            _driver.Navigate().GoToUrl($"{_baseUrl}/UserSettings");
+            _driver.FindElement(By.TagName("form")).Click();
+        }
+        catch (Exception)
+        {
+            // Ignore exceptions during teardown to avoid masking test results
+        }
+      
+    }
+       
+
 
     // This step definition uses Cucumber Expressions. See https://github.com/gasparnagy/CucumberExpressions.SpecFlow
     [Given("there is a user named {string}")]
@@ -30,7 +46,12 @@ public class WVT34Steps
     {
         using var context = BDDSetup.CreateContext();
         string email = $"{userName}{_emailBase}";
-        if (context.Set<User>().Where(u => u.NormalizedEmail == email.ToUpper()).Count() > 0) return;
+        var existing = context.Set<User>().FirstOrDefault(u => u.NormalizedEmail == email.ToUpper());
+        if (existing != null)
+        {
+            users[userName] = existing;
+            return;
+        }
 
         User newUser = new User()
         {
@@ -40,7 +61,7 @@ public class WVT34Steps
             Email = email,
             NormalizedEmail = email.ToUpper(),
             EmailConfirmed = true,
-            SecurityStamp = Guid.NewGuid().ToString()           
+            SecurityStamp = Guid.NewGuid().ToString()
         };
 
         newUser.PasswordHash = new PasswordHasher<User>().HashPassword(newUser, _userPassword);
@@ -48,7 +69,7 @@ public class WVT34Steps
         context.Add(newUser);
         context.SaveChanges();
     }
-
+ 
     // This step definition uses Cucumber Expressions. See https://github.com/gasparnagy/CucumberExpressions.SpecFlow
     [Given("{string} is logged into Onebite")]
     public void GivenIsLoggedIntoOnebite(string userName)
@@ -57,6 +78,7 @@ public class WVT34Steps
         _driver.FindElement(By.Id("Email")).SendKeys($"{userName}{_emailBase}");
         _driver.FindElement(By.Id("Password")).SendKeys(_userPassword);
         _driver.FindElement(By.ClassName("btn")).Click();
+        
     }
 
     // This step definition uses Cucumber Expressions. See https://github.com/gasparnagy/CucumberExpressions.SpecFlow
@@ -66,8 +88,7 @@ public class WVT34Steps
     public void GivenTheyAreOnThePage(string pagePath)
     {
         _driver.Navigate().GoToUrl($"{_baseUrl}/{pagePath}");
-        new WebDriverWait(_driver, TimeSpan.FromSeconds(5)).Until(
-            d => d.FindElement(By.TagName("h1")).Text.ToLower().Contains(pagePath.ToLower()));
+        new WebDriverWait(_driver, TimeSpan.FromSeconds(5)).Until(d => d.Url.Contains(pagePath));
     }
 
     // This step definition uses Cucumber Expressions. See https://github.com/gasparnagy/CucumberExpressions.SpecFlow

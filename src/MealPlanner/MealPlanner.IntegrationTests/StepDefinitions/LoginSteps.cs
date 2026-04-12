@@ -22,18 +22,18 @@ public class LoginSteps
     }
 
     //error here 
-    // [Given("a user is logged in")]
-    // public void GivenAUserIsLoggedIn()
-    // {
-    //     CreateTestUser();
-    //     GivenAUserIsLoggedInAs(TestUserEmail, TestUserPassword);
-    // }
+    [Given("a user is logged in")]
+    public void GivenAUserIsLoggedIn()
+    {
+        CreateTestUser();
+        GivenAUserIsLoggedInAs(TestUserEmail, TestUserPassword);
+    }
 
-    // [Given("a user is logged in as {string}")]
-    // public void GivenAUserIsLoggedInAs(string userKey)
-    // {
-    //     GivenAUserIsLoggedInAs(TestUserEmail, TestUserPassword);
-    // }
+    [Given("a user is logged in as {string}")]
+    public void GivenAUserIsLoggedInAs(string userKey)
+    {
+        GivenAUserIsLoggedInAs(TestUserEmail, TestUserPassword);
+    }
 
     public static void CreateTestUser()
     {
