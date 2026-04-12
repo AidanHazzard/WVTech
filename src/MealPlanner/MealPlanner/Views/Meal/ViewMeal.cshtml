@@ -34,19 +34,24 @@
     </div>
 
     <!-- Meal info -->
-    @if (Model.Recipes != null && Model.Recipes.Any())
-    {
-        <div class="list-group">
-            @foreach (var recipe in Model.Recipes)
-            {
-                var location = Url.Action("Recipes", "FoodEntries", new { id = recipe.Id });
-                <button class="buttonGrey" onclick="location.href='@location'">
-                    <h3 class="buttonText">@recipe.Name</h3>
-                </button>
-            }
-        </div>
-    }
-    else
+ @if (Model.Recipes != null && Model.Recipes.Any())
+{
+    <div class="list-group">
+        @foreach (var recipe in Model.Recipes)
+        {
+            var location = Url.Action("Recipes", "FoodEntries", new { id = recipe.Id });
+            <div class="mealRecipeItem d-flex align-items-center justify-content-between mb-2 back2 back2-textbox" 
+                 data-recipe-id="@recipe.Id" 
+                 data-meal-id="@Model.Id">
+                <h4 class="buttonText mb-0" 
+                    style="cursor:pointer;" 
+                    onclick="location.href='@location'">@recipe.Name</h4>
+                <button type="button" class="btn btn-danger delete-recipe-btn">X</button>
+            </div>
+        }
+    </div>
+}
+ else
     {
         <p class="text-muted mb-0">There are no recipes in this meal.</p>
     }
@@ -59,3 +64,7 @@
     </form>
 
 </div>
+
+@section Scripts {
+    <script src="~/js/viewMeal.js"></script>
+}

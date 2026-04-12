@@ -202,7 +202,7 @@ namespace Mealplanner.IntegrationTests
             {
                 try
                 {
-                    var items = driver.FindElements(By.CssSelector(".buttonGrey h3.buttonText"));
+                    var items = driver.FindElements(By.CssSelector(".mealRecipeItem h4"));
                     return items.Any(item =>
                     {
                         try { return item.Text.Contains(_addedRecipeName); }

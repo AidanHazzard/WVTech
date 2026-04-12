@@ -3,8 +3,15 @@ const API_ROUTE = "/api/recipe/";
 
 $(document).ready(() => {
     $(document).on("click", ".recipeSearchRow", addRecipe);
-}
-);
+
+    $(document).on("click", ".delete-recipe-btn", function () {
+        if (!confirm("Are you sure you want to remove this recipe?")) return;
+        const $row = $(this).closest(".mealRecipeItem");
+        const recipeId = $row.find(".recipeIdInput").val();
+        $row.remove();
+        $(`#createMealForm input[value="${recipeId}"]`).remove();
+    });
+});
 
 async function addRecipe(event) {
     // Get info from the search
@@ -31,5 +38,6 @@ async function addRecipe(event) {
     const row = document.getElementById("addRecipeRow").content.cloneNode(true);
     $("#recipeName", row).text(recipeName);
     $(".recipeIdInput", row).val(recipeId);
+    console.log(document.getElementById("addRecipeRow").content.cloneNode(true));
     $("#createMealList").append(row);
 }
