@@ -2,27 +2,44 @@ const LOW_RATING_COLOR = "red";
 const HIGH_RATING_COLOR = "green";
 const API_ROUTE = "/api/recipe/";
 
-$(document).ready(() => {$("#searchText").on("input", throttle(recipeSearchHandler, 1000));
+$(document).ready(() => {
+    $("#searchText").on("input", throttle(recipeSearchHandler, 1000));
 
-    // Click on searched recipe
-    $(document).on("click", ".recipeSearchRow", async function () {
-        const $row = $(this);
-        const recipeName = $row.find(".recipeName").text();
-        const externalUri = $row.attr("externalUri");
+    if ($("#editMealForm").length) {
+        $(document).on("click", ".recipeSearchRow", async function () {
+            const $row = $(this);
+            const recipeName = $row.find(".recipeName").text();
+            const externalUri = $row.attr("externalUri");
 
-        let recipeId = Number($row.find(".recipeId").text());
+            let recipeId = Number($row.find(".recipeId").text());
 
-        recipeId = await resolveRecipeId(recipeId, recipeName, externalUri);
-        if (!recipeId) return;
+            recipeId = await resolveRecipeId(recipeId, recipeName, externalUri);
+            if (!recipeId) return;
 
-        const $mealForm = $("#editMealForm");
-        if (!$mealForm.length) {
-            console.warn("Meal form not found");
-            return;
-        }
+            const $mealForm = $("#editMealForm");
+            addRecipeToMealForm($mealForm, recipeId, recipeName);
+        });
 
-        addRecipeToMealForm($mealForm, recipeId, recipeName);
-    });
+        $(document).on("click", ".delete-recipe-btn", function () {
+            if (!confirm("Are you sure you want to remove this recipe?")) return;
+            
+            const $row = $(this).closest(".mealRecipeItem");
+            const recipeId = $row.data("id");
+            const mealId = $("#editMealForm input[name='Id']").val();
+
+            fetch("/Meal/DeleteRecipeFromMeal", {
+                method: "POST",
+                headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                body: `mealId=${mealId}&recipeId=${recipeId}`
+            }).then(response => {
+                if (response.ok) {
+                    $row.remove();
+                } else {
+                    alert("Failed to remove recipe.");
+                }
+            });
+        });
+    }
 });
 
 async function resolveRecipeId(recipeId, recipeName, externalUri) {
@@ -42,23 +59,15 @@ async function resolveRecipeId(recipeId, recipeName, externalUri) {
 }
 
 function addRecipeToMealForm($mealForm, recipeId, recipeName) {
-
-    // Hidden input (used when saving)
-    const hiddenInput = $(`<input type="hidden" name="RecipeIds" value="${recipeId}" />`);
-    $mealForm.append(hiddenInput);
-
-    // Visible recipe row
     const $rowWrapper = $(`
-        <div class="mealRecipeItem mb-2">
-            <button type="button" class="buttonGrey">
-                <h3 class="buttonText">${recipeName}</h3>
-            </button>
+        <div class="mealRecipeItem d-flex align-items-center justify-content-between mb-2 back2 back2-textbox" data-id="${recipeId}">
+            <h4 class="buttonText mb-0" style="cursor:pointer;" onclick="location.href='/FoodEntries/Recipes/${recipeId}'">
+                ${recipeName}
+            </h4>
+            <button type="button" class="btn btn-danger delete-recipe-btn" data-id="${recipeId}">X</button>
+            <input type="hidden" name="RecipeIds" value="${recipeId}" />
         </div>
     `);
-
-    $rowWrapper.find("button").on("click", () => {
-        window.location.href = `/FoodEntries/Recipes/${recipeId}`;
-    });
 
     $("#mealRecipeList").append($rowWrapper);
 }
@@ -114,4 +123,5 @@ async function recipeSearchHandler(event)
         $(".recipeRating", row).attr("style", `color: color-mix(in oklch, ${LOW_RATING_COLOR}, ${HIGH_RATING_COLOR} ${rating});`)
         $("#recipeResults").append(row);
     }
+  
 }
