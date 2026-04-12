@@ -260,4 +260,26 @@ public class MealController : Controller
 
         return RedirectToAction("Index", "Home", new { selectedDate = date });
     }
+
+    [HttpPost]
+    public async Task<IActionResult> DeleteRecipeFromMeal(int mealId, int recipeId)
+    {
+        var user = await _registrationService.FindUserByClaimAsync(User);
+        if (user == null) return Challenge();
+
+        var meal = await _context.Meals
+            .Include(m => m.Recipes)
+            .FirstOrDefaultAsync(m => m.Id == mealId);
+
+        if (meal == null || meal.UserId != user.Id) return NotFound();
+
+        var recipe = meal.Recipes.FirstOrDefault(r => r.Id == recipeId);
+        if (recipe != null)
+        {
+            meal.Recipes.Remove(recipe);
+            await _context.SaveChangesAsync();
+        }
+
+        return Ok();
+    }
 }
