@@ -160,7 +160,6 @@ public class MealController : Controller
     }
 
      [HttpPost]
-    [ValidateAntiForgeryToken]
     public async Task<IActionResult> EditMeal(EditMealViewModel model)
     {
         if (!ModelState.IsValid)

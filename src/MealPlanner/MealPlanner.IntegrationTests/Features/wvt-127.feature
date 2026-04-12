@@ -2,7 +2,7 @@ Feature: WVT-127
 
   Background:
     Given a user is logged in
-    And a user is on the edit meal page for meal id 2013
+    And a user is on the edit meal page
 
   Scenario: Meal title updates immediately when edited
     When User updates the meal title

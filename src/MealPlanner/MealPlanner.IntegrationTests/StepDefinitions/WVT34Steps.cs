@@ -66,6 +66,8 @@ public class WVT34Steps
     public void GivenTheyAreOnThePage(string pagePath)
     {
         _driver.Navigate().GoToUrl($"{_baseUrl}/{pagePath}");
+        new WebDriverWait(_driver, TimeSpan.FromSeconds(5)).Until(
+            d => d.FindElement(By.TagName("h1")).Text.ToLower().Contains(pagePath.ToLower()));
     }
 
     // This step definition uses Cucumber Expressions. See https://github.com/gasparnagy/CucumberExpressions.SpecFlow

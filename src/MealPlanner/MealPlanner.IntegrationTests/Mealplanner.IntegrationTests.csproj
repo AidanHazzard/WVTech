@@ -27,7 +27,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\MealPlanner\MealPlanner.csproj" />
-    <Content Include="testconfig.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>

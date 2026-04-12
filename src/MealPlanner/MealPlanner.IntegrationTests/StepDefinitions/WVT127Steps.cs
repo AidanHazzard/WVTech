@@ -1,6 +1,8 @@
 using System;
 using System.Linq;
 using System.Threading;
+using Mealplanner.IntegrationTests;
+using MealPlanner.Models;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Support.UI;
 using Reqnroll;
@@ -25,28 +27,17 @@ public class WVT127Steps
     public void GivenAUserIsOnTheEditMealPageForMealId(int mealId)
     {
         _mealId = mealId;
-        _shared.Driver.Navigate().GoToUrl($"{SharedDriver.BaseUrl}/Meal/EditMeal?id={mealId}");
+        NavigateToEditMealPage(_mealId);
+    }
 
-        _shared.Wait.Until(driver =>
-            ((IJavaScriptExecutor)driver)
-                .ExecuteScript("return document.readyState")
-                .ToString() == "complete");
-
-        _titleInput = _shared.Wait.Until(driver =>
-        {
-            try
-            {
-                var el = driver.FindElement(By.CssSelector("#mealTitle"));
-                return (el.Displayed && el.Enabled) ? el : null;
-            }
-            catch (NoSuchElementException)
-            {
-                return null;
-            }
-        })!;
-
-        ((IJavaScriptExecutor)_shared.Driver)
-            .ExecuteScript("arguments[0].scrollIntoView(true);", _titleInput);
+    [Given("a user is on the edit meal page")]
+    public void GivenAUserIsOnTheEditMealPage()
+    {
+        LoginSteps.CreateTestUser();
+        using var context = BDDSetup.CreateContext();
+        var user = context.Users.First(u => u.Email == LoginSteps.TestUserEmail);
+        _mealId = CreateTestMeal(user.Id);
+        NavigateToEditMealPage(_mealId);
     }
 
     // When
@@ -159,7 +150,7 @@ public class WVT127Steps
     [Then("the meal is saved with the updated title")]
     public void ThenTheMealIsSavedWithTheUpdatedTitle()
     {
-        _shared.Driver.Navigate().GoToUrl($"{SharedDriver.BaseUrl}/Meal/EditMeal?id={_mealId}");
+        _shared.Driver.Navigate().GoToUrl($"{_shared.BaseUrl}/Meal/EditMeal?id={_mealId}");
 
         _shared.Wait.Until(driver =>
             ((IJavaScriptExecutor)driver)
@@ -203,5 +194,47 @@ public class WVT127Steps
             var items = driver.FindElements(By.CssSelector(".list-group .buttonGrey h3"));
             return items.Any(item => item.Text.Contains(_addedRecipeName));
         });
+    }
+
+    // Helpers
+
+    private void NavigateToEditMealPage(int mealId)
+    {
+        _shared.Driver.Navigate().GoToUrl($"{_shared.BaseUrl}/Meal/EditMeal?id={mealId}");
+
+        _shared.Wait.Until(driver =>
+            ((IJavaScriptExecutor)driver)
+                .ExecuteScript("return document.readyState")
+                .ToString() == "complete");
+
+        _titleInput = _shared.Wait.Until(driver =>
+        {
+            try
+            {
+                var el = driver.FindElement(By.CssSelector("#mealTitle"));
+                return (el.Displayed && el.Enabled) ? el : null;
+            }
+            catch (NoSuchElementException)
+            {
+                return null;
+            }
+        })!;
+
+        ((IJavaScriptExecutor)_shared.Driver)
+            .ExecuteScript("arguments[0].scrollIntoView(true);", _titleInput);
+    }
+
+    private static int CreateTestMeal(string userId)
+    {
+        using var context = BDDSetup.CreateContext();
+        var meal = new Meal
+        {
+            UserId = userId,
+            Title = "Test Meal",
+            StartTime = DateTime.Now
+        };
+        context.Meals.Add(meal);
+        context.SaveChanges();
+        return meal.Id;
     }
 }

@@ -21,7 +21,7 @@ public class BDDSetup
         AUTHost.Start(_connectionString);
 
         ChromeOptions options = new ChromeOptions();
-        options.AddArgument("--headless");
+        // options.AddArgument("--headless");
         options.AddArgument("--disable-dev-shm-usage");
         options.AddArgument("--no-sandbox");
 

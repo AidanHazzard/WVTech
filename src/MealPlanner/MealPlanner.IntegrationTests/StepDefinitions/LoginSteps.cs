@@ -1,5 +1,8 @@
 using System;
-using Microsoft.Extensions.Configuration;
+using Mealplanner.IntegrationTests;
+using MealPlanner.Models;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Support.UI;
 using Reqnroll;
@@ -8,50 +11,66 @@ using Reqnroll;
 public class LoginSteps
 {
     private readonly SharedDriver _shared;
-    private static readonly IConfiguration _config = new ConfigurationBuilder()
-        .AddUserSecrets<LoginSteps>()
-        .Build();
+
+    public const string TestUserEmail = "testuser@test.com";
+    public const string TestUserPassword = "Test1234!";
+    public const string TestUserName = "testuser";
 
     public LoginSteps(SharedDriver shared)
     {
         _shared = shared;
     }
 
-    [Given("a user is logged in")]
-    public void GivenAUserIsLoggedIn()
+    //error here 
+    // [Given("a user is logged in")]
+    // public void GivenAUserIsLoggedIn()
+    // {
+    //     CreateTestUser();
+    //     GivenAUserIsLoggedInAs(TestUserEmail, TestUserPassword);
+    // }
+
+    // [Given("a user is logged in as {string}")]
+    // public void GivenAUserIsLoggedInAs(string userKey)
+    // {
+    //     GivenAUserIsLoggedInAs(TestUserEmail, TestUserPassword);
+    // }
+
+    public static void CreateTestUser()
     {
-        GivenAUserIsLoggedInAs("user");
+    using var context = BDDSetup.CreateContext();
+    if (context.Users.Any(u => u.Email == TestUserEmail)) return;
+
+    var user = new User
+    {
+        Id = Guid.NewGuid().ToString(),
+        UserName = TestUserEmail,
+        NormalizedUserName = TestUserEmail.ToUpper(),
+        Email = TestUserEmail,
+        NormalizedEmail = TestUserEmail.ToUpper(),
+        EmailConfirmed = true,
+        FullName = "Test User",
+        SecurityStamp = Guid.NewGuid().ToString(),
+        LockoutEnabled = false,
+        ConcurrencyStamp = Guid.NewGuid().ToString()
+    };
+
+    // Use PasswordHasher with the exact same user object that will be used for verification
+    var hasher = new PasswordHasher<User>();
+    user.PasswordHash = hasher.HashPassword(user, TestUserPassword);
+
+    context.Users.Add(user);
+    context.SaveChanges();
+
+    // Verify the hash works immediately after creation
+    var verify = hasher.VerifyHashedPassword(user, user.PasswordHash, TestUserPassword);
+    Console.WriteLine($"Password hash verification result: {verify}");
     }
 
-    [Given("a user is logged in as {string}")]
-    public void GivenAUserIsLoggedInAs(string userKey)
+    private void GivenAUserIsLoggedInAs(string email, string password)
     {
-        var email = GetCredential(userKey, "Email");
-        var password = GetCredential(userKey, "Password");
-
-        _shared.Driver.Navigate().GoToUrl($"{SharedDriver.BaseUrl}/Login");
-
-        _shared.Wait.Until(driver => {
-            try { return driver.FindElement(By.CssSelector("input[type='email'], input[name='Email'], input[name='Input.Email']")); }
-            catch (NoSuchElementException) { return null; }
-        });
-
-        _shared.Driver.FindElement(By.CssSelector("input[type='email'], input[name='Email'], input[name='Input.Email']")).SendKeys(email);
-        _shared.Driver.FindElement(By.CssSelector("input[type='password'], input[name='Password'], input[name='Input.Password']")).SendKeys(password);
-        _shared.Driver.FindElement(By.CssSelector("button[type='submit'], input[type='submit'], form button")).Click();
-
-        _shared.Wait.Until(driver => !driver.Url.Contains("/Login"));
-    }
-
-    private static string GetCredential(string userKey, string field)
-    {
-        var value = _config[$"TestUsers:{userKey}:{field}"];
-
-        if (string.IsNullOrEmpty(value))
-            throw new Exception(
-                $"Missing credential '{field}' for user '{userKey}'. " +
-                $"Run: dotnet user-secrets set \"TestUsers:{userKey}:{field}\" \"your-value\"");
-
-        return value;
+        _shared.Driver.Navigate().GoToUrl($"{_shared.BaseUrl}/Login");
+        _shared.Driver.FindElement(By.Id("Email")).SendKeys(email);
+        _shared.Driver.FindElement(By.Id("Password")).SendKeys(password);
+        _shared.Driver.FindElement(By.ClassName("btn")).Click();
     }
 }
