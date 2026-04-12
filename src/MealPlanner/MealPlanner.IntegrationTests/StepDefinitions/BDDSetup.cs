@@ -2,7 +2,7 @@ using MealPlanner.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using OpenQA.Selenium;
-using OpenQA.Selenium.Chrome;
+using OpenQA.Selenium.Firefox;
 
 namespace Mealplanner.IntegrationTests;
 
@@ -20,13 +20,13 @@ public class BDDSetup
         SetupDatabase();
         AUTHost.Start(_connectionString);
 
-        ChromeOptions options = new ChromeOptions();
-        options.AddArgument("--headless");
-        options.AddArgument("--disable-dev-shm-usage");
-        options.AddArgument("--no-sandbox");
+        FirefoxOptions options = new FirefoxOptions();
+        //  options.AddArgument("--headless");
+        // options.AddArgument("--disable-dev-shm-usage");
+        // options.AddArgument("--no-sandbox");
 
 
-        Driver = new ChromeDriver(options);
+        Driver = new FirefoxDriver(options);
         Driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(2);
     }
 
