@@ -105,9 +105,13 @@ namespace Mealplanner.IntegrationTests
        [When("'Jack' confirms the deletion")]
         public void WhenJackConfirmsTheDeletion()
         {
-            new WebDriverWait(_shared.Driver, TimeSpan.FromSeconds(10)).Until(driver =>
+            _shared.Wait.Until(driver =>
             {
-                try { driver.SwitchTo().Alert(); return true; }
+                try
+                {
+                    driver.SwitchTo().Alert();
+                    return true;
+                }
                 catch (NoAlertPresentException) { return false; }
             });
             _shared.Driver.SwitchTo().Alert().Accept();
@@ -116,9 +120,13 @@ namespace Mealplanner.IntegrationTests
         [When("'Jack' denies the deletion")]
         public void WhenJackDeniesTheDeletion()
         {
-            new WebDriverWait(_shared.Driver, TimeSpan.FromSeconds(10)).Until(driver =>
+            _shared.Wait.Until(driver =>
             {
-                try { driver.SwitchTo().Alert(); return true; }
+                try
+                {
+                    driver.SwitchTo().Alert();
+                    return true;
+                }
                 catch (NoAlertPresentException) { return false; }
             });
             _shared.Driver.SwitchTo().Alert().Dismiss();
