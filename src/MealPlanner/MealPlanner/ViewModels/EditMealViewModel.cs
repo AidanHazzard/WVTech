@@ -6,15 +6,16 @@ namespace MealPlanner.ViewModels
     {
         public int Id { get; set; }
 
-        [Required]
         public string Title { get; set; } = string.Empty;
 
-        [Required]
-        [Range(1, 12)]
+        [DataType(DataType.Date)]
+        public DateTime Date { get; set; }
+
+        [DataType(DataType.Time)]
+        public string? Time { get; set; }
+
         public int SelectedMonth { get; set; }
 
-        [Required]
-        [Range(1, 31)]
         public int SelectedDay { get; set; }
 
         public bool RepeatWeekly { get; set; }

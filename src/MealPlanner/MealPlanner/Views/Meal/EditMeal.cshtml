@@ -16,6 +16,12 @@
     </div>
 
     <h2 class="back1Title">Edit Meal</h2>
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">
+            Meal updated successfully
+        </div>
+    }
     <hr>
     <!-- Form for the meal details only -->
     <form id="editMealForm" class="mx-1" asp-action="EditMeal" method="POST">
@@ -27,6 +33,18 @@
                 <label asp-for="Title" class="form-label back1Title"></label>
                 <input asp-for="Title" id="mealTitle" class="form-control mealInput" placeholder="Meal title" />
                 <span asp-validation-for="Title" class="text-danger"></span>
+            </div>
+
+            <div class="col-md-4">
+                <label asp-for="Date" class="form-label back1Title">Date</label>
+                <input type="date" asp-for="Date" name="Date" class="form-control mealInput" />
+                <span asp-validation-for="Date" class="text-danger"></span>
+            </div>
+
+            <div class="col-md-4">
+                <label asp-for="Time" class="form-label back1Title">Time</label>
+                <input type="time" asp-for="Time" name="Time" class="form-control mealInput" />
+                <span asp-validation-for="Time" class="text-danger"></span>
             </div>
 
             <div class="col-md-4">

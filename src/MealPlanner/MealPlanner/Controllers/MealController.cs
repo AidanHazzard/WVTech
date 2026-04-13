@@ -154,12 +154,14 @@ public class MealController : Controller
         {
             Id = meal.Id,
             Title = meal.Title,
+            Date = meal.StartTime ?? DateTime.Today,
+            Time = meal.StartTime.HasValue
+                ? meal.StartTime.Value.ToString("HH:mm")
+                : "00:00",
             SelectedMonth = meal.StartTime?.Month ?? DateTime.Today.Month,
             SelectedDay = meal.StartTime?.Day ?? DateTime.Today.Day,
             RepeatWeekly = meal.RepeatRule == "Weekly",
             RecipeIds = meal.Recipes?.Select(r => r.Id).ToList() ?? new List<int>(),
-
-            // Populate the list for display
             Recipes = meal.Recipes?.Select(r => new RecipeDisplayViewModel
             {
                 Id = r.Id,
@@ -187,18 +189,11 @@ public class MealController : Controller
         if (meal == null || meal.UserId != user.Id)
             return NotFound();
 
-        var year = DateTime.Today.Year;
-        DateTime selectedDate;
-
-        try
-        {
-            selectedDate = new DateTime(year, model.SelectedMonth, model.SelectedDay);
-        }
-        catch
-        {
-            ModelState.AddModelError("", "Please select a valid month and day.");
-            return View(model);
-        }
+        DateTime selectedDate = (model.Date == default)
+            ? DateTime.Today
+            : (TimeSpan.TryParse(model.Time, out var parsedTime)
+                ? model.Date.Date + parsedTime
+                : model.Date.Date);
 
         meal.Title = model.Title.Trim();
         meal.StartTime = selectedDate;
@@ -224,7 +219,9 @@ public class MealController : Controller
 
         await _context.SaveChangesAsync();
 
-        return RedirectToAction("ViewMeal", new { id = meal.Id });
+        TempData["Success"] = "Meal updated successfully";
+
+        return RedirectToAction("EditMeal", new { id = meal.Id });
     }
 
     [HttpPost]
@@ -254,7 +251,7 @@ public class MealController : Controller
         var meal = await _context.Meals.FindAsync(id);
         if (meal == null)
         {
-            return RedirectToAction("Index", "Home", new { selectedDate = date });
+            return RedirectToAction("PlannerHome", "Meal", new { date });
         }
 
         if (meal.UserId != user.Id)
@@ -265,7 +262,7 @@ public class MealController : Controller
         _context.Meals.Remove(meal);
         await _context.SaveChangesAsync();
 
-        return RedirectToAction("Index", "Home", new { selectedDate = date });
+        return RedirectToAction("PlannerHome", "Meal", new { date });
     }
 
     [HttpPost]
@@ -289,7 +286,7 @@ public class MealController : Controller
 
         return Ok();
     }
-    
+
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> ToggleMealCompleted(int id, string? date, bool? isCompleted)
@@ -314,6 +311,6 @@ public class MealController : Controller
         meal.IsCompleted = isCompleted == true;
         await _context.SaveChangesAsync();
 
-        return RedirectToAction("Index", "Home", new { date });
+        return RedirectToAction("PlannerHome", "Meal", new { date });
     }
 }
