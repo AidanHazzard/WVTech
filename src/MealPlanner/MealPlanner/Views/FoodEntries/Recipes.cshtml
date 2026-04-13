@@ -3,16 +3,15 @@
 <div class="back1 backHasButton">
     <h1 class="back1Title">Your Recipes</h1>
     @foreach (RecipeViewModel r in Model)
-    {
-        var location = @Url.Action(action: "Recipes");
-        <div class="mealRecipeItem d-flex align-items-center justify-content-between mb-2 back2 back2-textbox"
-             data-recipe-id="@r.Id">
-            <h4 class="buttonText mb-0"
-                style="cursor:pointer;"
-                onclick="location.href='@location/@r.Id'">@r.Name</h4>
-            <button type="button" class="btn btn-danger delete-recipe-btn" data-id="@r.Id">X</button>
-        </div>
-    }
+{
+    var location = @Url.Action(action: "Recipes");
+   <div class="mealRecipeItem d-flex align-items-center justify-content-between mb-2 back2 back2-textbox"
+     data-recipe-id="@r.Id"
+     style="cursor:pointer;">
+    <h4 class="buttonText mb-0">@r.Name</h4>
+    <button type="button" class="btn btn-danger delete-recipe-btn" data-id="@r.Id">X</button>
+</div>
+}
     <form asp-controller="FoodEntries" asp-action="AddNewRecipe" method="get">
         <button class="buttonBlue">
             <h2 class="buttonText">Create a New Recipe</h2>
