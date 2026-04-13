@@ -19,7 +19,11 @@ jobs:
       - name: Setup dotnet
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '10.x'
+          dotnet-version: '10.0.x'
+          dotnet-quality: 'preview'
+
+      - name: Verify dotnet version
+        run: dotnet --version
 
       - name: Install dependencies
         run: dotnet restore ./src/MealPlanner/MealPlanner.IntegrationTests/Mealplanner.IntegrationTests.csproj
