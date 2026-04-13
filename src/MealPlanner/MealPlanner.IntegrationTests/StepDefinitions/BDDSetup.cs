@@ -25,7 +25,7 @@ public class BDDSetup
         try
         {
             FirefoxOptions options = new FirefoxOptions();
-            options.BrowserExecutableLocation = "/usr/bin/firefox";
+            options.BinaryLocation = "/usr/bin/firefox";
             options.AddArgument("--headless");
             options.SetPreference("dom.webdriver.enabled", false);
             options.SetPreference("useAutomationExtension", false);
