@@ -4,8 +4,8 @@ using Microsoft.EntityFrameworkCore;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Firefox;
 using NUnit.Framework;
+using MealPlanner.IntegrationTests;
 
-namespace MealPlanner.IntegrationTests;
 
 [SetUpFixture]
 public class BDDSetup
@@ -16,26 +16,30 @@ public class BDDSetup
     [OneTimeSetUp]
     public void Setup()
     {
-        _connectionString = Environment.GetEnvironmentVariable("ConnectionString")
-            ?? "Data Source=localhost,1433;Database=MealPlannerDb;User ID=sa;Password=MealPlanner!1234;Pooling=False;Trust Server Certificate=True;Authentication=SqlPassword";
-
-        SetupDatabase();
-        AUTHost.Start(_connectionString);
-
         try
         {
+            _connectionString = Environment.GetEnvironmentVariable("ConnectionString")
+                ?? "Data Source=localhost,1433;Database=MealPlannerDb;User ID=sa;Password=MealPlanner!1234;Pooling=False;Trust Server Certificate=True;Authentication=SqlPassword";
+        
+            Console.WriteLine("Setting up database...");
+            SetupDatabase();
+            Console.WriteLine("Database setup complete. Starting AUTHost...");
+            AUTHost.Start(_connectionString);
+            Console.WriteLine("AUTHost started. Initializing WebDriver...");
+
             FirefoxOptions options = new FirefoxOptions();
-            options.BinaryLocation = "/usr/bin/firefox";
+            options.BinaryLocation = "/Applications/Firefox.app/Contents/MacOS/firefox";
             options.AddArgument("--headless");
             options.SetPreference("dom.webdriver.enabled", false);
             options.SetPreference("useAutomationExtension", false);
-
-            Driver = new FirefoxDriver("/usr/local/bin", options);
+            Driver = new FirefoxDriver("/opt/homebrew/bin", options);
             Driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(10);
+            Console.WriteLine("WebDriver initialized successfully.");
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"WebDriver initialization failed: {ex.Message}");
+            Console.WriteLine($"SETUP FAILED at: {ex.Message}");
+            Console.WriteLine(ex.StackTrace);
             Assert.Fail($"WebDriver initialization failed: {ex.Message}");
         }
     }

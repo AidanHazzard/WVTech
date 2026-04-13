@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace MealPlanner.IntegrationTests;
 
-internal sealed class AUTHost : IDisposable
+public sealed class AUTHost : IDisposable
 {
     private readonly string _baseUrl;
     private readonly Process _process;
