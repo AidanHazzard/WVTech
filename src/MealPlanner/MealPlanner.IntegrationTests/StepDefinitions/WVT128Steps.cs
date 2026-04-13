@@ -102,7 +102,7 @@ namespace Mealplanner.IntegrationTests
             deleteBtn.Click();
         }
 
-        [When("'Jack' confirms the deletion")]
+       [When("'Jack' confirms the deletion")]
         public void WhenJackConfirmsTheDeletion()
         {
             _shared.Wait.Until(driver =>
