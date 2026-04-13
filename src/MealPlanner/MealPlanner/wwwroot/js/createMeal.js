@@ -13,6 +13,7 @@ $(document).ready(() => {
     });
 });
 
+
 async function addRecipe(event) {
     // Get info from the search
     let recipeId = Number($(".recipeId", this).text());
@@ -28,6 +29,15 @@ async function addRecipe(event) {
         if (!response.ok) return;
         recipeId = await response.json();
     }
+
+    // Check for duplicate
+    const isDuplicate = Array.from($("#createMealForm input[name='RecipeIds']"))
+        .some(input => Number(input.value) === Number(recipeId));
+
+    if (isDuplicate) {
+        alert("This recipe is already in the meal.");
+        return;
+}
 
     // Edit the form with hidden elements
     const recipeInputHtml = `<input id="recipe${num_recipes}" name="RecipeIds" type='hidden' value="${Number(recipeId)}">`;

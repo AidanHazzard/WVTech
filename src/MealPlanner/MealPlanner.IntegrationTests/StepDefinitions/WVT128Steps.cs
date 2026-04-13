@@ -135,6 +135,7 @@ namespace Mealplanner.IntegrationTests
         }
 
         [Given("'Jack' searches for a recipe {string}")]
+        [When("'Jack' searches for a recipe {string}")]
         public void GivenJackSearchesForARecipe(string searchTerm)
         {
             var searchInput = _shared.Wait.Until(driver =>
@@ -156,6 +157,7 @@ namespace Mealplanner.IntegrationTests
         }
 
         [Given("'Jack' clicks the first search result")]
+        [When("'Jack' clicks the first search result")]
         public void GivenJackClicksTheFirstSearchResult()
         {
             var firstResult = _shared.Wait.Until(driver =>
