@@ -6,7 +6,6 @@ name: Build and deploy ASP.Net Core app to Azure Web App - OneBite
 on:
   push:
     branches:
-      - test-deploy
       - main
   workflow_dispatch:
 
