@@ -16,6 +16,14 @@ $(document).ready(() => {
             recipeId = await resolveRecipeId(recipeId, recipeName, externalUri);
             if (!recipeId) return;
 
+             // Check for duplicate
+            const isDuplicate = $(`#mealRecipeList [data-id="${recipeId}"]`).length > 0;
+            if (isDuplicate) {
+                alert("This recipe is already in the meal.");
+                return;
+            }
+
+
             const $mealForm = $("#editMealForm");
             addRecipeToMealForm($mealForm, recipeId, recipeName);
         });

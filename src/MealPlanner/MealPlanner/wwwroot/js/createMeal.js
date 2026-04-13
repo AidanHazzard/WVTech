@@ -29,6 +29,15 @@ async function addRecipe(event) {
         recipeId = await response.json();
     }
 
+    // Check for duplicate
+    const isDuplicate = Array.from($("#createMealForm input[name='RecipeIds']"))
+        .some(input => Number(input.value) === Number(recipeId));
+
+    if (isDuplicate) {
+        alert("This recipe is already in the meal.");
+        return;
+}
+
     // Edit the form with hidden elements
     const recipeInputHtml = `<input id="recipe${num_recipes}" name="RecipeIds" type='hidden' value="${Number(recipeId)}">`;
     num_recipes++;
