@@ -17,14 +17,14 @@ public class RecipeAPIController : ControllerBase
     private readonly IUserRecipeRepository _userRecipeRepository;
     private readonly IRegistrationService _registrationSerivice;
     private readonly MealPlannerDBContext _context;
-    private readonly IExternalRecipeService _recipeService;
+    private readonly IExternalRecipeService? _recipeService;
 
     public RecipeAPIController(
         MealPlannerDBContext context,
         IRecipeRepository recipeRepository,
         IUserRecipeRepository userRecipeRepository,
         IRegistrationService registrationService,
-        IExternalRecipeService recipeService)
+        IExternalRecipeService? recipeService = null)
     {
         _context = context;
         _recipeRepository = recipeRepository;
@@ -39,7 +39,7 @@ public class RecipeAPIController : ControllerBase
     public async Task<IActionResult> SearchRecipesByName(string name, int count=10)
     {
         var results = _recipeRepository.GetRecipesByName(name).Select(r => new RecipeDTO(r));
-        if (results.Count() < count)
+        if (results.Count() < count && _recipeService != null)
         {
             try
             {
@@ -100,7 +100,7 @@ public class RecipeAPIController : ControllerBase
     [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public async Task<IActionResult> GetExternalRecipePage(string externalUri, string recipeName)
     {
-        Console.WriteLine(externalUri);
+        if (_recipeService == null) return StatusCode(500);
         Recipe? recipe = _recipeRepository.ReadRecipeByExternalUri(externalUri);
         if (recipe != null) return Ok(recipe.Id);
         recipe = new Recipe { Name = recipeName, ExternalUri = externalUri, Directions = "" };

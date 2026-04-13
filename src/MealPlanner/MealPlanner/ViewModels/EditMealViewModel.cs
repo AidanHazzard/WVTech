@@ -8,6 +8,9 @@ namespace MealPlanner.ViewModels
         public int Id { get; set; }
 
         [Required]
+        public string Title { get; set; }
+
+        [Required]
         public DateTime Date { get; set; }
 
         [Required]
@@ -15,7 +18,15 @@ namespace MealPlanner.ViewModels
 
         public bool RepeatWeekly { get; set; }
 
-        // <- This is the property your controller expects
         public List<int> RecipeIds { get; set; } = new List<int>();
+
+         public List<RecipeDisplayViewModel> Recipes { get; set; } = new List<RecipeDisplayViewModel>();
     }
+
+     public class RecipeDisplayViewModel
+    {
+        public int Id { get; set; }
+        public string Name { get; set; } = string.Empty;
+    }
+
 }

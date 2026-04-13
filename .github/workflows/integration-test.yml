@@ -1,0 +1,25 @@
+name: Integration Test
+
+on: 
+  push:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./src/MealPlanner/MealPlanner.Tests
+    steps:
+      - uses: actions/checkout@v5
+      - name: Setup dotnet
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '10.x'
+      - name: Install dependencies
+        run: dotnet restore
+      - name: Build test project
+        run: dotnet build --no-restore
+      - name: Test
+        run: dotnet test --no-build
+  
