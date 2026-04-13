@@ -1,18 +1,45 @@
 @model MealPlanner.ViewModels.CreateMealViewModel
 
 <div class="back1 backHasButton">
+    <h2 class="back1Title">Recommend Meal</h2>
+    <button class="buttonBlue">
+        <h4 id="recommendMeal" class="buttonText" data-bs-toggle="modal" data-bs-target="#recommendMealModel">Have Onebite generate a meal for you</h4>
+    </button>
+</div>
+
+<div class="modal fade" id="recommendMealModel">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content back1 backHasButton">
+            <h1 class="back1Title">Recommend Meal</h1>
+            <hr />
+            <form asp-action="GenerateMeal" method="POST">
+                <label for="recommendMealTitle">Meal Title</label>
+                <input asp-for="Title" id="recommendMealTitle" class="back2-textbox" placeholder="Lunch"/>
+                
+                <label for="recommendMealDate">Meal Date</label>
+                <input asp-for="Date" id="recommendMealDate" type="date" class="back2-textbox" />
+                
+                <button class="buttonBlue" type="submit">
+                    <h4 id="finishRecommendMeal" class="buttonText">Generate Meal</h4>
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="back1 backHasButton">
     <h2 class="back1Title">Create a Meal</h2>
     <hr>
 
-   <div id="createMealList">
-    <template id="addRecipeRow">
-        <div class="back2 d-flex align-items-center gap-2 back2-textbox mealRecipeItem">
-            <h4 id="recipeName" class="mb-0 flex-grow-1">{Recipe Name}</h4>
-            <input type="hidden" name="RecipeIds" class="recipeIdInput" />
-            <button type="button" class="btn btn-danger delete-recipe-btn">X</button>
-        </div>
-    </template>
-</div>
+    <div id="createMealList">
+        <template id="addRecipeRow">
+            <div class="back2 d-flex align-items-center gap-2 back2-textbox mealRecipeItem">
+                <h4 id="recipeName" class="mb-0 flex-grow-1">{Recipe Name}</h4>
+                <input type="hidden" name="RecipeIds" class="recipeIdInput" />
+                <button type="button" class="btn btn-danger delete-recipe-btn">X</button>
+            </div>
+        </template>
+    </div>
 
     <div class="row align-items-center">
         <div class="text-danger" asp-validation-summary="All"></div>
@@ -46,8 +73,8 @@
 
     @await Html.PartialAsync("_RecipeSearchPartial")
 
-    <button type="submit" form="createMealForm" class="buttonBlue">
-        <h4>Create Meal</h4>
+    <button id="createMeal" type="submit" form="createMealForm" class="buttonBlue">
+        <h4 class="buttonText">Create Meal</h4>
     </button>
 </div>
 

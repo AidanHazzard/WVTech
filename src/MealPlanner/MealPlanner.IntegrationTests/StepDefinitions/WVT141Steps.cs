@@ -7,19 +7,19 @@ namespace Mealplanner.IntegrationTests
     [Binding]
     public class WVT141Steps
     {
-        private readonly SharedDriver _shared;
-        private readonly ScenarioContext _scenarioContext;
+        private WebDriverWait _wait = null!;
 
-        public WVT141Steps(SharedDriver shared, ScenarioContext scenarioContext)
+        // Runs before each scenerio
+        [BeforeScenario]
+        public void SetUp()
         {
-            _shared = shared;
-            _scenarioContext = scenarioContext;
+            _wait = BDDSetup.Wait;
         }
 
         [Then("the meal title is shown on the page")]
         public void ThenTheMealTitleIsShownOnThePage()
         {
-            var title = _shared.Wait.Until(driver =>
+            var title = _wait.Until(driver =>
             {
                 try
                 {

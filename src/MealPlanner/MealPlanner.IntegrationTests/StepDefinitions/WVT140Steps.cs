@@ -7,17 +7,19 @@ namespace Mealplanner.IntegrationTests
     [Binding]
     public class WVT140Steps
     {
-        private readonly SharedDriver _shared;
+        private WebDriverWait _wait = null!;
 
-        public WVT140Steps(SharedDriver shared)
+        // Runs before each scenerio
+        [BeforeScenario]
+        public void SetUp()
         {
-            _shared = shared;
+            _wait = BDDSetup.Wait;
         }
 
         [Then("an error is shown saying the recipe is already in the meal")]
         public void ThenAnErrorIsShownSayingTheRecipeIsAlreadyInTheMeal()
         {
-            var alert = _shared.Wait.Until(driver =>
+            var alert = _wait.Until(driver =>
             {
                 try
                 {

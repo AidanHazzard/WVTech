@@ -7,18 +7,24 @@ namespace Mealplanner.IntegrationTests
     [Binding]
     public class WVT149Steps
     {
-        private readonly SharedDriver _shared;
+        private IWebDriver _driver = null!;
+        private string _baseUrl = null!;
+        private WebDriverWait _wait = null!;
 
-        public WVT149Steps(SharedDriver shared)
+        // Runs before each scenerio
+        [BeforeScenario]
+        public void SetUp()
         {
-            _shared = shared;
+            _driver = BDDSetup.Driver;
+            _baseUrl = AUTHost.BaseUrl;
+            _wait = BDDSetup.Wait;
         }
 
         [Given("'Jack' is on the user settings page")]
         public void GivenJackIsOnTheUserSettingsPage()
         {
-            _shared.Driver.Navigate().GoToUrl($"{_shared.BaseUrl}/UserSettings/Index");
-            _shared.Wait.Until(driver =>
+            _driver.Navigate().GoToUrl($"{_baseUrl}/UserSettings/Index");
+            _wait.Until(driver =>
                 ((IJavaScriptExecutor)driver)
                     .ExecuteScript("return document.readyState")
                     .ToString() == "complete");
@@ -27,7 +33,7 @@ namespace Mealplanner.IntegrationTests
         [Then("a theme toggle is shown on the settings page")]
         public void ThenAThemeToggleIsShownOnTheSettingsPage()
         {
-            var toggle = _shared.Wait.Until(driver =>
+            var toggle = _wait.Until(driver =>
             {
                 try
                 {
@@ -43,7 +49,7 @@ namespace Mealplanner.IntegrationTests
         [When("'Jack' clicks the theme toggle")]
         public void WhenJackClicksTheThemeToggle()
         {
-            var toggle = _shared.Wait.Until(driver =>
+            var toggle = _wait.Until(driver =>
             {
                 try
                 {
@@ -59,8 +65,8 @@ namespace Mealplanner.IntegrationTests
        [Then("the theme changes")]
 public void ThenTheThemeChanges()
 {
-    var js = (IJavaScriptExecutor)_shared.Driver;
-    var toggle = _shared.Driver.FindElement(By.CssSelector("#themeToggle"));
+    var js = (IJavaScriptExecutor)_driver;
+    var toggle = _driver.FindElement(By.CssSelector("#themeToggle"));
     var isChecked = js.ExecuteScript("return document.getElementById('themeToggle').checked;") as bool? == true;
     var theme = js.ExecuteScript("return document.documentElement.getAttribute('data-theme');")?.ToString();
 

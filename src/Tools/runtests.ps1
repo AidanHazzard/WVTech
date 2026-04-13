@@ -1,2 +1,0 @@
-$connectionString = "Data Source=localhost,1434;Database=OnebiteTest;User ID=SA;Password=1234TestP@ssword;Pooling=False;Trust Server Certificate=True;Authentication=SqlPassword"
-dotnet test ../.. -e ConnectionString=$connectionString

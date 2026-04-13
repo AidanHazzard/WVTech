@@ -10,16 +10,26 @@ namespace Mealplanner.IntegrationTests
     [Binding]
     public class WVT128Steps
     {
-        private readonly SharedDriver _shared;
         private readonly ScenarioContext _scenarioContext;
         private int _mealId;
         private string _userId = null!;
         private string _deletedRecipeName = null!;
+        private IWebDriver _driver = null!;
+        private string _baseUrl = null!;
+        private WebDriverWait _wait = null!;
 
-        public WVT128Steps(SharedDriver shared, ScenarioContext scenarioContext)
+        public WVT128Steps(ScenarioContext scenarioContext)
         {
-            _shared = shared;
             _scenarioContext = scenarioContext;
+        }
+
+        // Runs before each scenerio
+        [BeforeScenario]
+        public void SetUp()
+        {
+            _driver = BDDSetup.Driver;
+            _baseUrl = AUTHost.BaseUrl;
+            _wait = BDDSetup.Wait;
         }
 
         [Given("'Jack' has a meal with recipes created")]
@@ -53,8 +63,8 @@ namespace Mealplanner.IntegrationTests
             if (_scenarioContext.ContainsKey("MealId"))
                 _mealId = (int)_scenarioContext["MealId"];
 
-            _shared.Driver.Navigate().GoToUrl($"{_shared.BaseUrl}/Meal/ViewMeal?id={_mealId}");
-            _shared.Wait.Until(driver =>
+            _driver.Navigate().GoToUrl($"{_baseUrl}/Meal/ViewMeal?id={_mealId}");
+            _wait.Until(driver =>
                 ((IJavaScriptExecutor)driver)
                     .ExecuteScript("return document.readyState")
                     .ToString() == "complete");
@@ -63,8 +73,8 @@ namespace Mealplanner.IntegrationTests
         [Given("'Jack' is on the create meal page")]
         public void GivenJackIsOnTheCreateMealPage()
         {
-            _shared.Driver.Navigate().GoToUrl($"{_shared.BaseUrl}/Meal/NewMeal");
-            _shared.Wait.Until(driver =>
+            _driver.Navigate().GoToUrl($"{_baseUrl}/Meal/NewMeal");
+            _wait.Until(driver =>
                 ((IJavaScriptExecutor)driver)
                     .ExecuteScript("return document.readyState")
                     .ToString() == "complete");
@@ -76,8 +86,8 @@ namespace Mealplanner.IntegrationTests
             if (_scenarioContext.ContainsKey("MealId"))
                 _mealId = (int)_scenarioContext["MealId"];
 
-            _shared.Driver.Navigate().GoToUrl($"{_shared.BaseUrl}/Meal/EditMeal?id={_mealId}");
-            _shared.Wait.Until(driver =>
+            _driver.Navigate().GoToUrl($"{_baseUrl}/Meal/EditMeal?id={_mealId}");
+            _wait.Until(driver =>
                 ((IJavaScriptExecutor)driver)
                     .ExecuteScript("return document.readyState")
                     .ToString() == "complete");
@@ -86,7 +96,7 @@ namespace Mealplanner.IntegrationTests
         [When("'Jack' clicks the delete button on a recipe")]
         public void WhenJackClicksTheDeleteButtonOnARecipe()
         {
-            var firstItem = _shared.Wait.Until(driver =>
+            var firstItem = _wait.Until(driver =>
             {
                 try
                 {
@@ -105,7 +115,7 @@ namespace Mealplanner.IntegrationTests
        [When("'Jack' confirms the deletion")]
         public void WhenJackConfirmsTheDeletion()
         {
-            _shared.Wait.Until(driver =>
+            _wait.Until(driver =>
             {
                 try
                 {
@@ -114,13 +124,13 @@ namespace Mealplanner.IntegrationTests
                 }
                 catch (NoAlertPresentException) { return false; }
             });
-            _shared.Driver.SwitchTo().Alert().Accept();
+            _driver.SwitchTo().Alert().Accept();
         }
 
         [When("'Jack' denies the deletion")]
         public void WhenJackDeniesTheDeletion()
         {
-            _shared.Wait.Until(driver =>
+            _wait.Until(driver =>
             {
                 try
                 {
@@ -129,13 +139,13 @@ namespace Mealplanner.IntegrationTests
                 }
                 catch (NoAlertPresentException) { return false; }
             });
-            _shared.Driver.SwitchTo().Alert().Dismiss();
+            _driver.SwitchTo().Alert().Dismiss();
         }
 
         [Then("the recipe is removed from the meal immediately")]
         public void ThenTheRecipeIsRemovedFromTheMealImmediately()
         {
-            _shared.Wait.Until(driver =>
+            _wait.Until(driver =>
             {
                 var items = driver.FindElements(By.CssSelector(".mealRecipeItem h4"));
                 return items.All(item => !item.Text.Contains(_deletedRecipeName));
@@ -145,7 +155,7 @@ namespace Mealplanner.IntegrationTests
         [Then("the recipe is still shown in the meal recipe list")]
         public void ThenTheRecipeIsStillShownInTheMealRecipeList()
         {
-            _shared.Wait.Until(driver =>
+            _wait.Until(driver =>
             {
                 var items = driver.FindElements(By.CssSelector(".mealRecipeItem h4"));
                 return items.Any(item => item.Text.Contains(_deletedRecipeName));
@@ -156,7 +166,7 @@ namespace Mealplanner.IntegrationTests
         [When("'Jack' searches for a recipe {string}")]
         public void GivenJackSearchesForARecipe(string searchTerm)
         {
-            var searchInput = _shared.Wait.Until(driver =>
+            var searchInput = _wait.Until(driver =>
             {
                 try
                 {
@@ -166,7 +176,7 @@ namespace Mealplanner.IntegrationTests
                 catch (NoSuchElementException) { return null; }
             })!;
 
-            ((IJavaScriptExecutor)_shared.Driver)
+            ((IJavaScriptExecutor)_driver)
                 .ExecuteScript("arguments[0].scrollIntoView(true);", searchInput);
             searchInput.Click();
             searchInput.Clear();
@@ -178,7 +188,7 @@ namespace Mealplanner.IntegrationTests
         [When("'Jack' clicks the first search result")]
         public void GivenJackClicksTheFirstSearchResult()
         {
-            var firstResult = _shared.Wait.Until(driver =>
+            var firstResult = _wait.Until(driver =>
             {
                 try
                 {
@@ -188,7 +198,7 @@ namespace Mealplanner.IntegrationTests
                 catch (NoSuchElementException) { return null; }
             })!;
 
-            ((IJavaScriptExecutor)_shared.Driver)
+            ((IJavaScriptExecutor)_driver)
                 .ExecuteScript("arguments[0].scrollIntoView(true);", firstResult);
             firstResult.Click();
         }
