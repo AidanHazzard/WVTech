@@ -289,4 +289,5 @@ __pycache__/
 *.xsd.cs
 
 # MacOS files
-.DS_Store
+.DS_Store**/bin/
+**/obj/

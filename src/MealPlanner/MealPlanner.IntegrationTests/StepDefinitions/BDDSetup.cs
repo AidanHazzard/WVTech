@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Firefox;
+using NUnit.Framework;
 
 namespace MealPlanner.IntegrationTests;
 
@@ -23,19 +24,19 @@ public class BDDSetup
 
         try
         {
-            var service = FirefoxDriverService.CreateDefaultService();
-            service.FirefoxBinaryPath = "/usr/bin/firefox";
-
             FirefoxOptions options = new FirefoxOptions();
+            options.BrowserExecutableLocation = "/usr/bin/firefox";
             options.AddArgument("--headless");
+            options.SetPreference("dom.webdriver.enabled", false);
+            options.SetPreference("useAutomationExtension", false);
 
-            Driver = new FirefoxDriver(service, options);
+            Driver = new FirefoxDriver("/usr/local/bin", options);
             Driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(10);
         }
         catch (Exception ex)
         {
             Console.WriteLine($"WebDriver initialization failed: {ex.Message}");
-            throw;
+            Assert.Fail($"WebDriver initialization failed: {ex.Message}");
         }
     }
 
