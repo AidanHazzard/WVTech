@@ -21,11 +21,22 @@ public class BDDSetup
         SetupDatabase();
         AUTHost.Start(_connectionString);
 
-        FirefoxOptions options = new FirefoxOptions();
-        options.AddArgument("--headless");
+        try
+        {
+            var service = FirefoxDriverService.CreateDefaultService();
+            service.FirefoxBinaryPath = "/usr/bin/firefox";
 
-        Driver = new FirefoxDriver(options);
-        Driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(2);
+            FirefoxOptions options = new FirefoxOptions();
+            options.AddArgument("--headless");
+
+            Driver = new FirefoxDriver(service, options);
+            Driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(10);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"WebDriver initialization failed: {ex.Message}");
+            throw;
+        }
     }
 
     [OneTimeTearDown]

@@ -16,10 +16,14 @@ jobs:
           dotnet-version: '10.0.x'
           dotnet-quality: 'preview'
 
-      - name: Install Firefox
+      - name: Install Firefox and GeckoDriver
         run: |
           sudo apt-get update
           sudo apt-get install -y firefox
+          wget https://github.com/mozilla/geckodriver/releases/download/v0.33.0/geckodriver-v0.33.0-linux64.tar.gz
+          tar -xzf geckodriver-v0.33.0-linux64.tar.gz
+          sudo mv geckodriver /usr/local/bin/
+          sudo chmod +x /usr/local/bin/geckodriver
 
       - name: Start Xvfb
         run: Xvfb :99 -screen 0 1920x1080x24 &
