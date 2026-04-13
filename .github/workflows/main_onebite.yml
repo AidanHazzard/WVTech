@@ -24,16 +24,16 @@ jobs:
           dotnet-version: '10.x'
 
       - name: dotnet Build
-        run: dotnet build --configuration Release
+        run: dotnet build src/MealPlanner/MealPlanner --configuration Release
 
       - name: dotnet publish
-        run: dotnet publish -c Release -o "${{env.DOTNET_ROOT}}/myapp"
+        run: dotnet publish src/MealPlanner/MealPlanner --no-build -o "${{env.DOTNET_ROOT}}/OneBite"
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
           name: .net-app
-          path: ${{env.DOTNET_ROOT}}/myapp
+          path: ${{env.DOTNET_ROOT}}/OneBite
 
   deploy:
     runs-on: windows-latest
@@ -51,9 +51,9 @@ jobs:
       - name: Login to Azure
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_FD30E289A3AF43BDAF0BEF39273CC369 }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_307863429E4E4C4AA1B86DDAC11A6BE7 }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_A50431BEE3824489BD2B00212F1E1D27 }}
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_812D1041674D45AC91B55719D976E1C7 }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_305BA962FF21462CB2C9C02AC90367C2 }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_63FE37A3A16540DA81119ED7862B1B7D }}
 
       - name: Deploy to Azure Web App
         id: deploy-to-webapp
