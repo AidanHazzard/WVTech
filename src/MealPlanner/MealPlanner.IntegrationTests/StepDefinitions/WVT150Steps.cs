@@ -7,18 +7,22 @@ namespace Mealplanner.IntegrationTests
     [Binding]
     public class WVT143Steps
     {
-        private readonly SharedDriver _shared;
         private string _clickedRecipeId = null!;
+        private IWebDriver _driver = null!;
+        private WebDriverWait _wait = null!;
 
-        public WVT143Steps(SharedDriver shared)
+        // Runs before each scenerio
+        [BeforeScenario]
+        public void SetUp()
         {
-            _shared = shared;
+            _driver = BDDSetup.Driver;
+            _wait = BDDSetup.Wait;
         }
 
         [When("'Jack' clicks on their recipe")]
         public void WhenJackClicksOnTheirRecipe()
         {
-            var firstItem = _shared.Wait.Until(driver =>
+            var firstItem = _wait.Until(driver =>
             {
                 try
                 {
@@ -35,10 +39,10 @@ namespace Mealplanner.IntegrationTests
         [Then("'Jack' is taken to the recipe detail page")]
         public void ThenJackIsTakenToTheRecipeDetailPage()
         {
-            _shared.Wait.Until(driver =>
+            _wait.Until(driver =>
                 driver.Url.Contains($"/FoodEntries/Recipes/{_clickedRecipeId}"));
 
-            Assert.That(_shared.Driver.Url, Does.Contain($"/FoodEntries/Recipes/{_clickedRecipeId}"));
+            Assert.That(_driver.Url, Does.Contain($"/FoodEntries/Recipes/{_clickedRecipeId}"));
         }
     }
 }

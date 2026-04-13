@@ -1,9 +1,6 @@
 using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
-using MealPlanner.Models;
-using Microsoft.Data.SqlClient;
-using Microsoft.EntityFrameworkCore;
 
 namespace Mealplanner.IntegrationTests;
 
@@ -19,9 +16,6 @@ internal sealed class AUTHost : IDisposable
         string projectRoot = GetProjectRoot();
         int port = GetOpenPort();
         _baseUrl = $"http://localhost:{port}";
-        _connectionString = Environment.GetEnvironmentVariable("ConnectionString")
-            ?? "Data Source=localhost,1434;Database=OnebiteTest;User ID=SA;Password=1234TestP@ssword;Pooling=False;Trust Server Certificate=True;Authentication=SqlPassword";
-
         ProcessStartInfo startInfo = new ProcessStartInfo("dotnet")
         {
             WorkingDirectory = projectRoot,
@@ -119,5 +113,4 @@ internal sealed class AUTHost : IDisposable
 
         _process.Dispose();
     }
-
 }

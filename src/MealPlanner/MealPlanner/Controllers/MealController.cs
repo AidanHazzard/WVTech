@@ -3,8 +3,10 @@ using MealPlanner.Models;
 using MealPlanner.Services;
 using MealPlanner.ViewModels;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 
 namespace MealPlanner.Controllers;
 
@@ -15,17 +17,20 @@ public class MealController : Controller
     private readonly IRecipeRepository _recipeRepo;
     private readonly IMealRepository _mealRepo;
     private readonly MealPlannerDBContext _context;
+    private readonly IMealRecommendationService? _recommendationService;
 
     public MealController(
         IRegistrationService registrationService,
         IRecipeRepository recipeRepo,
         IMealRepository mealRepo,
-        MealPlannerDBContext context)
+        MealPlannerDBContext context,
+        IMealRecommendationService? mealRecommendationService = null)
     {
         _registrationService = registrationService;
         _recipeRepo = recipeRepo;
         _mealRepo = mealRepo;
         _context = context;
+        _recommendationService = mealRecommendationService;
     }
 
     public async Task<IActionResult> PlannerHome(string? date)
@@ -101,6 +106,26 @@ public class MealController : Controller
         return RedirectToAction("Index", "Home");
     }
 
+    [HttpPost]
+    public async Task<IActionResult> GenerateMeal(CreateMealViewModel model)
+    {
+        var user = await _registrationService.FindUserByClaimAsync(User);
+        if (user == null) return Challenge();
+        if (_recommendationService == null) return Problem(statusCode:500);
+        Meal newMeal = new Meal
+        {
+            User = user,
+            Title = model.Title.Trim(),
+            StartTime = model.Date.Date
+        };
+        newMeal.Recipes = await _recommendationService.GetRecommendedRecipesForUser(user, model.Date.Date);
+        if (newMeal.Recipes.IsNullOrEmpty()) return NotFound();
+
+        newMeal = _mealRepo.CreateOrUpdate(newMeal);
+        _context.SaveChanges();
+        return RedirectToAction("ViewMeal", new {id = newMeal.Id });
+    }
+
     [HttpGet]
     public async Task<IActionResult> ViewMeal(int id)
     {
@@ -121,7 +146,7 @@ public class MealController : Controller
         return View(meal);
     }
 
-   [HttpGet]
+    [HttpGet]
     public async Task<IActionResult> EditMeal(int id)
     {
         var user = await _registrationService.FindUserByClaimAsync(User);
@@ -159,7 +184,7 @@ public class MealController : Controller
         return View(viewModel);
     }
 
-     [HttpPost]
+    [HttpPost]
     public async Task<IActionResult> EditMeal(EditMealViewModel model)
     {
         if (!ModelState.IsValid)

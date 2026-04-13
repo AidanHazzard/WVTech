@@ -59,8 +59,7 @@ builder.Services.AddScoped<IMealRepository, MealRepository>();
 builder.Services.AddScoped<IUserRecipeRepository, UserRecipeRepository>();
 builder.Services.AddScoped<IUserSettingsRepository, UserSettingsRepository>();
 builder.Services.AddScoped<IShoppingListRepository, ShoppingListRepository>();
-builder.Services.AddScoped<ThemeFilter>();
-builder.Services.AddScoped<ShoppingListService>();
+builder.Services.AddScoped<IUserNutritionPreferenceRepository, UserNutritionPreferenceRepository>();
 
 // Add Identity
 builder.Services.AddIdentity<User, IdentityRole>(options =>
@@ -102,6 +101,9 @@ builder.Services.AddScoped<INutritionProgressService, NutritionProgressService>(
 builder.Services.AddScoped<ILoginService, LoginService>();
 builder.Services.AddScoped<IRegistrationService, RegistrationService>();
 builder.Services.AddScoped<IUserSettingsService, UserSettingsService>();
+builder.Services.AddScoped<IMealRecommendationService, MealRecommendationService>();
+builder.Services.AddScoped<ThemeFilter>();
+builder.Services.AddScoped<ShoppingListService>();
 
 // External APIs
 if (builder.Configuration["NoApi"] != "true")

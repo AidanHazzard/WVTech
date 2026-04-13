@@ -1,33 +1,41 @@
 using MealPlanner.Models;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using OpenQA.Selenium;
-using OpenQA.Selenium.Firefox;
+using OpenQA.Selenium.Chrome;
+using OpenQA.Selenium.Support.UI;
 
 namespace Mealplanner.IntegrationTests;
 
 [SetUpFixture]
 public class BDDSetup
 {
+    public TestContext? TestContext { get; set; }
     public static IWebDriver Driver { get; private set;}
+    public static WebDriverWait Wait { get; private set; }
+    public static MealPlannerDBContext Context { get; private set; }
     private static string _connectionString;
 
     [OneTimeSetUp]
     public void Setup()
     {
         _connectionString = Environment.GetEnvironmentVariable("ConnectionString")
-            ?? "Data Source=localhost,1434;Database=OnebiteTest;User ID=SA;Password=1234TestP@ssword;Pooling=False;Trust Server Certificate=True;Authentication=SqlPassword";
+            ?? TestContext.Parameters["ConnectionString"]
+            ?? throw new InvalidOperationException("Connection String not provided");
+
         SetupDatabase();
         AUTHost.Start(_connectionString);
+        
+        //FirefoxOptions options = new FirefoxOptions();
+        ChromeOptions options = new ChromeOptions();
+        options.AddArgument("--headless");
+        options.AddArgument("--disable-dev-shm-usage");
+        options.AddArgument("--no-sandbox");
+        options.AddArgument("--window-size=2560,1440");
 
-        FirefoxOptions options = new FirefoxOptions();
-        //  options.AddArgument("--headless");
-        // options.AddArgument("--disable-dev-shm-usage");
-        // options.AddArgument("--no-sandbox");
 
-
-        Driver = new FirefoxDriver(options);
+        Driver = new ChromeDriver(options);
         Driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(2);
+        Wait = new WebDriverWait(Driver, TimeSpan.FromSeconds(10));
     }
 
     [OneTimeTearDown]
@@ -36,6 +44,7 @@ public class BDDSetup
         Driver.Quit();
         Driver.Dispose();
         AUTHost.Stop();
+        Context.Dispose();
     }
 
     public static MealPlannerDBContext CreateContext()
@@ -49,8 +58,8 @@ public class BDDSetup
 
     private static void SetupDatabase()
     {
-        using var context = CreateContext();
+        Context = CreateContext();
 
-        context.Database.EnsureDeleted();
+        Context.Database.EnsureDeleted();
     }
 }
