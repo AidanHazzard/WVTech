@@ -12,7 +12,7 @@
     </div>
 
     <div class="flex-grow-1 text-center">
-        <h2 class="back1Title">Meal Details</h2>
+        <h2 class="back1Title" id="mealTitle">@Model.Title</h2>
         <div class="back1Title">
             <!-- Show date first -->
             @(Model.StartTime?.ToString("MMM dd, yyyy") ?? "No date set")
