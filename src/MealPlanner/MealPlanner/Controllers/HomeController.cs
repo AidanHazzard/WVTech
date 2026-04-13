@@ -14,44 +14,53 @@ public class HomeController : Controller
     private readonly ILoginService _loginService;
     private readonly IRegistrationService _registrationService;
     private readonly IMealRepository _mealRepo;
+    //private readonly INutritionProgressService _nutritionProgressService;
 
     public HomeController(
         MealPlannerDBContext context,
         ILoginService loginService,
         IRegistrationService registrationService,
         IMealRepository mealRepo)
+        //INutritionProgressService nutritionProgressService)
     {
         _context = context;
         _loginService = loginService;
         _registrationService = registrationService;
         _mealRepo = mealRepo;
+        //_nutritionProgressService = nutritionProgressService;
     }
 
-   public async Task<IActionResult> Index(string? date)
-{
-    if (!HttpContext.User.Identity?.IsAuthenticated ?? true)
-        return Redirect("/Login");
-
-    User? user = await _registrationService.FindUserByClaimAsync(HttpContext.User);
-
-    if (user == null)
-        return Redirect("/Login");
-
-    DateTime selectedDate =
-        DateTime.TryParse(date, out var parsed)
-            ? parsed.Date
-            : DateTime.Today;
-
-    var meals = await _mealRepo.GetUserMealsByDateAsync(user, selectedDate);
-
-    var vm = new PlannerHomeViewModel
+    public async Task<IActionResult> Index(string? date)
     {
-        SelectedDate = selectedDate,
-        Meals = meals
-    };
+        if (!HttpContext.User.Identity?.IsAuthenticated ?? true)
+            return Redirect("/Login");
 
-    return View(vm);
-}
+        User? user = await _registrationService.FindUserByClaimAsync(HttpContext.User);
+
+        if (user == null)
+            return Redirect("/Login");
+
+        DateTime selectedDate =
+            DateTime.TryParse(date, out var parsed)
+                ? parsed.Date
+                : DateTime.Today;
+
+        var meals = await _mealRepo.GetUserMealsByDateAsync(user, selectedDate);
+
+        //var nutrition = await _nutritionProgressService.GetDailyProgressAsync(
+        //    user.Id,
+        //    DateOnly.FromDateTime(selectedDate)
+        //);
+
+        var vm = new PlannerHomeViewModel
+        {
+            SelectedDate = selectedDate,
+            Meals = meals
+            //DailyNutrition = nutrition
+        };
+
+        return View(vm);
+    }
 
     [Authorize]
     public Task<IActionResult> Dashboard(string? date)

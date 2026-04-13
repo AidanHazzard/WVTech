@@ -3,6 +3,8 @@ using OpenQA.Selenium;
 using OpenQA.Selenium.Support.UI;
 using Reqnroll;
 using NUnit.Framework;
+using Mealplanner.IntegrationTests;
+using MealPlanner.IntegrationTests;
 
 namespace Mealplanner.IntegrationTests;
 
