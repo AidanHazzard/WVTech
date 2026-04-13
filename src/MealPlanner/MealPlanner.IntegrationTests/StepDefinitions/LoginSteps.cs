@@ -1,5 +1,6 @@
 using System;
 using Mealplanner.IntegrationTests;
+using MealPlanner.IntegrationTests;
 using MealPlanner.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;

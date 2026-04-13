@@ -4,6 +4,8 @@ using MealPlanner.Models;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Support.UI;
 using Reqnroll;
+using Mealplanner.IntegrationTests;
+using MealPlanner.IntegrationTests;
 
 namespace Mealplanner.IntegrationTests
 {

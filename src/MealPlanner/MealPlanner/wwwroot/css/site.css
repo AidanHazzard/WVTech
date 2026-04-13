@@ -20,9 +20,9 @@
   --image-filter: none;
   --button-text: black;
   --nutrition-bar-track: #2f2f2f;
-}
-
-[data-theme="light"] {
+  }
+  
+  [data-theme="light"] {
   --body-bg: rgb(240, 240, 240);
   --layer1-bg: #e0e0e0;
   --layer2-bg: #c8c8c8;
@@ -44,102 +44,91 @@
   --image-filter: invert(1);
   --button-text: black;
   --nutrition-bar-track: #9a9a9a;
-}
-
-html {
+  }
+  
+  html {
   font-size: 14px;
   position: relative;
   min-height: 100%;
   transition: background-color 0.3s ease-in-out;
-}
-
-@media (min-width: 768px) {
-  html {
-    font-size: 16px;
   }
-}
-
-body {
+  
+  @media (min-width: 768px) {
+  html {
+  font-size: 16px;
+  }
+  }
+  
+  body {
   margin-bottom: 60px;
   background-color: var(--body-bg);
-}
-
-.btn:focus,
-.btn:active:focus,
-.btn-link.nav-link:focus,
-.form-control:focus,
-.form-check-input:focus {
+  }
+  
+  .btn:focus,
+  .btn:active:focus,
+  .btn-link.nav-link:focus,
+  .form-control:focus,
+  .form-check-input:focus {
   box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
-}
-
-.form-floating>.form-control-plaintext::placeholder,
-.form-floating>.form-control::placeholder {
+  }
+  
+  .form-floating>.form-control-plaintext::placeholder,
+  .form-floating>.form-control::placeholder {
   color: var(--bs-secondary-color);
   text-align: end;
-}
-
-.form-floating>.form-control-plaintext:focus::placeholder,
-.form-floating>.form-control:focus::placeholder {
+  }
+  
+  .form-floating>.form-control-plaintext:focus::placeholder,
+  .form-floating>.form-control:focus::placeholder {
   text-align: start;
-}
-
-li {
+  }
+  
+  li {
   color: var(--text-primary);
-}
-
-.baseText {
+  }
+  
+  .baseText {
   color: var(--text-primary);
-}
-
-.linkListBack {
+  }
+  
+  .linkListBack {
   transition: background-color 0.3s ease-in-out;
   background-color: var(--layer2-bg);
-}
-
-.linkListBack:hover {
+  }
+  
+  .linkListBack:hover {
   background-color: var(--button-grey-hover-bg);
-}
-
-*, *::before, *::after {
-    transition: background-color 0.3s ease-in-out, color 0.3s ease-in-out;
-}
-
-/* .form-check-input {
-    background-color: var(--layer2-bg);
-    border-color: var(--text-primary);
-}
-
-.form-check-input:checked {
-    background-color: var(--button-blue-bg);
-    border-color: var(--button-blue-bg);
-} */
-
-#themeToggle {
-    background-color: #ffffff;
-    border-color: #ffffff;
-    box-shadow: none;
-}
-
-#themeToggle:checked {
-    background-color: #000000;
-    border-color: #000000;
-    box-shadow: none;
-}
-
-#themeToggle:focus {
-    box-shadow: none;
-}
-
-#themeToggle:focus-visible {
-    box-shadow: none;
-}
-
-#themeToggle[type=checkbox] {
-    --bs-form-switch-bg: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%23737373'/%3e%3c/svg%3e");
-}
-
-/*Use this for the first background layer*/
-.back1 {
+  }
+  
+  *, *::before, *::after {
+  transition: background-color 0.3s ease-in-out, color 0.3s ease-in-out;
+  }
+  
+  #themeToggle {
+  background-color: #ffffff;
+  border-color: #ffffff;
+  box-shadow: none;
+  }
+  
+  #themeToggle:checked {
+  background-color: #000000;
+  border-color: #000000;
+  box-shadow: none;
+  }
+  
+  #themeToggle:focus {
+  box-shadow: none;
+  }
+  
+  #themeToggle:focus-visible {
+  box-shadow: none;
+  }
+  
+  #themeToggle[type=checkbox] {
+  --bs-form-switch-bg: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%23737373'/%3e%3c/svg%3e");
+  }
+  
+  .back1 {
   background-color: var(--layer1-bg);
   border-radius: 20px;
   margin: 24px 0;
@@ -147,262 +136,108 @@ li {
   width: 100%;
   box-sizing: border-box;
   position: relative;
-}
-
-/*Used for the text on the 1st background layer*/
-.back1Title {
+  }
+  
+  .back1Title {
   color: var(--text-primary);
   text-align: center;
   position: relative;
-}
-
-p {
+  }
+  
+  p, label {
   color: var(--text-primary);
-}
-
-label {
-  color: var(--text-primary);
-}
-
-.buttonText {
+  }
+  
+  .buttonText {
   transition: transform 0.3s ease-in-out;
   color: var(--button-text);
-}
-
-.left {
+  }
+  
+  .left {
   text-align: left;
   display: flex;
   align-items: center;
   gap: 0.5rem;
-}
-
-/*Use this for the second background layer*/
-.back2 {
+  }
+  
+  .back2 {
   background-color: var(--layer2-bg);
   border-radius: 20px;
   margin-top: 30px;
   margin-bottom: 10px;
   padding: 24px;
   position: relative;
-}
-
-.back2-textbox {
+  }
+  
+  .back2-textbox,
+  .back2-textbox-partial {
   display: inline-block;
   background-color: var(--textbox-bg);
   color: var(--text-primary);
   font-size: 1.5rem;
+  margin: 5px 0;
+  border-radius: 20px;
+  border-color: #ffffff00;
+  box-shadow: none;
+  outline: none;
+  box-sizing: border-box;
+  }
+  
+  .back2-textbox {
   padding: 0.75rem 1rem;
   width: 100%;
-  margin-top: 5px;
-  margin-bottom: 5px;
-  border-radius: 20px;
-  border-color: #ffffff00;
-  box-shadow: none;
-  outline: none;
-  box-sizing: border-box;
-}
-
-.back2-textbox-partial {
-  display: inline-block;
+  }
+  
+  .back2-textbox-partial {
+  padding: 0rem 1rem;
+  }
+  
+  .search-result:hover {
+  background-color: var(--search-result-hover-bg) !important;
+  }
+  
+  /* Month/Day Dropdown Styles */
+  .mealSelect {
   background-color: var(--textbox-bg);
   color: var(--text-primary);
-  font-size: 1.5rem;
-  padding: 0rem 1rem;
-  margin-top: 5px;
-  margin-bottom: 5px;
   border-radius: 20px;
-  border-color: #ffffff00;
-  box-shadow: none;
-  outline: none;
-  box-sizing: border-box;
-}
-
-/*Use this for if you want to have an image be a button*/
-.imageButton {
-  background-color: var(--layer2-bg);
-  border-radius: 20px;
-  width: 300px;
-  height: 300px;
-  margin: 24px;
-  padding: 0;
-  border: none;
-  position: relative;
-  overflow: hidden;
-  transition: background-color 0.3s ease-in-out;
-}
-
-.imageButton:hover {
-  background-color: var(--image-button-hover-bg);
-}
-
-/*Used for the image that is contained in the button image*/
-.imageButtonimage {
-  display: block;
-  width: 200px;
-  height: 200px;
-  margin: -40px auto 0 auto;
-  object-fit: contain;
-  overflow: hidden;
-  transition: transform 0.3s ease-in-out;
-  filter: var(--image-filter);
-}
-
-.imageScaleDown {
-  width: 175px;
-  height: 175px;
-}
-
-.imageButton:hover .imageButtonimage {
-  transform: scale(1.08);
-}
-
-/* List button for search results */
-.buttonGrey {
-  display: inline-block;
-  background-color: var(--button-grey-bg);
+  min-height: 52px;
+  padding: 0.75rem 1rem;
+  font-size: 1.2rem;
+  }
+  
+  .mealInput {
+  background-color: var(--textbox-bg);
   color: var(--text-primary);
-  font-size: 1.5rem;
-  padding: 0.5rem 1rem;
-  width: 100%;
-  margin-top: 5px;
-  margin-bottom: 5px;
   border-radius: 20px;
-  border-color: #ffffff00;
-  box-shadow: none;
-  outline: none;
-  box-sizing: border-box;
-  transition: background-color 0.3s ease-in-out;
-  cursor: pointer;
-}
-
-.buttonGrey:not(:has(.growOnHover:hover)):hover {
-  background-color: var(--button-grey-hover-bg);
-}
-
-/*Use this for blue buttons*/
-.buttonBlue {
+  min-height: 52px;
+  padding: 0.75rem 1rem;
+  font-size: 1.2rem;
+  }
+  
+  /* Nutrition Bar Styling */
+  .nutrition-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+  }
+  
+  .nutrition-bar-label {
+  width: 70px;
+  text-align: right;
+  font-weight: bold;
+  }
+  
+  .nutrition-bar-progress {
+  flex: 1;
+  background-color: var(--nutrition-bar-track);
   border-radius: 20px;
-  background-color: var(--button-blue-bg);
-  margin-top: 24px;
-  padding: 4px;
-  width: 100%;
-  box-sizing: border-box;
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  border: none;
-  transition: background-color 0.3s ease-in-out;
-}
-
-.buttonBlue:hover {
-  background-color: var(--button-blue-hover-bg);
-}
-
-.imageButton:hover .buttonBlue {
-  background-color: var(--button-blue-hover-bg);
-}
-
-/*Use this for green buttons*/
-.buttonGreen {
-  border-radius: 20px;
-  background-color: var(--button-green-bg);
-  margin-top: 24px;
-  padding: 4px;
-  width: 100%;
-  box-sizing: border-box;
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  border: none;
-  transition: background-color 0.3s ease-in-out;
-}
-
-.buttonGreen:hover {
-  background-color: var(--button-green-hover-bg);
-}
-
-.imageButton:hover .buttonText,
-.buttonBlue:hover .buttonText,
-.buttonGreen:hover .buttonText,
-.buttonGrey:hover .buttonText {
-  transform: scale(1.08);
-}
-
-/* Bouncy Icon Buttons, removes all base button styling */
-.growOnHover{
-  background: none;
-  color: inherit;
-  border: none;
-  padding: 0;
-  font: inherit;
-  outline: inherit;
-  transition: transform 0.1s ease-in-out;
-  filter: var(--image-filter);
-}
-.growOnHover:hover {
-  transform: scale(1.12);
-  cursor: pointer;
-}
-.growOnHover:active {
-  transform: scale(0.92);
-  cursor: pointer;
-}
-/*Use this class if the background div has a button attatched to it*/
-.backHasButton {
-  padding-bottom: 70px;
-}
-
-/*Use this to make any image centered and autoscaled*/
-.imageFit {
-  display: block;
-  max-width: 100%;
-  max-height: 100%;
-  width: auto;
-  height: auto;
-  margin: auto auto;
-  object-fit: contain;
-  transition: transform 0.3s ease-in-out;
-}
-
-/* Styling for search results */
-.search-result:hover {
-  background-color: var(--search-result-hover-bg) !important;
-}
-
-/* Nutrition Bar Styling */
-.nutrition-bar-row {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 8px;
-}
-
-.nutrition-bar-label {
-    width: 70px;
-    min-width: 70px;
-    text-align: right;
-    color: var(--text-primary);
-    font-weight: bold;
-    font-size: 0.95rem;
-}
-
-.nutrition-bar-progress {
-    flex: 1 1 0;
-    min-width: 0;
-    background-color: var(--nutrition-bar-track);
-    border-radius: 20px;
-}
-
-.nutrition-bar-progress .progress-bar {
-    border-radius: 20px;
-}
-
-.nutrition-bar-fraction {
-    width: 90px;
-    min-width: 90px;
-    text-align: left;
-    font-size: 0.9rem;
-    color: var(--text-primary);
-    font-weight: bold;
-    white-space: nowrap;
-}
+  }
+  
+  .nutrition-bar-fraction {
+  width: 90px;
+  text-align: left;
+  font-weight: bold;
+  }
+  
