@@ -9,7 +9,7 @@ namespace MealPlanner.IntegrationTests;
 [SetUpFixture]
 public class BDDSetup
 {
-    public static IWebDriver Driver { get; private set;}
+    public static IWebDriver Driver { get; private set; }
     private static string _connectionString;
 
     [OneTimeSetUp]
@@ -17,14 +17,12 @@ public class BDDSetup
     {
         _connectionString = Environment.GetEnvironmentVariable("ConnectionString")
             ?? "Data Source=localhost,1433;Database=MealPlannerDb;User ID=sa;Password=MealPlanner!1234;Pooling=False;Trust Server Certificate=True;Authentication=SqlPassword";
+
         SetupDatabase();
         AUTHost.Start(_connectionString);
 
         FirefoxOptions options = new FirefoxOptions();
-        //  options.AddArgument("--headless");
-        // options.AddArgument("--disable-dev-shm-usage");
-        // options.AddArgument("--no-sandbox");
-
+        options.AddArgument("--headless");
 
         Driver = new FirefoxDriver(options);
         Driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(2);
@@ -42,15 +40,14 @@ public class BDDSetup
     {
         return new MealPlannerDBContext(
             new DbContextOptionsBuilder<MealPlannerDBContext>()
-            .UseSqlServer(_connectionString)
-            .Options
+                .UseSqlServer(_connectionString)
+                .Options
         );
     }
 
     private static void SetupDatabase()
     {
         using var context = CreateContext();
-
         context.Database.EnsureDeleted();
     }
 }

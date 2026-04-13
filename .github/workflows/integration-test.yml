@@ -10,25 +10,22 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Debug - list MealPlanner source files
-        run: |
-          echo "=== MealPlanner directory contents ==="
-          ls -la src/MealPlanner/MealPlanner/
-          echo "=== CS files found ==="
-          find src/MealPlanner/MealPlanner -name "*.cs" | head -20
-          echo "=== Total tracked files ==="
-          git ls-files src/MealPlanner/MealPlanner/ | wc -l
-          echo "=== dotnet build verbose ==="
-          dotnet build --no-restore ./src/MealPlanner/MealPlanner.IntegrationTests/Mealplanner.IntegrationTests.csproj -v:diag 2>&1 | head -100
-
       - name: Setup dotnet
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '10.0.x'
           dotnet-quality: 'preview'
 
-      - name: Verify dotnet version
-        run: dotnet --version
+      - name: Install Firefox
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y firefox
+
+      - name: Start Xvfb
+        run: Xvfb :99 -screen 0 1920x1080x24 &
+
+      - name: Set display environment variable
+        run: echo "DISPLAY=:99" >> $GITHUB_ENV
 
       - name: Install dependencies
         run: dotnet restore ./src/MealPlanner/MealPlanner.IntegrationTests/Mealplanner.IntegrationTests.csproj
