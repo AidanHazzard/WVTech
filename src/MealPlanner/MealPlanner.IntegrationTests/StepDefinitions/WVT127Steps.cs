@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using System.Threading;
 using Mealplanner.IntegrationTests;
+using MealPlanner.IntegrationTests;
 using MealPlanner.Models;
 using Microsoft.AspNetCore.Identity;
 using OpenQA.Selenium;

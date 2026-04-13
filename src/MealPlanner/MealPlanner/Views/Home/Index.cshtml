@@ -19,7 +19,9 @@
 </div>
 
 <div class="back1 backHasButton">
-    <h1 class="back1Title">Meals On @Model.SelectedDate.ToString("MMM")/@Model.SelectedDate.Day/@Model.SelectedDate.ToString("yy")</h1>
+    <h1 class="back1Title">
+        Meals On @Model.SelectedDate.ToString("MMM")/@Model.SelectedDate.Day/@Model.SelectedDate.ToString("yy")
+    </h1>
 
     <div class="row align-items-center">
         <div class="col d-flex justify-content-center">
@@ -44,26 +46,39 @@
                     <button type="submit" class="mealDeleteButton" title="Delete meal">✕</button>
                 </form>
 
-                <!-- Meal card button (opens the meal view) -->
-                <form asp-controller="Meal" asp-action="ViewMeal" method="get" class="mealViewForm">
-                    <input type="hidden" name="id" value="@meal.Id" />
-                    <button type="submit" class="imageButton mealButton">
+                <!-- Meal card container -->
+                <div class="mealCardInner">
 
-                        <!-- Checkbox -->
+                    <!-- Checkbox (toggles completion) -->
+                    <form asp-controller="Meal" asp-action="ToggleMealCompleted" method="post" class="mealCompleteForm">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@meal.Id" />
+                        <input type="hidden" name="date" value="@Model.SelectedDate.ToString("yyyy-MM-dd")" />
+
                         <input type="checkbox"
+                               name="isCompleted"
+                               value="true"
                                class="MealCheckBox"
-                               onclick="event.stopPropagation();" />
+                               @(meal.IsCompleted ? "checked" : null)
+                               onchange="this.form.submit(); event.stopPropagation();" />
+                    </form>
 
-                        <img src="~/images/placeholder/apples.avif"
-                             alt="apples"
-                             class="fullImage">
+                    <!-- Meal card button (opens the meal view) -->
+                    <form asp-controller="Meal" asp-action="ViewMeal" method="get" class="mealViewForm">
+                        <input type="hidden" name="id" value="@meal.Id" />
 
-                        <div class="buttonGreen noBevelTop">
-                            <h2 class="buttonText">@meal.Title</h2>
-                        </div>
+                        <button type="submit" class="imageButton mealButton">
+                            <img src="~/images/placeholder/apples.avif"
+                                 alt="apples"
+                                 class="fullImage">
 
-                    </button>
-                </form>
+                            <div class="buttonGreen noBevelTop">
+                                <h2 class="buttonText">@meal.Title</h2>
+                            </div>
+                        </button>
+                    </form>
+
+                </div>
 
             </div>
         }
@@ -73,6 +88,18 @@
         <!-- Holds a display of the statistics so far today. Will populate this with info when the nutrient info is done -->
         <div class="back2">
             <h2 class="back1Title">Statistics</h2>
+
+            @* Dynamic nutrition bars (disabled for teammate's feature)
+            @if (Model.DailyNutrition != null)
+            {
+                var totals = Model.DailyNutrition.Totals;
+                var targets = Model.DailyNutrition.Targets;
+
+                ...
+            }
+            *@
+
+            <!-- Original placeholder -->
             <img src="~/images/placeholder/nutrients.png" alt="nutrients" class="imageFit">
         </div>
     </div>

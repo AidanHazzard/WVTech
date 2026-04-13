@@ -32,7 +32,6 @@ public class MealControllerTests
     [SetUp]
     public void SetUp()
     {
-        // In-memory SQLite for any DB operations
         var connection = new SqliteConnection("Filename=:memory:");
         connection.Open();
 
@@ -43,7 +42,6 @@ public class MealControllerTests
         _context = new MealPlannerDBContext(contextOptions);
         _context.Database.EnsureCreated();
 
-        // Fake logged-in user
         _user = new ClaimsPrincipal(new ClaimsIdentity(
             new[]
             {
@@ -52,7 +50,6 @@ public class MealControllerTests
             },
             "TestAuth"));
 
-        // Mock services
         _registrationServiceMock = new Mock<IRegistrationService>();
         _registrationServiceMock.Setup(r => r.FindUserByClaimAsync(_user))
             .ReturnsAsync(new User { Id = "user-1", FullName = "testuser" });
@@ -60,7 +57,7 @@ public class MealControllerTests
         _recipeRepoMock = new Mock<IRecipeRepository>();
         _mealRepoMock = new Mock<IMealRepository>();
         _reccServiceMock = new Mock<IMealRecommendationService>();
-        // Instantiate controller
+
         _controller = new MealController(
             _registrationServiceMock.Object,
             _recipeRepoMock.Object,
@@ -80,10 +77,6 @@ public class MealControllerTests
         _controller.Dispose();
         _context.Dispose();
     }
-
-    // -----------------------------
-    // ViewMeal tests
-    // -----------------------------
 
     [Test]
     public async Task ViewMeal_WhenMealExistsForUser_ReturnsViewResult()
@@ -159,10 +152,6 @@ public class MealControllerTests
         Assert.That(result, Is.TypeOf<NotFoundResult>());
     }
 
-    // -----------------------------
-    // EditMeal tests
-    // -----------------------------
-
     [Test]
     public async Task EditMeal_Get_WhenMealExistsForUser_ReturnsViewResult()
     {
@@ -193,9 +182,6 @@ public class MealControllerTests
         Assert.That(result, Is.TypeOf<NotFoundResult>());
     }
 
-    // -----------------------------
-    // GenerateMeal tests
-    // -----------------------------
     [Test]
     public async Task GenerateMeal_RedirectsToViewMeal_ForNewMeal()
     {
@@ -203,20 +189,21 @@ public class MealControllerTests
         CreateMealViewModel vm = new CreateMealViewModel()
         {
             Title = "Test",
-            Date = DateTime.UnixEpoch,
-            Time = TimeSpan.MinValue
+            SelectedMonth = 1,
+            SelectedDay = 1
         };
 
         Meal meal = new Meal()
         {
             Id = 100,
             Title = vm.Title,
-            StartTime = vm.Date
+            StartTime = new DateTime(DateTime.Today.Year, vm.SelectedMonth, vm.SelectedDay)
         };
+
         _reccServiceMock.Setup(s => s.GetRecommendedRecipesForUser(It.IsAny<User>(), It.IsAny<DateTime>()))
             .ReturnsAsync([new Recipe()]);
         _mealRepoMock.Setup(r => r.CreateOrUpdate(It.IsAny<Meal>())).Returns(meal);
-        
+
         // Act
         var result = await _controller.GenerateMeal(vm);
 
@@ -226,7 +213,7 @@ public class MealControllerTests
         using (Assert.EnterMultipleScope())
         {
             Assert.That(redirectResult!.ActionName, Is.EqualTo("ViewMeal"));
-            Assert.That(redirectResult.RouteValues!["id"], Is.EqualTo(meal.Id));            
+            Assert.That(redirectResult.RouteValues!["id"], Is.EqualTo(meal.Id));
         }
     }
 }

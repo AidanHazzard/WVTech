@@ -1,10 +1,11 @@
 using System.Diagnostics;
 using System.Net;
 using System.Net.Sockets;
-
-namespace Mealplanner.IntegrationTests;
-
-internal sealed class AUTHost : IDisposable
+using MealPlanner.Models;
+using Microsoft.Data.SqlClient;
+using Microsoft.EntityFrameworkCore;
+namespace MealPlanner.IntegrationTests;
+public sealed class AUTHost : IDisposable
 {
     private readonly string _baseUrl;
     private readonly Process _process;
@@ -16,12 +17,12 @@ internal sealed class AUTHost : IDisposable
         string projectRoot = GetProjectRoot();
         int port = GetOpenPort();
         _baseUrl = $"http://localhost:{port}";
+
         ProcessStartInfo startInfo = new ProcessStartInfo("dotnet")
         {
             WorkingDirectory = projectRoot,
             UseShellExecute = false
         };
-
         startInfo.ArgumentList.Add("run");
         startInfo.ArgumentList.Add("--no-build");
         startInfo.ArgumentList.Add("--project");

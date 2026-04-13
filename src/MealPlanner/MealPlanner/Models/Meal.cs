@@ -24,6 +24,7 @@ public class Meal
     public DateTime? EndTime { get; set; }
 
     public string? RepeatRule { get; set; }
+    public bool IsCompleted { get; set; }
 
     public List<Recipe> Recipes { get; set; } = [];
 

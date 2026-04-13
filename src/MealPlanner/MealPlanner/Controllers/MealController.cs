@@ -62,15 +62,14 @@ public class MealController : Controller
     {
         return View(new CreateMealViewModel
         {
-            Date = DateTime.Today
+            SelectedMonth = DateTime.Today.Month,
+            SelectedDay = DateTime.Today.Day
         });
     }
 
     [HttpPost]
     public async Task<IActionResult> NewMeal(CreateMealViewModel model)
     {
-        Console.WriteLine(model.Date);
-        Console.WriteLine(model.Time);
         if (!ModelState.IsValid)
         {
             return View(model);
@@ -82,12 +81,25 @@ public class MealController : Controller
             return Challenge();
         }
 
+        var year = DateTime.Today.Year;
+        DateTime selectedDate;
+
+        try
+        {
+            selectedDate = new DateTime(year, model.SelectedMonth, model.SelectedDay);
+        }
+        catch
+        {
+            ModelState.AddModelError("", "Please select a valid month and day.");
+            return View(model);
+        }
+
         Meal newMeal = new Meal
         {
             User = user,
             UserId = user.Id,
             Title = model.Title.Trim(),
-            StartTime = model.Date.Date,
+            StartTime = selectedDate,
             RepeatRule = model.RepeatWeekly ? "Weekly" : null
         };
 
@@ -112,13 +124,16 @@ public class MealController : Controller
         var user = await _registrationService.FindUserByClaimAsync(User);
         if (user == null) return Challenge();
         if (_recommendationService == null) return Problem(statusCode:500);
+    
+        var selectedDate = new DateTime(DateTime.Today.Year, model.SelectedMonth, model.SelectedDay);
+    
         Meal newMeal = new Meal
         {
             User = user,
             Title = model.Title.Trim(),
-            StartTime = model.Date.Date
+            StartTime = selectedDate
         };
-        newMeal.Recipes = await _recommendationService.GetRecommendedRecipesForUser(user, model.Date.Date);
+        newMeal.Recipes = await _recommendationService.GetRecommendedRecipesForUser(user, selectedDate);
         if (newMeal.Recipes.IsNullOrEmpty()) return NotFound();
 
         newMeal = _mealRepo.CreateOrUpdate(newMeal);
@@ -161,19 +176,20 @@ public class MealController : Controller
             return NotFound();
         }
 
-        // Ensure recipes are loaded
         await _mealRepo.LoadRecipesAsync(meal);
 
         var viewModel = new EditMealViewModel
         {
             Id = meal.Id,
             Title = meal.Title,
-            Date = meal.StartTime?.Date ?? DateTime.Today,
-            Time = meal.StartTime?.TimeOfDay ?? TimeSpan.Zero,
+            Date = meal.StartTime ?? DateTime.Today,
+            Time = meal.StartTime.HasValue
+                ? meal.StartTime.Value.ToString("HH:mm")
+                : "00:00",
+            SelectedMonth = meal.StartTime?.Month ?? DateTime.Today.Month,
+            SelectedDay = meal.StartTime?.Day ?? DateTime.Today.Day,
             RepeatWeekly = meal.RepeatRule == "Weekly",
             RecipeIds = meal.Recipes?.Select(r => r.Id).ToList() ?? new List<int>(),
-
-            // Populate the list for display
             Recipes = meal.Recipes?.Select(r => new RecipeDisplayViewModel
             {
                 Id = r.Id,
@@ -201,19 +217,22 @@ public class MealController : Controller
         if (meal == null || meal.UserId != user.Id)
             return NotFound();
 
+        DateTime selectedDate = (model.Date == default)
+            ? DateTime.Today
+            : (TimeSpan.TryParse(model.Time, out var parsedTime)
+                ? model.Date.Date + parsedTime
+                : model.Date.Date);
+
         meal.Title = model.Title.Trim();
-        meal.StartTime = model.Date.Date + model.Time;
+        meal.StartTime = selectedDate;
         meal.RepeatRule = model.RepeatWeekly ? "Weekly" : null;
 
-        // Normalize incoming IDs
         var incomingRecipeIds = model.RecipeIds
             .Distinct()
             .ToList();
 
-        // Remove recipes that were unselected
         meal.Recipes.RemoveAll(r => !incomingRecipeIds.Contains(r.Id));
 
-        // Add newly selected recipes
         foreach (var recipeId in incomingRecipeIds)
         {
             if (!meal.Recipes.Any(r => r.Id == recipeId))
@@ -228,7 +247,9 @@ public class MealController : Controller
 
         await _context.SaveChangesAsync();
 
-        return RedirectToAction("ViewMeal", new { id = meal.Id });
+        TempData["Success"] = "Meal updated successfully";
+
+        return RedirectToAction("EditMeal", new { id = meal.Id });
     }
 
     [HttpPost]
@@ -240,22 +261,8 @@ public class MealController : Controller
         var meal = await _mealRepo.ReadAsync(mealId);
         if (meal == null || meal.UserId != user.Id) return NotFound();
 
-        // Ensure recipes are loaded
         await _mealRepo.LoadRecipesAsync(meal);
 
-        // Prevent duplicates if necessary
-        // if (!meal.Recipes.Any(r => r.Id == recipeId))
-        // {
-        //     var recipe = _recipeRepo.Read(recipeId);
-        //     if (recipe != null)
-        //     {
-        //         meal.Recipes.Add(recipe);
-        //         _mealRepo.CreateOrUpdate(meal);
-        //         _context.SaveChanges();
-        //     }
-        // }
-
-        // Redirect back to EditMeal with updated list
         return RedirectToAction("EditMeal", new { id = meal.Id });
     }
 
@@ -272,7 +279,7 @@ public class MealController : Controller
         var meal = await _context.Meals.FindAsync(id);
         if (meal == null)
         {
-            return RedirectToAction("Index", "Home", new { selectedDate = date });
+            return RedirectToAction("PlannerHome", "Meal", new { date });
         }
 
         if (meal.UserId != user.Id)
@@ -283,7 +290,7 @@ public class MealController : Controller
         _context.Meals.Remove(meal);
         await _context.SaveChangesAsync();
 
-        return RedirectToAction("Index", "Home", new { selectedDate = date });
+        return RedirectToAction("PlannerHome", "Meal", new { date });
     }
 
     [HttpPost]
@@ -306,5 +313,32 @@ public class MealController : Controller
         }
 
         return Ok();
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ToggleMealCompleted(int id, string? date, bool? isCompleted)
+    {
+        var user = await _registrationService.FindUserByClaimAsync(User);
+        if (user == null)
+        {
+            return Challenge();
+        }
+
+        var meal = await _context.Meals.FindAsync(id);
+        if (meal == null)
+        {
+            return NotFound();
+        }
+
+        if (meal.UserId != user.Id)
+        {
+            return Forbid();
+        }
+
+        meal.IsCompleted = isCompleted == true;
+        await _context.SaveChangesAsync();
+
+        return RedirectToAction("PlannerHome", "Meal", new { date });
     }
 }

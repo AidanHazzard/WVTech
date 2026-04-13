@@ -4,6 +4,7 @@ using MealPlanner.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace MealPlanner.Migrations
 {
     [DbContext(typeof(MealPlannerDBContext))]
-    partial class MealPlannerDBContextModelSnapshot : ModelSnapshot
+    [Migration("20260413002908_AddMealCompletionFlag")]
+    partial class AddMealCompletionFlag
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -191,7 +194,7 @@ namespace MealPlanner.Migrations
                         new
                         {
                             Id = -1,
-                            Calories = 250,
+                            Calories = 0,
                             Carbs = 0,
                             Directions = "",
                             Fat = 0,
@@ -201,7 +204,7 @@ namespace MealPlanner.Migrations
                         new
                         {
                             Id = -2,
-                            Calories = 400,
+                            Calories = 0,
                             Carbs = 0,
                             Directions = "",
                             Fat = 0,
@@ -211,7 +214,7 @@ namespace MealPlanner.Migrations
                         new
                         {
                             Id = -3,
-                            Calories = 1000,
+                            Calories = 0,
                             Carbs = 0,
                             Directions = "",
                             Fat = 0,
@@ -221,7 +224,7 @@ namespace MealPlanner.Migrations
                         new
                         {
                             Id = -4,
-                            Calories = 350,
+                            Calories = 0,
                             Carbs = 0,
                             Directions = "",
                             Fat = 0,
@@ -231,7 +234,7 @@ namespace MealPlanner.Migrations
                         new
                         {
                             Id = -5,
-                            Calories = 400,
+                            Calories = 0,
                             Carbs = 0,
                             Directions = "",
                             Fat = 0,
@@ -241,7 +244,7 @@ namespace MealPlanner.Migrations
                         new
                         {
                             Id = -6,
-                            Calories = 550,
+                            Calories = 0,
                             Carbs = 0,
                             Directions = "",
                             Fat = 0,
@@ -251,7 +254,7 @@ namespace MealPlanner.Migrations
                         new
                         {
                             Id = -7,
-                            Calories = 850,
+                            Calories = 0,
                             Carbs = 0,
                             Directions = "",
                             Fat = 0,
@@ -261,7 +264,7 @@ namespace MealPlanner.Migrations
                         new
                         {
                             Id = -8,
-                            Calories = 400,
+                            Calories = 0,
                             Carbs = 0,
                             Directions = "",
                             Fat = 0,
@@ -271,7 +274,7 @@ namespace MealPlanner.Migrations
                         new
                         {
                             Id = -9,
-                            Calories = 300,
+                            Calories = 0,
                             Carbs = 0,
                             Directions = "",
                             Fat = 0,

@@ -290,5 +290,5 @@ __pycache__/
 
 # MacOS files
 .DS_Store
-
-[Bb]in\
+**/bin/
+**/obj/
