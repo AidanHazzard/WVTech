@@ -13,7 +13,6 @@ $(document).ready(() => {
     });
 });
 
-
 async function addRecipe(event) {
     // Get info from the search
     let recipeId = Number($(".recipeId", this).text());
