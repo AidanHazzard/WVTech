@@ -37,11 +37,12 @@ jobs:
       - name: Build test project
         run: dotnet build --no-restore ./src/MealPlanner/MealPlanner.IntegrationTests/Mealplanner.IntegrationTests.csproj
 
-      - name: Test
-        run: dotnet test --no-build ./src/MealPlanner/MealPlanner.IntegrationTests/Mealplanner.IntegrationTests.csproj
-
       - name: Verify Firefox and GeckoDriver
         run: |
           firefox --version
           geckodriver --version
           which geckodriver
+      - name: Test
+        run: dotnet test --no-build ./src/MealPlanner/MealPlanner.IntegrationTests/Mealplanner.IntegrationTests.csproj
+
+  
