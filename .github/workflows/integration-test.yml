@@ -39,3 +39,9 @@ jobs:
 
       - name: Test
         run: dotnet test --no-build ./src/MealPlanner/MealPlanner.IntegrationTests/Mealplanner.IntegrationTests.csproj
+
+      - name: Verify Firefox and GeckoDriver
+        run: |
+          firefox --version
+          geckodriver --version
+          which geckodriver
