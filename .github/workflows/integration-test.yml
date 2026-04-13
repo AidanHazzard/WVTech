@@ -19,11 +19,8 @@ jobs:
       - name: Install dependencies
         working-directory: ./src/MealPlanner/MealPlanner.IntegrationTests
         run: dotnet restore
-
       - name: Build test project
-        working-directory: ./src/MealPlanner/MealPlanner.IntegrationTests
-        run: dotnet build --no-restore
+        run: dotnet build --no-restore ./src/MealPlanner/MealPlanner.IntegrationTests/MealPlanner.IntegrationTests.csproj
 
       - name: Test
-        working-directory: ./src/MealPlanner/MealPlanner.IntegrationTests
-        run: dotnet test --no-build
+        run: dotnet test --no-build ./src/MealPlanner/MealPlanner.IntegrationTests/MealPlanner.IntegrationTests.csproj
