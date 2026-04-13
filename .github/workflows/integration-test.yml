@@ -1,21 +1,26 @@
 name: Integration Test
-on: 
+
+on:
   push:
   pull_request:
+
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v5
+
       - name: Setup dotnet
         uses: actions/setup-dotnet@v5
         with:
           dotnet-version: '10.x'
+
       - name: Install dependencies
-        run: dotnet restore ./src/MealPlanner/MealPlanner.IntegrationTests/Mealplanner.IntegrationTests.csproj
+        run: dotnet restore ./src/MealPlanner/MealPlanner.IntegrationTests/MealPlanner.IntegrationTests.csproj
+
       - name: Build test project
-        run: dotnet build --no-restore ./src/MealPlanner/MealPlanner.IntegrationTests/Mealplanner.IntegrationTests.csproj
+        run: dotnet build --no-restore ./src/MealPlanner/MealPlanner.IntegrationTests/MealPlanner.IntegrationTests.csproj
+
       - name: Test
-        run: dotnet test --no-build ./src/MealPlanner/MealPlanner.IntegrationTests/Mealplanner.IntegrationTests.csproj
-      - name: Build test project
-        run: dotnet build --no-restore -v:detailed ./src/MealPlanner/MealPlanner.IntegrationTests/Mealplanner.IntegrationTests.csproj
+        run: dotnet test --no-build ./src/MealPlanner/MealPlanner.IntegrationTests/MealPlanner.IntegrationTests.csproj
