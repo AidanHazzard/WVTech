@@ -1,48 +1,20 @@
 name: Integration Test
-
 on:
   push:
   pull_request:
-
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - name: Setup dotnet
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '10.0.x'
           dotnet-quality: 'preview'
-
-      - name: Install Firefox and GeckoDriver
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y firefox
-          wget https://github.com/mozilla/geckodriver/releases/download/v0.33.0/geckodriver-v0.33.0-linux64.tar.gz
-          tar -xzf geckodriver-v0.33.0-linux64.tar.gz
-          sudo mv geckodriver /usr/local/bin/
-          sudo chmod +x /usr/local/bin/geckodriver
-
-      - name: Start Xvfb
-        run: Xvfb :99 -screen 0 1920x1080x24 &
-
-      - name: Set display environment variable
-        run: echo "DISPLAY=:99" >> $GITHUB_ENV
-
-      - name: Install dependencies
-        run: dotnet restore ./src/MealPlanner/MealPlanner.IntegrationTests/Mealplanner.IntegrationTests.csproj
-
+      - name: Restore dependencies
+        run: dotnet restore ./src/MealPlanner/MealPlanner.sln
       - name: Build test project
-        run: dotnet build --no-restore ./src/MealPlanner/MealPlanner.IntegrationTests/Mealplanner.IntegrationTests.csproj
-
-      - name: Verify Firefox and GeckoDriver
-        run: |
-          firefox --version
-          geckodriver --version
-          which geckodriver
+        run: dotnet build --no-restore ./src/MealPlanner/MealPlanner.Tests/MealPlanner.Tests.csproj
       - name: Test
-        run: dotnet test --no-build ./src/MealPlanner/MealPlanner.IntegrationTests/Mealplanner.IntegrationTests.csproj
-
-  
+        run: dotnet test --no-build ./src/MealPlanner/MealPlanner.Tests/MealPlanner.Tests.csproj
