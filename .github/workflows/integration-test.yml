@@ -16,11 +16,6 @@ jobs:
         with:
           dotnet-version: '10.x'
 
-      - name: Install dependencies
-        run: dotnet restore ./src/MealPlanner/MealPlanner.IntegrationTests/Mealplanner.IntegrationTests.csproj
-
-      - name: Build test project
-        run: dotnet build --no-restore ./src/MealPlanner/MealPlanner.IntegrationTests/Mealplanner.IntegrationTests.csproj
-
-      - name: Test
-        run: dotnet test --no-build ./src/MealPlanner/MealPlanner.IntegrationTests/Mealplanner.IntegrationTests.csproj
+      - name: Run integration tests
+        working-directory: ./src/MealPlanner/MealPlanner.IntegrationTests
+        run: dotnet test Mealplanner.IntegrationTests.csproj --verbosity normal
