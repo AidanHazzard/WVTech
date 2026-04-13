@@ -16,6 +16,7 @@ namespace MealPlanner.Tests
         private MealPlannerDBContext _context;
         private UserSettingsRepository _userProfileRepository;
         private UserSettingsController _controller;
+        private Mock<IUserSettingsService> _mockUserSettingsService;
 
         [SetUp]
         public async Task Setup()
@@ -25,6 +26,7 @@ namespace MealPlanner.Tests
 
             _context = new MealPlannerDBContext(options);
             _userProfileRepository = new UserSettingsRepository(_context);
+            _mockUserSettingsService = new Mock<IUserSettingsService>();
 
             _controller = new UserSettingsController(_context, _userProfileRepository, new Mock<IUserSettingsService>().Object);
 

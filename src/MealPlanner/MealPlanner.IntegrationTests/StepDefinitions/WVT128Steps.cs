@@ -103,15 +103,33 @@ namespace Mealplanner.IntegrationTests
             deleteBtn.Click();
         }
 
-        [When("'Jack' confirms the deletion")]
+       [When("'Jack' confirms the deletion")]
         public void WhenJackConfirmsTheDeletion()
         {
+            _shared.Wait.Until(driver =>
+            {
+                try
+                {
+                    driver.SwitchTo().Alert();
+                    return true;
+                }
+                catch (NoAlertPresentException) { return false; }
+            });
             _shared.Driver.SwitchTo().Alert().Accept();
         }
 
         [When("'Jack' denies the deletion")]
         public void WhenJackDeniesTheDeletion()
         {
+            _shared.Wait.Until(driver =>
+            {
+                try
+                {
+                    driver.SwitchTo().Alert();
+                    return true;
+                }
+                catch (NoAlertPresentException) { return false; }
+            });
             _shared.Driver.SwitchTo().Alert().Dismiss();
         }
 
@@ -136,6 +154,7 @@ namespace Mealplanner.IntegrationTests
         }
 
         [Given("'Jack' searches for a recipe {string}")]
+        [When("'Jack' searches for a recipe {string}")]
         public void GivenJackSearchesForARecipe(string searchTerm)
         {
             var searchInput = _shared.Wait.Until(driver =>
@@ -157,6 +176,7 @@ namespace Mealplanner.IntegrationTests
         }
 
         [Given("'Jack' clicks the first search result")]
+        [When("'Jack' clicks the first search result")]
         public void GivenJackClicksTheFirstSearchResult()
         {
             var firstResult = _shared.Wait.Until(driver =>
