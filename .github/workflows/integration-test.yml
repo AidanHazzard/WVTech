@@ -10,11 +10,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Debug - verify checkout
+      - name: Debug - list MealPlanner source files
         run: |
-          pwd
-          ls -la
-          find . -name "MealPlanner.csproj" | head -5
+          echo "=== MealPlanner directory contents ==="
+          ls -la src/MealPlanner/MealPlanner/
+          echo "=== CS files found ==="
+          find src/MealPlanner/MealPlanner -name "*.cs" | head -20
+          echo "=== Total tracked files ==="
+          git ls-files src/MealPlanner/MealPlanner/ | wc -l
+          echo "=== dotnet build verbose ==="
+          dotnet build --no-restore ./src/MealPlanner/MealPlanner.IntegrationTests/Mealplanner.IntegrationTests.csproj -v:diag 2>&1 | head -100
 
       - name: Setup dotnet
         uses: actions/setup-dotnet@v4
