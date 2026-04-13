@@ -169,14 +169,15 @@ button {
 
 .MealCheckBox {
     position: absolute;
-    top: 10px;
-    left: 10px;
+    top: 34px;
+    left: 34px;
     margin: 0;
     width: 50px;
     height: 50px;
-    z-index: 1;
+    z-index: 3;
     cursor: pointer;
     transition: transform 0.3s ease-in-out;
+    accent-color: #1e73ff;
 }
 
 .MealCheckBox:hover {

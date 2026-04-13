@@ -5,7 +5,7 @@ using MealPlanner.Models;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 
-namespace Mealplanner.IntegrationTests;
+namespace MealPlanner.IntegrationTests;
 
 internal sealed class AUTHost : IDisposable
 {
@@ -20,7 +20,7 @@ internal sealed class AUTHost : IDisposable
         int port = GetOpenPort();
         _baseUrl = $"http://localhost:{port}";
         _connectionString = Environment.GetEnvironmentVariable("ConnectionString")
-            ?? "Data Source=localhost,1434;Database=OnebiteTest;User ID=SA;Password=1234TestP@ssword;Pooling=False;Trust Server Certificate=True;Authentication=SqlPassword";
+            ?? "Data Source=localhost,1433;Database=MealPlannerDb;User ID=sa;Password=MealPlanner!1234;Pooling=False;Trust Server Certificate=True;Authentication=SqlPassword";
 
         ProcessStartInfo startInfo = new ProcessStartInfo("dotnet")
         {

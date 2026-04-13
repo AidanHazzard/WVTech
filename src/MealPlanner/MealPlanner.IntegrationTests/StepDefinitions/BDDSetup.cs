@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Firefox;
 
-namespace Mealplanner.IntegrationTests;
+namespace MealPlanner.IntegrationTests;
 
 [SetUpFixture]
 public class BDDSetup
@@ -16,7 +16,7 @@ public class BDDSetup
     public void Setup()
     {
         _connectionString = Environment.GetEnvironmentVariable("ConnectionString")
-            ?? "Data Source=localhost,1434;Database=OnebiteTest;User ID=SA;Password=1234TestP@ssword;Pooling=False;Trust Server Certificate=True;Authentication=SqlPassword";
+            ?? "Data Source=localhost,1433;Database=MealPlannerDb;User ID=sa;Password=MealPlanner!1234;Pooling=False;Trust Server Certificate=True;Authentication=SqlPassword";
         SetupDatabase();
         AUTHost.Start(_connectionString);
 
@@ -33,8 +33,8 @@ public class BDDSetup
     [OneTimeTearDown]
     public void TearDown()
     {
-        Driver.Quit();
-        Driver.Dispose();
+        Driver?.Quit();
+        Driver?.Dispose();
         AUTHost.Stop();
     }
 

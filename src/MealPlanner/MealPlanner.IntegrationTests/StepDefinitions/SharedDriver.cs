@@ -3,6 +3,7 @@ using Mealplanner.IntegrationTests;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Support.UI;
 using Reqnroll;
+using MealPlanner.IntegrationTests;
 
 [Binding]
 public class SharedDriver
@@ -14,6 +15,9 @@ public class SharedDriver
     [BeforeScenario]
     public void SetUp()
     {
+        if (BDDSetup.Driver == null)
+            throw new Exception("BDDSetup.Driver is null. OneTimeSetUp did not initialize the WebDriver.");
+
         Wait = new WebDriverWait(Driver, TimeSpan.FromSeconds(5));
     }
 }

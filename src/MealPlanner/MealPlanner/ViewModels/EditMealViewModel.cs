@@ -1,4 +1,3 @@
-using MealPlanner.Models;
 using System.ComponentModel.DataAnnotations;
 
 namespace MealPlanner.ViewModels
@@ -8,25 +7,26 @@ namespace MealPlanner.ViewModels
         public int Id { get; set; }
 
         [Required]
-        public string Title { get; set; }
+        public string Title { get; set; } = string.Empty;
 
         [Required]
-        public DateTime Date { get; set; }
+        [Range(1, 12)]
+        public int SelectedMonth { get; set; }
 
         [Required]
-        public TimeSpan Time { get; set; }
+        [Range(1, 31)]
+        public int SelectedDay { get; set; }
 
         public bool RepeatWeekly { get; set; }
 
         public List<int> RecipeIds { get; set; } = new List<int>();
 
-         public List<RecipeDisplayViewModel> Recipes { get; set; } = new List<RecipeDisplayViewModel>();
+        public List<RecipeDisplayViewModel> Recipes { get; set; } = new List<RecipeDisplayViewModel>();
     }
 
-     public class RecipeDisplayViewModel
+    public class RecipeDisplayViewModel
     {
         public int Id { get; set; }
         public string Name { get; set; } = string.Empty;
     }
-
 }

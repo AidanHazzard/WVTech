@@ -102,6 +102,9 @@ namespace MealPlanner.Migrations
                     b.Property<DateTime?>("EndTime")
                         .HasColumnType("datetime2");
 
+                    b.Property<bool>("IsCompleted")
+                        .HasColumnType("bit");
+
                     b.Property<string>("RepeatRule")
                         .HasColumnType("nvarchar(max)");
 

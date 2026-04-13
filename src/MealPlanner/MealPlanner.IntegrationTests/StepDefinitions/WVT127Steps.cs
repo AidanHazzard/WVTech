@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using System.Threading;
 using Mealplanner.IntegrationTests;
+using MealPlanner.IntegrationTests;
 using MealPlanner.Models;
 using Microsoft.AspNetCore.Identity;
 using OpenQA.Selenium;
@@ -44,18 +45,7 @@ namespace Mealplanner.IntegrationTests
         [When("'Jack' clicks the edit button")]
         public void WhenJackClicksTheEditButton()
         {
-            var editButton = _shared.Wait.Until(driver =>
-            {
-                try
-                {
-                    var el = driver.FindElement(By.CssSelector("form[action*='EditMeal'] button[type='submit']"));
-                    return (el.Displayed && el.Enabled) ? el : null;
-                }
-                catch (NoSuchElementException) { return null; }
-            })!;
-            editButton.Click();
             _shared.Wait.Until(d => d.Url.Contains("EditMeal"));
-            NavigateToEditMealPage(_mealId);
         }
 
         [Then("the meal edit form is shown")]

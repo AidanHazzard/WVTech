@@ -327,3 +327,58 @@ label {
 .search-result:hover {
   background-color: var(--search-result-hover-bg) !important;
 }
+
+.mealSelect {
+  background-color: var(--textbox-bg);
+  color: var(--text-primary);
+  border: 1px solid transparent;
+  border-radius: 20px;
+  box-shadow: none;
+  outline: none;
+  min-height: 52px;
+  padding: 0.75rem 1rem;
+  font-size: 1.2rem;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--text-primary) 50%),
+    linear-gradient(135deg, var(--text-primary) 50%, transparent 50%);
+  background-position:
+    calc(100% - 22px) calc(50% - 3px),
+    calc(100% - 16px) calc(50% - 3px);
+  background-size: 6px 6px, 6px 6px;
+  background-repeat: no-repeat;
+  padding-right: 2.5rem;
+}
+
+.mealSelect:focus {
+  border-color: var(--button-blue-bg);
+  box-shadow: 0 0 0 0.15rem rgba(128, 238, 246, 0.25);
+  background-color: var(--textbox-bg);
+  color: var(--text-primary);
+}
+
+.mealSelect option {
+  background-color: var(--textbox-bg);
+  color: var(--text-primary);
+}
+
+.mealInput {
+  background-color: var(--textbox-bg);
+  color: var(--text-primary);
+  border: 1px solid transparent;
+  border-radius: 20px;
+  box-shadow: none;
+  outline: none;
+  min-height: 52px;
+  padding: 0.75rem 1rem;
+  font-size: 1.2rem;
+}
+
+.mealInput:focus {
+  border-color: var(--button-blue-bg);
+  box-shadow: 0 0 0 0.15rem rgba(128, 238, 246, 0.25);
+  background-color: var(--textbox-bg);
+  color: var(--text-primary);
+}
