@@ -45,6 +45,19 @@ namespace MealPlanner.Controllers
 
             return RedirectToAction(nameof(Index));
         }
+
+        [HttpPost]
+        [IgnoreAntiforgeryToken]
+        public async Task<IActionResult> ToggleTheme()
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId))
+                return Challenge();
+
+            await _userSettings.ToggleDarkThemeAsync(userId);
+            return Ok();
+        }
+
         [HttpGet]
         public async Task<IActionResult> Dietary()
         {
