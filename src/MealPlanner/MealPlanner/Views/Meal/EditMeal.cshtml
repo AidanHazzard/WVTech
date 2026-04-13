@@ -11,20 +11,24 @@
         <form asp-action="DeleteMeal" asp-controller="Meal" method="post"
               onsubmit="return confirm('Are you sure you want to delete this meal?');" class="m-0">
             <input type="hidden" name="id" value="@Model.Id" />
-            <button type="submit" class="btn btn-danger">
-                Delete
-            </button>
+            <button type="submit" class="btn btn-danger">Delete</button>
         </form>
     </div>
 
     <h2 class="back1Title">Edit Meal</h2>
     <hr>
-
     <!-- Form for the meal details only -->
-    <form id="createMealForm" class="mx-1" asp-action="EditMeal" method="POST">
+    <form id="editMealForm" class="mx-1" asp-action="EditMeal" method="POST">
+
         <input type="hidden" asp-for="Id" />
 
         <div class="row g-3 mb-3">
+            <div class="col-md-4">
+                <label asp-for="Title" class="form-label back1Title"></label>
+                <input asp-for="Title" id="mealTitle" class="form-control" placeholder="Meal title" />
+                <span asp-validation-for="Title" class="text-danger"></span>
+            </div>
+
             <div class="col-md-4">
                 <label asp-for="Date" class="form-label back1Title"></label>
                 <input asp-for="Date" type="date" class="form-control" />
@@ -40,35 +44,57 @@
             <div class="col-md-4 d-flex align-items-end">
                 <div class="form-check">
                     <input asp-for="RepeatWeekly" class="form-check-input" />
-                    <label asp-for="RepeatWeekly" class="form-check-label back1Title">Repeat Weekly</label>
+                    <label asp-for="RepeatWeekly" class="form-check-label back1Title">
+                        Repeat Weekly
+                    </label>
                 </div>
             </div>
         </div>
 
-        <!-- Bottom Save button -->
+        <!-- Hidden inputs for model binding -->
+        @* <div id="recipe-id-container">
+            @foreach (var recipe in Model.Recipes)
+            {
+                <input type="hidden" name="RecipeIds" value="@recipe.Id" />
+            }
+        </div> *@
+
+        <!-- Visible recipe list -->
+        <div id="mealRecipeList" class="mb-3">
+            @if (Model.Recipes != null && Model.Recipes.Any())
+            {
+                @foreach (var recipe in Model.Recipes)
+                {
+                    var location = Url.Action("Recipes", "FoodEntries", new { id = recipe.Id });
+                    <div class="mealRecipeItem d-flex align-items-center justify-content-between mb-2 back2 back2-textbox" data-id="@recipe.Id">
+                        <h4 class="buttonText mb-0"
+                            style="cursor:pointer;"
+                            onclick="location.href='@location'">@recipe.Name</h4>
+                        <button type="button" class="btn btn-danger delete-recipe-btn" data-id="@recipe.Id">
+                            X
+                        </button>
+                        <input type="hidden" name="RecipeIds" value="@recipe.Id" />
+                    </div>
+                }
+            }
+            else
+            {
+                <p class="text-muted mb-3">There are no recipes in this meal yet.</p>
+            }
+        </div>
+
         <button type="submit" class="buttonBlue mt-3">
             <h2 class="buttonText">Save Changes</h2>
         </button>
     </form>
 
-    <!-- Recipe search goes outside the POST form -->
-    <div id="createMealList" class="mt-4">
-        <template id="addRecipeRow">
-            <div class="back2 text-center back2-textbox">
-                <h4 id="recipeName">{Recipe Name}</h4>
-                <input type="hidden" name="RecipeIds" class="recipeIdInput" />
-            </div>
-        </template>
-    </div>
-
-    <div class="back2 pe-5 mt-3">
-        <h3 class="back1Title">Search for Recipes to Add</h3>
-        @await Html.PartialAsync("_RecipeSearchPartial")
-    </div>
+<div class="back2 pe-5 mt-3">
+    <h3 class="back1Title">Search for Recipes to Add</h3>
+    @await Html.PartialAsync("_RecipeSearchPartial")
+</div>
 
 </div>
 
 @section Scripts {
-    <script type="module" src="~/js/recipeSearch.js"></script>
-    <script type="module" src="~/js/createMeal.js"></script>
+    <script src="~/js/recipeSearch.js"></script>
 }

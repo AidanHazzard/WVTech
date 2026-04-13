@@ -7,7 +7,6 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Azure.Security.KeyVault.Secrets;
 using Azure.Identity;
-using System.Net.Http.Headers;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,22 +14,6 @@ builder.Services.AddControllersWithViews(options =>
 {
     options.Filters.Add<ThemeFilter>();
 });
-
-// Create connection string
-string? connectionString =
-    builder.Configuration.GetConnectionString("DefaultConnection")
-    ?? builder.Configuration["ConnectionString"];
-
-// Debug output
-Console.WriteLine("USING CONNECTION STRING: " + connectionString);
-
-// Validate connection string
-if (string.IsNullOrWhiteSpace(connectionString))
-{
-    throw new InvalidOperationException(
-        "Missing connection string. Set 'ConnectionStrings:DefaultConnection' or 'ConnectionString'."
-    );
-}
 
 // Get Secrets from Azure Key Vault (production only)
 if (builder.Environment.IsProduction())
@@ -47,8 +30,25 @@ if (builder.Environment.IsProduction())
 }
 
 // Create db context
+// Create connection string
+string? connectionString =
+    builder.Configuration.GetConnectionString("DefaultConnection")
+    ?? builder.Configuration["ConnectionString"];
+string databaseProvider = builder.Configuration["DatabaseProvider"] ?? "SqlServer";
+// Debug output
+Console.WriteLine("USING CONNECTION STRING: " + connectionString);
+
+// Validate connection string
+if (string.IsNullOrWhiteSpace(connectionString) && databaseProvider == "SqlServer")
+{
+    throw new InvalidOperationException(
+        "Missing connection string. Set 'ConnectionStrings:DefaultConnection' or 'ConnectionString'."
+    );
+}
+
 builder.Services.AddDbContext<MealPlannerDBContext>(options =>
     options.UseSqlServer(connectionString, options => options.EnableRetryOnFailure()));
+
 builder.Services.AddScoped<DbContext, MealPlannerDBContext>();
 
 // Add Repositories
@@ -104,26 +104,36 @@ builder.Services.AddScoped<IRegistrationService, RegistrationService>();
 builder.Services.AddScoped<IUserSettingsService, UserSettingsService>();
 
 // External APIs
-string edamamAppId = builder.Configuration.GetSection("Edamam")["AppId"];
-string edamamAPIKey = builder.Configuration.GetSection("Edamam")["ApiKey"];
-string edamamAPIUrl = "https://api.edamam.com/api/";
-builder.Services.AddHttpClient<IExternalRecipeService, EdamamService>(httpClient =>
+if (builder.Configuration["NoApi"] != "true")
 {
-    httpClient.BaseAddress = new Uri(edamamAPIUrl);
-    httpClient.DefaultRequestHeaders.Add("accept", "application/json");
-    httpClient.DefaultRequestHeaders.Add("Accept-Language", "en");
-    return new EdamamService(httpClient, edamamAppId, edamamAPIKey);
-});
+    
+    string edamamAppId = builder.Configuration.GetSection("Edamam")["AppId"];
+    string edamamAPIKey = builder.Configuration.GetSection("Edamam")["ApiKey"];
+    string edamamAPIUrl = "https://api.edamam.com/api/";
+    builder.Services.AddHttpClient<IExternalRecipeService, EdamamService>(httpClient =>
+    {
+        httpClient.BaseAddress = new Uri(edamamAPIUrl);
+        httpClient.DefaultRequestHeaders.Add("accept", "application/json");
+        httpClient.DefaultRequestHeaders.Add("Accept-Language", "en");
+        return new EdamamService(httpClient, edamamAppId, edamamAPIKey);
+    });
+}
 
 // Configure emailer
 builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection("EmailSettings"));
 builder.Services.AddTransient<IEmailService, EmailService>();
 
+// Use static assets for staging
+if (builder.Environment.IsStaging())
+{
+    builder.WebHost.UseStaticWebAssets();
+}
+
 var app = builder.Build();
 
 await SeedService.SeedData(app.Services);
 
-if (!app.Environment.IsDevelopment())
+if (app.Environment.IsProduction())
 {
     app.UseExceptionHandler("/Home/Error");
     app.UseHsts();
