@@ -211,30 +211,33 @@ public class FoodEntriesController : Controller
         return RedirectToAction("Recipes");
     }
 
-    [HttpPost]
-    [Authorize]
-    [IgnoreAntiforgeryToken]
-    public async Task<IActionResult> DeleteRecipe(int id)
-    {
-        User? user = await _registrationService.FindUserByClaimAsync(User);
-        if (user == null) return Challenge();
+  [HttpPost]
+[Authorize]
+[IgnoreAntiforgeryToken]
+public async Task<IActionResult> DeleteRecipe(int id)
+{
+    User? user = await _registrationService.FindUserByClaimAsync(User);
+    if (user == null) return Challenge();
 
-        var ownedRecipes = await _userRecipeRepository.GetUserOwnedRecipesByUserIdAsync(user.Id);
-        if (!ownedRecipes.Any(r => r.Id == id))
-            return Forbid();
+    var ownedRecipes = await _userRecipeRepository.GetUserOwnedRecipesByUserIdAsync(user.Id);
+    if (!ownedRecipes.Any(r => r.Id == id))
+        return Forbid();
 
-        var recipe = await _context.Recipes.FindAsync(id);
-        if (recipe == null) return NotFound();
+    var recipe = await _recipeRepository.ReadRecipeWithIngredientsAsync(id);
+    if (recipe == null) return NotFound();
 
-        // Remove UserRecipe records first to avoid FK constraint
-        var userRecipes = _context.Set<UserRecipe>().Where(ur => ur.RecipeId == id);
-        _context.Set<UserRecipe>().RemoveRange(userRecipes);
+    // Remove ingredients first
+    _context.Set<Ingredient>().RemoveRange(recipe.Ingredients);
 
-        _context.Recipes.Remove(recipe);
-        await _context.SaveChangesAsync();
+    // Remove user recipes
+    var userRecipes = _context.Set<UserRecipe>().Where(ur => ur.RecipeId == id);
+    _context.Set<UserRecipe>().RemoveRange(userRecipes);
 
-        return Ok();
-    }
+    _context.Recipes.Remove(recipe);
+    await _context.SaveChangesAsync();
+
+    return Ok();
+}
 
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
     public IActionResult Error()
