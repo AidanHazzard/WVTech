@@ -27,6 +27,7 @@ public class MealControllerTests
     private Mock<IMealRepository> _mealRepoMock;
     private Mock<IRecipeRepository> _recipeRepoMock;
     private Mock<IRegistrationService> _registrationServiceMock;
+    private Mock<IMealRecommendationService> _reccServiceMock;
 
     [SetUp]
     public void SetUp()
@@ -58,13 +59,14 @@ public class MealControllerTests
 
         _recipeRepoMock = new Mock<IRecipeRepository>();
         _mealRepoMock = new Mock<IMealRepository>();
-
+        _reccServiceMock = new Mock<IMealRecommendationService>();
         // Instantiate controller
         _controller = new MealController(
             _registrationServiceMock.Object,
             _recipeRepoMock.Object,
             _mealRepoMock.Object,
-            _context);
+            _context,
+            _reccServiceMock.Object);
 
         _controller.ControllerContext = new ControllerContext
         {
@@ -189,5 +191,42 @@ public class MealControllerTests
 
         var result = await _controller.EditMeal(999);
         Assert.That(result, Is.TypeOf<NotFoundResult>());
+    }
+
+    // -----------------------------
+    // GenerateMeal tests
+    // -----------------------------
+    [Test]
+    public async Task GenerateMeal_RedirectsToViewMeal_ForNewMeal()
+    {
+        // Arrange
+        CreateMealViewModel vm = new CreateMealViewModel()
+        {
+            Title = "Test",
+            Date = DateTime.UnixEpoch,
+            Time = TimeSpan.MinValue
+        };
+
+        Meal meal = new Meal()
+        {
+            Id = 100,
+            Title = vm.Title,
+            StartTime = vm.Date
+        };
+        _reccServiceMock.Setup(s => s.GetRecommendedRecipesForUser(It.IsAny<User>(), It.IsAny<DateTime>()))
+            .ReturnsAsync([new Recipe()]);
+        _mealRepoMock.Setup(r => r.CreateOrUpdate(It.IsAny<Meal>())).Returns(meal);
+        
+        // Act
+        var result = await _controller.GenerateMeal(vm);
+
+        // Assert
+        Assert.That(result, Is.TypeOf<RedirectToActionResult>());
+        var redirectResult = result as RedirectToActionResult;
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(redirectResult!.ActionName, Is.EqualTo("ViewMeal"));
+            Assert.That(redirectResult.RouteValues!["id"], Is.EqualTo(meal.Id));            
+        }
     }
 }

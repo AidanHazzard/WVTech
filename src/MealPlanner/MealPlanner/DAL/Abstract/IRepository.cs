@@ -6,7 +6,7 @@ public interface IRepository<TEntity> where TEntity : class, new()
 
     public List<TEntity> ReadAll();
 
-    public void CreateOrUpdate(TEntity entity);
+    public TEntity CreateOrUpdate(TEntity entity);
 
     public void Delete(TEntity entity);
 

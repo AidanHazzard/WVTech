@@ -29,7 +29,7 @@ public class RecipeRepository : Repository<Recipe>, IRecipeRepository
         return results;
     }
 
-    public override void CreateOrUpdate(Recipe recipe)
+    public override Recipe CreateOrUpdate(Recipe recipe)
     {
         HashSet<IngredientBase> newIngredientBases = [];
         HashSet<Measurement> newMeasurements = [];
@@ -78,7 +78,7 @@ public class RecipeRepository : Repository<Recipe>, IRecipeRepository
         if (!newIngredientBases.IsNullOrEmpty())  _ingredientBaseSet.AddRange(newIngredientBases); 
         if (!newMeasurements.IsNullOrEmpty())  _measurementSet.AddRange(newMeasurements); 
 
-        base.CreateOrUpdate(recipe);
+        return base.CreateOrUpdate(recipe);
     }
 
     public async Task<Recipe?> ReadRecipeWithIngredientsAsync(int id)

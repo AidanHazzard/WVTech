@@ -26,15 +26,15 @@ namespace MealPlanner.Models
             modelBuilder.Entity<Recipe>(b =>
             {
                 b.HasData(
-                    new Recipe { Id = -1, Name = "Oatmeal Cookies", Directions = "" },
-                    new Recipe { Id = -2, Name = "Spaghetti All'assassina", Directions = "" },
-                    new Recipe { Id = -3, Name = "Spaghetti and Meatballs", Directions = "" },
-                    new Recipe { Id = -4, Name = "Vegan Spaghetti with Mushrooms", Directions = "" },
-                    new Recipe { Id = -5, Name = "Baked Spaghetti Casserole", Directions = "" },
-                    new Recipe { Id = -6, Name = "Mac 'n Cheese Casserole", Directions = "" },
-                    new Recipe { Id = -7, Name = "Homemade Mac 'n Cheese", Directions = "" },
-                    new Recipe { Id = -8, Name = "Mushroom Steak Salad", Directions = "" },
-                    new Recipe { Id = -9, Name = "Ceasar Salad", Directions = "" }
+                    new Recipe { Id = -1, Name = "Oatmeal Cookies", Directions = "", Calories = 250 },
+                    new Recipe { Id = -2, Name = "Spaghetti All'assassina", Directions = "", Calories = 400 },
+                    new Recipe { Id = -3, Name = "Spaghetti and Meatballs", Directions = "", Calories = 1000 },
+                    new Recipe { Id = -4, Name = "Vegan Spaghetti with Mushrooms", Directions = "", Calories = 350 },
+                    new Recipe { Id = -5, Name = "Baked Spaghetti Casserole", Directions = "", Calories = 400 },
+                    new Recipe { Id = -6, Name = "Mac 'n Cheese Casserole", Directions = "", Calories = 550 },
+                    new Recipe { Id = -7, Name = "Homemade Mac 'n Cheese", Directions = "", Calories = 850 },
+                    new Recipe { Id = -8, Name = "Mushroom Steak Salad", Directions = "", Calories = 400 },
+                    new Recipe { Id = -9, Name = "Ceasar Salad", Directions = "", Calories = 300 }
                 );
             });
 

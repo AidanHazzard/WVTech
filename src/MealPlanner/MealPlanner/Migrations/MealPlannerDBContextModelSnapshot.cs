@@ -191,7 +191,7 @@ namespace MealPlanner.Migrations
                         new
                         {
                             Id = -1,
-                            Calories = 0,
+                            Calories = 250,
                             Carbs = 0,
                             Directions = "",
                             Fat = 0,
@@ -201,7 +201,7 @@ namespace MealPlanner.Migrations
                         new
                         {
                             Id = -2,
-                            Calories = 0,
+                            Calories = 400,
                             Carbs = 0,
                             Directions = "",
                             Fat = 0,
@@ -211,7 +211,7 @@ namespace MealPlanner.Migrations
                         new
                         {
                             Id = -3,
-                            Calories = 0,
+                            Calories = 1000,
                             Carbs = 0,
                             Directions = "",
                             Fat = 0,
@@ -221,7 +221,7 @@ namespace MealPlanner.Migrations
                         new
                         {
                             Id = -4,
-                            Calories = 0,
+                            Calories = 350,
                             Carbs = 0,
                             Directions = "",
                             Fat = 0,
@@ -231,7 +231,7 @@ namespace MealPlanner.Migrations
                         new
                         {
                             Id = -5,
-                            Calories = 0,
+                            Calories = 400,
                             Carbs = 0,
                             Directions = "",
                             Fat = 0,
@@ -241,7 +241,7 @@ namespace MealPlanner.Migrations
                         new
                         {
                             Id = -6,
-                            Calories = 0,
+                            Calories = 550,
                             Carbs = 0,
                             Directions = "",
                             Fat = 0,
@@ -251,7 +251,7 @@ namespace MealPlanner.Migrations
                         new
                         {
                             Id = -7,
-                            Calories = 0,
+                            Calories = 850,
                             Carbs = 0,
                             Directions = "",
                             Fat = 0,
@@ -261,7 +261,7 @@ namespace MealPlanner.Migrations
                         new
                         {
                             Id = -8,
-                            Calories = 0,
+                            Calories = 400,
                             Carbs = 0,
                             Directions = "",
                             Fat = 0,
@@ -271,7 +271,7 @@ namespace MealPlanner.Migrations
                         new
                         {
                             Id = -9,
-                            Calories = 0,
+                            Calories = 300,
                             Carbs = 0,
                             Directions = "",
                             Fat = 0,

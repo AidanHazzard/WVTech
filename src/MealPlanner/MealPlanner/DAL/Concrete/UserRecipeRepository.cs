@@ -109,4 +109,12 @@ public class UserRecipeRepository :  Repository<UserRecipe>, IUserRecipeReposito
         UserRecipe? userRecipe = await _dbset.FindAsync(userId, recipeId);
         return userRecipe?.UserVote ?? UserVoteType.NoVote;
     }
+    
+    public async Task<List<Recipe>> GetUserRecipesByVoteType(string userId, UserVoteType voteType)
+    {
+        return await _dbset
+            .Where(ur => ur.UserId == userId && ur.UserVote == voteType)
+            .Select(ur => ur.Recipe)
+            .ToListAsync();
+    }
 }

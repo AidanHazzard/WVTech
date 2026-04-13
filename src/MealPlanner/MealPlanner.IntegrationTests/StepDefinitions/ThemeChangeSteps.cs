@@ -29,14 +29,14 @@ public class ThemeChangeSteps
         {
             try
             {
-                var el = driver.FindElement(By.CssSelector("#themeToggle"));
+                var el = driver.FindElement(By.Id("themeToggle"));
                 return el.Displayed ? el : null;
             }
             catch (NoSuchElementException) { return null; }
         })!;
 
         toggle.Click();
-        Thread.Sleep(1000); // Wait for fetch to complete
+        Thread.Sleep(1000);
     }
 
     [Then("{string} has dark theme enabled in the database")]
