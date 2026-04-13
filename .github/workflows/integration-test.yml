@@ -17,10 +17,13 @@ jobs:
           dotnet-version: '10.x'
 
       - name: Install dependencies
-        run: dotnet restore ./src/MealPlanner/MealPlanner.IntegrationTests/MealPlanner.IntegrationTests.csproj
+        working-directory: ./src/MealPlanner/MealPlanner.IntegrationTests
+        run: dotnet restore
 
       - name: Build test project
-        run: dotnet build --no-restore ./src/MealPlanner/MealPlanner.IntegrationTests/MealPlanner.IntegrationTests.csproj
+        working-directory: ./src/MealPlanner/MealPlanner.IntegrationTests
+        run: dotnet build --no-restore
 
       - name: Test
-        run: dotnet test --no-build ./src/MealPlanner/MealPlanner.IntegrationTests/MealPlanner.IntegrationTests.csproj
+        working-directory: ./src/MealPlanner/MealPlanner.IntegrationTests
+        run: dotnet test --no-build
