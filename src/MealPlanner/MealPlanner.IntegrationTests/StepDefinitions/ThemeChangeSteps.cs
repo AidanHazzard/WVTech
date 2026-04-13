@@ -23,7 +23,7 @@ public class ThemeChangeSteps
     [When("{string} clicks the change theme button")]
     public void WhenUserClicksChangeThemeButton(string username)
     {
-        var link = new WebDriverWait(_driver, TimeSpan.FromSeconds(10)).Until(driver =>
+        var toggle = new WebDriverWait(_driver, TimeSpan.FromSeconds(10)).Until(driver =>
         {
             try
             {
