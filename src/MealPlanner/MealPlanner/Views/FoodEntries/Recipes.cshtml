@@ -5,9 +5,13 @@
     @foreach (RecipeViewModel r in Model)
     {
         var location = @Url.Action(action: "Recipes");
-        <button class="buttonGrey" onclick="location.href='@location/@r.Id'">
-            <h3 class="buttonText">@r.Name</h3>
-        </button>
+        <div class="mealRecipeItem d-flex align-items-center justify-content-between mb-2 back2 back2-textbox"
+             data-recipe-id="@r.Id">
+            <h4 class="buttonText mb-0"
+                style="cursor:pointer;"
+                onclick="location.href='@location/@r.Id'">@r.Name</h4>
+            <button type="button" class="btn btn-danger delete-recipe-btn" data-id="@r.Id">X</button>
+        </div>
     }
     <form asp-controller="FoodEntries" asp-action="AddNewRecipe" method="get">
         <button class="buttonBlue">
@@ -18,8 +22,8 @@
 
 @await Html.PartialAsync("_RecipeSearchPartial")
 
-
 @section Scripts{
     <script type="module" src="~/js/recipeSearch.js"></script>
     <script type="module" src="~/js/recipeSearchToView.js"></script>
+    <script src="~/js/deleteRecipe.js"></script>
 }
