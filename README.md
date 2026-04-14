@@ -5,4 +5,4 @@ A senior project from Western Oregon University by Natalie, Cooper, Easton, and 
 [Our Vision](/docs/vision_statement.md)<br>
 [Our App](https://onebite.azurewebsites.net/Home)
 
-[Sprint 3 Retrospective Meeting Notes](/team/sprint_retrospectives/sprint3_retrospective.pdf)
+[Sprint 4 Retrospective Meeting Notes](/team/sprint_retrospectives/sprint4_retrospective.md)
