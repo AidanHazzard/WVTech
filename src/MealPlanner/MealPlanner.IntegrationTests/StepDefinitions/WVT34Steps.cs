@@ -2,9 +2,6 @@ using MealPlanner.Models;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Support.UI;
 using Reqnroll;
-using Mealplanner.IntegrationTests;
-using MealPlanner.IntegrationTests;
-
 namespace Mealplanner.IntegrationTests;
 
 [Binding]
@@ -12,6 +9,7 @@ public class WVT34Steps
 {
     IWebDriver _driver;
     string _baseUrl;
+    MealPlannerDBContext _context;
     
     // Runs before each scenerio
     [BeforeScenario]
@@ -19,6 +17,7 @@ public class WVT34Steps
     {
         _driver = BDDSetup.Driver;
         _baseUrl = AUTHost.BaseUrl;
+        _context = BDDSetup.Context;
     }
 
     // This step definition uses Cucumber Expressions. See https://github.com/gasparnagy/CucumberExpressions.SpecFlow
@@ -43,16 +42,15 @@ public class WVT34Steps
     [Given("{string} had upvoted the recipe with id {int}")]
     public void GivenHadUpvotedTheRecipeWithId(string userName, int recipeId)
     {
-        using var ctx = BDDSetup.CreateContext();
-        UserRecipe userRecipe = ctx.Find<UserRecipe>(SharedSteps.Users[userName].Id, recipeId)
+        UserRecipe userRecipe = _context.Find<UserRecipe>(SharedSteps.Users[userName].Id, recipeId)
             ?? new UserRecipe()
             {
                 User = SharedSteps.Users[userName],
-                Recipe = ctx.Find<Recipe>(recipeId)
+                Recipe = _context.Find<Recipe>(recipeId)
             };
         userRecipe.UserVote = UserVoteType.UpVote;
-        ctx.Update(userRecipe);
-        ctx.SaveChanges();
+        _context.Update(userRecipe);
+        _context.SaveChanges();
     }
 
     // This step definition uses Cucumber Expressions. See https://github.com/gasparnagy/CucumberExpressions.SpecFlow
