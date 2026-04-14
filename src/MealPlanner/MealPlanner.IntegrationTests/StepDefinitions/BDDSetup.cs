@@ -27,7 +27,7 @@ public class BDDSetup
         
         //FirefoxOptions options = new FirefoxOptions();
         ChromeOptions options = new ChromeOptions();
-        options.AddArgument("--headless");
+        // options.AddArgument("--headless");
         options.AddArgument("--disable-dev-shm-usage");
         options.AddArgument("--no-sandbox");
         options.AddArgument("--window-size=2560,1440");
