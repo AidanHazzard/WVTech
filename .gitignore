@@ -292,3 +292,6 @@ __pycache__/
 .DS_Store
 **/bin/
 **/obj/
+
+# Personal Claude Code context (not shared with team)
+CLAUDE.local.md
