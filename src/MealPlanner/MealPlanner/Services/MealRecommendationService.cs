@@ -32,11 +32,13 @@ public class MealRecommendationService : IMealRecommendationService
 
         var rest = _recipeRepository
             .ReadAll()
-            .Where(r => _userRecipeRepository.GetUserRecipeVoteAsync(user.Id, r.Id).Result != UserVoteType.DownVote && !existingRecipes.Contains(r))
+            .Where(r => _userRecipeRepository.GetUserRecipeVoteAsync(user.Id, r.Id).Result != UserVoteType.DownVote && !existingRecipes.Contains(r) && !recipes.Contains(r))
             .OrderByDescending(r => _userRecipeRepository.GetRecipeVotePercentage(r.Id).Result)
             .ToList();
 
         recipes.AddRange(rest);
+
+        // Target of zero implies no calorie limit
         var calorieTarget = (await _nutrionRepository.GetUsersNutritionPreferenceAsync(user.Id))?.CalorieTarget ?? int.MaxValue;
         calorieTarget -= existingRecipes.Sum(r => r.Calories);
         List<Recipe> toReturn = [];
