@@ -13,6 +13,7 @@ public class WVT99Steps
     IWebDriver _driver;
     string _baseUrl;
     int _recipeId;
+    string _excludedTag = string.Empty;
 
     [BeforeScenario]
     public void SetUp()
@@ -132,5 +133,59 @@ public class WVT99Steps
         new WebDriverWait(_driver, TimeSpan.FromSeconds(10)).Until(driver =>
             ((IJavaScriptExecutor)driver)
                 .ExecuteScript("return document.readyState").ToString() == "complete");
+    }
+
+    [Then("there is only {int} tag with the name {string} in the database")]
+    public void ThenThereIsOnlyNTagWithNameInDatabase(int expectedCount, string tagName)
+    {
+        var ctx = BDDSetup.Context;
+        var actual = ctx.Set<Tag>()
+            .Count(t => t.Name.ToLower() == tagName.ToLower());
+        Assert.That(actual, Is.EqualTo(expectedCount),
+            $"Expected {expectedCount} tag(s) matching '{tagName}' (case-insensitive) but found {actual}.");
+    }
+
+    [Given("there are 11 tags with varying usage counts")]
+    public void GivenThereAre11TagsWithVaryingUsageCounts()
+    {
+        var ctx = BDDSetup.Context;
+
+        // Remove any existing tags to start clean
+        ctx.Set<Tag>().RemoveRange(ctx.Set<Tag>());
+        ctx.SaveChanges();
+
+        // Create 10 tags each used on 2 recipes (these should appear in top 10)
+        for (int i = 1; i <= 10; i++)
+        {
+            var tag = new Tag { Name = $"PopularTag{i}" };
+            ctx.AddRange(
+                new Recipe { Name = $"PopularRecipe{i}A", Directions = "d", Calories = 100, Protein = 5, Fat = 2, Carbs = 10, Tags = [tag] },
+                new Recipe { Name = $"PopularRecipe{i}B", Directions = "d", Calories = 100, Protein = 5, Fat = 2, Carbs = 10, Tags = [tag] }
+            );
+        }
+
+        // Create 1 tag used on only 1 recipe (should be excluded when top 10 are present)
+        _excludedTag = "RareTag";
+        var rareTag = new Tag { Name = _excludedTag };
+        ctx.Add(new Recipe { Name = "RareRecipe", Directions = "d", Calories = 100, Protein = 5, Fat = 2, Carbs = 10, Tags = [rareTag] });
+
+        ctx.SaveChanges();
+    }
+
+    [Then("the tag dropdown shows exactly {int} options")]
+    public void ThenTagDropdownShowsExactlyNOptions(int expectedCount)
+    {
+        var select = new SelectElement(_driver.FindElement(By.Id("tag-select")));
+        // Subtract 1 for the placeholder "Select a tag..." option
+        Assert.That(select.Options.Count - 1, Is.EqualTo(expectedCount));
+    }
+
+    [Then("the least used tag is not in the dropdown")]
+    public void ThenLeastUsedTagIsNotInDropdown()
+    {
+        var select = _driver.FindElement(By.Id("tag-select"));
+        var options = select.FindElements(By.TagName("option"));
+        Assert.That(options.Any(o => o.GetAttribute("value") == _excludedTag), Is.False,
+            $"Expected '{_excludedTag}' to be absent from the dropdown but it was present.");
     }
 }

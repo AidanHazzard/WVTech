@@ -24,13 +24,6 @@ public class TagRepositoryTests
 
         using var context = new MealPlannerDBContext(_contextOptions);
         context.Database.EnsureCreated();
-
-        context.Tags.AddRange(
-            new Tag { Name = "Breakfast" },
-            new Tag { Name = "Dinner" },
-            new Tag { Name = "Lunch" }
-        );
-        context.SaveChanges();
     }
 
     MealPlannerDBContext CreateContext() => new MealPlannerDBContext(_contextOptions);
@@ -39,41 +32,76 @@ public class TagRepositoryTests
     public void TearDown() => _connection.Dispose();
 
     [Test]
-    public async Task GetTagNamesAsync_ReturnsAllTagNames()
+    public async Task GetTagNamesAsync_ReturnsTopTagsByUsage()
     {
         // Arrange
+        using var context = CreateContext();
+        var popular = new Tag { Name = "Popular" };
+        var rare = new Tag { Name = "Rare" };
+        context.Tags.AddRange(popular, rare);
+        context.Recipes.Add(new Recipe { Name = "R1", Directions = "d", Calories = 100, Protein = 5, Fat = 2, Carbs = 10, Tags = [popular] });
+        context.Recipes.Add(new Recipe { Name = "R2", Directions = "d", Calories = 100, Protein = 5, Fat = 2, Carbs = 10, Tags = [popular] });
+        context.Recipes.Add(new Recipe { Name = "R3", Directions = "d", Calories = 100, Protein = 5, Fat = 2, Carbs = 10, Tags = [rare] });
+        context.SaveChanges();
         var repo = new TagRepository(CreateContext());
 
         // Act
         var names = await repo.GetTagNamesAsync();
 
-        // Assert
-        Assert.That(names, Contains.Item("Breakfast"));
-        Assert.That(names, Contains.Item("Dinner"));
-        Assert.That(names, Contains.Item("Lunch"));
+        // Assert — Popular (2 uses) should come before Rare (1 use)
+        Assert.That(names.IndexOf("Popular"), Is.LessThan(names.IndexOf("Rare")));
     }
 
     [Test]
-    public async Task GetTagNamesAsync_ReturnsNamesInAlphabeticalOrder()
+    public async Task GetTagNamesAsync_ReturnsAtMostTen()
     {
         // Arrange
+        using var context = CreateContext();
+        for (int i = 1; i <= 11; i++)
+        {
+            var tag = new Tag { Name = $"Tag{i}" };
+            context.Recipes.Add(new Recipe { Name = $"Recipe{i}", Directions = "d", Calories = 100, Protein = 5, Fat = 2, Carbs = 10, Tags = [tag] });
+        }
+        context.SaveChanges();
         var repo = new TagRepository(CreateContext());
 
         // Act
         var names = await repo.GetTagNamesAsync();
 
         // Assert
-        Assert.That(names, Is.EqualTo(names.OrderBy(n => n).ToList()));
+        Assert.That(names.Count, Is.EqualTo(10));
+    }
+
+    [Test]
+    public async Task GetTagNamesAsync_ExcludesLeastUsedTagWhenOver10()
+    {
+        // Arrange
+        using var context = CreateContext();
+        // 10 tags each on 2 recipes
+        for (int i = 1; i <= 10; i++)
+        {
+            var tag = new Tag { Name = $"PopularTag{i}" };
+            context.Recipes.Add(new Recipe { Name = $"PopRecipe{i}A", Directions = "d", Calories = 100, Protein = 5, Fat = 2, Carbs = 10, Tags = [tag] });
+            context.Recipes.Add(new Recipe { Name = $"PopRecipe{i}B", Directions = "d", Calories = 100, Protein = 5, Fat = 2, Carbs = 10, Tags = [tag] });
+        }
+        // 1 tag on only 1 recipe — should be excluded
+        var rareTag = new Tag { Name = "RareTag" };
+        context.Recipes.Add(new Recipe { Name = "RareRecipe", Directions = "d", Calories = 100, Protein = 5, Fat = 2, Carbs = 10, Tags = [rareTag] });
+        context.SaveChanges();
+        var repo = new TagRepository(CreateContext());
+
+        // Act
+        var names = await repo.GetTagNamesAsync();
+
+        // Assert
+        Assert.That(names, Does.Not.Contain("RareTag"));
     }
 
     [Test]
     public async Task GetTagNamesAsync_ReturnsEmptyList_WhenNoTagsExist()
     {
         // Arrange
-        using var context = CreateContext();
-        context.Tags.RemoveRange(context.Tags.ToList());
-        context.SaveChanges();
-        var repo = new TagRepository(context);
+        var repo = new TagRepository(CreateContext());
 
         // Act
         var names = await repo.GetTagNamesAsync();
