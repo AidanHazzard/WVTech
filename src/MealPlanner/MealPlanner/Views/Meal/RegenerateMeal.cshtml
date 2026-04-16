@@ -1,0 +1,55 @@
+@model MealPlanner.ViewModels.MealPreferenceViewModel
+@using MealPlanner.Models
+@{
+    ViewData["Title"] = "Regenerate Meal";
+    var tags = (List<Tag>)(ViewBag.AvailableTags ?? new List<Tag>());
+    int mealId = ViewBag.MealId ?? 0;
+}
+
+<div class="back1 backHasButton">
+    <h2 class="back1Title">Regenerate Meal</h2>
+    <hr />
+
+    <form asp-action="RegenerateMeal" asp-route-mealId="@mealId" method="POST">
+        @Html.AntiForgeryToken()
+
+        <div class="row g-3 mb-3">
+            <div class="col-md-4">
+                <label asp-for="Size" class="form-label">Meal size</label>
+                <select id="Size" asp-for="Size" class="form-control"
+                        asp-items="@(new SelectList(new[] {
+                            new { Value = "Small",   Text = "Small" },
+                            new { Value = "Average", Text = "Average" },
+                            new { Value = "Large",   Text = "Large" }
+                        }, "Value", "Text", Model.Size.ToString()))">
+                </select>
+            </div>
+        </div>
+
+        <div class="row g-3 mb-3">
+            <div class="col-md-8">
+                <label class="form-label">Food type (tags)</label>
+                <select id="TagIds" name="TagIds" class="form-control" multiple>
+                    @foreach (var tag in tags)
+                    {
+                        if (Model.TagIds.Contains(tag.Id))
+                        {
+                            <option value="@tag.Id" selected>@tag.Name</option>
+                        }
+                        else
+                        {
+                            <option value="@tag.Id">@tag.Name</option>
+                        }
+                    }
+                </select>
+            </div>
+        </div>
+
+        <button type="submit" class="buttonBlue">
+            <h4 class="buttonText">Regenerate</h4>
+        </button>
+        <a href="javascript:history.back()" class="buttonBlue ms-2">
+            <h4 class="buttonText">Cancel</h4>
+        </a>
+    </form>
+</div>

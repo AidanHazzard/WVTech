@@ -144,6 +144,7 @@ public class MealController : Controller
     [HttpGet]
     public IActionResult GenerateDayPlan()
     {
+        ViewBag.AvailableTags = _context.Set<Models.Tag>().OrderBy(t => t.Name).ToList();
         return View(new ViewModels.DayPlanConfigViewModel
         {
             SelectedMonth = DateTime.Today.Month,
@@ -177,6 +178,8 @@ public class MealController : Controller
         var meal = await _mealRepo.ReadAsync(mealId);
         if (meal == null || meal.UserId != user.Id) return NotFound();
 
+        ViewBag.MealId = mealId;
+        ViewBag.AvailableTags = _context.Set<Models.Tag>().OrderBy(t => t.Name).ToList();
         return View(new ViewModels.MealPreferenceViewModel());
     }
 

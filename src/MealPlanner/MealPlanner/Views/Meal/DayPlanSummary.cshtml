@@ -1,9 +1,48 @@
 @model MealPlanner.ViewModels.DayPlanSummaryViewModel
-
 @{
     ViewData["Title"] = "Day Plan Summary";
 }
 
-<h2>Day Plan Summary</h2>
+<div class="back1">
+    <h2 class="back1Title">Day Plan — @Model.Date.ToString("MMMM d")</h2>
+    <hr />
 
-<p>Summary coming soon.</p>
+    <div id="day-plan-summary">
+        @if (!Model.Meals.Any())
+        {
+            <p>No meals were generated. Please try again.</p>
+        }
+        else
+        {
+            foreach (var meal in Model.Meals)
+            {
+                <div class="back2 mb-3 p-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h4 data-meal-name data-meal-id="@meal.MealId">
+                            @(meal.IsSnack ? "Snack" : meal.Recipes.FirstOrDefault()?.Name ?? "Meal")
+                        </h4>
+                        <a href="/Meal/RegenerateMeal?mealId=@meal.MealId"
+                           data-action="regenerate-meal"
+                           class="buttonBlue">
+                            Regenerate
+                        </a>
+                    </div>
+
+                    @if (meal.Recipes.Any())
+                    {
+                        <ul class="mt-2">
+                            @foreach (var recipe in meal.Recipes)
+                            {
+                                <li>@recipe.Name (@recipe.Calories cal)</li>
+                            }
+                        </ul>
+                    }
+                </div>
+            }
+        }
+    </div>
+
+    <a asp-action="PlannerHome" class="buttonBlue mt-3 d-inline-block">
+        <h4 class="buttonText">Back to Planner</h4>
+    </a>
+</div>

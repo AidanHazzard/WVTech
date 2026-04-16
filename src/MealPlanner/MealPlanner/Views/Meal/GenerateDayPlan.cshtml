@@ -1,9 +1,123 @@
 @model MealPlanner.ViewModels.DayPlanConfigViewModel
-
+@using MealPlanner.Models
 @{
     ViewData["Title"] = "Generate Day Plan";
+    var tags = (List<Tag>)(ViewBag.AvailableTags ?? new List<Tag>());
+    var tagsJson = System.Text.Json.JsonSerializer.Serialize(
+        tags.Select(t => new { id = t.Id, name = t.Name }));
 }
 
-<h2>Generate Day Plan</h2>
+<div class="back1 backHasButton">
+    <h2 class="back1Title">Generate Day Plan</h2>
 
-<p>Day plan configuration coming soon.</p>
+    <form asp-action="GenerateDayPlan" method="POST" id="dayPlanForm">
+        @Html.AntiForgeryToken()
+
+        <!-- Date fields (hidden, submitted with the form) -->
+        <input type="hidden" asp-for="SelectedMonth" id="hiddenMonth" />
+        <input type="hidden" asp-for="SelectedDay" id="hiddenDay" />
+
+        <!-- Step 1: meal count + snack preference -->
+        <div id="step1">
+            <div class="row g-3 mb-3">
+                <div class="col-md-4">
+                    <label for="MealCount" class="form-label">How many meals would you like today?</label>
+                    <input id="MealCount" name="MealCount" type="number"
+                           min="1" max="10" value="3" class="form-control" />
+                </div>
+            </div>
+
+            <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                    <div class="form-check">
+                        <input id="IncludeSnacks" name="IncludeSnacks" type="checkbox"
+                               class="form-check-input" value="true" />
+                        <label for="IncludeSnacks" class="form-check-label">
+                            Include snacks?
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div id="snackSizeRow" class="row g-3 mb-3" style="display:none">
+                <div class="col-md-4">
+                    <label for="SnackSize" class="form-label">Snack size</label>
+                    <select id="SnackSize" name="SnackSize" class="form-control">
+                        <option value="SmallSnack">Small Snack</option>
+                        <option value="LargeSnack">Large Snack</option>
+                    </select>
+                </div>
+            </div>
+
+            <button type="button" data-action="next-step" class="buttonBlue mt-2">
+                <h4 class="buttonText">Next — Configure Meals</h4>
+            </button>
+        </div>
+
+        <!-- Step 2: per-meal configuration (populated by JS) -->
+        <div id="step2" style="display:none">
+            <div id="mealPreferenceSections"></div>
+
+            <button type="submit" class="buttonBlue mt-3">
+                <h4 class="buttonText">Generate Day Plan</h4>
+            </button>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+<script>
+    const availableTags = @Html.Raw(tagsJson);
+
+    document.getElementById('IncludeSnacks').addEventListener('change', function () {
+        document.getElementById('snackSizeRow').style.display = this.checked ? '' : 'none';
+    });
+
+    document.querySelector('[data-action="next-step"]').addEventListener('click', function () {
+        const count = parseInt(document.getElementById('MealCount').value) || 1;
+        const includeSnacks = document.getElementById('IncludeSnacks').checked;
+        const container = document.getElementById('mealPreferenceSections');
+        container.innerHTML = '';
+
+        // Set hidden date from today (already set server-side as default)
+        const today = new Date();
+        document.getElementById('hiddenMonth').value = today.getMonth() + 1;
+        document.getElementById('hiddenDay').value = today.getDate();
+
+        for (let i = 0; i < count; i++) {
+            const tagOptions = availableTags
+                .map(t => `<option value="${t.id}">${t.name}</option>`)
+                .join('');
+
+            container.innerHTML += `
+                <div class="back2 mb-3 p-3">
+                    <h5>Meal ${i + 1}</h5>
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label">Size</label>
+                            <select id="MealPreferences_${i}__Size"
+                                    name="MealPreferences[${i}].Size"
+                                    class="form-control">
+                                <option value="Small">Small</option>
+                                <option value="Average" selected>Average</option>
+                                <option value="Large">Large</option>
+                            </select>
+                        </div>
+                        <div class="col-md-8">
+                            <label class="form-label">Food type (tags)</label>
+                            <select id="MealPreferences_${i}__TagIds"
+                                    name="MealPreferences[${i}].TagIds"
+                                    class="form-control"
+                                    multiple>
+                                ${tagOptions}
+                            </select>
+                        </div>
+                    </div>
+                </div>`;
+        }
+
+        document.getElementById('step1').style.display = 'none';
+        document.getElementById('step2').style.display = '';
+    });
+</script>
+}
