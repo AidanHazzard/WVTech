@@ -111,12 +111,18 @@ The connection string key is `ConnectionStrings:DefaultConnection` (falls back t
 
 ### Development workflow (BDD + TDD)
 
-For every feature, follow this order — never write implementation code before tests exist:
+Work through BDD scenarios **one at a time**. For each scenario:
 
-1. Translate acceptance criteria into Gherkin `.feature` files (Given/When/Then) in `MealPlanner.IntegrationTests/Features/`
-2. Write step definitions and any relevant unit tests
-3. Run the tests and confirm they **fail** (red)
-4. Write the minimum implementation code to make them **pass** (green)
+1. Write the Gherkin scenario in the `.feature` file
+2. Create any class/method **stubs** needed (interfaces, empty method bodies, etc.)
+3. Write **unit tests** for those stubs — run them and confirm they **fail** (red)
+4. Implement the minimum code to make the unit tests **pass** (green)
+5. Confirm the BDD scenario itself passes end-to-end
+6. Commit, then move to the next scenario
+
+Never implement scenario N+1 before scenario N's BDD test passes. Never write all scenarios first and then implement everything — the per-scenario red→green cycle is the point.
+
+Unit tests must cover: repository find-or-create logic, ViewModel conversion methods (RecipeFromRecipeVM, RecipeToRecipeVM, EditRecipeVMToModel), and controller constructor changes (update existing mocks when adding constructor parameters). Step definitions use `BDDSetup.Context` (not `BDDSetup.CreateContext()`).
 
 ### Git workflow
 
@@ -135,6 +141,12 @@ Never suggest opening a PR to `main` mid-sprint. Always target `dev`.
 
 - **Edamam Recipe Search API v2** — https://api.edamam.com/doc/open-api/recipe-search-v2.yaml
   Used by `Services/EdamamService.cs`. Consult this when modifying recipe search, nutrition data parsing, or the nutrient key mappings (`ENERC_KCAL`, `PROCNT`, `CHOCDF`, `FAT`).
+
+### Jira
+
+- **Instance:** https://homework5.atlassian.net
+- **Ticket naming:** `WVT-{number}` (e.g. `WVT-99`). Feature files are named `wvt-{number}.feature` to match.
+- **API:** `GET https://homework5.atlassian.net/rest/api/3/issue/WVT-{number}` — requires Basic Auth (email + API token). Token is stored in `CLAUDE.local.md` (gitignored).
 
 ### CI/CD
 
