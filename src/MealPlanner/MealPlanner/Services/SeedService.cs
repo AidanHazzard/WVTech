@@ -26,6 +26,9 @@ public class SeedService
             logger.LogInformation("Seeding dietary restrictions.");
             await SeedDietaryRestrictionsAsync(context, logger);
 
+            logger.LogInformation("Seeding tags.");
+            await SeedTagsAsync(context, logger);
+
             logger.LogInformation("Seeding roles.");
             await AddRoleAsync(roleManager, "Admin");
             await AddRoleAsync(roleManager, "User");
@@ -91,6 +94,31 @@ public class SeedService
 
         await context.SaveChangesAsync();
         logger.LogInformation("Seeded dietary restrictions.");
+    }
+
+    private static async Task SeedTagsAsync(MealPlannerDBContext context, ILogger logger)
+    {
+        if (await context.Tags.AnyAsync())
+        {
+            logger.LogInformation("Tags already exist; skipping seed.");
+            return;
+        }
+
+        context.Tags.AddRange(
+            new Tag { Name = "Breakfast" },
+            new Tag { Name = "Lunch" },
+            new Tag { Name = "Dinner" },
+            new Tag { Name = "Snack" },
+            new Tag { Name = "Dessert" },
+            new Tag { Name = "Quick & Easy" },
+            new Tag { Name = "High Protein" },
+            new Tag { Name = "Low Calorie" },
+            new Tag { Name = "Vegetarian" },
+            new Tag { Name = "Vegan" }
+        );
+
+        await context.SaveChangesAsync();
+        logger.LogInformation("Seeded tags.");
     }
 
     private static async Task AddRoleAsync(RoleManager<IdentityRole> roleManager, string roleName)

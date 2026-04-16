@@ -58,3 +58,45 @@ function createInput() {
     inputWrapper.appendChild(deleteButton);
     container.appendChild(inputWrapper);
 }
+
+// --- Custom tag management ---
+function addCustomTag(tagName) {
+    const customTagsContainer = document.getElementById('custom-tags-container');
+    if (!tagName || !tagName.trim()) return;
+
+    const trimmed = tagName.trim();
+
+    // Prevent duplicates (case-insensitive) across checkboxes and hidden inputs
+    const allTagInputs = document.querySelectorAll('input[name="Tags"]');
+    for (const inp of allTagInputs) {
+        if (inp.value.toLowerCase() === trimmed.toLowerCase()) return;
+    }
+
+    const wrapper = document.createElement('div');
+    wrapper.className = 'custom-tag-badge d-inline-flex align-items-center me-2 mb-2';
+    wrapper.innerHTML = `
+        <span class="badge me-1">${trimmed}</span>
+        <input type="hidden" name="Tags" value="${trimmed}" />
+        <button type="button" class="remove-custom-tag">x</button>
+    `;
+    wrapper.querySelector('.remove-custom-tag')
+        .addEventListener('click', function () { wrapper.remove(); });
+    customTagsContainer.appendChild(wrapper);
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    const customTagInput = document.getElementById('custom-tag-input');
+    const addTagBtn = document.getElementById('add-custom-tag-btn');
+
+    if (addTagBtn) {
+        addTagBtn.addEventListener('click', function () {
+            addCustomTag(customTagInput.value);
+            customTagInput.value = '';
+        });
+    }
+
+    // Wire remove buttons for custom tags pre-rendered by EditRecipe view
+    document.querySelectorAll('.remove-custom-tag').forEach(function (btn) {
+        btn.addEventListener('click', function () { btn.closest('.custom-tag-badge').remove(); });
+    });
+});

@@ -73,6 +73,47 @@
                 </h2>
             </div>
 
+            <div class="back2">
+                <h2 class="back1Title">Tags</h2>
+                <div class="row" id="predefined-tags">
+                    @foreach (var tag in Model.AvailableTags)
+                    {
+                        <div class="col-md-4 mb-2">
+                            <div class="form-check">
+                                <input class="form-check-input"
+                                       type="checkbox"
+                                       name="Tags"
+                                       value="@tag"
+                                       id="tag-@tag.Replace(" ", "-")"
+                                       @(Model.Tags.Contains(tag) ? "checked" : "") />
+                                <label class="form-check-label" for="tag-@tag.Replace(" ", "-")">@tag</label>
+                            </div>
+                        </div>
+                    }
+                </div>
+                <div id="custom-tags-container" class="d-flex flex-wrap gap-2 mt-2">
+                    @foreach (var tag in Model.Tags.Where(t => !Model.AvailableTags.Contains(t)))
+                    {
+                        <div class="custom-tag-badge d-inline-flex align-items-center me-2 mb-2">
+                            <span class="badge me-1">@tag</span>
+                            <input type="hidden" name="Tags" value="@tag" />
+                            <button type="button" class="remove-custom-tag">x</button>
+                        </div>
+                    }
+                </div>
+                <div class="row mt-2">
+                    <div class="col-auto">
+                        <input type="text" id="custom-tag-input" class="back2-textbox"
+                               placeholder="Add a custom tag..." />
+                    </div>
+                    <div class="col-auto">
+                        <button type="button" class="buttonGreen" id="add-custom-tag-btn">
+                            <h2 class="buttonText">Add Tag</h2>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
             <button class="buttonBlue" type="submit">
                 <h2 class="buttonText">Finish</h2>
             </button>
