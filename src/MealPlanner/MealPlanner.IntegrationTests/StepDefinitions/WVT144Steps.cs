@@ -206,6 +206,34 @@ public class WVT144Steps
         Assert.That(el, Is.Not.Null, "Could not find tag selector for meal configuration");
     }
 
+    [Then("{string} can enter a custom tag name for the meal")]
+    public void ThenUserCanEnterCustomTagName(string userName)
+    {
+        var el = _wait.Until(d =>
+        {
+            try
+            {
+                return d.FindElements(By.CssSelector("[id^='MealPreferences_'][id$='__CustomTagName']"))
+                    .FirstOrDefault(e => e.Displayed);
+            }
+            catch { return null; }
+        });
+        Assert.That(el, Is.Not.Null, "Could not find custom tag input for meal configuration");
+    }
+
+    [When("{string} types {string} as a custom tag and generates the plan")]
+    public void WhenUserTypesCustomTagAndGenerates(string userName, string tagName)
+    {
+        var input = _driver.FindElement(
+            By.CssSelector("[id^='MealPreferences_'][id$='__CustomTagName']"));
+        input.Clear();
+        input.SendKeys(tagName);
+
+        var submit = _driver.FindElement(By.CssSelector("button[type='submit']"));
+        ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].click();", submit);
+        _wait.Until(d => d.Url.Contains("/Meal/DayPlanSummary"));
+    }
+
     [Given("{string} has completed the day plan configuration")]
     public void GivenUserHasCompletedDayPlanConfig(string userName)
     {

@@ -17,6 +17,7 @@ public class MealController : Controller
     private readonly IRecipeRepository _recipeRepo;
     private readonly IMealRepository _mealRepo;
     private readonly MealPlannerDBContext _context;
+    private readonly ITagRepository _tagRepo;
     private readonly IMealRecommendationService? _recommendationService;
 
     public MealController(
@@ -24,12 +25,14 @@ public class MealController : Controller
         IRecipeRepository recipeRepo,
         IMealRepository mealRepo,
         MealPlannerDBContext context,
+        ITagRepository tagRepo,
         IMealRecommendationService? mealRecommendationService = null)
     {
         _registrationService = registrationService;
         _recipeRepo = recipeRepo;
         _mealRepo = mealRepo;
         _context = context;
+        _tagRepo = tagRepo;
         _recommendationService = mealRecommendationService;
     }
 
@@ -142,9 +145,9 @@ public class MealController : Controller
     }
 
     [HttpGet]
-    public IActionResult GenerateDayPlan()
+    public async Task<IActionResult> GenerateDayPlan()
     {
-        ViewBag.AvailableTags = _context.Set<Models.Tag>().OrderBy(t => t.Name).ToList();
+        ViewBag.AvailableTags = await _tagRepo.GetTagsByPopularityAsync();
         return View(new ViewModels.DayPlanConfigViewModel
         {
             SelectedMonth = DateTime.Today.Month,
@@ -158,6 +161,8 @@ public class MealController : Controller
         var user = await _registrationService.FindUserByClaimAsync(User);
         if (user == null) return Challenge();
         if (_recommendationService == null) return Problem(statusCode: 500);
+
+        await ResolveCustomTagNamesAsync(model.MealPreferences);
 
         var selectedDate = new DateTime(DateTime.Today.Year, model.SelectedMonth, model.SelectedDay);
         var meals = await _recommendationService.GetRecommendedDayPlanForUser(user, selectedDate, model);
@@ -179,7 +184,7 @@ public class MealController : Controller
         if (meal == null || meal.UserId != user.Id) return NotFound();
 
         ViewBag.MealId = mealId;
-        ViewBag.AvailableTags = _context.Set<Models.Tag>().OrderBy(t => t.Name).ToList();
+        ViewBag.AvailableTags = await _tagRepo.GetTagsByPopularityAsync();
         return View(new ViewModels.MealPreferenceViewModel());
     }
 
@@ -194,6 +199,7 @@ public class MealController : Controller
         if (meal == null || meal.UserId != user.Id) return NotFound();
 
         var mealDate = meal.StartTime?.Date ?? DateTime.Today;
+        await ResolveCustomTagNamesAsync([preferences]);
         var config = new ViewModels.DayPlanConfigViewModel
         {
             MealCount = 1,
@@ -433,5 +439,16 @@ public class MealController : Controller
         await _context.SaveChangesAsync();
 
         return RedirectToAction("PlannerHome", "Meal", new { date });
+    }
+
+    private async Task ResolveCustomTagNamesAsync(IEnumerable<ViewModels.MealPreferenceViewModel> preferences)
+    {
+        foreach (var pref in preferences)
+        {
+            if (string.IsNullOrWhiteSpace(pref.CustomTagName)) continue;
+            var tag = await _tagRepo.FindByNameAsync(pref.CustomTagName.Trim());
+            if (tag != null && !pref.TagIds.Contains(tag.Id))
+                pref.TagIds.Add(tag.Id);
+        }
     }
 }

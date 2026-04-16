@@ -34,6 +34,13 @@ Feature: Recommend meals for entire day
     Then 'Gary' sees a summary of his meal plan for the day
     And the summary shows each recommended meal by name
 
+  Scenario: User enters a custom tag not shown in the suggested list
+    Given 'Gary' has specified 2 meals with no snacks for his day plan
+    When 'Gary' is presented with the configuration for each meal
+    Then 'Gary' can enter a custom tag name for the meal
+    When 'Gary' types 'Vegan' as a custom tag and generates the plan
+    Then 'Gary' sees a summary of his meal plan for the day
+
   Scenario: User regenerates a meal from the summary
     Given 'Gary' is viewing his generated day plan summary
     When 'Gary' chooses to regenerate one of the meals

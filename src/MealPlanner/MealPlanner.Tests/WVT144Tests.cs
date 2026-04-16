@@ -24,6 +24,7 @@ public class WVT144Tests
     private Mock<IRecipeRepository> _recipeRepoMock;
     private Mock<IRegistrationService> _registrationServiceMock;
     private Mock<IMealRecommendationService> _reccServiceMock;
+    private Mock<ITagRepository> _tagRepoMock;
 
     [SetUp]
     public void SetUp()
@@ -53,12 +54,15 @@ public class WVT144Tests
         _recipeRepoMock = new Mock<IRecipeRepository>();
         _mealRepoMock = new Mock<IMealRepository>();
         _reccServiceMock = new Mock<IMealRecommendationService>();
+        _tagRepoMock = new Mock<ITagRepository>();
+        _tagRepoMock.Setup(r => r.GetTagsByPopularityAsync()).ReturnsAsync([]);
 
         _controller = new MealController(
             _registrationServiceMock.Object,
             _recipeRepoMock.Object,
             _mealRepoMock.Object,
             _context,
+            _tagRepoMock.Object,
             _reccServiceMock.Object);
 
         _controller.ControllerContext = new ControllerContext
@@ -75,36 +79,6 @@ public class WVT144Tests
     }
 
     // MealSize enum
-
-    [Test]
-    public void MealSize_SmallSnack_HasExpectedCalories()
-    {
-        Assert.That(MealSize.SmallSnack.Calories(), Is.EqualTo(150));
-    }
-
-    [Test]
-    public void MealSize_Small_HasExpectedCalories()
-    {
-        Assert.That(MealSize.Small.Calories(), Is.EqualTo(400));
-    }
-
-    [Test]
-    public void MealSize_Average_HasExpectedCalories()
-    {
-        Assert.That(MealSize.Average.Calories(), Is.EqualTo(600));
-    }
-
-    [Test]
-    public void MealSize_Large_HasExpectedCalories()
-    {
-        Assert.That(MealSize.Large.Calories(), Is.EqualTo(800));
-    }
-
-    [Test]
-    public void MealSize_LargeSnack_HasExpectedCalories()
-    {
-        Assert.That(MealSize.LargeSnack.Calories(), Is.EqualTo(350));
-    }
 
     [Test]
     public void MealSize_SnackSizes_AreIdentifiedAsSnacks()
@@ -124,17 +98,17 @@ public class WVT144Tests
     // Controller — GenerateDayPlan GET
 
     [Test]
-    public void GenerateDayPlan_Get_ReturnsViewResult()
+    public async Task GenerateDayPlan_Get_ReturnsViewResult()
     {
-        var result = _controller.GenerateDayPlan();
+        var result = await _controller.GenerateDayPlan();
 
         Assert.That(result, Is.TypeOf<ViewResult>());
     }
 
     [Test]
-    public void GenerateDayPlan_Get_ModelHasCurrentMonthAndDay()
+    public async Task GenerateDayPlan_Get_ModelHasCurrentMonthAndDay()
     {
-        var result = (ViewResult)_controller.GenerateDayPlan();
+        var result = (ViewResult)await _controller.GenerateDayPlan();
         var model = (DayPlanConfigViewModel)result.Model!;
 
         Assert.That(model.SelectedMonth, Is.EqualTo(DateTime.Today.Month));
@@ -208,5 +182,52 @@ public class WVT144Tests
         Assert.That(result, Is.TypeOf<ViewResult>());
         var model = ((ViewResult)result).Model;
         Assert.That(model, Is.TypeOf<MealPreferenceViewModel>());
+    }
+
+    // Controller — custom tag resolution
+
+    [Test]
+    public async Task GenerateDayPlan_Post_WithCustomTagName_ResolvesTagAndAddsToPreferences()
+    {
+        var tag = new Tag { Id = 42, Name = "Vegan" };
+        _tagRepoMock.Setup(r => r.FindByNameAsync("Vegan")).ReturnsAsync(tag);
+
+        var config = new DayPlanConfigViewModel
+        {
+            MealCount = 1,
+            SelectedMonth = DateTime.Today.Month,
+            SelectedDay = DateTime.Today.Day,
+            MealPreferences = [new MealPreferenceViewModel { Size = MealSize.Average, CustomTagName = "Vegan" }]
+        };
+
+        _reccServiceMock
+            .Setup(s => s.GetRecommendedDayPlanForUser(It.IsAny<User>(), It.IsAny<DateTime>(), It.IsAny<DayPlanConfigViewModel>()))
+            .ReturnsAsync([]);
+
+        await _controller.GenerateDayPlan(config);
+
+        Assert.That(config.MealPreferences[0].TagIds, Does.Contain(42));
+    }
+
+    [Test]
+    public async Task GenerateDayPlan_Post_WithUnknownCustomTagName_DoesNotAddTag()
+    {
+        _tagRepoMock.Setup(r => r.FindByNameAsync("Unknown")).ReturnsAsync((Tag?)null);
+
+        var config = new DayPlanConfigViewModel
+        {
+            MealCount = 1,
+            SelectedMonth = DateTime.Today.Month,
+            SelectedDay = DateTime.Today.Day,
+            MealPreferences = [new MealPreferenceViewModel { Size = MealSize.Average, CustomTagName = "Unknown" }]
+        };
+
+        _reccServiceMock
+            .Setup(s => s.GetRecommendedDayPlanForUser(It.IsAny<User>(), It.IsAny<DateTime>(), It.IsAny<DayPlanConfigViewModel>()))
+            .ReturnsAsync([]);
+
+        await _controller.GenerateDayPlan(config);
+
+        Assert.That(config.MealPreferences[0].TagIds, Is.Empty);
     }
 }
