@@ -36,6 +36,11 @@ public class ViewModelService
             });
         }
 
+        recipe.Tags = vm.Tags
+            .Where(t => !string.IsNullOrWhiteSpace(t))
+            .Select(t => new Tag { Name = t.Trim() })
+            .ToList();
+
         return recipe;
     }
 
@@ -51,6 +56,8 @@ public class ViewModelService
         recipeFromDataBase.Carbs = updated.Carbs;
         recipeFromDataBase.Fat = updated.Fat;
         recipeFromDataBase.Ingredients = updated.Ingredients;
+        recipeFromDataBase.Tags.Clear();
+        recipeFromDataBase.Tags.AddRange(updated.Tags);
         return recipeFromDataBase;
     }
 }
