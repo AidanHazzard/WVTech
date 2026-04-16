@@ -73,8 +73,55 @@ public class MealRecommendationService : IMealRecommendationService
         return (null, runningMealCalorieCount);
     }
 
-    public Task<List<Meal>> GetRecommendedDayPlanForUser(User user, DateTime mealDate, DayPlanConfigViewModel config)
+    public async Task<List<Meal>> GetRecommendedDayPlanForUser(User user, DateTime mealDate, DayPlanConfigViewModel config)
     {
-        throw new NotImplementedException();
+        var result = new List<Meal>();
+        var preferences = new List<MealPreferenceViewModel>(config.MealPreferences);
+
+        if (config.IncludeSnacks && config.SnackSize.HasValue)
+            preferences.Add(new MealPreferenceViewModel { Size = config.SnackSize.Value });
+
+        int mealIndex = 0;
+        foreach (var pref in preferences)
+        {
+            var isSnack = pref.Size.IsSnack();
+            var calorieTarget = pref.Size.Calories();
+
+            var upvoted = await _userRecipeRepository.GetUserRecipesByVoteType(user.Id, UserVoteType.UpVote);
+            var rest = _recipeRepository
+                .ReadAll()
+                .Where(r => _userRecipeRepository.GetUserRecipeVoteAsync(user.Id, r.Id).Result != UserVoteType.DownVote
+                         && !upvoted.Contains(r))
+                .OrderByDescending(r => _userRecipeRepository.GetRecipeVotePercentage(r.Id).Result)
+                .ToList();
+
+            var candidates = upvoted.Concat(rest).ToList();
+
+            if (pref.TagIds.Any())
+                candidates = candidates.Where(r => r.Tags.Any(t => pref.TagIds.Contains(t.Id))).ToList();
+
+            var recipes = new List<Recipe>();
+            int running = 0;
+            foreach (var recipe in candidates)
+            {
+                if (recipes.Count >= _MAX_RECIPES) break;
+                if (recipe.Calories + running <= calorieTarget)
+                {
+                    recipes.Add(recipe);
+                    running += recipe.Calories;
+                }
+            }
+
+            result.Add(new Meal
+            {
+                User = user,
+                UserId = user.Id,
+                Title = isSnack ? "Snack" : $"Meal {++mealIndex}",
+                StartTime = mealDate,
+                Recipes = recipes
+            });
+        }
+
+        return result;
     }
 }

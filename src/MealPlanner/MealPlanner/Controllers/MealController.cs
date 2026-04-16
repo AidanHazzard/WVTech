@@ -154,13 +154,30 @@ public class MealController : Controller
     [HttpPost]
     public async Task<IActionResult> GenerateDayPlan(ViewModels.DayPlanConfigViewModel model)
     {
-        throw new NotImplementedException();
+        var user = await _registrationService.FindUserByClaimAsync(User);
+        if (user == null) return Challenge();
+        if (_recommendationService == null) return Problem(statusCode: 500);
+
+        var selectedDate = new DateTime(DateTime.Today.Year, model.SelectedMonth, model.SelectedDay);
+        var meals = await _recommendationService.GetRecommendedDayPlanForUser(user, selectedDate, model);
+
+        foreach (var meal in meals)
+            _mealRepo.CreateOrUpdate(meal);
+        _context.SaveChanges();
+
+        return RedirectToAction("DayPlanSummary", new { date = selectedDate.ToString("yyyy-MM-dd") });
     }
 
     [HttpGet]
     public async Task<IActionResult> RegenerateMeal(int mealId)
     {
-        throw new NotImplementedException();
+        var user = await _registrationService.FindUserByClaimAsync(User);
+        if (user == null) return Challenge();
+
+        var meal = await _mealRepo.ReadAsync(mealId);
+        if (meal == null || meal.UserId != user.Id) return NotFound();
+
+        return View(new ViewModels.MealPreferenceViewModel());
     }
 
     [HttpPost]
@@ -170,9 +187,26 @@ public class MealController : Controller
     }
 
     [HttpGet]
-    public IActionResult DayPlanSummary()
+    public async Task<IActionResult> DayPlanSummary(string? date)
     {
-        return View(new ViewModels.DayPlanSummaryViewModel());
+        var user = await _registrationService.FindUserByClaimAsync(User);
+        if (user == null) return Challenge();
+
+        DateTime selectedDate = DateTime.TryParse(date, out var parsed) ? parsed.Date : DateTime.Today;
+        var meals = await _mealRepo.GetUserMealsByDateAsync(user, selectedDate);
+        await Task.WhenAll(meals.Select(m => _mealRepo.LoadRecipesAsync(m)));
+
+        var vm = new ViewModels.DayPlanSummaryViewModel
+        {
+            Date = selectedDate,
+            Meals = meals.Select(m => new ViewModels.DayPlanMealViewModel
+            {
+                MealId = m.Id,
+                Recipes = m.Recipes
+            }).ToList()
+        };
+
+        return View(vm);
     }
 
     [HttpGet]
