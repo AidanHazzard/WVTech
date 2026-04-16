@@ -1,5 +1,6 @@
 using MealPlanner.DAL.Abstract;
 using MealPlanner.Models;
+using MealPlanner.ViewModels;
 using Microsoft.IdentityModel.Tokens;
 
 namespace MealPlanner.Services;
@@ -70,5 +71,10 @@ public class MealRecommendationService : IMealRecommendationService
             return (toReturn, runningMealCalorieCount + toReturn.Calories);
         }
         return (null, runningMealCalorieCount);
+    }
+
+    public Task<List<Meal>> GetRecommendedDayPlanForUser(User user, DateTime mealDate, DayPlanConfigViewModel config)
+    {
+        throw new NotImplementedException();
     }
 }

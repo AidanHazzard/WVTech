@@ -142,6 +142,40 @@ public class MealController : Controller
     }
 
     [HttpGet]
+    public IActionResult GenerateDayPlan()
+    {
+        return View(new ViewModels.DayPlanConfigViewModel
+        {
+            SelectedMonth = DateTime.Today.Month,
+            SelectedDay = DateTime.Today.Day
+        });
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> GenerateDayPlan(ViewModels.DayPlanConfigViewModel model)
+    {
+        throw new NotImplementedException();
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> RegenerateMeal(int mealId)
+    {
+        throw new NotImplementedException();
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> RegenerateMeal(int mealId, ViewModels.MealPreferenceViewModel preferences)
+    {
+        throw new NotImplementedException();
+    }
+
+    [HttpGet]
+    public IActionResult DayPlanSummary()
+    {
+        return View(new ViewModels.DayPlanSummaryViewModel());
+    }
+
+    [HttpGet]
     public async Task<IActionResult> ViewMeal(int id)
     {
         var user = await _registrationService.FindUserByClaimAsync(User);
