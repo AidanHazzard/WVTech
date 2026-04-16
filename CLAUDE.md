@@ -114,9 +114,11 @@ The connection string key is `ConnectionStrings:DefaultConnection` (falls back t
 For every feature, follow this order — never write implementation code before tests exist:
 
 1. Translate acceptance criteria into Gherkin `.feature` files (Given/When/Then) in `MealPlanner.IntegrationTests/Features/`
-2. Write step definitions and any relevant unit tests
+2. Write step definitions and unit tests for every new service method, repository method, and ViewModel conversion
 3. Run the tests and confirm they **fail** (red)
 4. Write the minimum implementation code to make them **pass** (green)
+
+Unit tests must cover: repository find-or-create logic, ViewModel conversion methods (RecipeFromRecipeVM, RecipeToRecipeVM, EditRecipeVMToModel), and controller constructor changes (update existing mocks when adding constructor parameters). Step definitions use `BDDSetup.Context` (not `BDDSetup.CreateContext()`).
 
 ### Git workflow
 
@@ -135,6 +137,12 @@ Never suggest opening a PR to `main` mid-sprint. Always target `dev`.
 
 - **Edamam Recipe Search API v2** — https://api.edamam.com/doc/open-api/recipe-search-v2.yaml
   Used by `Services/EdamamService.cs`. Consult this when modifying recipe search, nutrition data parsing, or the nutrient key mappings (`ENERC_KCAL`, `PROCNT`, `CHOCDF`, `FAT`).
+
+### Jira
+
+- **Instance:** https://homework5.atlassian.net
+- **Ticket naming:** `WVT-{number}` (e.g. `WVT-99`). Feature files are named `wvt-{number}.feature` to match.
+- **API:** `GET https://homework5.atlassian.net/rest/api/3/issue/WVT-{number}` — requires Basic Auth (email + API token). Token is stored in `CLAUDE.local.md` (gitignored).
 
 ### CI/CD
 
