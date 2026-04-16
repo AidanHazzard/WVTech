@@ -65,7 +65,10 @@ public class NutritionBarSteps
     [Given("{string} submits the recipe form")]
     public void GivenUserSubmitsRecipeForm(string username)
     {
-        _driver.FindElement(By.CssSelector("button.buttonBlue[type='submit']")).Click();
+        var btn = _driver.FindElement(By.CssSelector("button.buttonBlue[type='submit']"));
+        ((IJavaScriptExecutor)_driver).ExecuteScript(
+            "arguments[0].scrollIntoView({block:'center',behavior:'instant'});", btn);
+        btn.Click();
         new WebDriverWait(_driver, TimeSpan.FromSeconds(10)).Until(driver =>
             ((IJavaScriptExecutor)driver)
                 .ExecuteScript("return document.readyState").ToString() == "complete");

@@ -30,9 +30,11 @@ namespace MealPlanner.Tests
             _context = new MealPlannerDBContext(options);
             _recipeRepository = new RecipeRepository(_context);
             _userRecipeRepo = new Mock<IUserRecipeRepository>();
+            var tagRepo = new Mock<ITagRepository>();
+            tagRepo.Setup(r => r.GetTagNamesAsync()).ReturnsAsync([]);
             _registrationService = new Mock<IRegistrationService>();
             var externalRecipeService = new Mock<IExternalRecipeService>();
-            _controller = new FoodEntriesController(_recipeRepository, _userRecipeRepo.Object, _context, _registrationService.Object, externalRecipeService.Object);
+            _controller = new FoodEntriesController(_recipeRepository, tagRepo.Object, _userRecipeRepo.Object, _context, _registrationService.Object, externalRecipeService.Object);
 
             var claims = new List<Claim> { new Claim(ClaimTypes.NameIdentifier, "test-user-id") };
             var identity = new ClaimsIdentity(claims, "TestAuth");

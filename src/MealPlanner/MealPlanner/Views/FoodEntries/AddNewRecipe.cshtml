@@ -29,23 +29,42 @@
                 
                 <h2 class="back1Title left">
                     <span>Calories:</span>
-                    <input type="number" class="back2-textbox" placeholder="Enter Calories" min="0" max="32767" step="1" asp-for="Calories" required>
+                    <input type="number" class="back2-textbox" placeholder="Enter Calories" min="0" max="32767" step="1" name="Calories" id="Calories" required>
                 </h2>
 
                 <h2 class="back1Title left">
                     <span>Protein:</span>
-                    <input type="number" class="back2-textbox" placeholder="Enter Protein" min="0" max="32767" step="1" asp-for="Protein" required>
+                    <input type="number" class="back2-textbox" placeholder="Enter Protein" min="0" max="32767" step="1" name="Protein" id="Protein" required>
                 </h2>
 
                 <h2 class="back1Title left">
                     <span>Carbs:</span>
-                    <input type="number" class="back2-textbox" placeholder="Enter Carbs" min="0" max="32767" step="1" asp-for="Carbs" required>
+                    <input type="number" class="back2-textbox" placeholder="Enter Carbs" min="0" max="32767" step="1" name="Carbs" id="Carbs" required>
                 </h2>
 
                 <h2 class="back1Title left">
                     <span>Fat:</span>
-                    <input type="number" class="back2-textbox" placeholder="Enter Fat" min="0" max="32767" step="1" asp-for="Fat" required>
+                    <input type="number" class="back2-textbox" placeholder="Enter Fat" min="0" max="32767" step="1" name="Fat" id="Fat" required>
                 </h2>
+            </div>
+
+            <div class="back2">
+                <h2 class="back1Title">Tags</h2>
+                <div id="tags-container" class="d-flex flex-wrap gap-1 mb-2"></div>
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                    <select id="tag-select" class="back2-textbox">
+                        <option value="">Select a tag...</option>
+                        @foreach (var tag in Model.AvailableTags)
+                        {
+                            <option value="@tag">@tag</option>
+                        }
+                    </select>
+                    <input type="text" id="custom-tag-input" class="back2-textbox"
+                           placeholder="Or type a custom tag..." />
+                    <button type="button" class="buttonGreen" id="add-custom-tag-btn">
+                        <h2 class="buttonText">Add</h2>
+                    </button>
+                </div>
             </div>
 
             <button class="buttonBlue" type="submit">

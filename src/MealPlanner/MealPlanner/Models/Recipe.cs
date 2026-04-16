@@ -20,6 +20,7 @@ public class Recipe
     public int Fat { get; set; } 
     public string? ExternalUri { get; set; }
     public List<Meal> Meals { get; set; } = [];
+    public List<Tag> Tags { get; set; } = [];
     public List<User> Users { get; } = [];
     public List<UserRecipe> UserRecipes { get; } = [];
 }
