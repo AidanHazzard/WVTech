@@ -47,6 +47,60 @@ public class ViewModelServiceTests
     }
 
     [Test]
+    public void RecipeFromRecipeVM_MapsTagsToRecipe()
+    {
+        // Arrange
+        var vm = new RecipeViewModel
+        {
+            Name = "name",
+            Directions = "dir",
+            Tags = ["Breakfast", "Vegan"]
+        };
+
+        // Act
+        Recipe r = ViewModelService.RecipeFromRecipeVM(vm);
+
+        // Assert
+        Assert.That(r.Tags.Select(t => t.Name), Is.EquivalentTo(new[] { "Breakfast", "Vegan" }));
+    }
+
+    [Test]
+    public void RecipeFromRecipeVM_IgnoresBlankTags()
+    {
+        // Arrange
+        var vm = new RecipeViewModel
+        {
+            Name = "name",
+            Directions = "dir",
+            Tags = ["Breakfast", "", "  "]
+        };
+
+        // Act
+        Recipe r = ViewModelService.RecipeFromRecipeVM(vm);
+
+        // Assert
+        Assert.That(r.Tags.Count, Is.EqualTo(1));
+    }
+
+    [Test]
+    public void RecipeFromRecipeVM_TrimsTagWhitespace()
+    {
+        // Arrange
+        var vm = new RecipeViewModel
+        {
+            Name = "name",
+            Directions = "dir",
+            Tags = ["  Breakfast  "]
+        };
+
+        // Act
+        Recipe r = ViewModelService.RecipeFromRecipeVM(vm);
+
+        // Assert
+        Assert.That(r.Tags[0].Name, Is.EqualTo("Breakfast"));
+    }
+
+    [Test]
     public void RecipeToRecipeVM_ReturnsViewModel()
     {
         // Arrange
@@ -93,5 +147,71 @@ public class ViewModelServiceTests
             Assert.That(vm.Ingredients[1], Is.EqualTo("i2_base"));
             Assert.That(vm.IngredientMeasurements[1], Is.EqualTo("i2_measure"));
         }
+    }
+
+    [Test]
+    public void RecipeToRecipeVM_MapsTagsToViewModel()
+    {
+        // Arrange
+        var recipe = new Recipe
+        {
+            Name = "name",
+            Directions = "dir",
+            Tags = [new Tag { Name = "Breakfast" }, new Tag { Name = "Vegan" }]
+        };
+
+        // Act
+        RecipeViewModel vm = ViewModelService.RecipeToRecipeVM(recipe);
+
+        // Assert
+        Assert.That(vm.Tags, Is.EquivalentTo(new[] { "Breakfast", "Vegan" }));
+    }
+
+    [Test]
+    public void EditRecipeVMToModel_UpdatesTags()
+    {
+        // Arrange
+        var existing = new Recipe
+        {
+            Name = "name",
+            Directions = "dir",
+            Tags = [new Tag { Name = "Breakfast" }]
+        };
+        var vm = new RecipeViewModel
+        {
+            Name = "name",
+            Directions = "dir",
+            Tags = ["Dinner"]
+        };
+
+        // Act
+        Recipe result = ViewModelService.EditRecipeVMToModel(existing, vm);
+
+        // Assert
+        Assert.That(result.Tags.Select(t => t.Name), Is.EquivalentTo(new[] { "Dinner" }));
+    }
+
+    [Test]
+    public void EditRecipeVMToModel_ClearsOldTags_WhenNoTagsSubmitted()
+    {
+        // Arrange
+        var existing = new Recipe
+        {
+            Name = "name",
+            Directions = "dir",
+            Tags = [new Tag { Name = "Breakfast" }]
+        };
+        var vm = new RecipeViewModel
+        {
+            Name = "name",
+            Directions = "dir",
+            Tags = []
+        };
+
+        // Act
+        Recipe result = ViewModelService.EditRecipeVMToModel(existing, vm);
+
+        // Assert
+        Assert.That(result.Tags, Is.Empty);
     }
 }

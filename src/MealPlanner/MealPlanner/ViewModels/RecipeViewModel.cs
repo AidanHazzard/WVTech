@@ -32,6 +32,7 @@ public class RecipeViewModel
         Protein = recipe.Protein;
         Carbs = recipe.Carbs;
         Fat = recipe.Fat;
+        Tags = recipe.Tags.Select(t => t.Name).ToList();
     }
 
     [Required(ErrorMessage = "A recipe needs a name")]
@@ -55,6 +56,8 @@ public class RecipeViewModel
     
     [Range(0, 32767)]
     public int Fat { get; set; }
+    public List<string> Tags { get; set; } = [];
+    public List<string> AvailableTags { get; set; } = [];
     public bool IsOwned { get; set;} = false;
     public UserVoteType UserVote { get; set; } = UserVoteType.NoVote;
     public float? VotePercentage { get; set; }
