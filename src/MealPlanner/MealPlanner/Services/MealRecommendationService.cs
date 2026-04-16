@@ -18,12 +18,13 @@ public class MealRecommendationService : IMealRecommendationService
         IRecipeRepository recipeRepository, 
         IUserNutritionPreferenceRepository nutritionRepository,
         IMealRepository mealRepository,
-        IExternalRecipeService? externalRecipeService)
+        IExternalRecipeService? externalRecipeService = null)
     {
         _userRecipeRepository = userRecipeRepository;
         _recipeRepository = recipeRepository;
         _nutrionRepository = nutritionRepository;
         _mealRepository = mealRepository;
+        _externalRecipeService = externalRecipeService;
     }
 
     public async Task<List<Recipe>> GetRecommendedRecipesForUser(User user, DateTime mealDate)
