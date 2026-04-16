@@ -114,7 +114,13 @@ public class SeedService
             new Tag { Name = "High Protein" },
             new Tag { Name = "Low Calorie" },
             new Tag { Name = "Vegetarian" },
-            new Tag { Name = "Vegan" }
+            new Tag { Name = "Vegan" },
+            new Tag { Name = "Gluten-Free" },
+            new Tag { Name = "Dairy-Free" },
+            new Tag { Name = "Keto" },
+            new Tag { Name = "Halal" },
+            new Tag { Name = "Kosher" },
+            new Tag { Name = "Nut Allergy" }
         );
 
         await context.SaveChangesAsync();

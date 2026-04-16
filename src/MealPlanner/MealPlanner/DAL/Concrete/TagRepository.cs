@@ -12,6 +12,10 @@ public class TagRepository : Repository<Tag>, ITagRepository
 
     public async Task<List<string>> GetTagNamesAsync()
     {
-        return await _dbset.OrderBy(t => t.Name).Select(t => t.Name).ToListAsync();
+        return await _dbset
+            .OrderByDescending(t => t.Recipes.Count)
+            .Take(10)
+            .Select(t => t.Name)
+            .ToListAsync();
     }
 }
