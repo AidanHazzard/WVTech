@@ -19,7 +19,8 @@ public class NutritionProgressService : INutritionProgressService
     {
         var start = startDay.ToDateTime(TimeOnly.MinValue);
         var endExclusive = endDay.AddDays(1).ToDateTime(TimeOnly.MinValue);
-        var targets = 
+
+        var targets =
             await _db.UserNutritionPreferences
                 .AsNoTracking()
                 .Where(x => x.UserId == userId)
@@ -29,25 +30,26 @@ public class NutritionProgressService : INutritionProgressService
                     x.CarbTarget ?? 0,
                     x.FatTarget ?? 0
                 ))
-                .FirstOrDefaultAsync() 
+                .FirstOrDefaultAsync()
             ?? new MacroTargets(0, 0, 0, 0);
 
-        var meals = 
+        var completedMeals =
             await _db.Meals
                 .AsNoTracking()
-                .Where(m =>    
-                        m.UserId == userId &&
-                        m.StartTime.HasValue &&
-                        m.StartTime.Value >= start &&
-                        m.StartTime.Value < endExclusive)
+                .Where(m =>
+                    m.UserId == userId &&
+                    m.IsCompleted &&
+                    m.StartTime.HasValue &&
+                    m.StartTime.Value >= start &&
+                    m.StartTime.Value < endExclusive)
                 .Include(m => m.Recipes)
                 .ToListAsync();
 
         var totals = new MacroTotals(
-            Calories: meals.Sum(m => m.Recipes.Sum(r => r.Calories)),
-            Protein:  meals.Sum(m => m.Recipes.Sum(r => r.Protein)),
-            Carbs:    meals.Sum(m => m.Recipes.Sum(r => r.Carbs)),
-            Fat:      meals.Sum(m => m.Recipes.Sum(r => r.Fat))
+            Calories: completedMeals.Sum(m => m.Recipes.Sum(r => r.Calories)),
+            Protein: completedMeals.Sum(m => m.Recipes.Sum(r => r.Protein)),
+            Carbs: completedMeals.Sum(m => m.Recipes.Sum(r => r.Carbs)),
+            Fat: completedMeals.Sum(m => m.Recipes.Sum(r => r.Fat))
         );
 
         return new NutritionProgressDto(

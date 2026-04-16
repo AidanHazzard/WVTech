@@ -1,5 +1,3 @@
-using System;
-using System.Linq;
 using MealPlanner.Models;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Support.UI;

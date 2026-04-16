@@ -11,12 +11,12 @@ public class CreateMealViewModel
     public string Title { get; set; } = string.Empty;
 
     [Required]
-    [DataType(DataType.Date)]
-    public DateTime Date { get; set; }
+    [Range(1, 12)]
+    public int SelectedMonth { get; set; }
 
     [Required]
-    [DataType(DataType.Time)]
-    public TimeSpan Time { get; set; }
+    [Range(1, 31)]
+    public int SelectedDay { get; set; }
 
     public bool RepeatWeekly { get; set; }
 }

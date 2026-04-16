@@ -25,7 +25,6 @@ public class BDDSetup
         SetupDatabase();
         AUTHost.Start(_connectionString);
         
-        //FirefoxOptions options = new FirefoxOptions();
         ChromeOptions options = new ChromeOptions();
         // options.AddArgument("--headless");
         options.AddArgument("--disable-dev-shm-usage");
@@ -59,7 +58,6 @@ public class BDDSetup
     private static void SetupDatabase()
     {
         Context = CreateContext();
-
         Context.Database.EnsureDeleted();
     }
 }

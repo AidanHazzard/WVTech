@@ -1,8 +1,5 @@
-using System;
-using Mealplanner.IntegrationTests;
 using MealPlanner.Models;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Support.UI;
 using Reqnroll;

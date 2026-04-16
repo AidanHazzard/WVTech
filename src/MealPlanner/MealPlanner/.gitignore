@@ -1,1 +1,5 @@
 preprocessed.xml
+bin/
+bin\
+obj\
+obj/

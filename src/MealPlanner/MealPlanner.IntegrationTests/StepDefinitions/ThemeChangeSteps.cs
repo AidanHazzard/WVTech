@@ -2,7 +2,6 @@ using MealPlanner.Models;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Support.UI;
 using Reqnroll;
-using NUnit.Framework;
 
 namespace Mealplanner.IntegrationTests;
 
