@@ -58,3 +58,87 @@ function createInput() {
     inputWrapper.appendChild(deleteButton);
     container.appendChild(inputWrapper);
 }
+
+// --- Tag management ---
+function addTag(tagName, fromSelect) {
+    const container = document.getElementById('tags-container');
+    const select = document.getElementById('tag-select');
+    if (!tagName || !tagName.trim()) return;
+
+    const trimmed = tagName.trim();
+
+    // Prevent duplicates (case-insensitive)
+    for (const inp of document.querySelectorAll('input[name="Tags"]')) {
+        if (inp.value.toLowerCase() === trimmed.toLowerCase()) {
+            if (fromSelect) select.value = '';
+            return;
+        }
+    }
+
+    const pill = document.createElement('button');
+    pill.type = 'button';
+    pill.className = 'tag-pill badge rounded-pill recipe-tag recipe-tag-removable';
+    pill.title = `Remove ${trimmed}`;
+    if (fromSelect) pill.dataset.predefined = 'true';
+    pill.innerHTML = `
+        ${trimmed}
+        <input type="hidden" name="Tags" value="${trimmed}" />
+    `;
+    pill.addEventListener('click', function () {
+        // If this was a predefined tag, put its option back in the select
+        if (pill.dataset.predefined === 'true' && select) {
+            const opt = document.createElement('option');
+            opt.value = trimmed;
+            opt.textContent = trimmed;
+            const opts = Array.from(select.options).slice(1); // skip placeholder
+            const insertBefore = opts.find(o => o.value.toLowerCase() > trimmed.toLowerCase());
+            if (insertBefore) select.insertBefore(opt, insertBefore);
+            else select.appendChild(opt);
+        }
+        pill.remove();
+    });
+    container.appendChild(pill);
+
+    if (fromSelect) {
+        // Remove the chosen option from the dropdown
+        const chosen = Array.from(select.options).find(o => o.value === trimmed);
+        if (chosen) chosen.remove();
+        select.value = '';
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    const select = document.getElementById('tag-select');
+    const customTagInput = document.getElementById('custom-tag-input');
+    const addTagBtn = document.getElementById('add-custom-tag-btn');
+
+    if (select) {
+        select.addEventListener('change', function () {
+            if (select.value) addTag(select.value, true);
+        });
+    }
+
+    if (addTagBtn) {
+        addTagBtn.addEventListener('click', function () {
+            addTag(customTagInput.value, false);
+            customTagInput.value = '';
+        });
+    }
+
+    // Wire remove handler for tags pre-rendered by EditRecipe view
+    document.querySelectorAll('.tag-pill').forEach(function (pill) {
+        const tagName = pill.querySelector('input[name="Tags"]').value;
+        pill.addEventListener('click', function () {
+            if (pill.dataset.predefined === 'true' && select) {
+                const opt = document.createElement('option');
+                opt.value = tagName;
+                opt.textContent = tagName;
+                const opts = Array.from(select.options).slice(1);
+                const insertBefore = opts.find(o => o.value.toLowerCase() > tagName.toLowerCase());
+                if (insertBefore) select.insertBefore(opt, insertBefore);
+                else select.appendChild(opt);
+            }
+            pill.remove();
+        });
+    });
+});

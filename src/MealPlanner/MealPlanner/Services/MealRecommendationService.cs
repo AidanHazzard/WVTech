@@ -11,17 +11,20 @@ public class MealRecommendationService : IMealRecommendationService
     private IRecipeRepository _recipeRepository;
     private IUserNutritionPreferenceRepository _nutrionRepository;
     private IMealRepository _mealRepository;
+    private IExternalRecipeService? _externalRecipeService;
     
     public MealRecommendationService(
         IUserRecipeRepository userRecipeRepository, 
         IRecipeRepository recipeRepository, 
         IUserNutritionPreferenceRepository nutritionRepository,
-        IMealRepository mealRepository)
+        IMealRepository mealRepository,
+        IExternalRecipeService? externalRecipeService = null)
     {
         _userRecipeRepository = userRecipeRepository;
         _recipeRepository = recipeRepository;
         _nutrionRepository = nutritionRepository;
         _mealRepository = mealRepository;
+        _externalRecipeService = externalRecipeService;
     }
 
     public async Task<List<Recipe>> GetRecommendedRecipesForUser(User user, DateTime mealDate)
@@ -42,24 +45,30 @@ public class MealRecommendationService : IMealRecommendationService
         var calorieTarget = (await _nutrionRepository.GetUsersNutritionPreferenceAsync(user.Id))?.CalorieTarget ?? int.MaxValue;
         calorieTarget -= existingRecipes.Sum(r => r.Calories);
         List<Recipe> toReturn = [];
-
+        int runningMealCalorieCount = 0;
         while(!recipes.IsNullOrEmpty() && toReturn.Count < _MAX_RECIPES)
         {
-            var toAdd = await GetOneRecipeRecommendation(calorieTarget, toReturn, recipes);
+            Recipe? toAdd;
+            (toAdd, runningMealCalorieCount) = await GetOneRecipeRecommendation(calorieTarget, recipes, runningMealCalorieCount);
             if (toAdd == null) continue;
             toReturn.Add(toAdd);
         }
         return toReturn;
     }
 
-    private async Task<Recipe?> GetOneRecipeRecommendation(int calorieTarget, List<Recipe> recipesInMeal, List<Recipe> recipes)
+    private async Task<(Recipe? Recommendation, int mealCalories)> GetOneRecipeRecommendation(int calorieTarget, List<Recipe> recipes, int runningMealCalorieCount)
     {
-        int calorieCount = 0;
-        calorieCount = recipesInMeal.Sum(r => r.Calories);
-
         var toReturn = recipes.First();
         recipes.Remove(toReturn);
-        if (toReturn.Calories + calorieCount <= calorieTarget) return toReturn;
-        return null;
+        if (!toReturn.ExternalUri.IsNullOrEmpty())
+        {
+            toReturn = await _externalRecipeService?.GetExternalRecipeByURI(toReturn.ExternalUri) ?? null;
+        }
+
+        if (toReturn != null && toReturn.Calories + runningMealCalorieCount <= calorieTarget)
+        {
+            return (toReturn, runningMealCalorieCount + toReturn.Calories);
+        }
+        return (null, runningMealCalorieCount);
     }
 }

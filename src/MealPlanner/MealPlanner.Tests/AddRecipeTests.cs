@@ -26,9 +26,11 @@ namespace MealPlanner.Tests
             _context = new MealPlannerDBContext(options);
             _recipeRepository = new RecipeRepository(_context);
             var userRecipeRepo = new Mock<IUserRecipeRepository>();
+            var tagRepo = new Mock<ITagRepository>();
+            tagRepo.Setup(r => r.GetTagNamesAsync()).ReturnsAsync([]);
             var registrationService = new Mock<IRegistrationService>();
             var externalRecipeService = new Mock<IExternalRecipeService>();
-            _controller = new FoodEntriesController(_recipeRepository, userRecipeRepo.Object, _context, registrationService.Object, externalRecipeService.Object);
+            _controller = new FoodEntriesController(_recipeRepository, tagRepo.Object, userRecipeRepo.Object, _context, registrationService.Object, externalRecipeService.Object);
         }
 
         //handels the cleaning up after every test
