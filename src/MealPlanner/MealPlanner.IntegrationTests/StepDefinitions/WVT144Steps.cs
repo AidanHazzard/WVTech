@@ -29,7 +29,7 @@ public class WVT144Steps
     [Given("{string} has a calorie target set")]
     public void GivenUserHasACalorieTargetSet(string userName)
     {
-        using var ctx = BDDSetup.CreateContext();
+        var ctx = BDDSetup.Context;
         var user = ctx.Set<User>().First(u => u.NormalizedEmail == $"{userName}@fakeemail.com".ToUpper());
 
         var existing = ctx.Set<UserNutritionPreference>().FirstOrDefault(p => p.UserId == user.Id);
@@ -209,8 +209,15 @@ public class WVT144Steps
     [Given("{string} has completed the day plan configuration")]
     public void GivenUserHasCompletedDayPlanConfig(string userName)
     {
-        using var ctx = BDDSetup.CreateContext();
+        var ctx = BDDSetup.Context;
         var user = ctx.Set<User>().First(u => u.NormalizedEmail == $"{userName}@fakeemail.com".ToUpper());
+
+        // Remove any meals for today so previous scenarios don't pollute this one
+        var today = DateTime.Today;
+        var existingMeals = ctx.Set<Meal>().Where(m => m.UserId == user.Id && m.StartTime != null && m.StartTime.Value.Date == today).ToList();
+        ctx.Set<Meal>().RemoveRange(existingMeals);
+        ctx.SaveChanges();
+
         var recipe = new Recipe
         {
             Name = "Day Plan Test Recipe",

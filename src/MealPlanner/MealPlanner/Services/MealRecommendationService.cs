@@ -76,7 +76,11 @@ public class MealRecommendationService : IMealRecommendationService
     public async Task<List<Meal>> GetRecommendedDayPlanForUser(User user, DateTime mealDate, DayPlanConfigViewModel config)
     {
         var result = new List<Meal>();
-        var preferences = new List<MealPreferenceViewModel>(config.MealPreferences);
+        var preferences = config.MealPreferences.Any()
+            ? new List<MealPreferenceViewModel>(config.MealPreferences)
+            : Enumerable.Range(0, config.MealCount)
+                .Select(_ => new MealPreferenceViewModel { Size = MealSize.Average })
+                .ToList();
 
         if (config.IncludeSnacks && config.SnackSize.HasValue)
             preferences.Add(new MealPreferenceViewModel { Size = config.SnackSize.Value });

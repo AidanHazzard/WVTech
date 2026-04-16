@@ -186,7 +186,29 @@ public class MealController : Controller
     [HttpPost]
     public async Task<IActionResult> RegenerateMeal(int mealId, ViewModels.MealPreferenceViewModel preferences)
     {
-        throw new NotImplementedException();
+        var user = await _registrationService.FindUserByClaimAsync(User);
+        if (user == null) return Challenge();
+        if (_recommendationService == null) return Problem(statusCode: 500);
+
+        var meal = await _mealRepo.ReadAsync(mealId);
+        if (meal == null || meal.UserId != user.Id) return NotFound();
+
+        var mealDate = meal.StartTime?.Date ?? DateTime.Today;
+        var config = new ViewModels.DayPlanConfigViewModel
+        {
+            MealCount = 1,
+            SelectedMonth = mealDate.Month,
+            SelectedDay = mealDate.Day,
+            MealPreferences = [preferences]
+        };
+
+        var newMeals = await _recommendationService.GetRecommendedDayPlanForUser(user, mealDate, config);
+        await _mealRepo.LoadRecipesAsync(meal);
+        meal.Recipes = newMeals.FirstOrDefault()?.Recipes ?? [];
+        _mealRepo.CreateOrUpdate(meal);
+        _context.SaveChanges();
+
+        return RedirectToAction("DayPlanSummary", new { date = mealDate.ToString("yyyy-MM-dd") });
     }
 
     [HttpGet]
