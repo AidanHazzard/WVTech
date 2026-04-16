@@ -1,4 +1,4 @@
-Feature: WVT-59
+Feature: Basic meal recommendation
     As a user, 
     I want to be able to have recommended meals 
     based on my caloric needs
