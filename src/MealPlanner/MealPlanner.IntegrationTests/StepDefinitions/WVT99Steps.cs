@@ -25,12 +25,8 @@ public class WVT99Steps
     [When("{string} selects the predefined tag {string}")]
     public void GivenUserSelectsPredefinedTag(string username, string tag)
     {
-        var checkbox = _driver.FindElement(
-            By.CssSelector($"input[name='Tags'][value='{tag}']"));
-        if (!checkbox.Selected)
-        {
-            ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].click();", checkbox);
-        }
+        var select = new SelectElement(_driver.FindElement(By.Id("tag-select")));
+        select.SelectByValue(tag);
     }
 
     [Given("{string} adds the custom tag {string}")]

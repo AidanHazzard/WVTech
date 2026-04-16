@@ -50,32 +50,20 @@
 
             <div class="back2">
                 <h2 class="back1Title">Tags</h2>
-                <div class="row" id="predefined-tags">
-                    @foreach (var tag in Model.AvailableTags)
-                    {
-                        <div class="col-md-4 mb-2">
-                            <div class="form-check">
-                                <input class="form-check-input"
-                                       type="checkbox"
-                                       name="Tags"
-                                       value="@tag"
-                                       id="tag-@tag.Replace(" ", "-")" />
-                                <label class="form-check-label" for="tag-@tag.Replace(" ", "-")">@tag</label>
-                            </div>
-                        </div>
-                    }
-                </div>
-                <div id="custom-tags-container" class="d-flex flex-wrap gap-2 mt-2"></div>
-                <div class="row mt-2">
-                    <div class="col-auto">
-                        <input type="text" id="custom-tag-input" class="back2-textbox"
-                               placeholder="Add a custom tag..." />
-                    </div>
-                    <div class="col-auto">
-                        <button type="button" class="buttonGreen" id="add-custom-tag-btn">
-                            <h2 class="buttonText">Add Tag</h2>
-                        </button>
-                    </div>
+                <div id="tags-container" class="d-flex flex-wrap gap-1 mb-2"></div>
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                    <select id="tag-select" class="back2-textbox">
+                        <option value="">Select a tag...</option>
+                        @foreach (var tag in Model.AvailableTags)
+                        {
+                            <option value="@tag">@tag</option>
+                        }
+                    </select>
+                    <input type="text" id="custom-tag-input" class="back2-textbox"
+                           placeholder="Or type a custom tag..." />
+                    <button type="button" class="buttonGreen" id="add-custom-tag-btn">
+                        <h2 class="buttonText">Add</h2>
+                    </button>
                 </div>
             </div>
 

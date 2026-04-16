@@ -59,44 +59,86 @@ function createInput() {
     container.appendChild(inputWrapper);
 }
 
-// --- Custom tag management ---
-function addCustomTag(tagName) {
-    const customTagsContainer = document.getElementById('custom-tags-container');
+// --- Tag management ---
+function addTag(tagName, fromSelect) {
+    const container = document.getElementById('tags-container');
+    const select = document.getElementById('tag-select');
     if (!tagName || !tagName.trim()) return;
 
     const trimmed = tagName.trim();
 
-    // Prevent duplicates (case-insensitive) across checkboxes and hidden inputs
-    const allTagInputs = document.querySelectorAll('input[name="Tags"]');
-    for (const inp of allTagInputs) {
-        if (inp.value.toLowerCase() === trimmed.toLowerCase()) return;
+    // Prevent duplicates (case-insensitive)
+    for (const inp of document.querySelectorAll('input[name="Tags"]')) {
+        if (inp.value.toLowerCase() === trimmed.toLowerCase()) {
+            if (fromSelect) select.value = '';
+            return;
+        }
     }
 
-    const wrapper = document.createElement('div');
-    wrapper.className = 'custom-tag-badge d-inline-flex align-items-center me-2 mb-2';
-    wrapper.innerHTML = `
-        <span class="badge me-1">${trimmed}</span>
+    const pill = document.createElement('button');
+    pill.type = 'button';
+    pill.className = 'tag-pill badge rounded-pill recipe-tag recipe-tag-removable';
+    pill.title = `Remove ${trimmed}`;
+    if (fromSelect) pill.dataset.predefined = 'true';
+    pill.innerHTML = `
+        ${trimmed}
         <input type="hidden" name="Tags" value="${trimmed}" />
-        <button type="button" class="remove-custom-tag">x</button>
     `;
-    wrapper.querySelector('.remove-custom-tag')
-        .addEventListener('click', function () { wrapper.remove(); });
-    customTagsContainer.appendChild(wrapper);
+    pill.addEventListener('click', function () {
+        // If this was a predefined tag, put its option back in the select
+        if (pill.dataset.predefined === 'true' && select) {
+            const opt = document.createElement('option');
+            opt.value = trimmed;
+            opt.textContent = trimmed;
+            const opts = Array.from(select.options).slice(1); // skip placeholder
+            const insertBefore = opts.find(o => o.value.toLowerCase() > trimmed.toLowerCase());
+            if (insertBefore) select.insertBefore(opt, insertBefore);
+            else select.appendChild(opt);
+        }
+        pill.remove();
+    });
+    container.appendChild(pill);
+
+    if (fromSelect) {
+        // Remove the chosen option from the dropdown
+        const chosen = Array.from(select.options).find(o => o.value === trimmed);
+        if (chosen) chosen.remove();
+        select.value = '';
+    }
 }
 
 document.addEventListener('DOMContentLoaded', function () {
+    const select = document.getElementById('tag-select');
     const customTagInput = document.getElementById('custom-tag-input');
     const addTagBtn = document.getElementById('add-custom-tag-btn');
 
+    if (select) {
+        select.addEventListener('change', function () {
+            if (select.value) addTag(select.value, true);
+        });
+    }
+
     if (addTagBtn) {
         addTagBtn.addEventListener('click', function () {
-            addCustomTag(customTagInput.value);
+            addTag(customTagInput.value, false);
             customTagInput.value = '';
         });
     }
 
-    // Wire remove buttons for custom tags pre-rendered by EditRecipe view
-    document.querySelectorAll('.remove-custom-tag').forEach(function (btn) {
-        btn.addEventListener('click', function () { btn.closest('.custom-tag-badge').remove(); });
+    // Wire remove handler for tags pre-rendered by EditRecipe view
+    document.querySelectorAll('.tag-pill').forEach(function (pill) {
+        const tagName = pill.querySelector('input[name="Tags"]').value;
+        pill.addEventListener('click', function () {
+            if (pill.dataset.predefined === 'true' && select) {
+                const opt = document.createElement('option');
+                opt.value = tagName;
+                opt.textContent = tagName;
+                const opts = Array.from(select.options).slice(1);
+                const insertBefore = opts.find(o => o.value.toLowerCase() > tagName.toLowerCase());
+                if (insertBefore) select.insertBefore(opt, insertBefore);
+                else select.appendChild(opt);
+            }
+            pill.remove();
+        });
     });
 });

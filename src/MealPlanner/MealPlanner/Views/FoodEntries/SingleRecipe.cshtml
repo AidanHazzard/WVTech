@@ -3,6 +3,16 @@
 <div id="recipe" class="back1 backHasButton row container-fluid" recipe-id="@Model.Id">
 <div class="backHasButton row container-fluid">
     <div class="col-3 mx-1">
+        @if (Model.Tags.Any())
+        {
+            <div class="d-flex flex-wrap gap-1 mb-2">
+                @foreach (var tag in Model.Tags)
+                {
+                    <span class="badge rounded-pill recipe-tag">@tag</span>
+                }
+            </div>
+        }
+
         <div class="back2">
             <h3 class="back1Title">Nutrition</h3>
 
@@ -40,18 +50,6 @@
             </ul>
         </div>
 
-        @if (Model.Tags.Any())
-        {
-            <div class="back2">
-                <h3 class="back1Title">Tags</h3>
-                <div class="d-flex flex-wrap gap-2">
-                    @foreach (var tag in Model.Tags)
-                    {
-                        <span class="badge back2-textbox">@tag</span>
-                    }
-                </div>
-            </div>
-        }
     </div>
 
     <div class="col mx-1">

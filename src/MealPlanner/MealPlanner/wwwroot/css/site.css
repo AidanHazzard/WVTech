@@ -433,3 +433,25 @@ label {
     font-weight: bold;
     white-space: nowrap;
 }
+
+.recipe-tag {
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    padding: 0.25em 0.65em;
+    background-color: var(--button-blue-bg);
+    color: var(--button-text);
+    opacity: 0.9;
+}
+
+.recipe-tag-removable {
+    cursor: pointer;
+    border: none;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.recipe-tag-removable:hover {
+    background-color: #e05555 !important;
+    color: #fff !important;
+    opacity: 1;
+}
