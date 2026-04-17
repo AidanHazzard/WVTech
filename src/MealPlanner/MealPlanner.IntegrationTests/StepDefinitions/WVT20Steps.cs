@@ -16,6 +16,8 @@ public class WVT20Steps
     private string _testIngredientName = string.Empty;
     private readonly string _manualItemName = "ManualShoppingItem";
     private int _testMealId;
+    private float _testIngredientAmount;
+    private float _expectedConvertedAmount;
 
     public WVT20Steps()
     {
@@ -265,6 +267,71 @@ public class WVT20Steps
         var userId = GetAliceId(ctx);
         var items = ctx.Set<ShoppingListItem>().Where(i => i.UserId == userId).ToList();
         Assert.That(items.Any(i => i.Name.ToLower() == _testIngredientName.ToLower()), Is.True);
+    }
+
+    [Given("'Alice' has an upcoming meal with an ingredient measured in cups")]
+    public void GivenAliceHasAnUpcomingMealWithAnIngredientMeasuredInCups()
+    {
+        _testIngredientName = "CupIngredient";
+        _testIngredientAmount = 1f;
+        _expectedConvertedAmount = 8f; // 1 Cup(s) × 8 = 8 Ounce(s)
+
+        using var ctx = BDDSetup.CreateContext();
+        var userId = GetAliceId(ctx);
+
+        var ingredientBase = ctx.Set<IngredientBase>().FirstOrDefault(ib => ib.Name == _testIngredientName);
+        if (ingredientBase == null)
+        {
+            ingredientBase = new IngredientBase { Name = _testIngredientName };
+            ctx.Set<IngredientBase>().Add(ingredientBase);
+            ctx.SaveChanges();
+        }
+
+        var measurement = ctx.Set<Measurement>().FirstOrDefault(m => m.Name == "Cup(s)");
+        if (measurement == null)
+        {
+            measurement = new Measurement { Name = "Cup(s)" };
+            ctx.Set<Measurement>().Add(measurement);
+            ctx.SaveChanges();
+        }
+
+        var recipe = new Recipe
+        {
+            Name = "CupIngredientRecipe",
+            Directions = "Test",
+            Calories = 100, Protein = 5, Carbs = 10, Fat = 3,
+            Ingredients = new List<Ingredient>
+            {
+                new Ingredient { IngredientBase = ingredientBase, Measurement = measurement, Amount = _testIngredientAmount }
+            }
+        };
+        ctx.Recipes.Add(recipe);
+
+        var meal = new Meal
+        {
+            UserId = userId,
+            Title = "Cup Ingredient Meal",
+            StartTime = DateTime.Today.AddHours(12)
+        };
+        meal.Recipes.Add(recipe);
+        ctx.Meals.Add(meal);
+        ctx.SaveChanges();
+        _testMealId = meal.Id;
+    }
+
+    [When("'Alice' changes the display unit to 'Ounce\\(s\\)'")]
+    public void WhenAliceChangesTheDisplayUnitToOunces()
+    {
+        var select = new SelectElement(_driver.FindElement(By.Id("unitConvertSelect")));
+        select.SelectByValue("Ounce(s)");
+    }
+
+    [Then("the ingredient is displayed converted to ounces")]
+    public void ThenTheIngredientIsDisplayedConvertedToOunces()
+    {
+        var expectedText = $"{_expectedConvertedAmount:G} Ounce(s) of {_testIngredientName}";
+        _wait.Until(d => d.PageSource.Contains(expectedText));
+        Assert.That(_driver.PageSource, Does.Contain(expectedText));
     }
 
     [Then("the associated shopping list items are removed from the database")]

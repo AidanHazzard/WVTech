@@ -44,3 +44,9 @@ Feature: WVT-20
     Given 'Alice' has an upcoming meal with ingredients
     When 'Alice' deletes that meal
     Then the associated shopping list items are removed from the database
+
+  Scenario: User can convert shopping list item measurements to a different unit
+    Given 'Alice' has an upcoming meal with an ingredient measured in cups
+    When 'Alice' views her shopping list
+    And 'Alice' changes the display unit to 'Ounce(s)'
+    Then the ingredient is displayed converted to ounces

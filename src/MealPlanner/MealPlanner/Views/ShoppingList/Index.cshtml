@@ -41,6 +41,18 @@
         </div>
     </form>
 
+    <div class="d-flex align-items-center gap-2 mb-3">
+        <label class="mb-0">Display units:</label>
+        <select id="unitConvertSelect" class="back2-textbox-partial" onchange="convertUnits(this.value)">
+            <option value="original">Original</option>
+            <option value="Cup(s)">Cup(s)</option>
+            <option value="Ounce(s)">Ounce(s)</option>
+            <option value="Pound(s)">Pound(s)</option>
+            <option value="L">Liters</option>
+            <option value="KG">KG</option>
+        </select>
+    </div>
+
     <div class="back2">
         @if (Model.Items.Any())
         {
@@ -48,7 +60,10 @@
                 @foreach (var item in Model.Items)
                 {
                     <div class="d-flex justify-content-between align-items-center back2-textbox">
-                        <span class="fs-5">@($"{item.Amount:G} {item.Measurement} of {item.Name}")</span>
+                        <span class="fs-5 item-display"
+                              data-amount="@item.Amount.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+                              data-measurement="@item.Measurement"
+                              data-name="@item.Name">@($"{item.Amount:G} {item.Measurement} of {item.Name}")</span>
                         <form asp-action="RemoveItem" method="post" class="m-0">
                             @Html.AntiForgeryToken()
                             <input type="hidden" name="itemId" value="@item.Id" />
@@ -64,3 +79,5 @@
         }
     </div>
 </div>
+
+<script src="~/js/shoppingListConvert.js"></script>
