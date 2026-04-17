@@ -9,12 +9,14 @@ public class RecipeRepository : Repository<Recipe>, IRecipeRepository
 {
     DbSet<IngredientBase> _ingredientBaseSet;
     DbSet<Measurement> _measurementSet;
+    DbSet<Tag> _tagSet;
 
     public RecipeRepository(MealPlannerDBContext context)
         : base(context)
     {
         _ingredientBaseSet = context.Set<IngredientBase>();
         _measurementSet = context.Set<Measurement>();
+        _tagSet = context.Set<Tag>();
     }
 
     public List<Recipe> GetRecipesByName(string name)
@@ -29,8 +31,34 @@ public class RecipeRepository : Repository<Recipe>, IRecipeRepository
         return results;
     }
 
-    public override void CreateOrUpdate(Recipe recipe)
+    public override Recipe CreateOrUpdate(Recipe recipe)
     {
+        // Resolve tag shell objects (Id=0, name only) to real tracked Tag entities.
+        // Find existing tags by name; deduplicate new custom tags with a dictionary.
+        Dictionary<string, Tag> newTags = new(StringComparer.OrdinalIgnoreCase);
+        List<Tag> resolvedTags = [];
+
+        foreach (Tag t in recipe.Tags.ToList())
+        {
+            Tag? existing = _tagSet.FirstOrDefault(tag => tag.Name == t.Name);
+            if (existing != null)
+            {
+                resolvedTags.Add(existing);
+            }
+            else if (newTags.TryGetValue(t.Name, out Tag? alreadyAdded))
+            {
+                resolvedTags.Add(alreadyAdded);
+            }
+            else
+            {
+                newTags[t.Name] = t;
+                resolvedTags.Add(t);
+            }
+        }
+
+        recipe.Tags.Clear();
+        recipe.Tags.AddRange(resolvedTags);
+
         HashSet<IngredientBase> newIngredientBases = [];
         HashSet<Measurement> newMeasurements = [];
 
@@ -78,13 +106,14 @@ public class RecipeRepository : Repository<Recipe>, IRecipeRepository
         if (!newIngredientBases.IsNullOrEmpty())  _ingredientBaseSet.AddRange(newIngredientBases); 
         if (!newMeasurements.IsNullOrEmpty())  _measurementSet.AddRange(newMeasurements); 
 
-        base.CreateOrUpdate(recipe);
+        return base.CreateOrUpdate(recipe);
     }
 
     public async Task<Recipe?> ReadRecipeWithIngredientsAsync(int id)
     {
         return await _dbset
             .Include(r => r.Ingredients)
+            .Include(r => r.Tags)
             .FirstOrDefaultAsync(r => r.Id == id);
     }
 

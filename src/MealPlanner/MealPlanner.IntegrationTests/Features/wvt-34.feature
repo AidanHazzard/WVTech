@@ -1,4 +1,4 @@
-Feature: wvt-34
+Feature: Recipe voting
     Background:
         Given there is a user named 'Jack'
         And there is a user named 'Gary'

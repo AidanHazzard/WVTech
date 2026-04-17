@@ -5,6 +5,7 @@ using MealPlanner.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 
 namespace MealPlanner.Controllers;
@@ -103,9 +104,14 @@ public class RecipeAPIController : ControllerBase
         if (_recipeService == null) return StatusCode(500);
         Recipe? recipe = _recipeRepository.ReadRecipeByExternalUri(externalUri);
         if (recipe != null) return Ok(recipe.Id);
-        recipe = new Recipe { Name = recipeName, ExternalUri = externalUri, Directions = "" };
-        _recipeRepository.CreateOrUpdate(recipe);
-        await _context.SaveChangesAsync();
+
+        try
+        {
+            recipe = new Recipe { Name = recipeName, ExternalUri = externalUri, Directions = "" };
+            _recipeRepository.CreateOrUpdate(recipe);
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateException) {}
 
         recipe = _recipeRepository.ReadRecipeByExternalUri(externalUri);
         if (recipe == null) return StatusCode(500);

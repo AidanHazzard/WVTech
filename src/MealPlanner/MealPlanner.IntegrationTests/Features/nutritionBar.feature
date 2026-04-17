@@ -19,6 +19,7 @@ Feature: nutritionBar
     And 'bob' searches for recipe 'TestRecipe'
     And 'bob' clicks the first recipe result
     And 'bob' submits the meal form
+    And 'bob' marks the meal as completed
     And 'bob' is on the page 'UserSettings/Nutrition'
     And 'bob' fills in the nutrition targets
     And 'bob' is on the page 'FoodEntries/Nutrition'

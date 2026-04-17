@@ -50,6 +50,7 @@ html {
   font-size: 14px;
   position: relative;
   min-height: 100%;
+  transition: background-color 0.3s ease-in-out;
 }
 
 @media (min-width: 768px) {
@@ -97,6 +98,44 @@ li {
 
 .linkListBack:hover {
   background-color: var(--button-grey-hover-bg);
+}
+
+*, *::before, *::after {
+    transition: background-color 0.3s ease-in-out, color 0.3s ease-in-out;
+}
+
+/* .form-check-input {
+    background-color: var(--layer2-bg);
+    border-color: var(--text-primary);
+}
+
+.form-check-input:checked {
+    background-color: var(--button-blue-bg);
+    border-color: var(--button-blue-bg);
+} */
+
+#themeToggle {
+    background-color: #ffffff;
+    border-color: #ffffff;
+    box-shadow: none;
+}
+
+#themeToggle:checked {
+    background-color: #000000;
+    border-color: #000000;
+    box-shadow: none;
+}
+
+#themeToggle:focus {
+    box-shadow: none;
+}
+
+#themeToggle:focus-visible {
+    box-shadow: none;
+}
+
+#themeToggle[type=checkbox] {
+    --bs-form-switch-bg: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%23737373'/%3e%3c/svg%3e");
 }
 
 /*Use this for the first background layer*/
@@ -338,6 +377,33 @@ label {
     margin-bottom: 8px;
 }
 
+/* Month/Day Dropdown Styles */
+.mealSelect {
+  background-color: var(--textbox-bg);
+  color: var(--text-primary);
+  border-radius: 20px;
+  min-height: 52px;
+  padding: 0.75rem 1rem;
+  font-size: 1.2rem;
+}
+  
+.mealInput {
+  background-color: var(--textbox-bg);
+  color: var(--text-primary);
+  border-radius: 20px;
+  min-height: 52px;
+  padding: 0.75rem 1rem;
+  font-size: 1.2rem;
+}
+
+/* Nutrition Bar Styling */
+.nutrition-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
 .nutrition-bar-label {
     width: 70px;
     min-width: 70px;
@@ -366,4 +432,26 @@ label {
     color: var(--text-primary);
     font-weight: bold;
     white-space: nowrap;
+}
+
+.recipe-tag {
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    padding: 0.25em 0.65em;
+    background-color: var(--button-blue-bg);
+    color: var(--button-text);
+    opacity: 0.9;
+}
+
+.recipe-tag-removable {
+    cursor: pointer;
+    border: none;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.recipe-tag-removable:hover {
+    background-color: #e05555 !important;
+    color: #fff !important;
+    opacity: 1;
 }

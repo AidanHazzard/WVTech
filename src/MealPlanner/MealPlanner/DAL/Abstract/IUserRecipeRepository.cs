@@ -18,4 +18,5 @@ public interface IUserRecipeRepository : IRepository<UserRecipe>
     public Task ChangeRecipeVoteAsync(User user, Recipe recipe, UserVoteType voteType);
     
     public Task<UserVoteType> GetUserRecipeVoteAsync(string userId, int recipeId);
+    public Task<List<Recipe>> GetUserRecipesByVoteType(string userId, UserVoteType voteType);
 }

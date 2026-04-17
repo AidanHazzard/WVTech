@@ -102,6 +102,9 @@ namespace MealPlanner.Migrations
                     b.Property<DateTime?>("EndTime")
                         .HasColumnType("datetime2");
 
+                    b.Property<bool>("IsCompleted")
+                        .HasColumnType("bit");
+
                     b.Property<string>("RepeatRule")
                         .HasColumnType("nvarchar(max)");
 
@@ -188,7 +191,7 @@ namespace MealPlanner.Migrations
                         new
                         {
                             Id = -1,
-                            Calories = 0,
+                            Calories = 250,
                             Carbs = 0,
                             Directions = "",
                             Fat = 0,
@@ -198,7 +201,7 @@ namespace MealPlanner.Migrations
                         new
                         {
                             Id = -2,
-                            Calories = 0,
+                            Calories = 400,
                             Carbs = 0,
                             Directions = "",
                             Fat = 0,
@@ -208,7 +211,7 @@ namespace MealPlanner.Migrations
                         new
                         {
                             Id = -3,
-                            Calories = 0,
+                            Calories = 1000,
                             Carbs = 0,
                             Directions = "",
                             Fat = 0,
@@ -218,7 +221,7 @@ namespace MealPlanner.Migrations
                         new
                         {
                             Id = -4,
-                            Calories = 0,
+                            Calories = 350,
                             Carbs = 0,
                             Directions = "",
                             Fat = 0,
@@ -228,7 +231,7 @@ namespace MealPlanner.Migrations
                         new
                         {
                             Id = -5,
-                            Calories = 0,
+                            Calories = 400,
                             Carbs = 0,
                             Directions = "",
                             Fat = 0,
@@ -238,7 +241,7 @@ namespace MealPlanner.Migrations
                         new
                         {
                             Id = -6,
-                            Calories = 0,
+                            Calories = 550,
                             Carbs = 0,
                             Directions = "",
                             Fat = 0,
@@ -248,7 +251,7 @@ namespace MealPlanner.Migrations
                         new
                         {
                             Id = -7,
-                            Calories = 0,
+                            Calories = 850,
                             Carbs = 0,
                             Directions = "",
                             Fat = 0,
@@ -258,7 +261,7 @@ namespace MealPlanner.Migrations
                         new
                         {
                             Id = -8,
-                            Calories = 0,
+                            Calories = 400,
                             Carbs = 0,
                             Directions = "",
                             Fat = 0,
@@ -268,7 +271,7 @@ namespace MealPlanner.Migrations
                         new
                         {
                             Id = -9,
-                            Calories = 0,
+                            Calories = 300,
                             Carbs = 0,
                             Directions = "",
                             Fat = 0,
@@ -296,6 +299,27 @@ namespace MealPlanner.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("ShoppingListItems");
+                });
+
+            modelBuilder.Entity("MealPlanner.Models.Tag", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("Tag");
                 });
 
             modelBuilder.Entity("MealPlanner.Models.User", b =>
@@ -628,6 +652,21 @@ namespace MealPlanner.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("RecipeTag", b =>
+                {
+                    b.Property<int>("RecipesId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TagsId")
+                        .HasColumnType("int");
+
+                    b.HasKey("RecipesId", "TagsId");
+
+                    b.HasIndex("TagsId");
+
+                    b.ToTable("RecipeTag");
+                });
+
             modelBuilder.Entity("RecipeUser", b =>
                 {
                     b.Property<int>("RecipesId")
@@ -799,6 +838,21 @@ namespace MealPlanner.Migrations
                     b.HasOne("MealPlanner.Models.User", null)
                         .WithMany()
                         .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("RecipeTag", b =>
+                {
+                    b.HasOne("MealPlanner.Models.Recipe", null)
+                        .WithMany()
+                        .HasForeignKey("RecipesId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("MealPlanner.Models.Tag", null)
+                        .WithMany()
+                        .HasForeignKey("TagsId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });

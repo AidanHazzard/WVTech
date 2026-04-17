@@ -1,9 +1,4 @@
-using System;
-using System.Linq;
-using System.Threading;
-using Mealplanner.IntegrationTests;
 using MealPlanner.Models;
-using Microsoft.AspNetCore.Identity;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Support.UI;
 using Reqnroll;
@@ -14,18 +9,23 @@ namespace Mealplanner.IntegrationTests
     [Binding]
     public class WVT127Steps
     {
-        private readonly SharedDriver _shared;
+        private IWebDriver _driver = null!;
+        private string _baseUrl = null!;
+        private WebDriverWait _wait = null!;
         private IWebElement _titleInput = null!;
         private int _mealId;
         private string _updatedTitle = null!;
         private string _addedRecipeName = null!;
         private string _userId = null!;
 
-        public WVT127Steps(SharedDriver shared)
+        // Runs before each scenerio
+        [BeforeScenario]
+        public void SetUp()
         {
-            _shared = shared;
+            _driver = BDDSetup.Driver;
+            _baseUrl = AUTHost.BaseUrl;
+            _wait = BDDSetup.Wait;
         }
-
 
         [Given("'Jack' has a meal created")]
         public void GivenJackHasAMealCreated()
@@ -44,7 +44,7 @@ namespace Mealplanner.IntegrationTests
         [When("'Jack' clicks the edit button")]
         public void WhenJackClicksTheEditButton()
         {
-            var editButton = _shared.Wait.Until(driver =>
+            var editButton = _wait.Until(driver =>
             {
                 try
                 {
@@ -54,14 +54,14 @@ namespace Mealplanner.IntegrationTests
                 catch (NoSuchElementException) { return null; }
             })!;
             editButton.Click();
-            _shared.Wait.Until(d => d.Url.Contains("EditMeal"));
+            _wait.Until(d => d.Url.Contains("EditMeal"));
             NavigateToEditMealPage(_mealId);
         }
 
         [Then("the meal edit form is shown")]
         public void ThenTheMealEditFormIsShown()
         {
-            _shared.Wait.Until(d =>
+            _wait.Until(d =>
             {
                 try { return d.FindElement(By.CssSelector("#editMealForm")); }
                 catch (NoSuchElementException) { return null; }
@@ -82,7 +82,7 @@ namespace Mealplanner.IntegrationTests
        [When("User saves the meal")]
         public void WhenUserSavesTheMeal()
         {
-            var js = (IJavaScriptExecutor)_shared.Driver;
+            var js = (IJavaScriptExecutor)_driver;
             
             // Ensure Date and Time fields have values if empty
             js.ExecuteScript(@"
@@ -92,7 +92,7 @@ namespace Mealplanner.IntegrationTests
                 if (timeInput && !timeInput.value) timeInput.value = '12:00:00';
             ");
 
-            var saveButton = _shared.Wait.Until(driver =>
+            var saveButton = _wait.Until(driver =>
             {
                 try
                 {
@@ -102,12 +102,12 @@ namespace Mealplanner.IntegrationTests
                 catch (NoSuchElementException) { return null; }
             })!;
 
-            ((IJavaScriptExecutor)_shared.Driver)
+            ((IJavaScriptExecutor)_driver)
                 .ExecuteScript("arguments[0].scrollIntoView(true);", saveButton);
             //Thread.Sleep(300);
             saveButton.Click();
 
-            _shared.Wait.Until(driver =>
+            _wait.Until(driver =>
                 ((IJavaScriptExecutor)driver)
                     .ExecuteScript("return document.readyState")
                     .ToString() == "complete");
@@ -116,7 +116,7 @@ namespace Mealplanner.IntegrationTests
         [When("User searches for a recipe {string}")]
         public void WhenUserSearchesForARecipe(string searchTerm)
         {
-            var searchInput = _shared.Wait.Until(driver =>
+            var searchInput = _wait.Until(driver =>
             {
                 try
                 {
@@ -126,7 +126,7 @@ namespace Mealplanner.IntegrationTests
                 catch (NoSuchElementException) { return null; }
             })!;
 
-            ((IJavaScriptExecutor)_shared.Driver)
+            ((IJavaScriptExecutor)_driver)
                 .ExecuteScript("arguments[0].scrollIntoView(true);", searchInput);
             searchInput.Click();
             searchInput.Clear();
@@ -136,7 +136,7 @@ namespace Mealplanner.IntegrationTests
         [When("User clicks the first search result")]
         public void WhenUserClicksTheFirstSearchResult()
         {
-            var firstResult = _shared.Wait.Until(driver =>
+            var firstResult = _wait.Until(driver =>
             {
                 try
                 {
@@ -146,7 +146,7 @@ namespace Mealplanner.IntegrationTests
                 catch (NoSuchElementException) { return null; }
             })!;
 
-            ((IJavaScriptExecutor)_shared.Driver)
+            ((IJavaScriptExecutor)_driver)
                 .ExecuteScript("arguments[0].scrollIntoView(true);", firstResult);
             _addedRecipeName = firstResult.FindElement(By.CssSelector(".recipeName")).Text;
             firstResult.Click();
@@ -157,7 +157,7 @@ namespace Mealplanner.IntegrationTests
         [Then("the updated meal title is shown immediately")]
         public void ThenTheUpdatedMealTitleIsShownImmediately()
         {
-            _shared.Wait.Until(driver =>
+            _wait.Until(driver =>
             {
                 try
                 {
@@ -171,8 +171,8 @@ namespace Mealplanner.IntegrationTests
         [Then("the meal is saved with the updated title")]
         public void ThenTheMealIsSavedWithTheUpdatedTitle()
         {
-            _shared.Driver.Navigate().GoToUrl($"{_shared.BaseUrl}/Meal/EditMeal?id={_mealId}");
-            var wait = new WebDriverWait(_shared.Driver, TimeSpan.FromSeconds(15));
+            _driver.Navigate().GoToUrl($"{_baseUrl}/Meal/EditMeal?id={_mealId}");
+            var wait = new WebDriverWait(_driver, TimeSpan.FromSeconds(15));
             wait.Until(driver =>
             {
                 try
@@ -187,7 +187,7 @@ namespace Mealplanner.IntegrationTests
         [Then("the recipe is shown in the meal recipe list")]
         public void ThenTheRecipeIsShownInTheMealRecipeList()
         {
-            _shared.Wait.Until(driver =>
+            _wait.Until(driver =>
             {
                 var items = driver.FindElements(By.CssSelector("#mealRecipeList .mealRecipeItem"));
                 return items.Any(item => item.Text.Contains(_addedRecipeName));
@@ -197,7 +197,7 @@ namespace Mealplanner.IntegrationTests
         [Then("the recipe is saved with the meal")]
         public void ThenTheRecipeIsSavedWithTheMeal()
         {
-            var wait = new WebDriverWait(_shared.Driver, TimeSpan.FromSeconds(15));
+            var wait = new WebDriverWait(_driver, TimeSpan.FromSeconds(15));
             wait.Until(driver =>
             {
                 try
@@ -217,14 +217,14 @@ namespace Mealplanner.IntegrationTests
 
         private void NavigateToEditMealPage(int mealId)
         {
-            _shared.Driver.Navigate().GoToUrl($"{_shared.BaseUrl}/Meal/EditMeal?id={mealId}");
+            _driver.Navigate().GoToUrl($"{_baseUrl}/Meal/EditMeal?id={mealId}");
 
-            _shared.Wait.Until(driver =>
+            _wait.Until(driver =>
                 ((IJavaScriptExecutor)driver)
                     .ExecuteScript("return document.readyState")
                     .ToString() == "complete");
 
-            _titleInput = _shared.Wait.Until(driver =>
+            _titleInput = _wait.Until(driver =>
             {
                 try
                 {
@@ -234,21 +234,22 @@ namespace Mealplanner.IntegrationTests
                 catch (NoSuchElementException) { return null; }
             })!;
 
-            ((IJavaScriptExecutor)_shared.Driver)
+            ((IJavaScriptExecutor)_driver)
                 .ExecuteScript("arguments[0].scrollIntoView(true);", _titleInput);
         }
 
         private static int CreateTestMeal(string userId)
         {
-            using var context = BDDSetup.CreateContext();
+            
+            using var ctx = BDDSetup.CreateContext();
             var meal = new Meal
             {
                 UserId = userId,
                 Title = "Test Meal",
                 StartTime = DateTime.Now
             };
-            context.Meals.Add(meal);
-            context.SaveChanges();
+            ctx.Meals.Add(meal);
+            ctx.SaveChanges();
             return meal.Id;
         }
     }

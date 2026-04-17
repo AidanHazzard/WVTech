@@ -68,8 +68,11 @@ public class FoodEntriesTests
         // New context instance for controller (same options)
         var controllerContext = new MealPlannerDBContext(contextOptions);
         var externalRecipeService = new Mock<IExternalRecipeService>();
+        var tagRepo = new Mock<ITagRepository>();
+        tagRepo.Setup(r => r.GetTagNamesAsync()).ReturnsAsync([]);
         _controller = new FoodEntriesController(
             recipeRepo.Object,
+            tagRepo.Object,
             userRecipeRepo.Object,
             controllerContext,
             registrationService.Object,

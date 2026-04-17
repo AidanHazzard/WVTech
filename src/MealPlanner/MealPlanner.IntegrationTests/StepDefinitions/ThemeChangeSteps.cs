@@ -2,7 +2,6 @@ using MealPlanner.Models;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Support.UI;
 using Reqnroll;
-using NUnit.Framework;
 
 namespace Mealplanner.IntegrationTests;
 
@@ -23,21 +22,18 @@ public class ThemeChangeSteps
     [When("{string} clicks the change theme button")]
     public void WhenUserClicksChangeThemeButton(string username)
     {
-        var link = new WebDriverWait(_driver, TimeSpan.FromSeconds(10)).Until(driver =>
+        var toggle = new WebDriverWait(_driver, TimeSpan.FromSeconds(10)).Until(driver =>
         {
             try
             {
-                var el = driver.FindElement(By.LinkText("Change Theme"));
+                var el = driver.FindElement(By.Id("themeToggle"));
                 return el.Displayed ? el : null;
             }
             catch (NoSuchElementException) { return null; }
         })!;
 
-        link.Click();
-
-        new WebDriverWait(_driver, TimeSpan.FromSeconds(10)).Until(driver =>
-            ((IJavaScriptExecutor)driver)
-                .ExecuteScript("return document.readyState").ToString() == "complete");
+        toggle.Click();
+        Thread.Sleep(1000);
     }
 
     [Then("{string} has dark theme enabled in the database")]

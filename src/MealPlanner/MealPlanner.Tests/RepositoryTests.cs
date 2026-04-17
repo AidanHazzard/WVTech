@@ -106,6 +106,21 @@ public class RepositoryTests
     }
 
     [Test]
+    public void CreateOrUpdate_ReturnsNewEntity_WithId()
+    {
+        // Arrange
+        MealPlannerDBContext context = CreateContext();
+        Repository<Recipe> repo = new Repository<Recipe>(context);
+
+        // Act
+        var result = repo.CreateOrUpdate(new Recipe { Name="Test", Directions="" });
+        context.SaveChanges();
+
+        // Assert
+        Assert.That(result.Id, Is.Not.Zero);
+    }
+
+    [Test]
     public void CreateOrUpdate_ChangesExistingRowOnTable()
     {
         // Arrange

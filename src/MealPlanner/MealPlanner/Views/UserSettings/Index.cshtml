@@ -16,10 +16,13 @@
             <h5 class="baseText">Nutrition Goals</h5>
         </a>
 
-        <a class="list-group-item list-group-item-action linkListBack"
-        asp-controller="UserSettings" asp-action="ThemeChange">
-            <h5 class="baseText">Change Theme</h5>
-        </a>
+        <div class="list-group-item linkListBack d-flex justify-content-between align-items-center">
+            <h5 class="baseText mb-0">Toggle Dark Mode</h5>
+            <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="themeToggle"
+                       style="cursor:pointer; width:3em; height:1.5em;">
+            </div>
+        </div>
 
         @if (User.IsInRole("Admin"))
             {
@@ -43,3 +46,7 @@
         <partial name="_LoginPartial" />
     </div>
 </div>
+
+@section Scripts {
+    <script src="~/js/themeToggle.js"></script>
+}

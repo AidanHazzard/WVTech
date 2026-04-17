@@ -65,7 +65,10 @@ public class NutritionBarSteps
     [Given("{string} submits the recipe form")]
     public void GivenUserSubmitsRecipeForm(string username)
     {
-        _driver.FindElement(By.CssSelector("button.buttonBlue[type='submit']")).Click();
+        var btn = _driver.FindElement(By.CssSelector("button.buttonBlue[type='submit']"));
+        ((IJavaScriptExecutor)_driver).ExecuteScript(
+            "arguments[0].scrollIntoView({block:'center',behavior:'instant'});", btn);
+        btn.Click();
         new WebDriverWait(_driver, TimeSpan.FromSeconds(10)).Until(driver =>
             ((IJavaScriptExecutor)driver)
                 .ExecuteScript("return document.readyState").ToString() == "complete");
@@ -89,10 +92,18 @@ public class NutritionBarSteps
     [Given("{string} sets the meal date to today")]
     public void GivenUserSetsMealDateToToday(string username)
     {
-        string today = DateTime.Now.ToString("yyyy-MM-dd");
-        var dateInput = _driver.FindElement(By.Id("Date"));
-        ((IJavaScriptExecutor)_driver).ExecuteScript(
-            "arguments[0].value = arguments[1];", dateInput, today);
+        var monthDropdown = new SelectElement(
+            _driver.FindElement(By.Id("SelectedMonth"))
+        );
+
+        var dayDropdown = new SelectElement(
+            _driver.FindElement(By.Id("SelectedDay"))
+        );
+
+        var today = DateTime.Now;
+
+        monthDropdown.SelectByValue(today.Month.ToString());
+        dayDropdown.SelectByValue(today.Day.ToString());
     }
 
     [Given("{string} searches for recipe {string}")]
@@ -141,6 +152,22 @@ public class NutritionBarSteps
         new WebDriverWait(_driver, TimeSpan.FromSeconds(10)).Until(driver =>
             ((IJavaScriptExecutor)driver)
                 .ExecuteScript("return document.readyState").ToString() == "complete");
+    }
+
+    [Given("'(.*)' marks the meal as completed")]
+    public void GivenUserMarksTheMealAsCompleted(string user)
+    {
+        var today = DateTime.Today.ToString("yyyy-MM-dd");
+        _driver.Navigate().GoToUrl($"{_baseUrl}/Meal/PlannerHome?date={today}");
+
+        var checkbox = new WebDriverWait(_driver, TimeSpan.FromSeconds(5))
+            .Until(d => d.FindElement(By.CssSelector("input[type='checkbox'][name='isCompleted']")));
+
+        checkbox.Click();
+
+        // Wait for page to reload after form submit
+        new WebDriverWait(_driver, TimeSpan.FromSeconds(5))
+            .Until(d => d.FindElement(By.CssSelector("input[type='checkbox'][name='isCompleted']")));
     }
 
     [Then("Meal Bars callories are at {int}\\/{int}")]

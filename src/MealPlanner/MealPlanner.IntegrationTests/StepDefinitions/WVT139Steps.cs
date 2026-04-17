@@ -1,5 +1,3 @@
-using System;
-using System.Linq;
 using MealPlanner.Models;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Support.UI;
@@ -10,14 +8,20 @@ namespace Mealplanner.IntegrationTests
     [Binding]
     public class WVT129Steps
     {
-        private readonly SharedDriver _shared;
         private string _deletedRecipeName = null!;
         private string _deletedRecipeId = null!;
         private string _userId = null!;
+        private IWebDriver _driver = null!;
+        private string _baseUrl = null!;
+        private WebDriverWait _wait = null!;
 
-        public WVT129Steps(SharedDriver shared)
+        // Runs before each scenerio
+        [BeforeScenario]
+        public void SetUp()
         {
-            _shared = shared;
+            _driver = BDDSetup.Driver;
+            _baseUrl = AUTHost.BaseUrl;
+            _wait = BDDSetup.Wait;
         }
 
         [Given("'Jack' has a recipe created")]
@@ -62,8 +66,8 @@ namespace Mealplanner.IntegrationTests
         [Given("'Jack' is on the recipe page")]
         public void GivenJackIsOnTheRecipePage()
         {
-            _shared.Driver.Navigate().GoToUrl($"{_shared.BaseUrl}/FoodEntries/Recipes");
-            _shared.Wait.Until(driver =>
+            _driver.Navigate().GoToUrl($"{_baseUrl}/FoodEntries/Recipes");
+            _wait.Until(driver =>
                 ((IJavaScriptExecutor)driver)
                     .ExecuteScript("return document.readyState")
                     .ToString() == "complete");
@@ -72,7 +76,7 @@ namespace Mealplanner.IntegrationTests
         [When("'Jack' clicks the delete button on their recipe")]
         public void WhenJackClicksTheDeleteButtonOnTheirRecipe()
         {
-            var firstItem = _shared.Wait.Until(driver =>
+            var firstItem = _wait.Until(driver =>
             {
                 try
                 {
@@ -92,26 +96,26 @@ namespace Mealplanner.IntegrationTests
         [Then("the recipe is removed from the recipe list")]
         public void ThenTheRecipeIsRemovedFromTheRecipeList()
         {
-            var js = (IJavaScriptExecutor)_shared.Driver;
-            var wait = new WebDriverWait(_shared.Driver, TimeSpan.FromSeconds(15));
+            var js = (IJavaScriptExecutor)_driver;
+            var wait = new WebDriverWait(_driver, TimeSpan.FromSeconds(15));
 
             // Wait for fetch to complete
             wait.Until(driver => js.ExecuteScript("return window._deleteStatus != null;") as bool? == true);
 
-            _shared.Driver.Navigate().GoToUrl($"{_shared.BaseUrl}/FoodEntries/Recipes");
+            _driver.Navigate().GoToUrl($"{_baseUrl}/FoodEntries/Recipes");
             wait.Until(driver =>
                 ((IJavaScriptExecutor)driver)
                     .ExecuteScript("return document.readyState")
                     .ToString() == "complete");
 
-            var items = _shared.Driver.FindElements(By.CssSelector(".mealRecipeItem"));
+            var items = _driver.FindElements(By.CssSelector(".mealRecipeItem"));
             Assert.That(items.All(item => item.GetAttribute("data-recipe-id") != _deletedRecipeId), Is.True);
         }
 
         [Then("the recipe is still shown in the recipe list")]
         public void ThenTheRecipeIsStillShownInTheRecipeList()
         {
-            _shared.Wait.Until(driver =>
+            _wait.Until(driver =>
             {
                 var items = driver.FindElements(By.CssSelector(".mealRecipeItem h4"));
                 return items.Any(item => item.Text.Contains(_deletedRecipeName));

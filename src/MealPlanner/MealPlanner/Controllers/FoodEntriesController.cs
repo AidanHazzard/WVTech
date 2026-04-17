@@ -14,6 +14,7 @@ public class FoodEntriesController : Controller
 {
     private readonly MealPlannerDBContext _context;
     private readonly IRecipeRepository _recipeRepository;
+    private readonly ITagRepository _tagRepository;
     private readonly IUserRecipeRepository _userRecipeRepository;
     private readonly INutritionProgressService? _nutritionProgressService;
     private readonly IRegistrationService _registrationService;
@@ -21,6 +22,7 @@ public class FoodEntriesController : Controller
 
     public FoodEntriesController(
         IRecipeRepository recipeRepository,
+        ITagRepository tagRepository,
         IUserRecipeRepository userRecipeRepository,
         MealPlannerDBContext context,
         IRegistrationService registrationService,
@@ -28,6 +30,7 @@ public class FoodEntriesController : Controller
         INutritionProgressService? nutritionProgressService = null)
     {
         _recipeRepository = recipeRepository;
+        _tagRepository = tagRepository;
         _context = context;
         _registrationService = registrationService;
         _nutritionProgressService = nutritionProgressService;
@@ -121,9 +124,9 @@ public class FoodEntriesController : Controller
         return View("SingleRecipe", viewModel);
     }
 
-    public IActionResult AddNewRecipe()
+    public async Task<IActionResult> AddNewRecipe()
     {
-        return View();
+        return View(new RecipeViewModel { AvailableTags = await _tagRepository.GetTagNamesAsync() });
     }
 
     [HttpPost]
@@ -132,6 +135,7 @@ public class FoodEntriesController : Controller
         //error checking
         if (!ModelState.IsValid)
         {
+            newRecipeViewModel.AvailableTags = await _tagRepository.GetTagNamesAsync();
             return View("AddNewRecipe", newRecipeViewModel);
         }
 
@@ -174,6 +178,7 @@ public class FoodEntriesController : Controller
         }
 
         RecipeViewModel viewModel = ViewModelService.RecipeToRecipeVM(recipe);
+        viewModel.AvailableTags = await _tagRepository.GetTagNamesAsync();
         return View("EditRecipe", viewModel);
     }
 
@@ -183,7 +188,8 @@ public class FoodEntriesController : Controller
     {
         if (!ModelState.IsValid)
         {
-            return View("AddNewRecipe", editedRecipeViewModel);
+            editedRecipeViewModel.AvailableTags = await _tagRepository.GetTagNamesAsync();
+            return View("EditRecipe", editedRecipeViewModel);
         }
 
         //if you do not own the recipe redirect

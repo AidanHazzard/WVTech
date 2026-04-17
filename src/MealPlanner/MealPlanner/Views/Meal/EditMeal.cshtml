@@ -1,4 +1,5 @@
 @model MealPlanner.ViewModels.EditMealViewModel
+@{DateTime today = DateTime.Today; }
 
 <div class="back1 backHasButton">
 
@@ -16,6 +17,12 @@
     </div>
 
     <h2 class="back1Title">Edit Meal</h2>
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">
+            Meal updated successfully
+        </div>
+    }
     <hr>
     <!-- Form for the meal details only -->
     <form id="editMealForm" class="mx-1" asp-action="EditMeal" method="POST">
@@ -25,20 +32,46 @@
         <div class="row g-3 mb-3">
             <div class="col-md-4">
                 <label asp-for="Title" class="form-label back1Title"></label>
-                <input asp-for="Title" id="mealTitle" class="form-control" placeholder="Meal title" />
+                <input asp-for="Title" id="mealTitle" class="form-control mealInput" placeholder="Meal title" />
                 <span asp-validation-for="Title" class="text-danger"></span>
             </div>
 
             <div class="col-md-4">
-                <label asp-for="Date" class="form-label back1Title"></label>
-                <input asp-for="Date" type="date" class="form-control" />
+                <label asp-for="Date" class="form-label back1Title">Date</label>
+                <input type="date" asp-for="Date" name="Date" class="form-control mealInput" />
                 <span asp-validation-for="Date" class="text-danger"></span>
             </div>
 
             <div class="col-md-4">
-                <label asp-for="Time" class="form-label back1Title"></label>
-                <input asp-for="Time" type="time" class="form-control" />
+                <label asp-for="Time" class="form-label back1Title">Time</label>
+                <input type="time" asp-for="Time" name="Time" class="form-control mealInput" />
                 <span asp-validation-for="Time" class="text-danger"></span>
+            </div>
+
+            <div class="col-md-4">
+                <label asp-for="SelectedMonth" class="form-label back1Title">Month</label>
+                <select asp-for="SelectedMonth" class="form-control mealSelect">
+                    <option value="">Select month</option>
+                    @for (int i = 1; i <= 12; i++)
+                    {
+                        <!option @(i==today.Month ? "selected" : "") value="@i">
+                            @System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(i)
+                        </!option>
+                    }
+                </select>
+                <span asp-validation-for="SelectedMonth" class="text-danger"></span>
+            </div>
+
+            <div class="col-md-4">
+                <label asp-for="SelectedDay" class="form-label back1Title">Day</label>
+                <select asp-for="SelectedDay" class="form-control mealSelect">
+                    <option value="">Select day</option>
+                    @for (int i = 1; i <= 31; i++)
+                    {
+                        <!option value="@i" @(i==today.Day ? "selected" : "")>@i</!option>
+                    }
+                </select>
+                <span asp-validation-for="SelectedDay" class="text-danger"></span>
             </div>
 
             <div class="col-md-4 d-flex align-items-end">
@@ -88,10 +121,10 @@
         </button>
     </form>
 
-<div class="back2 pe-5 mt-3">
-    <h3 class="back1Title">Search for Recipes to Add</h3>
-    @await Html.PartialAsync("_RecipeSearchPartial")
-</div>
+    <div class="back2 pe-5 mt-3">
+        <h3 class="back1Title">Search for Recipes to Add</h3>
+        @await Html.PartialAsync("_RecipeSearchPartial")
+    </div>
 
 </div>
 
