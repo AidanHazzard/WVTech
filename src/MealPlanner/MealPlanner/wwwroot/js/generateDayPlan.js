@@ -1,10 +1,10 @@
-const availableTags = JSON.parse(document.getElementById('dayPlanForm').dataset.tags);
-
-document.getElementById('IncludeSnacks').addEventListener('change', function () {
-    document.getElementById('snackSizeRow').style.display = this.checked ? '' : 'none';
+document.getElementById('showDayPlanWizard')?.addEventListener('click', function () {
+    document.getElementById('dayPlanWizard').style.display = '';
+    this.closest('.back1').style.paddingBottom = '';
 });
 
 document.querySelector('[data-action="next-step"]').addEventListener('click', function () {
+    const availableTags = JSON.parse(document.getElementById('dayPlanForm').dataset.tags);
     const count = parseInt(document.getElementById('MealCount').value) || 1;
     const container = document.getElementById('mealPreferenceSections');
     container.innerHTML = '';

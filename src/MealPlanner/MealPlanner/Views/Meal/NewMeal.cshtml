@@ -1,14 +1,60 @@
 @model MealPlanner.ViewModels.CreateMealViewModel
-@{DateTime today = DateTime.Today; }
+@using MealPlanner.Models
+@{
+    DateTime today = DateTime.Today;
+    var tags = (List<Tag>)(ViewBag.AvailableTags ?? new List<Tag>());
+    var tagsJson = System.Text.Json.JsonSerializer.Serialize(
+        tags.Select(t => new { id = t.Id, name = t.Name }));
+}
 
 <div class="back1 backHasButton">
     <h2 class="back1Title">Recommend Meal</h2>
-    <button class="buttonBlue">
-        <h4 id="recommendMeal" class="buttonText" data-bs-toggle="modal" data-bs-target="#recommendMealModel">Have Onebite generate a meal for you</h4>
-    </button>
-    <a asp-action="GenerateDayPlan" class="buttonBlue">
-        <h4 class="buttonText">Generate Day Plan</h4>
-    </a>
+    <div class="buttonRow">
+        <button class="buttonBlueInline">
+            <h4 id="recommendMeal" class="buttonText" data-bs-toggle="modal" data-bs-target="#recommendMealModel">Recommend Meal</h4>
+        </button>
+        <button id="showDayPlanWizard" class="buttonBlueInline" type="button">
+            <h4 class="buttonText">Generate Day Plan</h4>
+        </button>
+    </div>
+</div>
+
+<!-- Day Plan Wizard (hidden until Generate Day Plan is clicked) -->
+<div id="dayPlanWizard" style="display:none">
+    <div class="back1 backHasButton">
+        <h2 class="back1Title">Generate Day Plan</h2>
+
+        <form asp-action="GenerateDayPlan" method="POST" id="dayPlanForm" data-tags="@tagsJson">
+            @Html.AntiForgeryToken()
+
+            <input type="hidden" name="SelectedMonth" id="hiddenMonth" />
+            <input type="hidden" name="SelectedDay" id="hiddenDay" />
+
+            <!-- Step 1: meal count -->
+            <div id="step1">
+                <div class="row g-3 mb-3">
+                    <div class="col-md-4">
+                        <label for="MealCount" class="form-label">How many meals would you like today?</label>
+                        <input id="MealCount" name="MealCount" type="number"
+                               min="1" max="10" value="3" class="form-control" />
+                    </div>
+                </div>
+
+                <button type="button" data-action="next-step" class="buttonBlue mt-2">
+                    <h4 class="buttonText">Next — Configure Meals</h4>
+                </button>
+            </div>
+
+            <!-- Step 2: per-meal configuration (populated by JS) -->
+            <div id="step2" style="display:none">
+                <div id="mealPreferenceSections"></div>
+
+                <button type="submit" class="buttonBlue mt-3">
+                    <h4 class="buttonText">Generate Day Plan</h4>
+                </button>
+            </div>
+        </form>
+    </div>
 </div>
 
 <div class="modal fade" id="recommendMealModel">
@@ -19,7 +65,7 @@
             <form asp-action="GenerateMeal" method="POST">
                 <label for="recommendMealTitle">Meal Title</label>
                 <input asp-for="Title" id="recommendMealTitle" class="back2-textbox" placeholder="Lunch"/>
-                
+
                 <label>Meal Date</label>
                 <select name="SelectedMonth" class="back2-textbox">
                     @for (int i = 1; i <= 12; i++)
@@ -35,7 +81,7 @@
                         <!option value="@i" @(i==today.Day ? "selected" : "")>@i</!option>
                     }
                 </select>
-                
+
                 <button class="buttonBlue" type="submit">
                     <h4 id="finishRecommendMeal" class="buttonText">Generate Meal</h4>
                 </button>
@@ -119,4 +165,5 @@
     <partial name="_ValidationScriptsPartial" />
     <script type="module" src="~/js/recipeSearch.js"></script>
     <script type="module" src="~/js/createMeal.js"></script>
+    <script src="~/js/generateDayPlan.js"></script>
 }

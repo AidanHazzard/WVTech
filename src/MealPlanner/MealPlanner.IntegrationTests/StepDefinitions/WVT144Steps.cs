@@ -15,7 +15,6 @@ public class WVT144Steps
     private WebDriverWait _wait = null!;
     private string _baseUrl = null!;
 
-    // Tracks the first meal name in the summary before regeneration
     private string _mealNameBeforeRegeneration = string.Empty;
 
     [BeforeScenario]
@@ -96,59 +95,27 @@ public class WVT144Steps
         input.SendKeys(count.ToString());
     }
 
-    [Then("{string} is asked whether he would like snacks included")]
-    public void ThenUserIsAskedAboutSnacks(string userName)
-    {
-        var el = _wait.Until(d =>
-        {
-            try { return d.FindElement(By.Id("IncludeSnacks")); }
-            catch (NoSuchElementException) { return null; }
-        });
-        Assert.That(el, Is.Not.Null, "Could not find snack inclusion input (#IncludeSnacks)");
-        Assert.That(el!.Displayed, Is.True);
-    }
-
-    [When("{string} chooses to include snacks")]
-    public void WhenUserChoosesToIncludeSnacks(string userName)
-    {
-        var checkbox = _driver.FindElement(By.Id("IncludeSnacks"));
-        if (!checkbox.Selected)
-            ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].click();", checkbox);
-    }
-
-    [Then("{string} is asked what size he would like his snacks to be")]
-    public void ThenUserIsAskedSnackSize(string userName)
-    {
-        var el = _wait.Until(d =>
-        {
-            try { return d.FindElement(By.Id("SnackSize")); }
-            catch (NoSuchElementException) { return null; }
-        });
-        Assert.That(el, Is.Not.Null, "Could not find snack size selector (#SnackSize)");
-        Assert.That(el!.Displayed, Is.True);
-    }
-
-    [Then("the snack size options include {string} and {string}")]
-    public void ThenSnackSizeOptionsInclude(string option1, string option2)
-    {
-        var select = new SelectElement(_driver.FindElement(By.Id("SnackSize")));
-        var optionTexts = select.Options.Select(o => o.Text).ToList();
-        Assert.That(optionTexts, Does.Contain(option1), $"Snack size option '{option1}' not found");
-        Assert.That(optionTexts, Does.Contain(option2), $"Snack size option '{option2}' not found");
-    }
-
-    [Given("{string} has specified {int} meals with no snacks for his day plan")]
-    public void GivenUserHasSpecifiedMealsWithNoSnacks(string userName, int mealCount)
+    [Given("{string} has specified {int} meals for his day plan")]
+    public void GivenUserHasSpecifiedMeals(string userName, int mealCount)
     {
         ClearTodaysMealsForUser(userName);
-        _driver.Navigate().GoToUrl($"{_baseUrl}/Meal/GenerateDayPlan");
-        _wait.Until(d => d.Url.Contains("/Meal/GenerateDayPlan"));
-        var input = _driver.FindElement(By.Id("MealCount"));
-        input.Clear();
+        _driver.Navigate().GoToUrl($"{_baseUrl}/Meal/NewMeal");
+        _wait.Until(d => d.Url.Contains("/Meal/NewMeal"));
+
+        var showWizard = _wait.Until(d =>
+        {
+            try { return d.FindElement(By.Id("showDayPlanWizard")); }
+            catch (NoSuchElementException) { return null; }
+        });
+        ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].click();", showWizard!);
+
+        var input = _wait.Until(d =>
+        {
+            try { return d.FindElement(By.Id("MealCount")); }
+            catch (NoSuchElementException) { return null; }
+        });
+        input!.Clear();
         input.SendKeys(mealCount.ToString());
-        var snacks = _driver.FindElement(By.Id("IncludeSnacks"));
-        if (snacks.Selected)
-            ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].click();", snacks);
     }
 
     private void ClearTodaysMealsForUser(string userName)
@@ -166,8 +133,6 @@ public class WVT144Steps
     [When("{string} is presented with the configuration for each meal")]
     public void WhenUserIsPresentedWithMealConfig(string userName)
     {
-        // The wizard shows per-meal config after meal count is entered;
-        // trigger the next step in the wizard
         var nextBtn = _wait.Until(d =>
         {
             try
@@ -186,8 +151,11 @@ public class WVT144Steps
     {
         var el = _wait.Until(d =>
         {
-            try { return d.FindElements(By.CssSelector("[id^='MealPreferences_']"))
-                    .FirstOrDefault(e => e.Displayed); }
+            try
+            {
+                return d.FindElements(By.CssSelector("[id^='MealPreferences_']"))
+                    .FirstOrDefault(e => e.Displayed);
+            }
             catch { return null; }
         });
         Assert.That(el, Is.Not.Null, "Could not find meal size selector for first meal");
@@ -305,18 +273,50 @@ public class WVT144Steps
         });
         ctx.SaveChanges();
 
-        _driver.Navigate().GoToUrl($"{_baseUrl}/Meal/GenerateDayPlan");
-        _wait.Until(d => d.Url.Contains("/Meal/GenerateDayPlan"));
-        var input = _driver.FindElement(By.Id("MealCount"));
-        input.Clear();
+        _driver.Navigate().GoToUrl($"{_baseUrl}/Meal/NewMeal");
+        _wait.Until(d => d.Url.Contains("/Meal/NewMeal"));
+
+        var showWizard = _wait.Until(d =>
+        {
+            try { return d.FindElement(By.Id("showDayPlanWizard")); }
+            catch (NoSuchElementException) { return null; }
+        });
+        ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].click();", showWizard!);
+
+        var input = _wait.Until(d =>
+        {
+            try { return d.FindElement(By.Id("MealCount")); }
+            catch (NoSuchElementException) { return null; }
+        });
+        input!.Clear();
         input.SendKeys("1");
+
+        var nextBtn = _wait.Until(d =>
+        {
+            try
+            {
+                return d.FindElements(By.CssSelector("[data-action='next-step']"))
+                    .FirstOrDefault(e => e.Displayed);
+            }
+            catch { return null; }
+        });
+        if (nextBtn != null)
+            ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].click();", nextBtn);
     }
 
     [When("the day plan is generated")]
     public void WhenTheDayPlanIsGenerated()
     {
-        var submit = _driver.FindElement(By.CssSelector("button[type='submit']"));
-        ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].click();", submit);
+        var submit = _wait.Until(d =>
+        {
+            try
+            {
+                return d.FindElements(By.CssSelector("button[type='submit']"))
+                    .FirstOrDefault(e => e.Displayed);
+            }
+            catch { return null; }
+        });
+        ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].click();", submit!);
         _wait.Until(d => d.Url.Contains("/Meal/DayPlanSummary"));
     }
 
@@ -363,29 +363,50 @@ public class WVT144Steps
         });
         Assert.That(regenBtn, Is.Not.Null, "Could not find regenerate button");
         ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].click();", regenBtn!);
-        _wait.Until(d => d.Url.Contains("/Meal/RegenerateMeal"));
+
+        _wait.Until(d =>
+        {
+            try
+            {
+                return d.FindElements(By.CssSelector("[data-regen-field='size']"))
+                    .Any(e => e.Displayed);
+            }
+            catch { return false; }
+        });
     }
 
-    [Then("{string} is shown the meal configuration form with his previous size and tag selections prefilled")]
-    public void ThenUserIsShownPrefillledMealConfig(string userName)
+    [Then("{string} is shown the meal configuration form inline on the summary page")]
+    public void ThenUserIsShownInlineMealConfig(string userName)
     {
         var sizeSelect = _wait.Until(d =>
         {
-            try { return d.FindElement(By.Id("Size")); }
+            try
+            {
+                return d.FindElements(By.CssSelector("[data-regen-field='size']"))
+                    .FirstOrDefault(e => e.Displayed);
+            }
             catch (NoSuchElementException) { return null; }
         });
-        Assert.That(sizeSelect, Is.Not.Null, "Could not find size selector on regenerate form (#Size)");
+        Assert.That(sizeSelect, Is.Not.Null, "Could not find inline size selector ([data-regen-field='size'])");
 
         var select = new SelectElement(sizeSelect!);
-        Assert.That(select.SelectedOption.Text, Is.Not.Empty,
-            "Size selector has no prefilled selection");
+        Assert.That(select.SelectedOption.Text, Is.Not.Empty, "Size selector has no selection");
     }
 
     [When("{string} confirms the configuration and regenerates")]
     public void WhenUserConfirmsAndRegenerates(string userName)
     {
-        var submit = _driver.FindElement(By.CssSelector("button[type='submit']"));
-        ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].click();", submit);
+        var submit = _wait.Until(d =>
+        {
+            try
+            {
+                var forms = d.FindElements(By.CssSelector("[id^='regenerate-form-']"));
+                var visibleForm = forms.FirstOrDefault(f => f.Displayed);
+                return visibleForm?.FindElement(By.CssSelector("button[type='submit']"));
+            }
+            catch { return null; }
+        });
+        ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].click();", submit!);
         _wait.Until(d => d.Url.Contains("/Meal/DayPlanSummary"));
     }
 
@@ -399,7 +420,6 @@ public class WVT144Steps
     [Then("all other meals in the summary remain unchanged")]
     public void ThenOtherMealsRemainUnchanged()
     {
-        // With only 1 meal in the test plan, verify the summary still shows 1 meal
         var meals = _driver.FindElements(By.CssSelector("[data-meal-name]"));
         Assert.That(meals.Count, Is.EqualTo(1),
             "Expected the same number of meals in the summary after regenerating one");
