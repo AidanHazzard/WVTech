@@ -102,7 +102,11 @@ public class MealRecommendationService : IMealRecommendationService
             var candidates = upvoted.Concat(rest).ToList();
 
             if (pref.TagIds.Any())
-                candidates = candidates.Where(r => r.Tags.Any(t => pref.TagIds.Contains(t.Id))).ToList();
+            {
+                var matched = candidates.Where(r => r.Tags.Any(t => pref.TagIds.Contains(t.Id))).ToList();
+                var unmatched = candidates.Where(r => r.Tags.All(t => !pref.TagIds.Contains(t.Id))).ToList();
+                candidates = matched.Concat(unmatched).ToList();
+            }
 
             var recipes = new List<Recipe>();
             int running = 0;
