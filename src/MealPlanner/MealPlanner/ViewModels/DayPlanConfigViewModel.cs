@@ -8,6 +8,7 @@ public class MealPreferenceViewModel
     public MealSize Size { get; set; } = MealSize.Average;
     public List<int> TagIds { get; set; } = [];
     public string? CustomTagName { get; set; }
+    public string? Title { get; set; }
 }
 
 public class DayPlanConfigViewModel

@@ -233,6 +233,7 @@ public class MealController : Controller
             Meals = meals.Select(m => new ViewModels.DayPlanMealViewModel
             {
                 MealId = m.Id,
+                Title = m.Title ?? string.Empty,
                 Recipes = m.Recipes
             }).ToList()
         };
@@ -445,10 +446,13 @@ public class MealController : Controller
     {
         foreach (var pref in preferences)
         {
-            if (string.IsNullOrWhiteSpace(pref.CustomTagName)) continue;
-            var tag = await _tagRepo.FindByNameAsync(pref.CustomTagName.Trim());
-            if (tag != null && !pref.TagIds.Contains(tag.Id))
-                pref.TagIds.Add(tag.Id);
+            foreach (var name in new[] { pref.CustomTagName, pref.Title }
+                .Where(n => !string.IsNullOrWhiteSpace(n)))
+            {
+                var tag = await _tagRepo.FindByNameAsync(name!.Trim());
+                if (tag != null && !pref.TagIds.Contains(tag.Id))
+                    pref.TagIds.Add(tag.Id);
+            }
         }
     }
 }

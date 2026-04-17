@@ -21,6 +21,16 @@ document.querySelector('[data-action="next-step"]').addEventListener('click', fu
         container.innerHTML += `
             <div class="back2 mb-3 p-3">
                 <h5>Meal ${i + 1}</h5>
+                <div class="row g-3 mb-3">
+                    <div class="col-md-8">
+                        <label class="form-label">Meal title (optional)</label>
+                        <input type="text"
+                               id="MealPreferences_${i}__Title"
+                               name="MealPreferences[${i}].Title"
+                               class="form-control"
+                               placeholder="e.g. Lunch, Weekend Brunch…" />
+                    </div>
+                </div>
                 <div class="row g-3">
                     <div class="col-md-4">
                         <label class="form-label">Size</label>

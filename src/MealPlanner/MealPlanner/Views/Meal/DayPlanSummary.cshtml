@@ -18,9 +18,7 @@
             {
                 <div class="back2 mb-3 p-3">
                     <div class="d-flex justify-content-between align-items-center">
-                        <h4 data-meal-name data-meal-id="@meal.MealId">
-                            @(meal.IsSnack ? "Snack" : meal.Recipes.FirstOrDefault()?.Name ?? "Meal")
-                        </h4>
+                        <h4 data-meal-name data-meal-id="@meal.MealId">@meal.Title</h4>
                         <a href="/Meal/RegenerateMeal?mealId=@meal.MealId"
                            data-action="regenerate-meal"
                            class="buttonBlue">

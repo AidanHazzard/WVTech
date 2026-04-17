@@ -34,6 +34,14 @@ Feature: Recommend meals for entire day
     Then 'Gary' sees a summary of his meal plan for the day
     And the summary shows each recommended meal by name
 
+  Scenario: User provides a meal title that appears in the day plan summary
+    Given 'Gary' has specified 2 meals with no snacks for his day plan
+    When 'Gary' is presented with the configuration for each meal
+    And 'Gary' enters 'Weekend Brunch' as the title for the first meal
+    When the day plan is generated
+    Then the summary contains a meal titled 'Weekend Brunch'
+    And the second meal in the summary uses the default naming scheme
+
   Scenario: User enters a custom tag not shown in the suggested list
     Given 'Gary' has specified 2 meals with no snacks for his day plan
     When 'Gary' is presented with the configuration for each meal

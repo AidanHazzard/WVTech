@@ -124,7 +124,7 @@ public class MealRecommendationService : IMealRecommendationService
             {
                 User = user,
                 UserId = user.Id,
-                Title = isSnack ? "Snack" : $"Meal {++mealIndex}",
+                Title = isSnack ? "Snack" : (!string.IsNullOrWhiteSpace(pref.Title) ? pref.Title : $"Meal {++mealIndex}"),
                 StartTime = mealDate,
                 Recipes = recipes
             });

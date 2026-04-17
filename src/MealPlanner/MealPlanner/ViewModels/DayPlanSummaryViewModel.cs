@@ -5,6 +5,7 @@ namespace MealPlanner.ViewModels;
 public class DayPlanMealViewModel
 {
     public int MealId { get; set; }
+    public string Title { get; set; } = string.Empty;
     public bool IsSnack { get; set; }
     public MealSize Size { get; set; }
     public List<Recipe> Recipes { get; set; } = [];

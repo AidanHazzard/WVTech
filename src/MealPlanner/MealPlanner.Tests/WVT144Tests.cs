@@ -230,4 +230,49 @@ public class WVT144Tests
 
         Assert.That(config.MealPreferences[0].TagIds, Is.Empty);
     }
+
+    [Test]
+    public async Task GenerateDayPlan_Post_WithMatchingTitle_AddsMatchingTagToPreferences()
+    {
+        var tag = new Tag { Id = 7, Name = "Vegan" };
+        _tagRepoMock.Setup(r => r.FindByNameAsync("Vegan")).ReturnsAsync(tag);
+
+        var config = new DayPlanConfigViewModel
+        {
+            MealCount = 1,
+            SelectedMonth = DateTime.Today.Month,
+            SelectedDay = DateTime.Today.Day,
+            MealPreferences = [new MealPreferenceViewModel { Size = MealSize.Average, Title = "Vegan" }]
+        };
+
+        _reccServiceMock
+            .Setup(s => s.GetRecommendedDayPlanForUser(It.IsAny<User>(), It.IsAny<DateTime>(), It.IsAny<DayPlanConfigViewModel>()))
+            .ReturnsAsync([]);
+
+        await _controller.GenerateDayPlan(config);
+
+        Assert.That(config.MealPreferences[0].TagIds, Does.Contain(7));
+    }
+
+    [Test]
+    public async Task GenerateDayPlan_Post_WithNonMatchingTitle_DoesNotAddTag()
+    {
+        _tagRepoMock.Setup(r => r.FindByNameAsync("Weekend Brunch")).ReturnsAsync((Tag?)null);
+
+        var config = new DayPlanConfigViewModel
+        {
+            MealCount = 1,
+            SelectedMonth = DateTime.Today.Month,
+            SelectedDay = DateTime.Today.Day,
+            MealPreferences = [new MealPreferenceViewModel { Size = MealSize.Average, Title = "Weekend Brunch" }]
+        };
+
+        _reccServiceMock
+            .Setup(s => s.GetRecommendedDayPlanForUser(It.IsAny<User>(), It.IsAny<DateTime>(), It.IsAny<DayPlanConfigViewModel>()))
+            .ReturnsAsync([]);
+
+        await _controller.GenerateDayPlan(config);
+
+        Assert.That(config.MealPreferences[0].TagIds, Is.Empty);
+    }
 }

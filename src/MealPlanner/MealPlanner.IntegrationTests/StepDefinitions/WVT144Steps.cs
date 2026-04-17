@@ -140,6 +140,7 @@ public class WVT144Steps
     [Given("{string} has specified {int} meals with no snacks for his day plan")]
     public void GivenUserHasSpecifiedMealsWithNoSnacks(string userName, int mealCount)
     {
+        ClearTodaysMealsForUser(userName);
         _driver.Navigate().GoToUrl($"{_baseUrl}/Meal/GenerateDayPlan");
         _wait.Until(d => d.Url.Contains("/Meal/GenerateDayPlan"));
         var input = _driver.FindElement(By.Id("MealCount"));
@@ -148,6 +149,18 @@ public class WVT144Steps
         var snacks = _driver.FindElement(By.Id("IncludeSnacks"));
         if (snacks.Selected)
             ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].click();", snacks);
+    }
+
+    private void ClearTodaysMealsForUser(string userName)
+    {
+        var ctx = BDDSetup.Context;
+        var user = ctx.Set<User>().First(u => u.NormalizedEmail == $"{userName}@fakeemail.com".ToUpper());
+        var today = DateTime.Today;
+        var existing = ctx.Set<Meal>()
+            .Where(m => m.UserId == user.Id && m.StartTime != null && m.StartTime.Value.Date == today)
+            .ToList();
+        ctx.Set<Meal>().RemoveRange(existing);
+        ctx.SaveChanges();
     }
 
     [When("{string} is presented with the configuration for each meal")]
@@ -206,6 +219,37 @@ public class WVT144Steps
         Assert.That(el, Is.Not.Null, "Could not find tag selector for meal configuration");
     }
 
+    [When("{string} enters {string} as the title for the first meal")]
+    public void WhenUserEntersTitleForFirstMeal(string userName, string title)
+    {
+        var input = _wait.Until(d =>
+        {
+            try { return d.FindElement(By.Id("MealPreferences_0__Title")); }
+            catch (NoSuchElementException) { return null; }
+        });
+        Assert.That(input, Is.Not.Null, "Could not find title input for first meal (#MealPreferences_0__Title)");
+        input!.Clear();
+        input.SendKeys(title);
+    }
+
+    [Then("the summary contains a meal titled {string}")]
+    public void ThenSummaryContainsMealTitled(string title)
+    {
+        var meals = _driver.FindElements(By.CssSelector("[data-meal-name]"));
+        Assert.That(meals.Any(m => m.Text.Trim() == title), Is.True,
+            $"No meal titled '{title}' found in the summary");
+    }
+
+    [Then("the second meal in the summary uses the default naming scheme")]
+    public void ThenSecondMealUsesDefaultNaming()
+    {
+        var meals = _driver.FindElements(By.CssSelector("[data-meal-name]"));
+        Assert.That(meals.Count, Is.GreaterThanOrEqualTo(2), "Expected at least 2 meals in the summary");
+        var secondTitle = meals[1].Text.Trim();
+        Assert.That(secondTitle, Does.Match(@"^Meal \d+$"),
+            $"Expected second meal to follow default naming 'Meal N', but was '{secondTitle}'");
+    }
+
     [Then("{string} can enter a custom tag name for the meal")]
     public void ThenUserCanEnterCustomTagName(string userName)
     {
@@ -237,14 +281,9 @@ public class WVT144Steps
     [Given("{string} has completed the day plan configuration")]
     public void GivenUserHasCompletedDayPlanConfig(string userName)
     {
+        ClearTodaysMealsForUser(userName);
         var ctx = BDDSetup.Context;
         var user = ctx.Set<User>().First(u => u.NormalizedEmail == $"{userName}@fakeemail.com".ToUpper());
-
-        // Remove any meals for today so previous scenarios don't pollute this one
-        var today = DateTime.Today;
-        var existingMeals = ctx.Set<Meal>().Where(m => m.UserId == user.Id && m.StartTime != null && m.StartTime.Value.Date == today).ToList();
-        ctx.Set<Meal>().RemoveRange(existingMeals);
-        ctx.SaveChanges();
 
         var recipe = new Recipe
         {
