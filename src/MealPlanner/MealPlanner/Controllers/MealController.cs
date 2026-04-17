@@ -115,6 +115,7 @@ public class MealController : Controller
         _mealRepo.CreateOrUpdate(newMeal);
         _context.SaveChanges();
 
+        Response.Cookies.Delete("ShoppingListSynced");
         return RedirectToAction("Index", "Home");
     }
 
@@ -138,6 +139,7 @@ public class MealController : Controller
 
         newMeal = _mealRepo.CreateOrUpdate(newMeal);
         _context.SaveChanges();
+        Response.Cookies.Delete("ShoppingListSynced");
         return RedirectToAction("ViewMeal", new {id = newMeal.Id });
     }
 
@@ -247,6 +249,7 @@ public class MealController : Controller
 
         await _context.SaveChangesAsync();
 
+        Response.Cookies.Delete("ShoppingListSynced");
         TempData["Success"] = "Meal updated successfully";
 
         return RedirectToAction("EditMeal", new { id = meal.Id });
@@ -290,6 +293,7 @@ public class MealController : Controller
         _context.Meals.Remove(meal);
         await _context.SaveChangesAsync();
 
+        Response.Cookies.Delete("ShoppingListSynced");
         return RedirectToAction("PlannerHome", "Meal", new { date });
     }
 
