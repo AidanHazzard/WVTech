@@ -1,4 +1,4 @@
-Feature: WVT-43
+Feature: Recipe search
     Background:
         Given User is on recipe page
         

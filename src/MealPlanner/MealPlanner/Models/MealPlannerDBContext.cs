@@ -17,6 +17,7 @@ namespace MealPlanner.Models
         public DbSet<DietaryRestriction> DietaryRestrictions { get; set; }
         public DbSet<UserDietaryRestriction> UserDietaryRestrictions { get; set; }
 
+        public DbSet<Tag> Tags { get; set; }
         public DbSet<ShoppingListItem> ShoppingListItems { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
