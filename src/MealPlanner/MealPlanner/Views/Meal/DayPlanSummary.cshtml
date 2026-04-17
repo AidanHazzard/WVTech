@@ -41,7 +41,7 @@
 
                     <!-- Inline regenerate form (toggled by dayPlanSummary.js) -->
                     <div id="regenerate-form-@meal.MealId" style="display:none" class="mt-3">
-                        <form action="/Meal/RegenerateMeal/@meal.MealId" method="POST">
+                        <form action="/Meal/RegenerateMeal?mealId=@meal.MealId" method="POST">
                             @Html.AntiForgeryToken()
 
                             <div class="row g-3 mb-3">
