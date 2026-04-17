@@ -61,8 +61,9 @@ public class MealController : Controller
     }
 
     [HttpGet]
-    public IActionResult NewMeal()
+    public async Task<IActionResult> NewMeal()
     {
+        ViewBag.AvailableTags = await _tagRepo.GetTagsByPopularityAsync();
         return View(new CreateMealViewModel
         {
             SelectedMonth = DateTime.Today.Month,
@@ -144,17 +145,6 @@ public class MealController : Controller
         return RedirectToAction("ViewMeal", new {id = newMeal.Id });
     }
 
-    [HttpGet]
-    public async Task<IActionResult> GenerateDayPlan()
-    {
-        ViewBag.AvailableTags = await _tagRepo.GetTagsByPopularityAsync();
-        return View(new ViewModels.DayPlanConfigViewModel
-        {
-            SelectedMonth = DateTime.Today.Month,
-            SelectedDay = DateTime.Today.Day
-        });
-    }
-
     [HttpPost]
     public async Task<IActionResult> GenerateDayPlan(ViewModels.DayPlanConfigViewModel model)
     {
@@ -172,20 +162,6 @@ public class MealController : Controller
         _context.SaveChanges();
 
         return RedirectToAction("DayPlanSummary", new { date = selectedDate.ToString("yyyy-MM-dd") });
-    }
-
-    [HttpGet]
-    public async Task<IActionResult> RegenerateMeal(int mealId)
-    {
-        var user = await _registrationService.FindUserByClaimAsync(User);
-        if (user == null) return Challenge();
-
-        var meal = await _mealRepo.ReadAsync(mealId);
-        if (meal == null || meal.UserId != user.Id) return NotFound();
-
-        ViewBag.MealId = mealId;
-        ViewBag.AvailableTags = await _tagRepo.GetTagsByPopularityAsync();
-        return View(new ViewModels.MealPreferenceViewModel());
     }
 
     [HttpPost]
@@ -230,6 +206,7 @@ public class MealController : Controller
         var vm = new ViewModels.DayPlanSummaryViewModel
         {
             Date = selectedDate,
+            AvailableTags = await _tagRepo.GetTagsByPopularityAsync(),
             Meals = meals.Select(m => new ViewModels.DayPlanMealViewModel
             {
                 MealId = m.Id,

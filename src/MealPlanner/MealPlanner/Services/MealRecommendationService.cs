@@ -82,13 +82,9 @@ public class MealRecommendationService : IMealRecommendationService
                 .Select(_ => new MealPreferenceViewModel { Size = MealSize.Average })
                 .ToList();
 
-        if (config.IncludeSnacks && config.SnackSize.HasValue)
-            preferences.Add(new MealPreferenceViewModel { Size = config.SnackSize.Value });
-
         int mealIndex = 0;
         foreach (var pref in preferences)
         {
-            var isSnack = pref.Size.IsSnack();
             var calorieTarget = pref.Size.Calories();
 
             var upvoted = await _userRecipeRepository.GetUserRecipesByVoteType(user.Id, UserVoteType.UpVote);
@@ -124,7 +120,7 @@ public class MealRecommendationService : IMealRecommendationService
             {
                 User = user,
                 UserId = user.Id,
-                Title = isSnack ? "Snack" : (!string.IsNullOrWhiteSpace(pref.Title) ? pref.Title : $"Meal {++mealIndex}"),
+                Title = !string.IsNullOrWhiteSpace(pref.Title) ? pref.Title : $"Meal {++mealIndex}",
                 StartTime = mealDate,
                 Recipes = recipes
             });

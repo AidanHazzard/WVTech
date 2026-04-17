@@ -17,9 +17,6 @@ public class DayPlanConfigViewModel
     [Range(1, 10)]
     public int MealCount { get; set; }
 
-    public bool IncludeSnacks { get; set; }
-    public MealSize? SnackSize { get; set; }
-
     public List<MealPreferenceViewModel> MealPreferences { get; set; } = [];
 
     [Required]

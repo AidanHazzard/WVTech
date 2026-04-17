@@ -57,6 +57,10 @@ public class WVT144Tests
         _tagRepoMock = new Mock<ITagRepository>();
         _tagRepoMock.Setup(r => r.GetTagsByPopularityAsync()).ReturnsAsync([]);
 
+        _mealRepoMock
+            .Setup(r => r.GetUserMealsByDateAsync(It.IsAny<User>(), It.IsAny<DateTime>()))
+            .ReturnsAsync([]);
+
         _controller = new MealController(
             _registrationServiceMock.Object,
             _recipeRepoMock.Object,
@@ -95,24 +99,18 @@ public class WVT144Tests
         Assert.That(MealSize.Large.IsSnack(), Is.False);
     }
 
-    // Controller — GenerateDayPlan GET
+    // Controller — NewMeal GET
 
     [Test]
-    public async Task GenerateDayPlan_Get_ReturnsViewResult()
+    public async Task NewMeal_Get_PassesAvailableTagsToViewBag()
     {
-        var result = await _controller.GenerateDayPlan();
+        var tags = new List<Tag> { new Tag { Id = 1, Name = "Vegan" } };
+        _tagRepoMock.Setup(r => r.GetTagsByPopularityAsync()).ReturnsAsync(tags);
 
-        Assert.That(result, Is.TypeOf<ViewResult>());
-    }
+        var result = (ViewResult)await _controller.NewMeal();
 
-    [Test]
-    public async Task GenerateDayPlan_Get_ModelHasCurrentMonthAndDay()
-    {
-        var result = (ViewResult)await _controller.GenerateDayPlan();
-        var model = (DayPlanConfigViewModel)result.Model!;
-
-        Assert.That(model.SelectedMonth, Is.EqualTo(DateTime.Today.Month));
-        Assert.That(model.SelectedDay, Is.EqualTo(DateTime.Today.Day));
+        Assert.That(_controller.ViewBag.AvailableTags, Is.Not.Null);
+        Assert.That(((List<Tag>)_controller.ViewBag.AvailableTags).Count, Is.EqualTo(1));
     }
 
     // Controller — GenerateDayPlan POST
@@ -123,7 +121,6 @@ public class WVT144Tests
         var config = new DayPlanConfigViewModel
         {
             MealCount = 3,
-            IncludeSnacks = false,
             SelectedMonth = DateTime.Today.Month,
             SelectedDay = DateTime.Today.Day,
             MealPreferences =
@@ -169,19 +166,19 @@ public class WVT144Tests
         Assert.That(((RedirectToActionResult)result).ActionName, Is.EqualTo("DayPlanSummary"));
     }
 
-    // Controller — RegenerateMeal GET
+    // Controller — DayPlanSummary GET
 
     [Test]
-    public async Task RegenerateMeal_Get_ReturnsViewWithPrefillledPreferences()
+    public async Task DayPlanSummary_Get_IncludesAvailableTagsInViewModel()
     {
-        var meal = new Meal { Id = 5, UserId = "user-1" };
-        _mealRepoMock.Setup(r => r.ReadAsync(5)).ReturnsAsync(meal);
+        var tags = new List<Tag> { new Tag { Id = 3, Name = "Vegan" } };
+        _tagRepoMock.Setup(r => r.GetTagsByPopularityAsync()).ReturnsAsync(tags);
 
-        var result = await _controller.RegenerateMeal(5);
+        var result = (ViewResult)await _controller.DayPlanSummary(DateTime.Today.ToString("yyyy-MM-dd"));
+        var model = (DayPlanSummaryViewModel)result.Model!;
 
-        Assert.That(result, Is.TypeOf<ViewResult>());
-        var model = ((ViewResult)result).Model;
-        Assert.That(model, Is.TypeOf<MealPreferenceViewModel>());
+        Assert.That(model.AvailableTags, Is.Not.Empty);
+        Assert.That(model.AvailableTags.First().Name, Is.EqualTo("Vegan"));
     }
 
     // Controller — custom tag resolution
