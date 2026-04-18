@@ -14,20 +14,20 @@ public class HomeController : Controller
     private readonly ILoginService _loginService;
     private readonly IRegistrationService _registrationService;
     private readonly IMealRepository _mealRepo;
-    //private readonly INutritionProgressService _nutritionProgressService;
+    private readonly INutritionProgressService _nutritionProgressService;
 
     public HomeController(
         MealPlannerDBContext context,
         ILoginService loginService,
         IRegistrationService registrationService,
-        IMealRepository mealRepo)
-        //INutritionProgressService nutritionProgressService)
+        IMealRepository mealRepo,
+        INutritionProgressService nutritionProgressService)
     {
         _context = context;
         _loginService = loginService;
         _registrationService = registrationService;
         _mealRepo = mealRepo;
-        //_nutritionProgressService = nutritionProgressService;
+        _nutritionProgressService = nutritionProgressService;
     }
 
     public async Task<IActionResult> Index(string? date)
@@ -47,16 +47,23 @@ public class HomeController : Controller
 
         var meals = await _mealRepo.GetUserMealsByDateAsync(user, selectedDate);
 
-        //var nutrition = await _nutritionProgressService.GetDailyProgressAsync(
-        //    user.Id,
-        //    DateOnly.FromDateTime(selectedDate)
-        //);
+        var nutrition = await _nutritionProgressService.GetDailyProgressAsync(
+            user.Id,
+            DateOnly.FromDateTime(selectedDate)
+        );
+
+        var bar = new NutritionBarInfoViewModel(
+            nutrition.Totals.Calories, nutrition.Targets.Calories,
+            nutrition.Totals.Protein,  nutrition.Targets.Protein,
+            nutrition.Totals.Fat,      nutrition.Targets.Fat,
+            nutrition.Totals.Carbs,    nutrition.Targets.Carbs
+        );
 
         var vm = new PlannerHomeViewModel
         {
             SelectedDate = selectedDate,
-            Meals = meals
-            //DailyNutrition = nutrition
+            Meals = meals,
+            NutritionBar = bar
         };
 
         return View(vm);
