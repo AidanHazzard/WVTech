@@ -85,22 +85,17 @@
 
     </div>
 
-        <!-- Holds a display of the statistics so far today. Will populate this with info when the nutrient info is done -->
         <div class="back2">
             <h2 class="back1Title">Statistics</h2>
 
-            @* Dynamic nutrition bars (disabled for teammate's feature)
-            @if (Model.DailyNutrition != null)
+            @if (Model.NutritionBar != null)
             {
-                var totals = Model.DailyNutrition.Totals;
-                var targets = Model.DailyNutrition.Targets;
-
-                ...
+                <partial name="_NutritionBarDisplayPartial" model="Model.NutritionBar" />
             }
-            *@
-
-            <!-- Original placeholder -->
-            <img src="~/images/placeholder/nutrients.png" alt="nutrients" class="imageFit">
+            else
+            {
+                <img src="~/images/placeholder/nutrients.png" alt="nutrients" class="imageFit">
+            }
         </div>
     </div>
 
