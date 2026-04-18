@@ -20,7 +20,7 @@ public class ShoppingListServiceTests
         string userId = "user-1";
         string itemName = "Milk";
 
-        service.AddItem(userId, itemName);
+        service.AddItem(userId, itemName, 1, "");
 
         repo.Verify(r => r.Add(It.Is<ShoppingListItem>(i =>
             i.UserId == userId &&
@@ -37,7 +37,7 @@ public class ShoppingListServiceTests
         string userId = "user-1";
         string itemName = "  Eggs  ";
 
-        service.AddItem(userId, itemName);
+        service.AddItem(userId, itemName, 1, "");
 
         repo.Verify(r => r.Add(It.Is<ShoppingListItem>(i =>
             i.UserId == userId &&
@@ -51,7 +51,7 @@ public class ShoppingListServiceTests
         var repo = new Mock<IShoppingListRepository>();
         var service = new ShoppingListService(repo.Object);
 
-        Assert.Throws<ArgumentException>(() => service.AddItem("user-1", ""));
+        Assert.Throws<ArgumentException>(() => service.AddItem("user-1", "", 1, ""));
         repo.Verify(r => r.Add(It.IsAny<ShoppingListItem>()), Times.Never);
     }
 
@@ -61,7 +61,7 @@ public class ShoppingListServiceTests
         var repo = new Mock<IShoppingListRepository>();
         var service = new ShoppingListService(repo.Object);
 
-        Assert.Throws<ArgumentException>(() => service.AddItem("user-1", "   "));
+        Assert.Throws<ArgumentException>(() => service.AddItem("user-1", "   ", 1, ""));
         repo.Verify(r => r.Add(It.IsAny<ShoppingListItem>()), Times.Never);
     }
 
