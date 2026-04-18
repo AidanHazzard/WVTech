@@ -27,3 +27,8 @@ Feature: nutritionBar
     Then Meal Bars protien are at 30/50
     Then Meal Bars fats are at 40/60
     Then Meal Bars carbs are at 50/70
+    And 'bob' is on the home page
+    Then Meal Bars callories are at 20/40
+    Then Meal Bars protien are at 30/50
+    Then Meal Bars fats are at 40/60
+    Then Meal Bars carbs are at 50/70

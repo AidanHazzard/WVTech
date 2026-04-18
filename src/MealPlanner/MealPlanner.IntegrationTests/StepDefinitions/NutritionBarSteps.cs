@@ -239,6 +239,15 @@ public class NutritionBarSteps
             By.CssSelector(".nutrition-bar-row:nth-child(4) .nutrition-bar-fraction"));
         Assert.That(fraction.Text.Trim(), Is.EqualTo($"{current} / {goal}"));
     }
+    [Given("{string} is on the home page")]
+    public void GivenUserIsOnHomePage(string username)
+    {
+        _driver.Navigate().GoToUrl($"{_baseUrl}/");
+        new WebDriverWait(_driver, TimeSpan.FromSeconds(10)).Until(driver =>
+            ((IJavaScriptExecutor)driver)
+                .ExecuteScript("return document.readyState").ToString() == "complete");
+    }
+
     [Given("{string} is on the page {string}")]
     public void GivenUserIsOnPage(string username, string pageName)
     {
