@@ -58,12 +58,13 @@ public class MealController : Controller
     }
 
     [HttpGet]
-    public IActionResult NewMeal()
+    public IActionResult NewMeal(string? date)
     {
+        var selected = DateTime.TryParse(date, out var parsed) ? parsed : DateTime.Today;
         return View(new CreateMealViewModel
         {
-            SelectedMonth = DateTime.Today.Month,
-            SelectedDay = DateTime.Today.Day
+            SelectedMonth = selected.Month,
+            SelectedDay = selected.Day
         });
     }
 

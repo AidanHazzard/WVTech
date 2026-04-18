@@ -97,6 +97,7 @@
     <div class="row align-items-center mt-3">
         <div class="col d-flex justify-content-center">
             <form asp-action="NewMeal" method="get">
+                <input type="hidden" name="date" value="@Model.SelectedDate.ToString("yyyy-MM-dd")" />
                 <button type="submit" class="imageButton">
                     <img src="~/images/icons/meal.png" alt="meal" class="imageButtonimage">
                     <div class="buttonBlue">

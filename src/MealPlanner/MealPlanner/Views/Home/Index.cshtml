@@ -100,6 +100,7 @@
     </div>
 
     <form asp-controller="Meal" asp-action="NewMeal" method="get">
+        <input type="hidden" name="date" value="@Model.SelectedDate.ToString("yyyy-MM-dd")" />
         <button class="buttonBlue">
             <h2 class="buttonText">Add A Meal</h2>
         </button>
