@@ -59,8 +59,29 @@ public class ShoppingListService
         _shoppingListRepository.Remove(itemId, userId);
     }
 
+    public void RemoveItemsByName(string userId, string itemName)
+    {
+        if (string.IsNullOrWhiteSpace(itemName))
+        {
+            throw new ArgumentException("Item name cannot be empty.");
+        }
+
+        _shoppingListRepository.RemoveAllByName(userId, itemName.Trim());
+    }
+
     public IEnumerable<ShoppingListItem> GetItemsForUser(string userId)
     {
-        return _shoppingListRepository.GetByUserId(userId);
+        return _shoppingListRepository.GetByUserId(userId)
+            .GroupBy(i => i.Name.ToLower())
+            .Select(g => new ShoppingListItem
+            {
+                UserId = userId,
+                Name = g.First().Name,
+                Amount = g.Sum(i => i.Amount),
+                Measurement = g.First().Measurement,
+                IsAutoAdded = g.Any(i => i.IsAutoAdded)
+            })
+            .OrderBy(i => i.Name)
+            .ToList();
     }
 }
