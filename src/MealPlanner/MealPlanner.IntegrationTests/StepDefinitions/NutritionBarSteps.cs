@@ -20,10 +20,48 @@ public class NutritionBarSteps
     [Given("{string} is on the create recipe page")]
     public void GivenUserIsOnCreateRecipePage(string username)
     {
-        _driver.Navigate().GoToUrl($"{_baseUrl}/FoodEntries/AddNewRecipe");
-        new WebDriverWait(_driver, TimeSpan.FromSeconds(10)).Until(driver =>
-            ((IJavaScriptExecutor)driver)
-                .ExecuteScript("return document.readyState").ToString() == "complete");
+        EnsureOnCreateRecipePage(username);
+    }
+
+    private void EnsureOnCreateRecipePage(string username)
+    {
+        const int maxAttempts = 3;
+        for (int attempt = 0; attempt < maxAttempts; attempt++)
+        {
+            _driver.Navigate().GoToUrl($"{_baseUrl}/FoodEntries/AddNewRecipe");
+            new WebDriverWait(_driver, TimeSpan.FromSeconds(10)).Until(driver =>
+                ((IJavaScriptExecutor)driver)
+                    .ExecuteScript("return document.readyState").ToString() == "complete");
+
+            // Pending login redirect can cause Navigate to land on "/" — retry.
+            if (!_driver.Url.Contains("/FoodEntries/AddNewRecipe", StringComparison.OrdinalIgnoreCase))
+            {
+                if (_driver.Url.Contains("/Login", StringComparison.OrdinalIgnoreCase))
+                {
+                    _driver.FindElement(By.Id("Email")).SendKeys($"{username}@fakeemail.com");
+                    _driver.FindElement(By.Id("Password")).SendKeys("1234!Abcd");
+                    _driver.FindElement(By.ClassName("btn")).Click();
+                    new WebDriverWait(_driver, TimeSpan.FromSeconds(10)).Until(d =>
+                        !d.Url.Contains("/Login", StringComparison.OrdinalIgnoreCase));
+                }
+                continue;
+            }
+
+            try
+            {
+                new WebDriverWait(_driver, TimeSpan.FromSeconds(5)).Until(driver =>
+                {
+                    try { return driver.FindElement(By.Id("Directions")).Displayed; }
+                    catch (NoSuchElementException) { return false; }
+                    catch (StaleElementReferenceException) { return false; }
+                });
+                return;
+            }
+            catch (WebDriverTimeoutException)
+            {
+                if (attempt == maxAttempts - 1) throw;
+            }
+        }
     }
 
     [Given("{string} fills in the recipe name as {string}")]
@@ -148,7 +186,17 @@ public class NutritionBarSteps
     [Given("{string} submits the meal form")]
     public void GivenUserSubmitsMealForm(string username)
     {
-        _driver.FindElement(By.CssSelector("button[form='createMealForm']")).Click();
+        var btn = _driver.FindElement(By.CssSelector("button[form='createMealForm']"));
+        ((IJavaScriptExecutor)_driver).ExecuteScript(
+            "arguments[0].scrollIntoView({block:'center',behavior:'instant'});", btn);
+        try
+        {
+            btn.Click();
+        }
+        catch (ElementClickInterceptedException)
+        {
+            ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].click();", btn);
+        }
         new WebDriverWait(_driver, TimeSpan.FromSeconds(10)).Until(driver =>
             ((IJavaScriptExecutor)driver)
                 .ExecuteScript("return document.readyState").ToString() == "complete");
@@ -201,6 +249,17 @@ public class NutritionBarSteps
             By.CssSelector(".nutrition-bar-row:nth-child(4) .nutrition-bar-fraction"));
         Assert.That(fraction.Text.Trim(), Is.EqualTo($"{current} / {goal}"));
     }
+    [Given("{string} is on the home page")]
+    [When("{string} is on the home page")]
+    [Then("{string} is on the home page")]
+    public void GivenUserIsOnHomePage(string username)
+    {
+        _driver.Navigate().GoToUrl($"{_baseUrl}/");
+        new WebDriverWait(_driver, TimeSpan.FromSeconds(10)).Until(driver =>
+            ((IJavaScriptExecutor)driver)
+                .ExecuteScript("return document.readyState").ToString() == "complete");
+    }
+
     [Given("{string} is on the page {string}")]
     public void GivenUserIsOnPage(string username, string pageName)
     {

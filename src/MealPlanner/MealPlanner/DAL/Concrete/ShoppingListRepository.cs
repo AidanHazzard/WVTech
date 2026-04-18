@@ -14,7 +14,18 @@ public class ShoppingListRepository : IShoppingListRepository
 
     public void Add(ShoppingListItem item)
     {
-        _context.ShoppingListItems.Add(item);
+        var existing = _context.ShoppingListItems
+            .FirstOrDefault(i => i.UserId == item.UserId && i.Name.ToLower() == item.Name.ToLower());
+
+        if (existing != null)
+        {
+            existing.Amount += item.Amount;
+        }
+        else
+        {
+            _context.ShoppingListItems.Add(item);
+        }
+
         _context.SaveChanges();
     }
 
@@ -28,6 +39,16 @@ public class ShoppingListRepository : IShoppingListRepository
             _context.ShoppingListItems.Remove(item);
             _context.SaveChanges();
         }
+    }
+
+    public void RemoveAutoAddedByUserId(string userId)
+    {
+        var items = _context.ShoppingListItems
+            .Where(i => i.UserId == userId && i.IsAutoAdded)
+            .ToList();
+
+        _context.ShoppingListItems.RemoveRange(items);
+        _context.SaveChanges();
     }
 
     public IEnumerable<ShoppingListItem> GetByUserId(string userId)
