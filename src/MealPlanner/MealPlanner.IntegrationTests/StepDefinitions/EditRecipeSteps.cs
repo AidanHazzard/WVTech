@@ -66,10 +66,44 @@ public class EditRecipeSteps
     [Given("{string} is on the edit recipe page")]
     public void GivenUserIsOnEditRecipePage(string username)
     {
-        _driver.Navigate().GoToUrl($"{_baseUrl}/FoodEntries/EditRecipe/{_recipeId}");
-        new WebDriverWait(_driver, TimeSpan.FromSeconds(10)).Until(driver =>
-            ((IJavaScriptExecutor)driver)
-                .ExecuteScript("return document.readyState").ToString() == "complete");
+        string expectedPath = $"/FoodEntries/EditRecipe/{_recipeId}";
+        const int maxAttempts = 3;
+        for (int attempt = 0; attempt < maxAttempts; attempt++)
+        {
+            _driver.Navigate().GoToUrl($"{_baseUrl}{expectedPath}");
+            new WebDriverWait(_driver, TimeSpan.FromSeconds(10)).Until(driver =>
+                ((IJavaScriptExecutor)driver)
+                    .ExecuteScript("return document.readyState").ToString() == "complete");
+
+            // Pending login redirect can cause Navigate to land on "/" — retry.
+            if (!_driver.Url.Contains(expectedPath, StringComparison.OrdinalIgnoreCase))
+            {
+                if (_driver.Url.Contains("/Login", StringComparison.OrdinalIgnoreCase))
+                {
+                    _driver.FindElement(By.Id("Email")).SendKeys($"{username}{_emailBase}");
+                    _driver.FindElement(By.Id("Password")).SendKeys("1234!Abcd");
+                    _driver.FindElement(By.ClassName("btn")).Click();
+                    new WebDriverWait(_driver, TimeSpan.FromSeconds(10)).Until(d =>
+                        !d.Url.Contains("/Login", StringComparison.OrdinalIgnoreCase));
+                }
+                continue;
+            }
+
+            try
+            {
+                new WebDriverWait(_driver, TimeSpan.FromSeconds(5)).Until(driver =>
+                {
+                    try { return driver.FindElement(By.Id("Directions")).Displayed; }
+                    catch (NoSuchElementException) { return false; }
+                    catch (StaleElementReferenceException) { return false; }
+                });
+                return;
+            }
+            catch (WebDriverTimeoutException)
+            {
+                if (attempt == maxAttempts - 1) throw;
+            }
+        }
     }
 
     [Then("the recipe name field contains {string}")]
