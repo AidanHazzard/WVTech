@@ -40,13 +40,13 @@
         @foreach (var recipe in Model.Recipes)
         {
             var location = Url.Action("Recipes", "FoodEntries", new { id = recipe.Id });
-            <div class="mealRecipeItem d-flex align-items-center justify-content-between mb-2 back2 back2-textbox" 
-                 data-recipe-id="@recipe.Id" 
-                 data-meal-id="@Model.Id">
-                <h4 class="buttonText mb-0" 
-                    style="cursor:pointer;" 
-                    onclick="location.href='@location'">@recipe.Name</h4>
-                <button type="button" class="btn btn-danger delete-recipe-btn">X</button>
+            <div class="mealRecipeItem d-flex align-items-center justify-content-between mb-2 back2 back2-textbox"
+                 data-recipe-id="@recipe.Id"
+                 data-meal-id="@Model.Id"
+                 style="cursor:pointer;"
+                 onclick="location.href='@location'">
+                <h4 class="buttonText mb-0">@recipe.Name</h4>
+                <button type="button" class="btn btn-danger delete-recipe-btn" onclick="event.stopPropagation()">X</button>
             </div>
         }
     </div>
