@@ -20,10 +20,48 @@ public class NutritionBarSteps
     [Given("{string} is on the create recipe page")]
     public void GivenUserIsOnCreateRecipePage(string username)
     {
-        _driver.Navigate().GoToUrl($"{_baseUrl}/FoodEntries/AddNewRecipe");
-        new WebDriverWait(_driver, TimeSpan.FromSeconds(10)).Until(driver =>
-            ((IJavaScriptExecutor)driver)
-                .ExecuteScript("return document.readyState").ToString() == "complete");
+        EnsureOnCreateRecipePage(username);
+    }
+
+    private void EnsureOnCreateRecipePage(string username)
+    {
+        const int maxAttempts = 3;
+        for (int attempt = 0; attempt < maxAttempts; attempt++)
+        {
+            _driver.Navigate().GoToUrl($"{_baseUrl}/FoodEntries/AddNewRecipe");
+            new WebDriverWait(_driver, TimeSpan.FromSeconds(10)).Until(driver =>
+                ((IJavaScriptExecutor)driver)
+                    .ExecuteScript("return document.readyState").ToString() == "complete");
+
+            // Pending login redirect can cause Navigate to land on "/" — retry.
+            if (!_driver.Url.Contains("/FoodEntries/AddNewRecipe", StringComparison.OrdinalIgnoreCase))
+            {
+                if (_driver.Url.Contains("/Login", StringComparison.OrdinalIgnoreCase))
+                {
+                    _driver.FindElement(By.Id("Email")).SendKeys($"{username}@fakeemail.com");
+                    _driver.FindElement(By.Id("Password")).SendKeys("1234!Abcd");
+                    _driver.FindElement(By.ClassName("btn")).Click();
+                    new WebDriverWait(_driver, TimeSpan.FromSeconds(10)).Until(d =>
+                        !d.Url.Contains("/Login", StringComparison.OrdinalIgnoreCase));
+                }
+                continue;
+            }
+
+            try
+            {
+                new WebDriverWait(_driver, TimeSpan.FromSeconds(5)).Until(driver =>
+                {
+                    try { return driver.FindElement(By.Id("Directions")).Displayed; }
+                    catch (NoSuchElementException) { return false; }
+                    catch (StaleElementReferenceException) { return false; }
+                });
+                return;
+            }
+            catch (WebDriverTimeoutException)
+            {
+                if (attempt == maxAttempts - 1) throw;
+            }
+        }
     }
 
     [Given("{string} fills in the recipe name as {string}")]
