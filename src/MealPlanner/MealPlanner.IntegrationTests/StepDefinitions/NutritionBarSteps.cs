@@ -186,7 +186,17 @@ public class NutritionBarSteps
     [Given("{string} submits the meal form")]
     public void GivenUserSubmitsMealForm(string username)
     {
-        _driver.FindElement(By.CssSelector("button[form='createMealForm']")).Click();
+        var btn = _driver.FindElement(By.CssSelector("button[form='createMealForm']"));
+        ((IJavaScriptExecutor)_driver).ExecuteScript(
+            "arguments[0].scrollIntoView({block:'center',behavior:'instant'});", btn);
+        try
+        {
+            btn.Click();
+        }
+        catch (ElementClickInterceptedException)
+        {
+            ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].click();", btn);
+        }
         new WebDriverWait(_driver, TimeSpan.FromSeconds(10)).Until(driver =>
             ((IJavaScriptExecutor)driver)
                 .ExecuteScript("return document.readyState").ToString() == "complete");
@@ -240,6 +250,8 @@ public class NutritionBarSteps
         Assert.That(fraction.Text.Trim(), Is.EqualTo($"{current} / {goal}"));
     }
     [Given("{string} is on the home page")]
+    [When("{string} is on the home page")]
+    [Then("{string} is on the home page")]
     public void GivenUserIsOnHomePage(string username)
     {
         _driver.Navigate().GoToUrl($"{_baseUrl}/");
