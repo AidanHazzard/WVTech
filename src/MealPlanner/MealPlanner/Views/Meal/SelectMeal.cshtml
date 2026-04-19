@@ -1,10 +1,10 @@
-@model List<MealPlanner.Models.Meal>
+@model MealPlanner.ViewModels.SelectMealViewModel
 
 <div class="back1 backHasButton">
     <h2 class="back1Title">Select A Meal</h2>
 
     <div id="selectMealList" class="d-flex flex-column gap-2">
-        @if (Model == null || Model.Count == 0)
+        @if (Model == null || Model.Meals == null || Model.Meals.Count == 0)
         {
             <div class="back2">
                 <h4 class="baseText">You have not created any meals yet.</h4>
@@ -12,11 +12,12 @@
         }
         else
         {
-            @foreach (var meal in Model)
+            @foreach (var meal in Model.Meals)
             {
                 <form asp-action="AddMealToDay" method="post">
                     @Html.AntiForgeryToken()
                     <input type="hidden" name="mealId" value="@meal.Id" />
+                    <input type="hidden" name="date" value="@Model.SelectedDate.ToString("yyyy-MM-dd")" />
                     <button type="submit"
                             class="back2 d-flex align-items-center gap-2 back2-textbox selectMealRow w-100 text-start"
                             style="cursor:pointer;"
@@ -29,6 +30,7 @@
     </div>
 
     <form asp-controller="Meal" asp-action="NewMeal" method="get">
+        <input type="hidden" name="date" value="@Model.SelectedDate.ToString("yyyy-MM-dd")" />
         <button class="buttonBlue">
             <h2 class="buttonText">Add A Meal</h2>
         </button>

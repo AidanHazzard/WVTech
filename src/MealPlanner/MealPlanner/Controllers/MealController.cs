@@ -34,18 +34,30 @@ public class MealController : Controller
     }
 
     [HttpGet]
-    public async Task<IActionResult> SelectMeal()
+    public async Task<IActionResult> SelectMeal(string? date)
     {
         var user = await _registrationService.FindUserByClaimAsync(User);
         if (user == null) return Challenge();
 
+        DateTime selectedDate =
+            DateTime.TryParse(date, out var parsed)
+                ? parsed.Date
+                : DateTime.Today;
+
         var meals = await _mealRepo.GetDistinctUserMealsAsync(user);
-        return View(meals);
+
+        var vm = new SelectMealViewModel
+        {
+            SelectedDate = selectedDate,
+            Meals = meals.ToList()
+        };
+
+        return View(vm);
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> AddMealToDay(int mealId)
+    public async Task<IActionResult> AddMealToDay(int mealId, string? date)
     {
         var user = await _registrationService.FindUserByClaimAsync(User);
         if (user == null) return Challenge();
@@ -55,12 +67,17 @@ public class MealController : Controller
 
         await _mealRepo.LoadRecipesAsync(source);
 
+        DateTime selectedDate =
+            DateTime.TryParse(date, out var parsed)
+                ? parsed.Date
+                : DateTime.Today;
+
         var clone = new Meal
         {
             User = user,
             UserId = user.Id,
             Title = source.Title,
-            StartTime = DateTime.Today,
+            StartTime = selectedDate,
             RepeatRule = source.RepeatRule,
             Recipes = source.Recipes.ToList()
         };
@@ -69,7 +86,7 @@ public class MealController : Controller
         _context.SaveChanges();
 
         Response.Cookies.Delete("ShoppingListSynced");
-        return RedirectToAction("Index", "Home");
+        return RedirectToAction("Index", "Home", new { date = selectedDate.ToString("yyyy-MM-dd") });
     }
 
     public async Task<IActionResult> PlannerHome(string? date)
