@@ -21,7 +21,7 @@
                 <select name="SelectedMonth" class="back2-textbox">
                     @for (int i = 1; i <= 12; i++)
                     {
-                        <!option @(i==today.Month ? "selected" : "") value="@i">
+                        <!option @(i==Model.SelectedMonth ? "selected" : "") value="@i">
                             @System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(i)
                         </!option>
                     }
@@ -29,7 +29,7 @@
                 <select name="SelectedDay" class="back2-textbox">
                     @for (int i = 1; i <= 31; i++)
                     {
-                        <!option value="@i" @(i==today.Day ? "selected" : "")>@i</!option>
+                        <!option value="@i" @(i==Model.SelectedDay ? "selected" : "")>@i</!option>
                     }
                 </select>
                 
@@ -47,10 +47,10 @@
 
     <div id="createMealList">
         <template id="addRecipeRow">
-            <div class="back2 d-flex align-items-center gap-2 back2-textbox mealRecipeItem">
-                <h4 id="recipeName" class="mb-0 flex-grow-1">{Recipe Name}</h4>
+            <div class="back2 d-flex align-items-center gap-2 back2-textbox mealRecipeItem" style="cursor:pointer;">
+                <h4 id="recipeName" class="mb-0 flex-grow-1"></h4>
                 <input type="hidden" name="RecipeIds" class="recipeIdInput" />
-                <button type="button" class="btn btn-danger delete-recipe-btn">X</button>
+                <button type="button" class="btn btn-danger delete-recipe-btn" onclick="event.stopPropagation()">X</button>
             </div>
         </template>
     </div>
@@ -73,7 +73,7 @@
                         <option value="">Select month</option>
                         @for (int i = 1; i <= 12; i++)
                         {
-                            <!option @(i==today.Month ? "selected" : "") value="@i">
+                            <!option @(i==Model.SelectedMonth ? "selected" : "") value="@i">
                                 @System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(i)
                             </!option>
                         }
@@ -87,7 +87,7 @@
                         <option value="">Select day</option>
                         @for (int i = 1; i <= 31; i++)
                         {
-                            <!option value="@i" @(i==today.Day ? "selected" : "")>@i</!option>
+                            <!option value="@i" @(i==Model.SelectedDay ? "selected" : "")>@i</!option>
                         }
                     </select>
                     <span asp-validation-for="SelectedDay" class="text-danger"></span>

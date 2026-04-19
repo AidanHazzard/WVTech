@@ -58,12 +58,13 @@ public class MealController : Controller
     }
 
     [HttpGet]
-    public IActionResult NewMeal()
+    public IActionResult NewMeal(string? date)
     {
+        var selected = DateTime.TryParse(date, out var parsed) ? parsed : DateTime.Today;
         return View(new CreateMealViewModel
         {
-            SelectedMonth = DateTime.Today.Month,
-            SelectedDay = DateTime.Today.Day
+            SelectedMonth = selected.Month,
+            SelectedDay = selected.Day
         });
     }
 
@@ -115,6 +116,7 @@ public class MealController : Controller
         _mealRepo.CreateOrUpdate(newMeal);
         _context.SaveChanges();
 
+        Response.Cookies.Delete("ShoppingListSynced");
         return RedirectToAction("Index", "Home");
     }
 
@@ -138,6 +140,7 @@ public class MealController : Controller
 
         newMeal = _mealRepo.CreateOrUpdate(newMeal);
         _context.SaveChanges();
+        Response.Cookies.Delete("ShoppingListSynced");
         return RedirectToAction("ViewMeal", new {id = newMeal.Id });
     }
 
@@ -247,6 +250,7 @@ public class MealController : Controller
 
         await _context.SaveChangesAsync();
 
+        Response.Cookies.Delete("ShoppingListSynced");
         TempData["Success"] = "Meal updated successfully";
 
         return RedirectToAction("EditMeal", new { id = meal.Id });
@@ -268,7 +272,7 @@ public class MealController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> DeleteMeal(int id, string? date)
+    public async Task<IActionResult> DeleteMeal(int id, string? date, string? source)
     {
         var user = await _registrationService.FindUserByClaimAsync(User);
         if (user == null)
@@ -279,7 +283,9 @@ public class MealController : Controller
         var meal = await _context.Meals.FindAsync(id);
         if (meal == null)
         {
-            return RedirectToAction("PlannerHome", "Meal", new { date });
+            return source == "home"
+                ? RedirectToAction("Index", "Home", new { date })
+                : RedirectToAction("PlannerHome", "Meal", new { date });
         }
 
         if (meal.UserId != user.Id)
@@ -290,7 +296,10 @@ public class MealController : Controller
         _context.Meals.Remove(meal);
         await _context.SaveChangesAsync();
 
-        return RedirectToAction("PlannerHome", "Meal", new { date });
+        Response.Cookies.Delete("ShoppingListSynced");
+        return source == "home"
+            ? RedirectToAction("Index", "Home", new { date })
+            : RedirectToAction("PlannerHome", "Meal", new { date });
     }
 
     [HttpPost]
@@ -317,7 +326,7 @@ public class MealController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> ToggleMealCompleted(int id, string? date, bool? isCompleted)
+    public async Task<IActionResult> ToggleMealCompleted(int id, string? date, bool? isCompleted, string? source)
     {
         var user = await _registrationService.FindUserByClaimAsync(User);
         if (user == null)
@@ -339,6 +348,8 @@ public class MealController : Controller
         meal.IsCompleted = isCompleted == true;
         await _context.SaveChangesAsync();
 
-        return RedirectToAction("PlannerHome", "Meal", new { date });
+        return source == "home"
+            ? RedirectToAction("Index", "Home", new { date })
+            : RedirectToAction("PlannerHome", "Meal", new { date });
     }
 }
