@@ -8,6 +8,8 @@ public interface IShoppingListRepository
 
     void Remove(int itemId, string userId);
 
+    void RemoveAllByName(string userId, string name);
+
     void RemoveAutoAddedByUserId(string userId);
 
     IEnumerable<ShoppingListItem> GetByUserId(string userId);
