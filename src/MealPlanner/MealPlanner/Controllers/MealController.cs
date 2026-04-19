@@ -33,6 +33,45 @@ public class MealController : Controller
         _recommendationService = mealRecommendationService;
     }
 
+    [HttpGet]
+    public async Task<IActionResult> SelectMeal()
+    {
+        var user = await _registrationService.FindUserByClaimAsync(User);
+        if (user == null) return Challenge();
+
+        var meals = await _mealRepo.GetDistinctUserMealsAsync(user);
+        return View(meals);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> AddMealToDay(int mealId)
+    {
+        var user = await _registrationService.FindUserByClaimAsync(User);
+        if (user == null) return Challenge();
+
+        var source = await _mealRepo.ReadAsync(mealId);
+        if (source == null || source.UserId != user.Id) return NotFound();
+
+        await _mealRepo.LoadRecipesAsync(source);
+
+        var clone = new Meal
+        {
+            User = user,
+            UserId = user.Id,
+            Title = source.Title,
+            StartTime = DateTime.Today,
+            RepeatRule = source.RepeatRule,
+            Recipes = source.Recipes.ToList()
+        };
+
+        _mealRepo.CreateOrUpdate(clone);
+        _context.SaveChanges();
+
+        Response.Cookies.Delete("ShoppingListSynced");
+        return RedirectToAction("Index", "Home");
+    }
+
     public async Task<IActionResult> PlannerHome(string? date)
     {
         var user = await _registrationService.FindUserByClaimAsync(User);

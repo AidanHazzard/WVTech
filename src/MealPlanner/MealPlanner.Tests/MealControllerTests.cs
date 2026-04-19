@@ -216,4 +216,83 @@ public class MealControllerTests
             Assert.That(redirectResult.RouteValues!["id"], Is.EqualTo(meal.Id));
         }
     }
+
+    [Test]
+    public async Task SelectMeal_Get_ReturnsView_WithDistinctUserMeals()
+    {
+        var meals = new List<Meal>
+        {
+            new Meal { Id = 1, UserId = "user-1", Title = "Breakfast" },
+            new Meal { Id = 2, UserId = "user-1", Title = "Lunch" }
+        };
+
+        _mealRepoMock.Setup(r => r.GetDistinctUserMealsAsync(It.IsAny<User>()))
+            .ReturnsAsync(meals);
+
+        var result = await _controller.SelectMeal();
+
+        Assert.That(result, Is.TypeOf<ViewResult>());
+        var view = (ViewResult)result;
+        Assert.That(view.Model, Is.TypeOf<List<Meal>>());
+        var model = (List<Meal>)view.Model!;
+        Assert.That(model.Count, Is.EqualTo(2));
+        Assert.That(model[0].Title, Is.EqualTo("Breakfast"));
+    }
+
+    [Test]
+    public async Task AddMealToDay_WhenMealBelongsToUser_ClonesToToday_AndRedirectsToHomeIndex()
+    {
+        var source = new Meal
+        {
+            Id = 5,
+            UserId = "user-1",
+            Title = "FavMeal",
+            StartTime = new DateTime(2020, 1, 1),
+            RepeatRule = null,
+            Recipes = new List<Recipe> { new Recipe { Id = 7, Name = "R", Directions = "D" } }
+        };
+
+        _mealRepoMock.Setup(r => r.ReadAsync(5)).ReturnsAsync(source);
+        _mealRepoMock.Setup(r => r.LoadRecipesAsync(source)).Returns(Task.CompletedTask);
+
+        Meal? captured = null;
+        _mealRepoMock.Setup(r => r.CreateOrUpdate(It.IsAny<Meal>()))
+            .Callback<Meal>(m => captured = m)
+            .Returns<Meal>(m => m);
+
+        var result = await _controller.AddMealToDay(5);
+
+        Assert.That(result, Is.TypeOf<RedirectToActionResult>());
+        var redirect = (RedirectToActionResult)result;
+        Assert.That(redirect.ActionName, Is.EqualTo("Index"));
+        Assert.That(redirect.ControllerName, Is.EqualTo("Home"));
+
+        Assert.That(captured, Is.Not.Null);
+        Assert.That(captured!.Title, Is.EqualTo("FavMeal"));
+        Assert.That(captured.UserId, Is.EqualTo("user-1"));
+        Assert.That(captured.StartTime!.Value.Date, Is.EqualTo(DateTime.Today));
+        Assert.That(captured.Recipes.Count, Is.EqualTo(1));
+        Assert.That(captured.Recipes[0].Id, Is.EqualTo(7));
+    }
+
+    [Test]
+    public async Task AddMealToDay_WhenMealNotFound_ReturnsNotFound()
+    {
+        _mealRepoMock.Setup(r => r.ReadAsync(999)).ReturnsAsync((Meal)null!);
+
+        var result = await _controller.AddMealToDay(999);
+
+        Assert.That(result, Is.TypeOf<NotFoundResult>());
+    }
+
+    [Test]
+    public async Task AddMealToDay_WhenMealBelongsToOtherUser_ReturnsNotFound()
+    {
+        var source = new Meal { Id = 5, UserId = "other-user", Title = "X", Recipes = new List<Recipe>() };
+        _mealRepoMock.Setup(r => r.ReadAsync(5)).ReturnsAsync(source);
+
+        var result = await _controller.AddMealToDay(5);
+
+        Assert.That(result, Is.TypeOf<NotFoundResult>());
+    }
 }
