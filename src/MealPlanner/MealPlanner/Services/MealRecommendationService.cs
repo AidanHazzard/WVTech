@@ -12,35 +12,57 @@ public class MealRecommendationService : IMealRecommendationService
     private IRecipeRepository _recipeRepository;
     private IUserNutritionPreferenceRepository _nutrionRepository;
     private IMealRepository _mealRepository;
+    private IUserDietaryRestrictionRepository _dietaryRestrictionRepository;
     private IExternalRecipeService? _externalRecipeService;
-    
+
     public MealRecommendationService(
-        IUserRecipeRepository userRecipeRepository, 
-        IRecipeRepository recipeRepository, 
+        IUserRecipeRepository userRecipeRepository,
+        IRecipeRepository recipeRepository,
         IUserNutritionPreferenceRepository nutritionRepository,
         IMealRepository mealRepository,
+        IUserDietaryRestrictionRepository dietaryRestrictionRepository,
         IExternalRecipeService? externalRecipeService = null)
     {
         _userRecipeRepository = userRecipeRepository;
         _recipeRepository = recipeRepository;
         _nutrionRepository = nutritionRepository;
         _mealRepository = mealRepository;
+        _dietaryRestrictionRepository = dietaryRestrictionRepository;
         _externalRecipeService = externalRecipeService;
     }
 
+    private async Task<HashSet<string>> GetRestrictionNamesAsync(string userId)
+    {
+        var restrictions = await _dietaryRestrictionRepository.GetByUserIdAsync(userId);
+        return restrictions
+            .Select(r => r.DietaryRestriction?.Name)
+            .Where(n => n != null)
+            .ToHashSet()!;
+    }
+
+    private static List<Recipe> ApplyDietaryFilter(List<Recipe> candidates, HashSet<string> restrictionNames)
+    {
+        if (restrictionNames.Count == 0) return candidates;
+        return candidates
+            .Where(r => restrictionNames.All(name => r.Tags.Any(t => t.Name == name)))
+            .ToList();
+    }
+
     public async Task<List<Recipe>> GetRecommendedRecipesForUser(User user, DateTime mealDate)
-    {  
+    {
+        var restrictionNames = await GetRestrictionNamesAsync(user.Id);
         var existingRecipes = (await _mealRepository.GetUserMealsByDateAsync(user, mealDate)).SelectMany(m => m.Recipes);
         var recipes = await _userRecipeRepository.GetUserRecipesByVoteType(user.Id, UserVoteType.UpVote);
         recipes = recipes.Where(r => !existingRecipes.Contains(r)).ToList();
 
-        var rest = _recipeRepository
-            .ReadAll()
+        var allWithTags = await _recipeRepository.GetAllWithTagsAsync();
+        var rest = allWithTags
             .Where(r => _userRecipeRepository.GetUserRecipeVoteAsync(user.Id, r.Id).Result != UserVoteType.DownVote && !existingRecipes.Contains(r) && !recipes.Contains(r))
             .OrderByDescending(r => _userRecipeRepository.GetRecipeVotePercentage(r.Id).Result)
             .ToList();
 
         recipes.AddRange(rest);
+        recipes = ApplyDietaryFilter(recipes, restrictionNames);
 
         // Target of zero implies no calorie limit
         var calorieTarget = (await _nutrionRepository.GetUsersNutritionPreferenceAsync(user.Id))?.CalorieTarget ?? int.MaxValue;
@@ -76,6 +98,7 @@ public class MealRecommendationService : IMealRecommendationService
     public async Task<List<Meal>> GetRecommendedDayPlanForUser(User user, DateTime mealDate, DayPlanConfigViewModel config)
     {
         var result = new List<Meal>();
+        var restrictionNames = await GetRestrictionNamesAsync(user.Id);
         var preferences = config.MealPreferences.Any()
             ? new List<MealPreferenceViewModel>(config.MealPreferences)
             : Enumerable.Range(0, config.MealCount)
@@ -88,14 +111,15 @@ public class MealRecommendationService : IMealRecommendationService
             var calorieTarget = pref.Size.Calories();
 
             var upvoted = await _userRecipeRepository.GetUserRecipesByVoteType(user.Id, UserVoteType.UpVote);
-            var rest = _recipeRepository
-                .ReadAll()
+            var allWithTags = await _recipeRepository.GetAllWithTagsAsync();
+            var rest = allWithTags
                 .Where(r => _userRecipeRepository.GetUserRecipeVoteAsync(user.Id, r.Id).Result != UserVoteType.DownVote
                          && !upvoted.Contains(r))
                 .OrderByDescending(r => _userRecipeRepository.GetRecipeVotePercentage(r.Id).Result)
                 .ToList();
 
             var candidates = upvoted.Concat(rest).ToList();
+            candidates = ApplyDietaryFilter(candidates, restrictionNames);
 
             if (pref.TagIds.Any())
             {

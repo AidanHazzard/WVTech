@@ -49,6 +49,16 @@ Feature: Recommend meals for entire day
     When 'Gary' types 'Vegan' as a custom tag and generates the plan
     Then 'Gary' sees a summary of his meal plan for the day
 
+  Scenario: Day plan recommendations respect the user's dietary restrictions
+    Given 'Gary' has a 'Vegan' dietary restriction
+    And 'Gary' has a recipe tagged 'Vegan' named 'Tofu Stir Fry'
+    And 'Gary' has a recipe named 'Beef Stew' without any tags
+    And 'Gary' has specified 1 meals for his day plan
+    When 'Gary' is presented with the configuration for each meal
+    When the day plan is generated
+    Then the day plan summary includes a recipe named 'Tofu Stir Fry'
+    And the day plan summary does not include a recipe named 'Beef Stew'
+
   Scenario: User regenerates a meal from the summary
     Given 'Gary' is viewing his generated day plan summary
     When 'Gary' chooses to regenerate one of the meals

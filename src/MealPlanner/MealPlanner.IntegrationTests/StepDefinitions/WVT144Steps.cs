@@ -78,13 +78,11 @@ public class WVT144Steps
     [Then("{string} is asked how many meals he would like for the day")]
     public void ThenUserIsAskedHowManyMeals(string userName)
     {
-        var input = _wait.Until(d =>
-        {
-            try { return d.FindElement(By.Id("MealCount")); }
-            catch (NoSuchElementException) { return null; }
-        });
+        _wait.Until(d => (bool)((IJavaScriptExecutor)d)
+            .ExecuteScript("return document.getElementById('dayPlanModal')?.classList.contains('show') === true"));
+        var input = _driver.FindElement(By.Id("MealCount"));
         Assert.That(input, Is.Not.Null, "Could not find meal count input (#MealCount)");
-        Assert.That(input!.Displayed, Is.True);
+        Assert.That(input.Displayed, Is.True);
     }
 
     [When("{string} enters {int} for the number of meals")]
@@ -109,12 +107,11 @@ public class WVT144Steps
         });
         ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].click();", showWizard!);
 
-        var input = _wait.Until(d =>
-        {
-            try { return d.FindElement(By.Id("MealCount")); }
-            catch (NoSuchElementException) { return null; }
-        });
-        input!.Clear();
+        _wait.Until(d => (bool)((IJavaScriptExecutor)d)
+            .ExecuteScript("return document.getElementById('dayPlanModal')?.classList.contains('show') === true"));
+
+        var input = _driver.FindElement(By.Id("MealCount"));
+        input.Clear();
         input.SendKeys(mealCount.ToString());
     }
 
@@ -241,8 +238,21 @@ public class WVT144Steps
         input.Clear();
         input.SendKeys(tagName);
 
-        var submit = _driver.FindElement(By.CssSelector("button[type='submit']"));
-        ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].click();", submit);
+        // Advance through any remaining meal steps
+        while (true)
+        {
+            var nextBtn = _driver.FindElements(By.Id("btnNextMeal"))
+                .FirstOrDefault(e => e.Displayed);
+            if (nextBtn == null) break;
+            ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].click();", nextBtn);
+        }
+
+        var submit = _wait.Until(d =>
+        {
+            try { return d.FindElements(By.Id("btnGeneratePlan")).FirstOrDefault(e => e.Displayed); }
+            catch { return null; }
+        });
+        ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].click();", submit!);
         _wait.Until(d => d.Url.Contains("/Meal/DayPlanSummary"));
     }
 
@@ -283,12 +293,11 @@ public class WVT144Steps
         });
         ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].click();", showWizard!);
 
-        var input = _wait.Until(d =>
-        {
-            try { return d.FindElement(By.Id("MealCount")); }
-            catch (NoSuchElementException) { return null; }
-        });
-        input!.Clear();
+        _wait.Until(d => (bool)((IJavaScriptExecutor)d)
+            .ExecuteScript("return document.getElementById('dayPlanModal')?.classList.contains('show') === true"));
+
+        var input = _driver.FindElement(By.Id("MealCount"));
+        input.Clear();
         input.SendKeys("1");
 
         var nextBtn = _wait.Until(d =>
@@ -307,11 +316,20 @@ public class WVT144Steps
     [When("the day plan is generated")]
     public void WhenTheDayPlanIsGenerated()
     {
+        // Advance through any remaining meal steps before the Generate button appears
+        while (true)
+        {
+            var nextBtn = _driver.FindElements(By.Id("btnNextMeal"))
+                .FirstOrDefault(e => e.Displayed);
+            if (nextBtn == null) break;
+            ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].click();", nextBtn);
+        }
+
         var submit = _wait.Until(d =>
         {
             try
             {
-                return d.FindElements(By.CssSelector("button[type='submit']"))
+                return d.FindElements(By.Id("btnGeneratePlan"))
                     .FirstOrDefault(e => e.Displayed);
             }
             catch { return null; }
@@ -402,12 +420,113 @@ public class WVT144Steps
             {
                 var forms = d.FindElements(By.CssSelector("[id^='regenerate-form-']"));
                 var visibleForm = forms.FirstOrDefault(f => f.Displayed);
-                return visibleForm?.FindElement(By.CssSelector("button[type='submit']"));
+                return visibleForm?.FindElement(By.CssSelector("[data-action='submit-regenerate']"));
             }
             catch { return null; }
         });
         ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].click();", submit!);
-        _wait.Until(d => d.Url.Contains("/Meal/DayPlanSummary"));
+        // Wait for the regenerate form to hide (fetch completed and DOM updated)
+        _wait.Until(d =>
+        {
+            try
+            {
+                var forms = d.FindElements(By.CssSelector("[id^='regenerate-form-']"));
+                return forms.All(f => !f.Displayed);
+            }
+            catch { return false; }
+        });
+    }
+
+    [Given("{string} has a {string} dietary restriction")]
+    public void GivenUserHasDietaryRestriction(string userName, string restrictionName)
+    {
+        var ctx = BDDSetup.Context;
+        var user = ctx.Set<User>().First(u => u.NormalizedEmail == $"{userName}@fakeemail.com".ToUpper());
+
+        var restriction = ctx.Set<DietaryRestriction>().FirstOrDefault(dr => dr.Name == restrictionName);
+        if (restriction == null)
+        {
+            restriction = new DietaryRestriction { Name = restrictionName };
+            ctx.Add(restriction);
+            ctx.SaveChanges();
+        }
+
+        var existing = ctx.Set<UserDietaryRestriction>()
+            .FirstOrDefault(udr => udr.UserId == user.Id && udr.DietaryRestrictionId == restriction.Id);
+        if (existing == null)
+        {
+            ctx.Add(new UserDietaryRestriction { UserId = user.Id, DietaryRestrictionId = restriction.Id });
+            ctx.SaveChanges();
+        }
+    }
+
+    [Given("{string} has a recipe tagged {string} named {string}")]
+    public void GivenUserHasRecipeTaggedNamed(string userName, string tagName, string recipeName)
+    {
+        var ctx = BDDSetup.Context;
+        var user = ctx.Set<User>().First(u => u.NormalizedEmail == $"{userName}@fakeemail.com".ToUpper());
+
+        var tag = ctx.Set<Tag>().FirstOrDefault(t => t.Name == tagName);
+        if (tag == null)
+        {
+            tag = new Tag { Name = tagName };
+            ctx.Add(tag);
+            ctx.SaveChanges();
+        }
+
+        var recipe = new Recipe
+        {
+            Name = recipeName,
+            Directions = "Test",
+            Calories = 400,
+            Protein = 20,
+            Fat = 10,
+            Carbs = 50,
+            Tags = [tag]
+        };
+        ctx.Add(recipe);
+        ctx.SaveChanges();
+
+        ctx.Add(new UserRecipe { UserId = user.Id, RecipeId = recipe.Id, UserOwner = true, UserVote = UserVoteType.NoVote });
+        ctx.SaveChanges();
+    }
+
+    [Given("{string} has a recipe named {string} without any tags")]
+    public void GivenUserHasRecipeNamedWithoutTags(string userName, string recipeName)
+    {
+        var ctx = BDDSetup.Context;
+        var user = ctx.Set<User>().First(u => u.NormalizedEmail == $"{userName}@fakeemail.com".ToUpper());
+
+        var recipe = new Recipe
+        {
+            Name = recipeName,
+            Directions = "Test",
+            Calories = 400,
+            Protein = 20,
+            Fat = 10,
+            Carbs = 50
+        };
+        ctx.Add(recipe);
+        ctx.SaveChanges();
+
+        ctx.Add(new UserRecipe { UserId = user.Id, RecipeId = recipe.Id, UserOwner = true, UserVote = UserVoteType.NoVote });
+        ctx.SaveChanges();
+    }
+
+    [Then("the day plan summary includes a recipe named {string}")]
+    public void ThenDayPlanSummaryIncludesRecipeNamed(string recipeName)
+    {
+        var items = _driver.FindElements(By.CssSelector("#day-plan-summary li"));
+        Assert.That(items.Any(li => li.Text.Contains(recipeName, StringComparison.OrdinalIgnoreCase)), Is.True,
+            $"Expected recipe '{recipeName}' in the day plan summary but it was not found");
+    }
+
+    [Then("the day plan summary does not include a recipe named {string}")]
+    public void ThenDayPlanSummaryDoesNotIncludeRecipeNamed(string recipeName)
+    {
+        var items = _driver.FindElements(By.CssSelector("#day-plan-summary li"));
+        Assert.That(items.All(li => !li.Text.Contains(recipeName, StringComparison.OrdinalIgnoreCase)), Is.True,
+            $"Expected recipe '{recipeName}' NOT to be in the day plan summary but it was found");
     }
 
     [Then("the updated meal appears in the summary in place of the previous recommendation")]

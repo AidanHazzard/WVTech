@@ -352,6 +352,44 @@ label {
   padding-bottom: 70px;
 }
 
+/*Use this for multiple blue buttons on the same row at the bottom of a back div*/
+.buttonRow {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  display: flex;
+  gap: 3px;
+  box-sizing: border-box;
+}
+
+.buttonRow .buttonBlueInline:first-child {
+  border-radius: 20px 0 0 20px;
+}
+
+.buttonRow .buttonBlueInline:last-child {
+  border-radius: 0 20px 20px 0;
+}
+
+.buttonBlueInline {
+  flex: 1;
+  background-color: var(--button-blue-bg);
+  padding: 4px;
+  border: none;
+  transition: background-color 0.3s ease-in-out;
+  text-align: center;
+  text-decoration: none;
+  display: block;
+}
+
+.buttonBlueInline:hover {
+  background-color: var(--button-blue-hover-bg);
+}
+
+.buttonBlueInline:hover .buttonText {
+  transform: scale(1.08);
+}
+
 /*Use this to make any image centered and autoscaled*/
 .imageFit {
   display: block;

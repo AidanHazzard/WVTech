@@ -190,7 +190,12 @@ public class MealController : Controller
         _mealRepo.CreateOrUpdate(meal);
         _context.SaveChanges();
 
-        return RedirectToAction("DayPlanSummary", new { date = mealDate.ToString("yyyy-MM-dd") });
+        return Json(new
+        {
+            mealId = meal.Id,
+            title = meal.Title,
+            recipes = meal.Recipes.Select(r => new { r.Name, r.Calories })
+        });
     }
 
     [HttpGet]

@@ -121,4 +121,9 @@ public class RecipeRepository : Repository<Recipe>, IRecipeRepository
     {
         return _dbset.FirstOrDefault(r => r.ExternalUri == uri);
     }
+
+    public async Task<List<Recipe>> GetAllWithTagsAsync()
+    {
+        return await _dbset.Include(r => r.Tags).ToListAsync();
+    }
 }
