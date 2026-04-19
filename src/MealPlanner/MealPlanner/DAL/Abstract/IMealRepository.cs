@@ -6,6 +6,7 @@ public interface IMealRepository : IRepository<Meal>
 {
     Task<List<Meal>> GetUserMealsByDateAsync(User user, DateTime date);
     Task<List<Meal>> GetUserMealsByDateRangeAsync(User user, DateTime start, DateTime end);
+    Task<List<Meal>> GetDistinctUserMealsAsync(User user);
     Task<Meal> ReadAsync(int id);
     Task LoadRecipesAsync(Meal meal);
     Task UpdateMealAsync(Meal meal, Meal updatedData, IEnumerable<int> recipeIds);

@@ -74,6 +74,21 @@ public class MealRepository : Repository<Meal>, IMealRepository
             .ToList();
     }
 
+    public async Task<List<Meal>> GetDistinctUserMealsAsync(User user)
+    {
+        var userMeals = await _dbset
+            .Include(m => m.Recipes)
+            .Where(m => m.UserId == user.Id)
+            .OrderByDescending(m => m.StartTime)
+            .ToListAsync();
+
+        return userMeals
+            .GroupBy(m => m.Title)
+            .Select(g => g.First())
+            .OrderBy(m => m.Title)
+            .ToList();
+    }
+
     // Load recipes for a meal
     public async Task LoadRecipesAsync(Meal meal)
     {
