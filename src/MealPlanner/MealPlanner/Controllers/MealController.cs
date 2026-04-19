@@ -34,7 +34,7 @@ public class MealController : Controller
     }
 
     [HttpGet]
-    public async Task<IActionResult> SelectMeal(string? date)
+    public async Task<IActionResult> SelectMeal(string? date = null)
     {
         var user = await _registrationService.FindUserByClaimAsync(User);
         if (user == null) return Challenge();
@@ -57,7 +57,7 @@ public class MealController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> AddMealToDay(int mealId, string? date)
+    public async Task<IActionResult> AddMealToDay(int mealId, string? date = null)
     {
         var user = await _registrationService.FindUserByClaimAsync(User);
         if (user == null) return Challenge();

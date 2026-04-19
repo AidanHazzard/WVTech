@@ -233,10 +233,11 @@ public class MealControllerTests
 
         Assert.That(result, Is.TypeOf<ViewResult>());
         var view = (ViewResult)result;
-        Assert.That(view.Model, Is.TypeOf<List<Meal>>());
-        var model = (List<Meal>)view.Model!;
-        Assert.That(model.Count, Is.EqualTo(2));
-        Assert.That(model[0].Title, Is.EqualTo("Breakfast"));
+        Assert.That(view.Model, Is.TypeOf<MealPlanner.ViewModels.SelectMealViewModel>());
+        var model = (MealPlanner.ViewModels.SelectMealViewModel)view.Model!;
+        Assert.That(model.Meals.Count, Is.EqualTo(2));
+        Assert.That(model.Meals[0].Title, Is.EqualTo("Breakfast"));
+        Assert.That(model.SelectedDate.Date, Is.EqualTo(DateTime.Today));
     }
 
     [Test]
