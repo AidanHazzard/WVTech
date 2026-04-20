@@ -9,6 +9,9 @@ Scenario: User can edit the day of a meal
   And User saves the meal
   Then the meal date field is saved as "2026-04-20"
 
+Scenario: User can edit the month of a meal
+  
+
 Scenario: User can make a meal repeat weekly
   Given there is a user named 'Jack'
   And 'Jack' is logged into Onebite

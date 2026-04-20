@@ -16,15 +16,6 @@ public class WVT72Steps
         _baseUrl = AUTHost.BaseUrl;
     }
 
-    [When("'Jack' enters meal time {string}")]
-    public void WhenJackEntersMealTime(string time)
-    {
-        var timeInput = new WebDriverWait(_driver, TimeSpan.FromSeconds(5))
-            .Until(d => d.FindElement(By.Name("Time")));
-        timeInput.Clear();
-        timeInput.SendKeys(time);
-    }
-
     [When("'Jack' selects meal date {string}")]
     public void WhenJackSelectsMealDate(string date)
     {
@@ -42,15 +33,6 @@ public class WVT72Steps
 
         if (!repeatCheckbox.Selected)
             repeatCheckbox.Click();
-    }
-
-    [Then("the meal time field is saved as {string}")]
-    public void ThenTheMealTimeFieldIsSavedAs(string expectedTime)
-    {
-        var timeInput = new WebDriverWait(_driver, TimeSpan.FromSeconds(5))
-            .Until(d => d.FindElement(By.Name("Time")));
-
-        Assert.That(timeInput.GetAttribute("value"), Does.Contain(expectedTime));
     }
 
     [Then("the meal date field is saved as {string}")]
