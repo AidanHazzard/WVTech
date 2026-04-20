@@ -269,18 +269,18 @@ public class MealController : Controller
         if (user == null)
             return Challenge();
 
-        var meal = await _context.Meals
-            .Include(m => m.Recipes)
-            .FirstOrDefaultAsync(m => m.Id == model.Id);
+        var meal = _mealRepo.Read(model.Id);
 
         if (meal == null || meal.UserId != user.Id)
             return NotFound();
 
-        DateTime selectedDate = (model.Date == default)
-            ? DateTime.Today
-            : (TimeSpan.TryParse(model.Time, out var parsedTime)
-                ? model.Date.Date + parsedTime
-                : model.Date.Date);
+        await _mealRepo.LoadRecipesAsync(meal);
+
+        
+        DateTime selectedDate = new DateTime(
+            DateTime.Today.Year, 
+            model.SelectedMonth, 
+            model.SelectedDay);
 
         meal.Title = model.Title.Trim();
         meal.StartTime = selectedDate;
