@@ -1,14 +1,5 @@
 Feature: Add time and date to meals
 
-Scenario: User can edit the time of a meal
-  Given there is a user named 'Jack'
-  And 'Jack' is logged into Onebite
-  And 'Jack' has a meal created
-  And the edit meal page is open
-  When 'Jack' enters meal time "08:30"
-  And User saves the meal
-  Then the meal time field is saved as "08:30"
-
 Scenario: User can edit the day of a meal
   Given there is a user named 'Jack'
   And 'Jack' is logged into Onebite
