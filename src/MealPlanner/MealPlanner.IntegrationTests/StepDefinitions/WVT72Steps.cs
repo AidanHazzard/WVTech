@@ -16,22 +16,13 @@ public class WVT72Steps
         _baseUrl = AUTHost.BaseUrl;
     }
 
-    [When("'Jack' enters meal time {string}")]
-    public void WhenJackEntersMealTime(string time)
+    [When("'Jack' selects meal day {string}")]
+    public void WhenJackSelectsMealDate(string day)
     {
-        var timeInput = new WebDriverWait(_driver, TimeSpan.FromSeconds(5))
-            .Until(d => d.FindElement(By.Name("Time")));
-        timeInput.Clear();
-        timeInput.SendKeys(time);
-    }
-
-    [When("'Jack' selects meal date {string}")]
-    public void WhenJackSelectsMealDate(string date)
-    {
-        var dateInput = new WebDriverWait(_driver, TimeSpan.FromSeconds(5))
-            .Until(d => d.FindElement(By.Name("Date")));
-        dateInput.Clear();
-        dateInput.SendKeys(date);
+        var dayElement = new WebDriverWait(_driver, TimeSpan.FromSeconds(5))
+            .Until(d => d.FindElement(By.Name("SelectedDay")));
+        var daySelect = new SelectElement(dayElement);
+        daySelect.SelectByText(day);
     }
 
     [When("'Jack' enables weekly repeat")]
@@ -44,24 +35,6 @@ public class WVT72Steps
             repeatCheckbox.Click();
     }
 
-    [Then("the meal time field is saved as {string}")]
-    public void ThenTheMealTimeFieldIsSavedAs(string expectedTime)
-    {
-        var timeInput = new WebDriverWait(_driver, TimeSpan.FromSeconds(5))
-            .Until(d => d.FindElement(By.Name("Time")));
-
-        Assert.That(timeInput.GetAttribute("value"), Does.Contain(expectedTime));
-    }
-
-    [Then("the meal date field is saved as {string}")]
-    public void ThenTheMealDateFieldIsSavedAs(string expectedDate)
-    {
-        var dateInput = new WebDriverWait(_driver, TimeSpan.FromSeconds(5))
-            .Until(d => d.FindElement(By.Name("Date")));
-
-        Assert.That(dateInput.GetAttribute("value"), Does.Contain(expectedDate));
-    }
-
     [Then("the meal repeat rule is saved as weekly")]
     public void ThenTheMealRepeatRuleIsSavedAsWeekly()
     {
@@ -69,5 +42,37 @@ public class WVT72Steps
             .Until(d => d.FindElement(By.Name("RepeatWeekly")));
 
         Assert.That(repeatCheckbox.Selected, Is.True);
+    }
+
+    // This step definition uses Cucumber Expressions. See https://github.com/gasparnagy/CucumberExpressions.SpecFlow
+    [When("'Jack' selects the meal day {string}")]
+    public void WhenSelectsTheMealDay(string month)
+    {
+        var monthElement = new WebDriverWait(_driver, TimeSpan.FromSeconds(5))
+            .Until(d => d.FindElement(By.Name("SelectedMonth")));
+        var monthSelect = new SelectElement(monthElement);
+        monthSelect.SelectByText(month);
+    }
+
+    // This step definition uses Cucumber Expressions. See https://github.com/gasparnagy/CucumberExpressions.SpecFlow
+    [Then("the meal month field is saved as {string}")]
+    public void ThenTheMealMonthFieldIsSavedAs(string expectedMonth)
+    {
+        var monthElement = new WebDriverWait(_driver, TimeSpan.FromSeconds(5))
+            .Until(d => d.FindElement(By.Name("SelectedMonth")));
+        var monthSelect = new SelectElement(monthElement);
+        var resultMonth = monthSelect.SelectedOption;
+        Assert.That(resultMonth.Text, Does.Contain(expectedMonth));
+    }
+
+    // This step definition uses Cucumber Expressions. See https://github.com/gasparnagy/CucumberExpressions.SpecFlow
+    [Then("the meal day field is saved as {string}")]
+    public void ThenTheMealDayFieldIsSavedAs(string expectedDay)
+    {
+        var dayElement = new WebDriverWait(_driver, TimeSpan.FromSeconds(5))
+            .Until(d => d.FindElement(By.Name("SelectedDay")));
+        var daySelect = new SelectElement(dayElement);
+        var resultDay = daySelect.SelectedOption;
+        Assert.That(resultDay.Text, Does.Contain(expectedDay));
     }
 }

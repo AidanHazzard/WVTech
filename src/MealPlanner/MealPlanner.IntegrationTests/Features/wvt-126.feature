@@ -15,7 +15,7 @@ Scenario: User creates a meal using month and day dropdowns
   And 'Jack' selects month "April"
   And 'Jack' selects day "15"
   And 'Jack' saves the meal
-  Then the meal form submits successfully
+  Then the meal creation form submits successfully
 
 Scenario: User edits a meal with month and day dropdowns
   Given there is a user named 'Jack'
