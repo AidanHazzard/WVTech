@@ -40,7 +40,6 @@ Feature: Add tags to recipes
     And 'Gary' submits the edit recipe form
     Then the recipe 'EditTagRecipe' has the tag 'Dinner' in the database
 
-  # TODO: Rewrite test to be more concise 
   Scenario: Tags with different casing are treated as the same tag
     Given there is a tag 'Spicy'
     And he is on the "FoodEntries/AddNewRecipe" page
