@@ -92,7 +92,7 @@
                          style="cursor:pointer;"
                          onclick="location.href='@location'">
                         <h4 class="buttonText mb-0">@recipe.Name</h4>
-                        <button type="button" class="btn btn-danger delete-recipe-btn" data-id="@recipe.Id" onclick="event.stopPropagation()">
+                        <button type="button" class="btn btn-danger delete-recipe-btn" data-id="@recipe.Id">
                             X
                         </button>
                         <input type="hidden" name="RecipeIds" value="@recipe.Id" />
