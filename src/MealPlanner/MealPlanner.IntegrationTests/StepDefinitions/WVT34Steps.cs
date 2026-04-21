@@ -10,6 +10,8 @@ public class WVT34Steps
     IWebDriver _driver;
     string _baseUrl;
     MealPlannerDBContext _context;
+    WebDriverWait _wait;
+    int _recipeId;
     
     // Runs before each scenerio
     [BeforeScenario]
@@ -18,6 +20,7 @@ public class WVT34Steps
         _driver = BDDSetup.Driver;
         _baseUrl = AUTHost.BaseUrl;
         _context = BDDSetup.Context;
+        _wait = BDDSetup.Wait;
     }
 
     // This step definition uses Cucumber Expressions. See https://github.com/gasparnagy/CucumberExpressions.SpecFlow
@@ -39,14 +42,14 @@ public class WVT34Steps
     }
 
     // This step definition uses Cucumber Expressions. See https://github.com/gasparnagy/CucumberExpressions.SpecFlow
-    [Given("{string} had upvoted the recipe with id {int}")]
-    public void GivenHadUpvotedTheRecipeWithId(string userName, int recipeId)
+    [Given("{string} had upvoted the recipe")]
+    public void GivenHadUpvotedTheRecipe(string userName)
     {
-        UserRecipe userRecipe = _context.Find<UserRecipe>(SharedSteps.Users[userName].Id, recipeId)
+        UserRecipe userRecipe = _context.Find<UserRecipe>(SharedSteps.Users[userName].Id, _recipeId)
             ?? new UserRecipe()
             {
                 User = SharedSteps.Users[userName],
-                Recipe = _context.Find<Recipe>(recipeId)
+                Recipe = _context.Find<Recipe>(_recipeId)
             };
         userRecipe.UserVote = UserVoteType.UpVote;
         _context.Update(userRecipe);
@@ -58,5 +61,39 @@ public class WVT34Steps
     public void WhenHeDownvotesTheRecipe()
     {
         _driver.FindElement(By.Id("thumbs-down")).Click();
+    }
+
+    // This step definition uses Cucumber Expressions. See https://github.com/gasparnagy/CucumberExpressions.SpecFlow
+    [Given("there is a recipe named {string} with no votes")]
+    public void GivenThereIsARecipeNamedWithNoVotes(string recipeName)
+    {
+        Recipe? recipe = _context.Set<Recipe>()
+            .Where(r => r.Name == recipeName)
+            .FirstOrDefault();
+
+        recipe ??= new Recipe()
+        {
+            Name = recipeName,
+            Directions = "",
+        };
+
+        if (recipe.Id == 0)
+        {
+            recipe = _context.Add(recipe).Entity;
+            _context.SaveChanges();
+        }
+
+        _recipeId = recipe.Id;
+
+        _context.RemoveRange(_context.Set<UserRecipe>().Where(ur => ur.RecipeId == _recipeId));
+        _context.SaveChanges();
+    }
+
+    // This step definition uses Cucumber Expressions. See https://github.com/gasparnagy/CucumberExpressions.SpecFlow
+    [Given("he is on the recipe page for the recipe")]
+    public void GivenHeIsOnTheRecipePageForTheRecipe()
+    {
+        _driver.Navigate().GoToUrl($"{_baseUrl}/FoodEntries/Recipes/{_recipeId}");
+        _wait.Until(d => ((IJavaScriptExecutor) d).ExecuteScript("return document.readyState")!.ToString() == "complete");
     }
 }

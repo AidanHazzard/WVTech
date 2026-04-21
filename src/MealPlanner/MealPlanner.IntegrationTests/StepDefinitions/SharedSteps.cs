@@ -11,6 +11,7 @@ public class SharedSteps
 {
     IWebDriver _driver;
     string _baseUrl;
+    MealPlannerDBContext _context;
     readonly string _userPassword = "1234!Abcd";
     readonly string _emailBase = "@fakeemail.com";
     public static Dictionary<string, User> Users = [];
@@ -21,6 +22,7 @@ public class SharedSteps
     {
         _driver = BDDSetup.Driver;
         _baseUrl = AUTHost.BaseUrl;
+        _context = BDDSetup.Context;
     }
 
     [AfterScenario]
@@ -39,9 +41,8 @@ public class SharedSteps
     [Given("there is a user named {string}")]
     public void GivenThereIsAUserNamed(string userName)
     {
-        using var ctx = BDDSetup.CreateContext();
         string email = $"{userName}{_emailBase}";
-        if (ctx.Set<User>().Where(u => u.NormalizedEmail == email.ToUpper()).Any()) return;
+        if (_context.Set<User>().Where(u => u.NormalizedEmail == email.ToUpper()).Any()) return;
 
         User newUser = new User()
         {
@@ -56,8 +57,8 @@ public class SharedSteps
 
         newUser.PasswordHash = new PasswordHasher<User>().HashPassword(newUser, _userPassword);
         Users.Add(userName, newUser);
-        ctx.Add(newUser);
-        ctx.SaveChanges();
+        _context.Add(newUser);
+        _context.SaveChanges();
     }    
     
     // This step definition uses Cucumber Expressions. See https://github.com/gasparnagy/CucumberExpressions.SpecFlow
@@ -85,8 +86,7 @@ public class SharedSteps
     [Given("{string} had downvoted the recipe with id {int}")]
     public void GivenHadDownvotedTheRecipeWithId(string userName, int recipeId)
     {
-        using var ctx = BDDSetup.CreateContext();
-        UserRecipe? userRecipe = ctx.Find<UserRecipe>(Users[userName].Id, recipeId);
+        UserRecipe? userRecipe = _context.Find<UserRecipe>(Users[userName].Id, recipeId);
         if (userRecipe == null)
         {
             userRecipe = new UserRecipe()
@@ -96,14 +96,14 @@ public class SharedSteps
                 UserVote = UserVoteType.DownVote
             };
             
-            ctx.Add(userRecipe);
-            ctx.SaveChanges();
+            _context.Add(userRecipe);
+            _context.SaveChanges();
         }
         else if (userRecipe.UserVote != UserVoteType.DownVote)
         {
             userRecipe.UserVote = UserVoteType.DownVote;
-            ctx.Update(userRecipe);
-            ctx.SaveChanges();
+            _context.Update(userRecipe);
+            _context.SaveChanges();
         }
     }
 }
