@@ -5,7 +5,7 @@ Feature: Add tags to recipes
     And 'Gary' is logged into Onebite
 
   Scenario: Creator adds a predefined tag when creating a recipe
-    Given 'Gary' is on the create recipe page
+    Given he is on the "FoodEntries/AddNewRecipe" page
     And 'Gary' fills in the recipe name as 'TaggedRecipe'
     And 'Gary' fills in the recipe directions as 'Test directions'
     And 'Gary' fills in the recipe calories as '200'
@@ -17,7 +17,7 @@ Feature: Add tags to recipes
     Then the recipe 'TaggedRecipe' has the tag 'Breakfast' in the database
 
   Scenario: Creator adds a custom tag when creating a recipe
-    Given 'Gary' is on the create recipe page
+    Given he is on the "FoodEntries/AddNewRecipe" page
     And 'Gary' fills in the recipe name as 'CustomTagRecipe'
     And 'Gary' fills in the recipe directions as 'Test directions'
     And 'Gary' fills in the recipe calories as '200'
@@ -40,8 +40,9 @@ Feature: Add tags to recipes
     And 'Gary' submits the edit recipe form
     Then the recipe 'EditTagRecipe' has the tag 'Dinner' in the database
 
+  # TODO: Rewrite test to be more concise 
   Scenario: Tags with different casing are treated as the same tag
-    Given 'Gary' is on the create recipe page
+    Given he is on the "FoodEntries/AddNewRecipe" page
     And 'Gary' fills in the recipe name as 'CaseRecipe1'
     And 'Gary' fills in the recipe directions as 'Test directions'
     And 'Gary' fills in the recipe calories as '200'
@@ -63,6 +64,6 @@ Feature: Add tags to recipes
 
   Scenario: Tag dropdown shows only the top 10 most used tags
     Given there are 11 tags with varying usage counts
-    And 'Gary' is on the create recipe page
+    And he is on the "FoodEntries/AddNewRecipe" page
     Then the tag dropdown shows exactly 10 options
     And the least used tag is not in the dropdown

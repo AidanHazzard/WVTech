@@ -45,7 +45,7 @@ public class WVT126Steps
     public void WhenJackEntersAMealTitle(string title)
     {
         var titleInput = new WebDriverWait(_driver, TimeSpan.FromSeconds(5))
-            .Until(d => d.FindElement(By.Name("Title")));
+            .Until(d => d.FindElement(By.CssSelector("#Title.mealInput")));
 
         titleInput.Clear();
         titleInput.SendKeys(title);
@@ -71,12 +71,12 @@ public class WVT126Steps
     public void WhenJackSavesTheMeal()
     {
         var saveButton = new WebDriverWait(_driver, TimeSpan.FromSeconds(5))
-            .Until(d => d.FindElement(By.CssSelector("button[type='submit'], input[type='submit']")));
+            .Until(d => d.FindElement(By.Id("createMeal")));
 
         saveButton.Click();
     }
 
-    [Then("the meal form submits successfully")]
+    [Then("the meal creation form submits successfully")]
     public void ThenTheMealFormSubmitsSuccessfully()
     {
         new WebDriverWait(_driver, TimeSpan.FromSeconds(5))
