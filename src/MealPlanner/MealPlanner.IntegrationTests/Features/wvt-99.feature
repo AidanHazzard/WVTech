@@ -40,18 +40,9 @@ Feature: Add tags to recipes
     And 'Gary' submits the edit recipe form
     Then the recipe 'EditTagRecipe' has the tag 'Dinner' in the database
 
-  # TODO: Rewrite test to be more concise 
   Scenario: Tags with different casing are treated as the same tag
-    Given he is on the "FoodEntries/AddNewRecipe" page
-    And 'Gary' fills in the recipe name as 'CaseRecipe1'
-    And 'Gary' fills in the recipe directions as 'Test directions'
-    And 'Gary' fills in the recipe calories as '200'
-    And 'Gary' fills in the recipe protein as '10'
-    And 'Gary' fills in the recipe fat as '5'
-    And 'Gary' fills in the recipe carbs as '30'
-    And 'Gary' adds the custom tag 'Spicy'
-    And 'Gary' submits the recipe form
-    And 'Gary' is on the create recipe page
+    Given there is a tag 'Spicy'
+    And he is on the "FoodEntries/AddNewRecipe" page
     And 'Gary' fills in the recipe name as 'CaseRecipe2'
     And 'Gary' fills in the recipe directions as 'Test directions'
     And 'Gary' fills in the recipe calories as '200'
