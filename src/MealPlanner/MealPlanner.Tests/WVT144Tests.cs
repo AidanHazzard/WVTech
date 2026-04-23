@@ -107,7 +107,7 @@ public class WVT144Tests
         var tags = new List<Tag> { new Tag { Id = 1, Name = "Vegan" } };
         _tagRepoMock.Setup(r => r.GetTagsByPopularityAsync()).ReturnsAsync(tags);
 
-        var result = (ViewResult)await _controller.NewMeal();
+        var result = (ViewResult)await _controller.NewMeal((string?)null);
 
         Assert.That(_controller.ViewBag.AvailableTags, Is.Not.Null);
         Assert.That(((List<Tag>)_controller.ViewBag.AvailableTags).Count, Is.EqualTo(1));

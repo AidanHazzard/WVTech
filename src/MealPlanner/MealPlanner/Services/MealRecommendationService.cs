@@ -56,9 +56,15 @@ public class MealRecommendationService : IMealRecommendationService
         recipes = recipes.Where(r => !existingRecipes.Contains(r)).ToList();
 
         var allWithTags = await _recipeRepository.GetAllWithTagsAsync();
+        var userVotes = await _userRecipeRepository.GetUserVotesByUserIdAsync(user.Id);
+        var votePercentages = await _userRecipeRepository.GetAllVotePercentagesAsync();
+        var existingIds = existingRecipes.Select(r => r.Id).ToHashSet();
+        var recipeIds = recipes.Select(r => r.Id).ToHashSet();
         var rest = allWithTags
-            .Where(r => _userRecipeRepository.GetUserRecipeVoteAsync(user.Id, r.Id).Result != UserVoteType.DownVote && !existingRecipes.Contains(r) && !recipes.Contains(r))
-            .OrderByDescending(r => _userRecipeRepository.GetRecipeVotePercentage(r.Id).Result)
+            .Where(r => userVotes.GetValueOrDefault(r.Id, UserVoteType.NoVote) != UserVoteType.DownVote
+                     && !existingIds.Contains(r.Id)
+                     && !recipeIds.Contains(r.Id))
+            .OrderByDescending(r => votePercentages.GetValueOrDefault(r.Id, 0f))
             .ToList();
 
         recipes.AddRange(rest);
@@ -121,6 +127,9 @@ public class MealRecommendationService : IMealRecommendationService
                 .Select(_ => new MealPreferenceViewModel { Size = MealSize.Average })
                 .ToList();
 
+        var userVotes = await _userRecipeRepository.GetUserVotesByUserIdAsync(user.Id);
+        var votePercentages = await _userRecipeRepository.GetAllVotePercentagesAsync();
+
         int mealIndex = 0;
         foreach (var pref in preferences)
         {
@@ -128,10 +137,11 @@ public class MealRecommendationService : IMealRecommendationService
 
             var upvoted = await _userRecipeRepository.GetUserRecipesByVoteType(user.Id, UserVoteType.UpVote);
             var allWithTags = await _recipeRepository.GetAllWithTagsAsync();
+            var upvotedIds = upvoted.Select(r => r.Id).ToHashSet();
             var rest = allWithTags
-                .Where(r => _userRecipeRepository.GetUserRecipeVoteAsync(user.Id, r.Id).Result != UserVoteType.DownVote
-                         && !upvoted.Contains(r))
-                .OrderByDescending(r => _userRecipeRepository.GetRecipeVotePercentage(r.Id).Result)
+                .Where(r => userVotes.GetValueOrDefault(r.Id, UserVoteType.NoVote) != UserVoteType.DownVote
+                         && !upvotedIds.Contains(r.Id))
+                .OrderByDescending(r => votePercentages.GetValueOrDefault(r.Id, 0f))
                 .ToList();
 
             var candidates = upvoted.Concat(rest).ToList();

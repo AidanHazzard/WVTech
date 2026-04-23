@@ -40,6 +40,12 @@ public class WVT144RecommendationTests
         _userRecipeRepoMock
             .Setup(r => r.GetRecipeVotePercentage(It.IsAny<int>()))
             .ReturnsAsync(0f);
+        _userRecipeRepoMock
+            .Setup(r => r.GetUserVotesByUserIdAsync(_user.Id))
+            .ReturnsAsync(new Dictionary<int, UserVoteType>());
+        _userRecipeRepoMock
+            .Setup(r => r.GetAllVotePercentagesAsync())
+            .ReturnsAsync(new Dictionary<int, float>());
         _nutritionRepoMock
             .Setup(r => r.GetUsersNutritionPreferenceAsync(_user.Id))
             .ReturnsAsync(new UserNutritionPreference { UserId = _user.Id, CalorieTarget = 9999 });
@@ -56,6 +62,30 @@ public class WVT144RecommendationTests
             _nutritionRepoMock.Object,
             _mealRepoMock.Object,
             _dietaryRestrictionRepoMock.Object);
+    }
+
+    [Test]
+    public async Task GetRecommendedDayPlanForUser_ExcludesDownvotedRecipes()
+    {
+        var downvoted = new Recipe { Id = 1, Name = "Downvoted", Calories = 300, Tags = [] };
+        var allowed = new Recipe { Id = 2, Name = "Allowed", Calories = 300, Tags = [] };
+        _recipeRepoMock.Setup(r => r.GetAllWithTagsAsync()).ReturnsAsync([downvoted, allowed]);
+        _userRecipeRepoMock
+            .Setup(r => r.GetUserVotesByUserIdAsync(_user.Id))
+            .ReturnsAsync(new Dictionary<int, UserVoteType> { [1] = UserVoteType.DownVote });
+
+        var config = new DayPlanConfigViewModel
+        {
+            MealCount = 1,
+            SelectedMonth = DateTime.Today.Month,
+            SelectedDay = DateTime.Today.Day,
+            MealPreferences = [new MealPreferenceViewModel { Size = MealSize.Average }]
+        };
+
+        var result = await _service.GetRecommendedDayPlanForUser(_user, DateTime.Today, config);
+
+        Assert.That(result[0].Recipes, Does.Not.Contain(downvoted));
+        Assert.That(result[0].Recipes, Does.Contain(allowed));
     }
 
     [Test]
