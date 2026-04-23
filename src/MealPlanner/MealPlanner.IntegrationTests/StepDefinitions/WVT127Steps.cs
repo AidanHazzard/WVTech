@@ -1,5 +1,6 @@
 using MealPlanner.Models;
 using OpenQA.Selenium;
+using OpenQA.Selenium.Interactions;
 using OpenQA.Selenium.Support.UI;
 using Reqnroll;
 
@@ -44,28 +45,15 @@ namespace Mealplanner.IntegrationTests
         [When("'Jack' clicks the edit button")]
         public void WhenJackClicksTheEditButton()
         {
-            var editButton = _wait.Until(driver =>
-            {
-                try
-                {
-                    var el = driver.FindElement(By.CssSelector("form[action*='EditMeal'] button[type='submit']"));
-                    return (el.Displayed && el.Enabled) ? el : null;
-                }
-                catch (NoSuchElementException) { return null; }
-            })!;
+            var editButton = _driver.FindElement(By.CssSelector("button[type='submit']"));
             editButton.Click();
-            _wait.Until(d => d.Url.Contains("EditMeal"));
-            NavigateToEditMealPage(_mealId);
         }
 
         [Then("the meal edit form is shown")]
         public void ThenTheMealEditFormIsShown()
         {
-            _wait.Until(d =>
-            {
-                try { return d.FindElement(By.CssSelector("#editMealForm")); }
-                catch (NoSuchElementException) { return null; }
-            });
+            _wait.Until(d =>d.FindElement(By.CssSelector("#editMealForm")));
+            Assert.Pass("Edit meal form loaded");
         }
 
         // When
@@ -82,30 +70,10 @@ namespace Mealplanner.IntegrationTests
        [When("User saves the meal")]
         public void WhenUserSavesTheMeal()
         {
-            var js = (IJavaScriptExecutor)_driver;
-            
-            // Ensure Date and Time fields have values if empty
-            js.ExecuteScript(@"
-                var dateInput = document.querySelector('#Date, input[name=""Date""]');
-                var timeInput = document.querySelector('#Time, input[name=""Time""]');
-                if (dateInput && !dateInput.value) dateInput.value = new Date().toISOString().split('T')[0];
-                if (timeInput && !timeInput.value) timeInput.value = '12:00:00';
-            ");
+            var saveButton = _driver.FindElement(By.Id("saveMealBtn"));
 
-            var saveButton = _wait.Until(driver =>
-            {
-                try
-                {
-                    var el = driver.FindElement(By.CssSelector("#editMealForm button[type='submit']"));
-                    return (el.Displayed && el.Enabled) ? el : null;
-                }
-                catch (NoSuchElementException) { return null; }
-            })!;
-
-            ((IJavaScriptExecutor)_driver)
-                .ExecuteScript("arguments[0].scrollIntoView(true);", saveButton);
-            //Thread.Sleep(300);
-            saveButton.Click();
+            // Navbar does weird stuff with this button in headless, forcing the click with JS
+            ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].click();", saveButton);
 
             _wait.Until(driver =>
                 ((IJavaScriptExecutor)driver)
@@ -211,6 +179,13 @@ namespace Mealplanner.IntegrationTests
                 }
                 catch (StaleElementReferenceException) { return false; }
             });
+        }
+
+        // This step definition uses Cucumber Expressions. See https://github.com/gasparnagy/CucumberExpressions.SpecFlow
+        [Given("he is on the meal page")]
+        public void GivenHeIsOnTheMealPage()
+        {
+            _driver.Navigate().GoToUrl($"{_baseUrl}/Meal/ViewMeal/{_mealId}");
         }
 
         // Helpers
