@@ -62,6 +62,7 @@ public class MealRecommendationService : IMealRecommendationService
             .ToList();
 
         recipes.AddRange(rest);
+        await LoadExternalRecipesAsync(recipes);
         recipes = ApplyDietaryFilter(recipes, restrictionNames);
 
         // Target of zero implies no calorie limit
@@ -79,14 +80,29 @@ public class MealRecommendationService : IMealRecommendationService
         return toReturn;
     }
 
+    private async Task LoadExternalRecipesAsync(List<Recipe> recipes)
+    {
+        if (_externalRecipeService == null) return;
+
+        for(int i = 0; i < recipes.Count; i++)
+        {
+            var r = recipes[i];
+            if (r.ExternalUri.IsNullOrEmpty()) continue;
+            try
+            {
+                r = await _externalRecipeService.GetExternalRecipeByURI(r.ExternalUri!);
+            }
+            catch
+            {
+                if (r != null) recipes.Remove(r);
+            }
+        }
+    }
+
     private async Task<(Recipe? Recommendation, int mealCalories)> GetOneRecipeRecommendation(int calorieTarget, List<Recipe> recipes, int runningMealCalorieCount)
     {
         var toReturn = recipes.First();
         recipes.Remove(toReturn);
-        if (!toReturn.ExternalUri.IsNullOrEmpty())
-        {
-            toReturn = await _externalRecipeService?.GetExternalRecipeByURI(toReturn.ExternalUri) ?? null;
-        }
 
         if (toReturn != null && toReturn.Calories + runningMealCalorieCount <= calorieTarget)
         {

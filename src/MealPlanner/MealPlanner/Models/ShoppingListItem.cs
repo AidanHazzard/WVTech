@@ -7,4 +7,10 @@ public class ShoppingListItem
     public string UserId { get; set; } = string.Empty;
 
     public string Name { get; set; } = string.Empty;
+
+    public float Amount { get; set; }
+
+    public string Measurement { get; set; } = string.Empty;
+
+    public bool IsAutoAdded { get; set; }
 }

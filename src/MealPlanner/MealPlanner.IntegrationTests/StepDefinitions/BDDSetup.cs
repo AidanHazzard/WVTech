@@ -26,10 +26,10 @@ public class BDDSetup
         AUTHost.Start(_connectionString);
         
         ChromeOptions options = new ChromeOptions();
-        options.AddArgument("--headless");
+        options.AddArgument("--headless=new");
         options.AddArgument("--disable-dev-shm-usage");
         options.AddArgument("--no-sandbox");
-        options.AddArgument("--window-size=2560,1440");
+        options.AddArgument("--window-size=1920,1080");
 
 
         Driver = new ChromeDriver(options);

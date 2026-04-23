@@ -1,52 +1,83 @@
-@model IEnumerable<MealPlanner.Models.ShoppingListItem>
+@model MealPlanner.ViewModels.ShoppingListViewModel
 
 @{
     ViewData["Title"] = "Shopping List";
 }
 
-    <div class="back1">
-        <h1 class="back1Title">Shopping List</h1>
+<div class="back1">
+    <h1 class="back1Title">Shopping List</h1>
 
-        @if (TempData["ShoppingListError"] != null)
+    @if (TempData["ShoppingListError"] != null)
+    {
+        <div class="alert alert-danger text-center">
+            @TempData["ShoppingListError"]
+        </div>
+    }
+
+    <form asp-action="SetDateRange" method="post" class="mb-4" id="dateRangeForm">
+        @Html.AntiForgeryToken()
+        <div class="d-flex gap-3 align-items-center">
+            <input type="date" name="dateFrom" value="@Model.DateFrom.ToString("yyyy-MM-dd")" class="back2-textbox date-range-input" onchange="document.getElementById('dateRangeForm').submit()" />
+            <span>to</span>
+            <input type="date" name="dateTo" value="@Model.DateTo.ToString("yyyy-MM-dd")" class="back2-textbox date-range-input" onchange="document.getElementById('dateRangeForm').submit()" />
+        </div>
+    </form>
+
+    <form asp-action="AddItem" method="post" class="mb-4">
+        @Html.AntiForgeryToken()
+        <div class="row align-items-center">
+            <input type="number" class="col-1 back2-textbox-partial mx-1" name="amount" placeholder="0" min="0" step="any" />
+            <select class="col-2 back2-textbox-partial mx-1" name="measurement">
+                <option value="" selected>Select</option>
+                <option value="Count">Count</option>
+                <option value="Cup(s)">Cup(s)</option>
+                <option value="Ounce(s)">Ounce(s)</option>
+                <option value="Pound(s)">Pounds</option>
+                <option value="L">L</option>
+                <option value="KG">KG</option>
+            </select>
+            <input type="text" class="col back2-textbox-partial mx-1" name="itemName" placeholder="Enter Ingredient" required />
+            <button type="submit" class="btn btn-success col-auto mx-1 rounded-4 px-4">Add Item</button>
+        </div>
+    </form>
+
+    <div class="d-flex align-items-center gap-2 mb-3">
+        <label class="mb-0">Display units:</label>
+        <select id="unitConvertSelect" class="back2-textbox-partial" onchange="convertUnits(this.value)">
+            <option value="original">Original</option>
+            <option value="Cup(s)">Cup(s)</option>
+            <option value="Ounce(s)">Ounce(s)</option>
+            <option value="Pound(s)">Pound(s)</option>
+            <option value="L">Liters</option>
+            <option value="KG">KG</option>
+        </select>
+    </div>
+
+    <div class="back2">
+        @if (Model.Items.Any())
         {
-            <div class="alert alert-danger text-center">
-                @TempData["ShoppingListError"]
+            <div class="d-flex flex-column gap-3">
+                @foreach (var item in Model.Items)
+                {
+                    <div class="d-flex justify-content-between align-items-center back2-textbox">
+                        <span class="fs-5 item-display"
+                              data-amount="@item.Amount.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+                              data-measurement="@item.Measurement"
+                              data-name="@item.Name">@($"{item.Amount:G} {item.Measurement} of {item.Name}")</span>
+                        <form asp-action="RemoveItem" method="post" class="m-0">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="itemName" value="@item.Name" />
+                            <button type="submit" class="btn btn-danger delete-recipe-btn">X</button>
+                        </form>
+                    </div>
+                }
             </div>
         }
-
-        <form asp-action="AddItem" method="post" class="mb-4">
-            @Html.AntiForgeryToken()
-
-            <div class="d-flex gap-3 align-items-center">
-                <input type="text"
-                       name="itemName"
-                       class="back2-textbox"
-                       placeholder="Enter grocery item" />
-                <button type="submit" class="btn btn-success px-4 rounded-4">Add Item</button>
-            </div>
-        </form>
-
-        <div class="back2">
-            @if (Model.Any())
-            {
-                <div class="d-flex flex-column gap-3">
-                    @foreach (var item in Model)
-                    {
-                        <div class="d-flex justify-content-between align-items-center back2-textbox">
-                            <span class="fs-5">@item.Name</span>
-
-                            <form asp-action="RemoveItem" method="post" class="m-0">
-                                @Html.AntiForgeryToken()
-                                <input type="hidden" name="itemId" value="@item.Id" />
-                                <button type="submit" class="btn btn-danger rounded-4 px-4">Remove</button>
-                            </form>
-                        </div>
-                    }
-                </div>
-            }
-            else
-            {
-                <p class="text-center fs-5 mb-0">No items in your shopping list yet.</p>
-            }
-        </div>
+        else
+        {
+            <p class="text-center fs-5 mb-0">No items in your shopping list yet.</p>
+        }
     </div>
+</div>
+
+<script src="~/js/shoppingListConvert.js"></script>

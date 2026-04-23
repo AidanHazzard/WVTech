@@ -296,3 +296,5 @@ __pycache__/
 # Personal Claude Code context (not shared with team)
 CLAUDE.local.md
 .claude/settings.local.json
+.claude/worktrees/
+**/.claude/worktrees/

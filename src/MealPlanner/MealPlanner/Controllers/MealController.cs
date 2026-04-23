@@ -36,6 +36,62 @@ public class MealController : Controller
         _recommendationService = mealRecommendationService;
     }
 
+    [HttpGet]
+    public async Task<IActionResult> SelectMeal(string? date = null)
+    {
+        var user = await _registrationService.FindUserByClaimAsync(User);
+        if (user == null) return Challenge();
+
+        DateTime selectedDate =
+            DateTime.TryParse(date, out var parsed)
+                ? parsed.Date
+                : DateTime.Today;
+
+        var meals = await _mealRepo.GetDistinctUserMealsAsync(user);
+
+        var vm = new SelectMealViewModel
+        {
+            SelectedDate = selectedDate,
+            Meals = meals.ToList()
+        };
+
+        return View(vm);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> AddMealToDay(int mealId, string? date = null)
+    {
+        var user = await _registrationService.FindUserByClaimAsync(User);
+        if (user == null) return Challenge();
+
+        var source = await _mealRepo.ReadAsync(mealId);
+        if (source == null || source.UserId != user.Id) return NotFound();
+
+        await _mealRepo.LoadRecipesAsync(source);
+
+        DateTime selectedDate =
+            DateTime.TryParse(date, out var parsed)
+                ? parsed.Date
+                : DateTime.Today;
+
+        var clone = new Meal
+        {
+            User = user,
+            UserId = user.Id,
+            Title = source.Title,
+            StartTime = selectedDate,
+            RepeatRule = source.RepeatRule,
+            Recipes = source.Recipes.ToList()
+        };
+
+        _mealRepo.CreateOrUpdate(clone);
+        _context.SaveChanges();
+
+        Response.Cookies.Delete("ShoppingListSynced");
+        return RedirectToAction("Index", "Home", new { date = selectedDate.ToString("yyyy-MM-dd") });
+    }
+
     public async Task<IActionResult> PlannerHome(string? date)
     {
         var user = await _registrationService.FindUserByClaimAsync(User);
@@ -61,13 +117,14 @@ public class MealController : Controller
     }
 
     [HttpGet]
-    public async Task<IActionResult> NewMeal()
+    public async Task<IActionResult> NewMeal(string? date)
     {
         ViewBag.AvailableTags = await _tagRepo.GetTagsByPopularityAsync();
+        var selected = DateTime.TryParse(date, out var parsed) ? parsed : DateTime.Today;
         return View(new CreateMealViewModel
         {
-            SelectedMonth = DateTime.Today.Month,
-            SelectedDay = DateTime.Today.Day
+            SelectedMonth = selected.Month,
+            SelectedDay = selected.Day
         });
     }
 
@@ -119,6 +176,7 @@ public class MealController : Controller
         _mealRepo.CreateOrUpdate(newMeal);
         _context.SaveChanges();
 
+        Response.Cookies.Delete("ShoppingListSynced");
         return RedirectToAction("Index", "Home");
     }
 
@@ -142,6 +200,7 @@ public class MealController : Controller
 
         newMeal = _mealRepo.CreateOrUpdate(newMeal);
         _context.SaveChanges();
+        Response.Cookies.Delete("ShoppingListSynced");
         return RedirectToAction("ViewMeal", new {id = newMeal.Id });
     }
 
@@ -292,18 +351,18 @@ public class MealController : Controller
         if (user == null)
             return Challenge();
 
-        var meal = await _context.Meals
-            .Include(m => m.Recipes)
-            .FirstOrDefaultAsync(m => m.Id == model.Id);
+        var meal = _mealRepo.Read(model.Id);
 
         if (meal == null || meal.UserId != user.Id)
             return NotFound();
 
-        DateTime selectedDate = (model.Date == default)
-            ? DateTime.Today
-            : (TimeSpan.TryParse(model.Time, out var parsedTime)
-                ? model.Date.Date + parsedTime
-                : model.Date.Date);
+        await _mealRepo.LoadRecipesAsync(meal);
+
+        
+        DateTime selectedDate = new DateTime(
+            DateTime.Today.Year, 
+            model.SelectedMonth, 
+            model.SelectedDay);
 
         meal.Title = model.Title.Trim();
         meal.StartTime = selectedDate;
@@ -329,6 +388,7 @@ public class MealController : Controller
 
         await _context.SaveChangesAsync();
 
+        Response.Cookies.Delete("ShoppingListSynced");
         TempData["Success"] = "Meal updated successfully";
 
         return RedirectToAction("EditMeal", new { id = meal.Id });
@@ -350,7 +410,7 @@ public class MealController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> DeleteMeal(int id, string? date)
+    public async Task<IActionResult> DeleteMeal(int id, string? date, string? source)
     {
         var user = await _registrationService.FindUserByClaimAsync(User);
         if (user == null)
@@ -361,7 +421,9 @@ public class MealController : Controller
         var meal = await _context.Meals.FindAsync(id);
         if (meal == null)
         {
-            return RedirectToAction("PlannerHome", "Meal", new { date });
+            return source == "home"
+                ? RedirectToAction("Index", "Home", new { date })
+                : RedirectToAction("PlannerHome", "Meal", new { date });
         }
 
         if (meal.UserId != user.Id)
@@ -372,7 +434,10 @@ public class MealController : Controller
         _context.Meals.Remove(meal);
         await _context.SaveChangesAsync();
 
-        return RedirectToAction("PlannerHome", "Meal", new { date });
+        Response.Cookies.Delete("ShoppingListSynced");
+        return source == "home"
+            ? RedirectToAction("Index", "Home", new { date })
+            : RedirectToAction("PlannerHome", "Meal", new { date });
     }
 
     [HttpPost]
@@ -399,7 +464,7 @@ public class MealController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> ToggleMealCompleted(int id, string? date, bool? isCompleted)
+    public async Task<IActionResult> ToggleMealCompleted(int id, string? date, bool? isCompleted, string? source)
     {
         var user = await _registrationService.FindUserByClaimAsync(User);
         if (user == null)
@@ -421,7 +486,9 @@ public class MealController : Controller
         meal.IsCompleted = isCompleted == true;
         await _context.SaveChangesAsync();
 
-        return RedirectToAction("PlannerHome", "Meal", new { date });
+        return source == "home"
+            ? RedirectToAction("Index", "Home", new { date })
+            : RedirectToAction("PlannerHome", "Meal", new { date });
     }
 
     private async Task ResolveCustomTagNamesAsync(IEnumerable<ViewModels.MealPreferenceViewModel> preferences)

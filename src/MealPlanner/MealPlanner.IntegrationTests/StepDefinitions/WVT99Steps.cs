@@ -4,6 +4,7 @@ using OpenQA.Selenium;
 using OpenQA.Selenium.Support.UI;
 using Reqnroll;
 using NUnit.Framework;
+using Microsoft.IdentityModel.Tokens;
 
 namespace Mealplanner.IntegrationTests;
 
@@ -12,12 +13,14 @@ public class WVT99Steps
 {
     IWebDriver _driver;
     string _baseUrl;
+    MealPlannerDBContext _context;
     int _recipeId;
     string _excludedTag = string.Empty;
 
     [BeforeScenario]
     public void SetUp()
     {
+        _context = BDDSetup.Context;
         _driver = BDDSetup.Driver;
         _baseUrl = AUTHost.BaseUrl;
     }
@@ -187,5 +190,14 @@ public class WVT99Steps
         var options = select.FindElements(By.TagName("option"));
         Assert.That(options.Any(o => o.GetAttribute("value") == _excludedTag), Is.False,
             $"Expected '{_excludedTag}' to be absent from the dropdown but it was present.");
+    }
+
+    // This step definition uses Cucumber Expressions. See https://github.com/gasparnagy/CucumberExpressions.SpecFlow
+    [Given("there is a tag {string}")]
+    public void GivenThereIsATag(string tagName)
+    {
+        if(!_context.Tags.Where(t => t.Name == tagName).IsNullOrEmpty()) return;
+        _context.Add(new Tag() { Name=tagName });
+        _context.SaveChanges();
     }
 }

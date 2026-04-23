@@ -32,16 +32,27 @@ public class HomeControllerTests
     private static HomeController CreateController(
         ClaimsPrincipal user,
         Mock<IRegistrationService>? registrationServiceMock = null,
-        Mock<IMealRepository>? mealRepoMock = null)
+        Mock<IMealRepository>? mealRepoMock = null,
+        Mock<INutritionProgressService>? nutritionServiceMock = null)
     {
         registrationServiceMock ??= new Mock<IRegistrationService>();
         mealRepoMock ??= new Mock<IMealRepository>();
+        nutritionServiceMock ??= new Mock<INutritionProgressService>();
+        nutritionServiceMock
+            .Setup(n => n.GetDailyProgressAsync(It.IsAny<string>(), It.IsAny<DateOnly>()))
+            .ReturnsAsync(new NutritionProgressDto(
+                "user-1",
+                DateOnly.FromDateTime(DateTime.Today),
+                DateOnly.FromDateTime(DateTime.Today),
+                new MacroTargets(0, 0, 0, 0),
+                new MacroTotals(0, 0, 0, 0)));
 
         var controller = new HomeController(
-            null!,                         // MealPlannerDBContext not used in tested actions
-            Mock.Of<ILoginService>(),       // also not used here
+            null!,
+            Mock.Of<ILoginService>(),
             registrationServiceMock.Object,
-            mealRepoMock.Object);
+            mealRepoMock.Object,
+            nutritionServiceMock.Object);
 
         controller.ControllerContext = new ControllerContext
         {

@@ -202,6 +202,18 @@ label {
   box-sizing: border-box;
 }
 
+.date-range-input {
+  width: auto;
+  cursor: pointer;
+  border: 2px solid transparent;
+}
+
+.date-range-input:focus,
+.date-range-input:hover {
+  border-color: var(--text-primary);
+  outline: none;
+}
+
 .back2-textbox-partial {
   display: inline-block;
   background-color: var(--textbox-bg);

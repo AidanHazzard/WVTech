@@ -1,5 +1,4 @@
 @model MealPlanner.ViewModels.EditMealViewModel
-@{DateTime today = DateTime.Today; }
 
 <div class="back1 backHasButton">
 
@@ -37,24 +36,12 @@
             </div>
 
             <div class="col-md-4">
-                <label asp-for="Date" class="form-label back1Title">Date</label>
-                <input type="date" asp-for="Date" name="Date" class="form-control mealInput" />
-                <span asp-validation-for="Date" class="text-danger"></span>
-            </div>
-
-            <div class="col-md-4">
-                <label asp-for="Time" class="form-label back1Title">Time</label>
-                <input type="time" asp-for="Time" name="Time" class="form-control mealInput" />
-                <span asp-validation-for="Time" class="text-danger"></span>
-            </div>
-
-            <div class="col-md-4">
                 <label asp-for="SelectedMonth" class="form-label back1Title">Month</label>
                 <select asp-for="SelectedMonth" class="form-control mealSelect">
                     <option value="">Select month</option>
                     @for (int i = 1; i <= 12; i++)
                     {
-                        <!option @(i==today.Month ? "selected" : "") value="@i">
+                        <!option @(i==Model.SelectedMonth ? "selected" : "") value="@i">
                             @System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(i)
                         </!option>
                     }
@@ -68,7 +55,7 @@
                     <option value="">Select day</option>
                     @for (int i = 1; i <= 31; i++)
                     {
-                        <!option value="@i" @(i==today.Day ? "selected" : "")>@i</!option>
+                        <!option value="@i" @(i==Model.SelectedDay ? "selected" : "")>@i</!option>
                     }
                 </select>
                 <span asp-validation-for="SelectedDay" class="text-danger"></span>
@@ -99,10 +86,11 @@
                 @foreach (var recipe in Model.Recipes)
                 {
                     var location = Url.Action("Recipes", "FoodEntries", new { id = recipe.Id });
-                    <div class="mealRecipeItem d-flex align-items-center justify-content-between mb-2 back2 back2-textbox" data-id="@recipe.Id">
-                        <h4 class="buttonText mb-0"
-                            style="cursor:pointer;"
-                            onclick="location.href='@location'">@recipe.Name</h4>
+                    <div class="mealRecipeItem d-flex align-items-center justify-content-between mb-2 back2 back2-textbox"
+                         data-id="@recipe.Id"
+                         style="cursor:pointer;"
+                         onclick="location.href='@location'">
+                        <h4 class="buttonText mb-0">@recipe.Name</h4>
                         <button type="button" class="btn btn-danger delete-recipe-btn" data-id="@recipe.Id">
                             X
                         </button>
@@ -115,10 +103,6 @@
                 <p class="text-muted mb-3">There are no recipes in this meal yet.</p>
             }
         </div>
-
-        <button type="submit" class="buttonBlue mt-3">
-            <h2 class="buttonText">Save Changes</h2>
-        </button>
     </form>
 
     <div class="back2 pe-5 mt-3">
@@ -126,6 +110,9 @@
         @await Html.PartialAsync("_RecipeSearchPartial")
     </div>
 
+    <button id="saveMealBtn" type="submit" class="buttonBlue mt-3" form="editMealForm">
+        <h4 class="buttonText">Save Changes</h2>
+    </button>
 </div>
 
 @section Scripts {
