@@ -7,6 +7,7 @@ Feature: WVT-127
       And the edit meal page is open
 
   Scenario: 'Jack' can edit a meal
+    Given he is on the meal page
     When 'Jack' clicks the edit button
     Then the meal edit form is shown 
 

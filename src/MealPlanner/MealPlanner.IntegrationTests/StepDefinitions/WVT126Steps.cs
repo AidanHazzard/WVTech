@@ -1,4 +1,5 @@
 using OpenQA.Selenium;
+using OpenQA.Selenium.Interactions;
 using OpenQA.Selenium.Support.UI;
 using Reqnroll;
 
@@ -71,8 +72,9 @@ public class WVT126Steps
     public void WhenJackSavesTheMeal()
     {
         var saveButton = new WebDriverWait(_driver, TimeSpan.FromSeconds(5))
-            .Until(d => d.FindElement(By.Id("createMeal")));
-
+            .Until(d => d.FindElement(By.CssSelector("#createMeal")));
+        
+        new Actions(_driver).ScrollToElement(saveButton).Perform();
         saveButton.Click();
     }
 
