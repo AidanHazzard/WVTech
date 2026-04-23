@@ -106,7 +106,7 @@ public class NutritionBarSteps
         var btn = _driver.FindElement(By.CssSelector("button.buttonBlue[type='submit']"));
         ((IJavaScriptExecutor)_driver).ExecuteScript(
             "arguments[0].scrollIntoView({block:'center',behavior:'instant'});", btn);
-        btn.Click();
+        ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].click();", btn);
         new WebDriverWait(_driver, TimeSpan.FromSeconds(10)).Until(driver =>
             ((IJavaScriptExecutor)driver)
                 .ExecuteScript("return document.readyState").ToString() == "complete");
@@ -115,16 +115,32 @@ public class NutritionBarSteps
     [Given("{string} is on the create meal page for nutrition")]
     public void GivenUserIsOnCreateMealPage(string username)
     {
-        _driver.Navigate().GoToUrl($"{_baseUrl}/Meal/NewMeal");
-        new WebDriverWait(_driver, TimeSpan.FromSeconds(10)).Until(driver =>
-            ((IJavaScriptExecutor)driver)
-                .ExecuteScript("return document.readyState").ToString() == "complete");
+        for (int attempt = 0; attempt < 3; attempt++)
+        {
+            _driver.Navigate().GoToUrl($"{_baseUrl}/Meal/NewMeal");
+            new WebDriverWait(_driver, TimeSpan.FromSeconds(10)).Until(driver =>
+                ((IJavaScriptExecutor)driver)
+                    .ExecuteScript("return document.readyState")?.ToString() == "complete");
+            if (_driver.Url.Contains("/Meal/NewMeal", StringComparison.OrdinalIgnoreCase)) return;
+            if (_driver.Url.Contains("/Login", StringComparison.OrdinalIgnoreCase))
+            {
+                _driver.FindElement(By.Id("Email")).SendKeys($"{username}@fakeemail.com");
+                _driver.FindElement(By.Id("Password")).SendKeys("1234!Abcd");
+                _driver.FindElement(By.ClassName("btn")).Click();
+                new WebDriverWait(_driver, TimeSpan.FromSeconds(10)).Until(d =>
+                    !d.Url.Contains("/Login", StringComparison.OrdinalIgnoreCase));
+            }
+        }
     }
 
     [Given("{string} fills in the meal title as {string}")]
     public void GivenUserFillsInMealTitle(string username, string title)
     {
-        _driver.FindElement(By.Id("Title")).SendKeys(title);
+        new WebDriverWait(_driver, TimeSpan.FromSeconds(5)).Until(d =>
+        {
+            try { var e = d.FindElement(By.Id("Title")); return e.Displayed ? e : null; }
+            catch (NoSuchElementException) { return null; }
+        })!.SendKeys(title);
     }
 
     [Given("{string} sets the meal date to today")]
@@ -221,32 +237,48 @@ public class NutritionBarSteps
     [Then("Meal Bars callories are at {int}\\/{int}")]
     public void ThenMealBarsCaloriesAreAt(int current, int goal)
     {
-        var fraction = _driver.FindElement(
-            By.CssSelector(".nutrition-bar-row:nth-child(1) .nutrition-bar-fraction"));
+        var fraction = new WebDriverWait(_driver, TimeSpan.FromSeconds(5))
+            .Until(d =>
+            {
+                try { var el = d.FindElement(By.Id("caloriesFraction")); return el.Displayed ? el : null; }
+                catch (NoSuchElementException) { return null; }
+            })!;
         Assert.That(fraction.Text.Trim(), Is.EqualTo($"{current} / {goal}"));
     }
 
     [Then("Meal Bars protien are at {int}\\/{int}")]
     public void ThenMealBarsProteinAreAt(int current, int goal)
     {
-        var fraction = _driver.FindElement(
-            By.CssSelector(".nutrition-bar-row:nth-child(2) .nutrition-bar-fraction"));
+        var fraction = new WebDriverWait(_driver, TimeSpan.FromSeconds(5))
+            .Until(d =>
+            {
+                try { var el = d.FindElement(By.Id("proteinFraction")); return el.Displayed ? el : null; }
+                catch (NoSuchElementException) { return null; }
+            })!;
         Assert.That(fraction.Text.Trim(), Is.EqualTo($"{current} / {goal}"));
     }
 
     [Then("Meal Bars fats are at {int}\\/{int}")]
     public void ThenMealBarsFatsAreAt(int current, int goal)
     {
-        var fraction = _driver.FindElement(
-            By.CssSelector(".nutrition-bar-row:nth-child(3) .nutrition-bar-fraction"));
+        var fraction = new WebDriverWait(_driver, TimeSpan.FromSeconds(5))
+            .Until(d =>
+            {
+                try { var el = d.FindElement(By.Id("fatFraction")); return el.Displayed ? el : null; }
+                catch (NoSuchElementException) { return null; }
+            })!;
         Assert.That(fraction.Text.Trim(), Is.EqualTo($"{current} / {goal}"));
     }
 
     [Then("Meal Bars carbs are at {int}\\/{int}")]
     public void ThenMealBarsCarbsAreAt(int current, int goal)
     {
-        var fraction = _driver.FindElement(
-            By.CssSelector(".nutrition-bar-row:nth-child(4) .nutrition-bar-fraction"));
+        var fraction = new WebDriverWait(_driver, TimeSpan.FromSeconds(5))
+            .Until(d =>
+            {
+                try { var el = d.FindElement(By.Id("carbsFraction")); return el.Displayed ? el : null; }
+                catch (NoSuchElementException) { return null; }
+            })!;
         Assert.That(fraction.Text.Trim(), Is.EqualTo($"{current} / {goal}"));
     }
     [Given("{string} is on the home page")]

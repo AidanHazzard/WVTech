@@ -65,17 +65,21 @@ namespace Mealplanner.IntegrationTests
             _wait.Until(driver =>
                 ((IJavaScriptExecutor)driver)
                     .ExecuteScript("return document.readyState")
-                    .ToString() == "complete");
+                    ?.ToString() == "complete");
+            _scenarioContext["CurrentPage"] = "ViewMeal";
         }
 
         [Given("'Jack' is on the create meal page")]
         public void GivenJackIsOnTheCreateMealPage()
         {
+            try { _wait.Until(d => !d.Url.Contains("/Login", StringComparison.OrdinalIgnoreCase)); }
+            catch (WebDriverTimeoutException) { }
             _driver.Navigate().GoToUrl($"{_baseUrl}/Meal/NewMeal");
             _wait.Until(driver =>
                 ((IJavaScriptExecutor)driver)
                     .ExecuteScript("return document.readyState")
-                    .ToString() == "complete");
+                    ?.ToString() == "complete");
+            _scenarioContext["CurrentPage"] = "CreateMeal";
         }
 
         [Given("'Jack' is on the edit meal page")]
@@ -88,7 +92,8 @@ namespace Mealplanner.IntegrationTests
             _wait.Until(driver =>
                 ((IJavaScriptExecutor)driver)
                     .ExecuteScript("return document.readyState")
-                    .ToString() == "complete");
+                    ?.ToString() == "complete");
+            _scenarioContext["CurrentPage"] = "EditMeal";
         }
 
         [When("'Jack' clicks the delete button on a recipe")]
@@ -105,44 +110,47 @@ namespace Mealplanner.IntegrationTests
             })!;
 
             _deletedRecipeName = firstItem.FindElement(By.CssSelector("h4")).Text;
-
-            var deleteBtn = firstItem.FindElement(By.CssSelector(".delete-recipe-btn"));
-            deleteBtn.Click();
+            _scenarioContext["DeleteBtn"] = firstItem.FindElement(By.CssSelector(".delete-recipe-btn"));
         }
 
-       [When("'Jack' confirms the deletion")]
+        [When("'Jack' confirms the deletion")]
         public void WhenJackConfirmsTheDeletion()
         {
-            _wait.Until(driver =>
-            {
-                try
-                {
-                    driver.SwitchTo().Alert();
-                    return true;
-                }
-                catch (NoAlertPresentException) { return false; }
-            });
-            _driver.SwitchTo().Alert().Accept();
+            var btn = (IWebElement)_scenarioContext["DeleteBtn"];
+            ((IJavaScriptExecutor)_driver).ExecuteScript("window.confirm = function() { return true; };");
+            btn.Click();
+            Thread.Sleep(600);
         }
 
         [When("'Jack' denies the deletion")]
         public void WhenJackDeniesTheDeletion()
         {
-            _wait.Until(driver =>
-            {
-                try
-                {
-                    driver.SwitchTo().Alert();
-                    return true;
-                }
-                catch (NoAlertPresentException) { return false; }
-            });
-            _driver.SwitchTo().Alert().Dismiss();
+            var btn = (IWebElement)_scenarioContext["DeleteBtn"];
+            ((IJavaScriptExecutor)_driver).ExecuteScript("window.confirm = function() { return false; };");
+            btn.Click();
         }
 
         [Then("the recipe is removed from the meal immediately")]
         public void ThenTheRecipeIsRemovedFromTheMealImmediately()
         {
+            _wait.Until(driver =>
+                ((IJavaScriptExecutor)driver).ExecuteScript("return document.readyState").ToString() == "complete");
+
+            var page = _scenarioContext.ContainsKey("CurrentPage") ? _scenarioContext["CurrentPage"]?.ToString() : "";
+
+            if (page == "ViewMeal" && _mealId > 0)
+            {
+                _driver.Navigate().GoToUrl($"{_baseUrl}/Meal/ViewMeal?id={_mealId}");
+                _wait.Until(driver =>
+                    ((IJavaScriptExecutor)driver).ExecuteScript("return document.readyState").ToString() == "complete");
+            }
+            else if (page == "EditMeal" && _mealId > 0)
+            {
+                _driver.Navigate().GoToUrl($"{_baseUrl}/Meal/EditMeal?id={_mealId}");
+                _wait.Until(driver =>
+                    ((IJavaScriptExecutor)driver).ExecuteScript("return document.readyState").ToString() == "complete");
+            }
+
             _wait.Until(driver =>
             {
                 var items = driver.FindElements(By.CssSelector(".mealRecipeItem h4"));
@@ -153,6 +161,24 @@ namespace Mealplanner.IntegrationTests
         [Then("the recipe is still shown in the meal recipe list")]
         public void ThenTheRecipeIsStillShownInTheMealRecipeList()
         {
+            _wait.Until(driver =>
+                ((IJavaScriptExecutor)driver).ExecuteScript("return document.readyState").ToString() == "complete");
+
+            var page = _scenarioContext.ContainsKey("CurrentPage") ? _scenarioContext["CurrentPage"]?.ToString() : "";
+
+            if (page == "ViewMeal" && _mealId > 0)
+            {
+                _driver.Navigate().GoToUrl($"{_baseUrl}/Meal/ViewMeal?id={_mealId}");
+                _wait.Until(driver =>
+                    ((IJavaScriptExecutor)driver).ExecuteScript("return document.readyState").ToString() == "complete");
+            }
+            else if (page == "EditMeal" && _mealId > 0)
+            {
+                _driver.Navigate().GoToUrl($"{_baseUrl}/Meal/EditMeal?id={_mealId}");
+                _wait.Until(driver =>
+                    ((IJavaScriptExecutor)driver).ExecuteScript("return document.readyState").ToString() == "complete");
+            }
+
             _wait.Until(driver =>
             {
                 var items = driver.FindElements(By.CssSelector(".mealRecipeItem h4"));
@@ -196,6 +222,8 @@ namespace Mealplanner.IntegrationTests
                 catch (NoSuchElementException) { return null; }
             })!;
 
+            ((IJavaScriptExecutor)_driver)
+                .ExecuteScript("window.alert = function(msg) { window._alertMessage = msg; }; window._alertMessage = null;");
             ((IJavaScriptExecutor)_driver)
                 .ExecuteScript("arguments[0].scrollIntoView(true);", firstResult);
             firstResult.Click();

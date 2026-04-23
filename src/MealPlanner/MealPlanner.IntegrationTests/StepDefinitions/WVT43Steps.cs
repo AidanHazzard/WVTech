@@ -26,13 +26,20 @@ public class WVT43Steps
     public void GivenUserIsOnRecipePage()
     {
         _driver.Navigate().GoToUrl($"{_baseUrl}/FoodEntries/Recipes");
+        new WebDriverWait(_driver, TimeSpan.FromSeconds(10))
+            .Until(d => ((IJavaScriptExecutor)d).ExecuteScript("return document.readyState").ToString() == "complete");
     }
 
     // This step definition uses Cucumber Expressions. See https://github.com/gasparnagy/CucumberExpressions.SpecFlow
     [When("User types {string} in the search")]
     public void WhenUserTypesInTheSearch(string searchString)
     {
-        _driver.FindElement(By.Id("searchText")).SendKeys(searchString);
+        var el = new WebDriverWait(_driver, TimeSpan.FromSeconds(5)).Until(d =>
+        {
+            try { var e = d.FindElement(By.Id("searchText")); return e.Displayed ? e : null; }
+            catch (NoSuchElementException) { return null; }
+        })!;
+        el.SendKeys(searchString);
     }
 
     // This step definition uses Cucumber Expressions. See https://github.com/gasparnagy/CucumberExpressions.SpecFlow

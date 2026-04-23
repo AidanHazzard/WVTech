@@ -8,12 +8,18 @@ namespace Mealplanner.IntegrationTests
     [Binding]
     public class WVT129Steps
     {
+        private readonly ScenarioContext _scenarioContext;
         private string _deletedRecipeName = null!;
         private string _deletedRecipeId = null!;
         private string _userId = null!;
         private IWebDriver _driver = null!;
         private string _baseUrl = null!;
         private WebDriverWait _wait = null!;
+
+        public WVT129Steps(ScenarioContext scenarioContext)
+        {
+            _scenarioContext = scenarioContext;
+        }
 
         // Runs before each scenerio
         [BeforeScenario]
@@ -70,7 +76,7 @@ namespace Mealplanner.IntegrationTests
             _wait.Until(driver =>
                 ((IJavaScriptExecutor)driver)
                     .ExecuteScript("return document.readyState")
-                    .ToString() == "complete");
+                    ?.ToString() == "complete");
         }
 
         [When("'Jack' clicks the delete button on their recipe")]
@@ -89,21 +95,17 @@ namespace Mealplanner.IntegrationTests
             _deletedRecipeName = firstItem.FindElement(By.CssSelector("h4")).Text;
             _deletedRecipeId = firstItem.GetAttribute("data-recipe-id");
 
-            var deleteBtn = firstItem.FindElement(By.CssSelector(".delete-recipe-btn"));
-            deleteBtn.Click();
+            _scenarioContext["DeleteBtn"] = firstItem.FindElement(By.CssSelector(".delete-recipe-btn"));
         }
 
         [Then("the recipe is removed from the recipe list")]
         public void ThenTheRecipeIsRemovedFromTheRecipeList()
         {
-            var js = (IJavaScriptExecutor)_driver;
-            var wait = new WebDriverWait(_driver, TimeSpan.FromSeconds(15));
-
-            // Wait for fetch to complete
-            wait.Until(driver => js.ExecuteScript("return window._deleteStatus != null;") as bool? == true);
+            _wait.Until(driver =>
+                ((IJavaScriptExecutor)driver).ExecuteScript("return document.readyState").ToString() == "complete");
 
             _driver.Navigate().GoToUrl($"{_baseUrl}/FoodEntries/Recipes");
-            wait.Until(driver =>
+            _wait.Until(driver =>
                 ((IJavaScriptExecutor)driver)
                     .ExecuteScript("return document.readyState")
                     .ToString() == "complete");

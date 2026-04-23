@@ -29,6 +29,8 @@ public class WVT158Steps
     private void NavigateToShoppingList()
     {
         _driver.Manage().Cookies.DeleteCookieNamed("ShoppingListSynced");
+        _driver.Manage().Cookies.DeleteCookieNamed("ShoppingListDateFrom");
+        _driver.Manage().Cookies.DeleteCookieNamed("ShoppingListDateTo");
         _driver.Navigate().GoToUrl($"{_baseUrl}/ShoppingList");
         _wait.Until(d => d.Url.Contains("ShoppingList"));
     }
@@ -48,6 +50,14 @@ public class WVT158Steps
     {
         using var ctx = BDDSetup.CreateContext();
         var userId = GetAliceId(ctx);
+
+        var staleItems = ctx.Set<ShoppingListItem>()
+            .Where(i => i.UserId == userId && i.Name == IngredientName).ToList();
+        ctx.Set<ShoppingListItem>().RemoveRange(staleItems);
+        var staleMeals = ctx.Meals
+            .Where(m => m.UserId == userId && m.Title == "WVT158 Meal").ToList();
+        ctx.Meals.RemoveRange(staleMeals);
+        ctx.SaveChanges();
 
         var ingredientBase = ctx.Set<IngredientBase>().FirstOrDefault(ib => ib.Name == IngredientName);
         if (ingredientBase == null)

@@ -20,7 +20,11 @@ public class WVT126Steps
     [Given("'Jack' is on the new meal page")]
     public void GivenJackIsOnTheNewMealPage()
     {
+        try { new WebDriverWait(_driver, TimeSpan.FromSeconds(5)).Until(d => !d.Url.Contains("/Login", StringComparison.OrdinalIgnoreCase)); }
+        catch (WebDriverTimeoutException) { }
         _driver.Navigate().GoToUrl($"{_baseUrl}/Meal/NewMeal");
+        new WebDriverWait(_driver, TimeSpan.FromSeconds(10))
+            .Until(d => ((IJavaScriptExecutor)d).ExecuteScript("return document.readyState")?.ToString() == "complete");
     }
 
     [Then("the month dropdown is shown")]
