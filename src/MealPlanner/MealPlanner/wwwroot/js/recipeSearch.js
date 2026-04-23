@@ -68,11 +68,9 @@ async function resolveRecipeId(recipeId, recipeName, externalUri) {
 
 function addRecipeToMealForm($mealForm, recipeId, recipeName) {
     const $rowWrapper = $(`
-        <div class="mealRecipeItem d-flex align-items-center justify-content-between mb-2 back2 back2-textbox" data-id="${recipeId}">
-            <h4 class="buttonText mb-0" style="cursor:pointer;" onclick="location.href='/FoodEntries/Recipes/${recipeId}'">
-                ${recipeName}
-            </h4>
-            <button type="button" class="btn btn-danger delete-recipe-btn" data-id="${recipeId}">X</button>
+        <div class="mealRecipeItem d-flex align-items-center justify-content-between mb-2 back2 back2-textbox" data-id="${recipeId}" style="cursor:pointer;" onclick="location.href='/FoodEntries/Recipes/${recipeId}'">
+            <h4 class="buttonText mb-0">${recipeName}</h4>
+            <button type="button" class="btn btn-danger delete-recipe-btn" data-id="${recipeId}" onclick="event.stopPropagation()">X</button>
             <input type="hidden" name="RecipeIds" value="${recipeId}" />
         </div>
     `);

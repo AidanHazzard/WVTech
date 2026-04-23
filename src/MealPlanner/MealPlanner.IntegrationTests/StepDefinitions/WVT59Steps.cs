@@ -91,11 +91,10 @@ public class WVT59Steps
     }
 
     // This step definition uses Cucumber Expressions. See https://github.com/gasparnagy/CucumberExpressions.SpecFlow
-    [Then("his new meal contains the recipe with id {int}")]
-    public void ThenHisNewMealContainsTheRecipeWithId(int recipeId)
+    [Then("his new meal contains the recipe named {string}")]
+    public void ThenHisNewMealContainsTheRecipeNamed(string recipeName)
     {
         _wait.Until(d => d.Url.Contains("ViewMeal"));
-        string recipeName = _context.Find<Recipe>(recipeId)!.Name;
 
         var recipes = _driver.FindElements(By.ClassName("mealRecipeItem"));
         foreach (var element in recipes)
@@ -106,7 +105,7 @@ public class WVT59Steps
                 return;
             }
         }
-        Assert.Fail($"No recipes with id:{recipeId} found");
+        Assert.Fail($"No recipes with name:{recipeName} found");
     }
 
     // This step definition uses Cucumber Expressions. See https://github.com/gasparnagy/CucumberExpressions.SpecFlow
@@ -256,6 +255,17 @@ public class WVT59Steps
             };
         prefs.CalorieTarget = int.MaxValue;
         _context.Update(prefs);
+        _context.SaveChanges();
+    }
+
+    // This step definition uses Cucumber Expressions. See https://github.com/gasparnagy/CucumberExpressions.SpecFlow
+    [Given("the database has recipes with combined calories greater than {int}")]
+    public void GivenTheDatabaseHasRecipesWithCombinedCaloriesGreaterThan(int i)
+    {
+        while(_context.Recipes.Sum(r => r.Calories) < i)
+        {
+            _context.Add(new Recipe() { Name="Test Recipe", Directions="", Calories=200});
+        }
         _context.SaveChanges();
     }
 

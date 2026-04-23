@@ -47,6 +47,6 @@ async function addRecipe(event) {
     const row = document.getElementById("addRecipeRow").content.cloneNode(true);
     $("#recipeName", row).text(recipeName);
     $(".recipeIdInput", row).val(recipeId);
-    console.log(document.getElementById("addRecipeRow").content.cloneNode(true));
+    $(".mealRecipeItem", row).attr("onclick", `location.href='/FoodEntries/Recipes/${recipeId}'`);
     $("#createMealList").append(row);
 }

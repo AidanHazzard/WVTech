@@ -54,6 +54,7 @@
                         @Html.AntiForgeryToken()
                         <input type="hidden" name="id" value="@meal.Id" />
                         <input type="hidden" name="date" value="@Model.SelectedDate.ToString("yyyy-MM-dd")" />
+                        <input type="hidden" name="source" value="home" />
 
                         <input type="checkbox"
                                name="isCompleted"
@@ -85,28 +86,24 @@
 
     </div>
 
-        <!-- Holds a display of the statistics so far today. Will populate this with info when the nutrient info is done -->
         <div class="back2">
             <h2 class="back1Title">Statistics</h2>
 
-            @* Dynamic nutrition bars (disabled for teammate's feature)
-            @if (Model.DailyNutrition != null)
+            @if (Model.NutritionBar != null)
             {
-                var totals = Model.DailyNutrition.Totals;
-                var targets = Model.DailyNutrition.Targets;
-
-                ...
+                <partial name="_NutritionBarDisplayPartial" model="Model.NutritionBar" />
             }
-            *@
-
-            <!-- Original placeholder -->
-            <img src="~/images/placeholder/nutrients.png" alt="nutrients" class="imageFit">
+            else
+            {
+                <img src="~/images/placeholder/nutrients.png" alt="nutrients" class="imageFit">
+            }
         </div>
     </div>
 
-    <form asp-controller="Meal" asp-action="NewMeal" method="get">
+    <form asp-controller="Meal" asp-action="SelectMeal" method="get">
+        <input type="hidden" name="date" value="@Model.SelectedDate.ToString("yyyy-MM-dd")" />
         <button class="buttonBlue">
-            <h2 class="buttonText">Add A Meal</h2>
+            <h2 class="buttonText">Select A Meal</h2>
         </button>
     </form>
 </div>
