@@ -1,0 +1,117 @@
+@model MealPlanner.ViewModels.DayPlanSummaryViewModel
+@using MealPlanner.Models
+@{
+    ViewData["Title"] = "Day Plan Summary";
+    var tagsJson = System.Text.Json.JsonSerializer.Serialize(
+        Model.AvailableTags.Select(t => new { id = t.Id, name = t.Name }));
+}
+
+<div class="back1 backHasButton">
+    <h2 class="back1Title">Day Plan — @Model.Date.ToString("MMMM d")</h2>
+    <hr />
+
+    <div id="day-plan-summary" data-tags="@tagsJson">
+        @if (!Model.Meals.Any())
+        {
+            <p>No meals were generated. Please try again.</p>
+        }
+        else
+        {
+            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-3">
+                @foreach (var meal in Model.Meals)
+                {
+                    <div class="col">
+                        <div id="meal-card-@meal.MealId" class="back2 backHasButton h-100" style="margin-top:0; margin-bottom:0;">
+                            <h4 class="back1Title" data-meal-name data-meal-id="@meal.MealId">@meal.Title</h4>
+
+                            <div data-recipe-list>
+                                @if (meal.Recipes.Any())
+                                {
+                                    @foreach (var recipe in meal.Recipes)
+                                    {
+                                        <div class="mealRecipeItem d-flex align-items-center justify-content-between back2 back2-textbox mb-1"
+                                             style="cursor:pointer; margin-top:8px;"
+                                             onclick="location.href='@Url.Action("Recipes", "FoodEntries", new { id = recipe.Id })'">
+                                            <h4 class="mb-0 flex-grow-1">@recipe.Name</h4>
+                                            <span class="ms-2 text-nowrap">@recipe.Calories cal</span>
+                                        </div>
+                                    }
+                                }
+                                else
+                                {
+                                    <p class="text-muted mb-0">No recipes in this meal.</p>
+                                }
+                            </div>
+
+                            <div id="regenerate-form-@meal.MealId" style="display:none" class="mt-3">
+                                <form>
+                                    @Html.AntiForgeryToken()
+
+                                    <div class="d-flex flex-column gap-3 mb-3">
+                                        <div>
+                                            <label class="form-label">Meal size</label>
+                                            <select name="Size"
+                                                    id="regen-@meal.MealId-Size"
+                                                    class="back2-textbox">
+                                                <option value="Small">Small</option>
+                                                <option value="Average" selected>Average</option>
+                                                <option value="Large">Large</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label class="form-label">Tags</label>
+                                            <div class="tags-container d-flex flex-wrap gap-1 mb-2"></div>
+                                            <div class="d-flex align-items-center gap-2 flex-wrap">
+                                                <select class="tag-select back2-textbox">
+                                                    <option value="">Select a tag...</option>
+                                                </select>
+                                                <div class="tag-input-wrapper">
+                                                    <input type="text" class="custom-tag-input back2-textbox" placeholder="Or type a custom tag..." />
+                                                    <button type="button" class="add-tag-btn buttonGreenInline">
+                                                        <h4 class="buttonText">Add</h4>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="buttonRow">
+                                        <button type="button"
+                                                class="buttonGreyInline"
+                                                style="flex:1; border-radius:20px 0 0 20px;"
+                                                data-action="cancel-regenerate"
+                                                data-meal-id="@meal.MealId">
+                                            <h4 class="buttonText">Cancel</h4>
+                                        </button>
+                                        <button type="button"
+                                                class="buttonBlueInline"
+                                                style="flex:1; border-radius:0 20px 20px 0;"
+                                                data-action="submit-regenerate"
+                                                data-meal-id="@meal.MealId">
+                                            <h4 class="buttonText">Regenerate</h4>
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+
+                            <button type="button"
+                                    class="buttonRed"
+                                    data-action="regenerate-meal"
+                                    data-meal-id="@meal.MealId">
+                                <h4 class="buttonText">Regenerate</h4>
+                            </button>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+
+    <button type="button" class="buttonBlue" onclick="location.href='@Url.Action("Index", "Home")'">
+        <h4 class="buttonText">Back to Planner</h4>
+    </button>
+</div>
+
+@section Scripts {
+    <script src="~/js/dayPlanSummary.js"></script>
+}

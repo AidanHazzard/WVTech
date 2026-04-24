@@ -19,44 +19,66 @@ public class RecipeAPIController : ControllerBase
     private readonly IRegistrationService _registrationSerivice;
     private readonly MealPlannerDBContext _context;
     private readonly IExternalRecipeService? _recipeService;
+    private readonly ITagRepository? _tagRepository;
 
     public RecipeAPIController(
         MealPlannerDBContext context,
         IRecipeRepository recipeRepository,
         IUserRecipeRepository userRecipeRepository,
         IRegistrationService registrationService,
-        IExternalRecipeService? recipeService = null)
+        IExternalRecipeService? recipeService = null,
+        ITagRepository? tagRepository = null)
     {
         _context = context;
         _recipeRepository = recipeRepository;
         _userRecipeRepository = userRecipeRepository;
         _registrationSerivice = registrationService;
         _recipeService = recipeService;
+        _tagRepository = tagRepository;
+    }
+
+    [HttpGet("tags")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<string>))]
+    public async Task<IActionResult> GetRecipeTags()
+    {
+        if (_tagRepository == null) return Ok(new List<string>());
+        var tags = await _tagRepository.GetTagsByPopularityAsync();
+        return Ok(tags.Select(t => t.Name).ToList());
     }
 
     [HttpGet("search")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<RecipeDTO>))]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> SearchRecipesByName(string name, int count=10)
+    public async Task<IActionResult> SearchRecipesByName(string name, int count=10, string? tag=null)
     {
-        var results = _recipeRepository.GetRecipesByName(name).Select(r => new RecipeDTO(r));
-        if (results.Count() < count && _recipeService != null)
+        IEnumerable<RecipeDTO> results;
+
+        if (!string.IsNullOrEmpty(tag))
         {
-            try
+            results = _recipeRepository.GetRecipesByNameAndTag(name ?? "", tag).Select(r => new RecipeDTO(r));
+        }
+        else
+        {
+            results = _recipeRepository.GetRecipesByName(name).Select(r => new RecipeDTO(r));
+            if (results.Count() < count && _recipeService != null)
             {
-                var externalResults = await _recipeService.SearchExternalRecipesByName(name);
-                results = results.Concat(externalResults).Take(20).ToList();
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e.Message);
+                try
+                {
+                    var externalResults = await _recipeService.SearchExternalRecipesByName(name);
+                    results = results.Concat(externalResults).Take(20).ToList();
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e.Message);
+                }
             }
         }
+
         if (results.IsNullOrEmpty())
         {
             return NotFound();
         }
-        
+
         foreach (RecipeDTO r in results)
         {
             r.VotePercentage = await _userRecipeRepository.GetRecipeVotePercentage(r.Id);

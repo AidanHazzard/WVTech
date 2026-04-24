@@ -1,4 +1,5 @@
 using MealPlanner.DAL.Abstract;
+using MealPlanner.Helpers;
 using MealPlanner.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -30,17 +31,31 @@ public class MealRepository : Repository<Meal>, IMealRepository
             .ToListAsync();
 
         weeklyRepeatMeals = weeklyRepeatMeals
-            .Where(m => m.StartTime!.Value.DayOfWeek == date.DayOfWeek)
+            .Where(m => MealSchedule.RepeatMatchesDay(m, date.DayOfWeek))
             .ToList();
+
+        var excludedIds = await _context.MealExclusions
+            .Where(me => me.ExclusionDate == date.Date)
+            .Select(me => me.MealId)
+            .ToHashSetAsync();
+
+        var completedIds = await _context.MealCompletions
+            .Where(mc => mc.CompletionDate == date.Date)
+            .Select(mc => mc.MealId)
+            .ToHashSetAsync();
 
         var meals = exactDateMeals
             .Concat(weeklyRepeatMeals)
             .GroupBy(m => m.Id)
             .Select(g => g.First())
+            .Where(m => !excludedIds.Contains(m.Id))
             .OrderBy(m => m.StartTime)
             .ToList();
 
-            return meals;
+        foreach (var meal in meals)
+            meal.IsCompleted = completedIds.Contains(meal.Id);
+
+        return meals;
     }
 
     public async Task<List<Meal>> GetUserMealsByDateRangeAsync(User user, DateTime start, DateTime end)
@@ -63,7 +78,7 @@ public class MealRepository : Repository<Meal>, IMealRepository
             .ToListAsync();
 
         weeklyMeals = weeklyMeals
-            .Where(m => daysInRange.Contains(m.StartTime!.Value.DayOfWeek))
+            .Where(m => daysInRange.Any(day => MealSchedule.RepeatMatchesDay(m, day)))
             .ToList();
 
         return exactMeals
@@ -120,7 +135,16 @@ public class MealRepository : Repository<Meal>, IMealRepository
 }
 
     public async Task<Meal> ReadAsync(int id)
-{
-    return await _dbset.FindAsync(id);
-}
+    {
+        return await _dbset.FindAsync(id);
+    }
+
+    public async Task<List<Meal>> GetMealsByIdsAsync(IEnumerable<int> ids)
+    {
+        var idSet = ids.ToHashSet();
+        return await _dbset
+            .Include(m => m.Recipes)
+            .Where(m => idSet.Contains(m.Id))
+            .ToListAsync();
+    }
 }

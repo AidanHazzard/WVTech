@@ -34,15 +34,15 @@ public class NutritionProgressService : INutritionProgressService
             ?? new MacroTargets(0, 0, 0, 0);
 
         var completedMeals =
-            await _db.Meals
+            await _db.MealCompletions
                 .AsNoTracking()
-                .Where(m =>
-                    m.UserId == userId &&
-                    m.IsCompleted &&
-                    m.StartTime.HasValue &&
-                    m.StartTime.Value >= start &&
-                    m.StartTime.Value < endExclusive)
-                .Include(m => m.Recipes)
+                .Where(mc =>
+                    mc.CompletionDate >= start &&
+                    mc.CompletionDate < endExclusive &&
+                    mc.Meal.UserId == userId)
+                .Include(mc => mc.Meal)
+                    .ThenInclude(m => m.Recipes)
+                .Select(mc => mc.Meal)
                 .ToListAsync();
 
         var totals = new MacroTotals(
