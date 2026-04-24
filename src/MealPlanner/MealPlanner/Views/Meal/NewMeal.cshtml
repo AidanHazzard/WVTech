@@ -24,47 +24,69 @@
 <div class="modal fade" id="dayPlanModal" tabindex="-1" aria-labelledby="dayPlanModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content back1 backHasButton">
-            <div class="modal-header border-0 pb-0">
-                <h2 class="back1Title modal-title" id="dayPlanModalLabel">Generate Day Plan</h2>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body pt-2">
-                <form asp-action="GenerateDayPlan" method="POST" id="dayPlanForm" data-tags="@tagsJson">
-                    @Html.AntiForgeryToken()
+            <h2 class="back1Title" id="dayPlanModalLabel">Generate Day Plan</h2>
 
-                    <input type="hidden" name="SelectedMonth" id="hiddenMonth" />
-                    <input type="hidden" name="SelectedDay" id="hiddenDay" />
+            <form asp-action="GenerateDayPlan" method="POST" id="dayPlanForm" data-tags="@tagsJson">
+                @Html.AntiForgeryToken()
 
-                    <!-- Step 1: meal count -->
-                    <div id="step1">
-                        <div class="row g-3 mb-3">
-                            <div class="col-md-4">
-                                <label for="MealCount" class="form-label">How many meals would you like today?</label>
-                                <input id="MealCount" name="MealCount" type="number"
-                                       min="1" max="10" value="3" class="form-control" />
-                            </div>
+                <input type="hidden" name="SelectedMonth" id="hiddenMonth" />
+                <input type="hidden" name="SelectedDay" id="hiddenDay" />
+
+                <!-- Step 1: date + meal count -->
+                <div id="step1">
+                    <div class="d-flex flex-column gap-3 mb-3">
+                        
+                        <label>Meal Date</label>
+                        <div>
+                            <select id="dayPlanMonth" class="back2-textbox">
+                                @for (int i = 1; i <= 12; i++)
+                                {
+                                    <!option value="@i" @(i == Model.SelectedMonth ? "selected" : "")>
+                                        @System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(i)
+                                    </!option>
+                                }
+                            </select>
                         </div>
-
-                        <button type="button" data-action="next-step" class="buttonBlue mt-2">
-                            <h4 class="buttonText">Next — Configure Meals</h4>
-                        </button>
+                        <div>
+                            <select id="dayPlanDay" class="back2-textbox">
+                                @for (int i = 1; i <= 31; i++)
+                                {
+                                    <!option value="@i" @(i == Model.SelectedDay ? "selected" : "")>@i</!option>
+                                }
+                            </select>
+                        </div>
+                        <div>
+                            <label for="MealCount" class="form-label">Number of meals</label>
+                            <input id="MealCount" name="MealCount" type="number"
+                                   min="1" max="10" value="3" class="back2-textbox" />
+                        </div>
                     </div>
 
-                    <!-- Step 2: per-meal configuration (populated by JS) -->
-                    <div id="step2" style="display:none">
-                        <p id="mealStepLabel" class="text-muted mb-2"></p>
-                        <div id="mealPreferenceSections"></div>
+                    <button type="button" data-action="next-step" class="buttonBlue mt-2">
+                        <h4 class="buttonText">Next — Configure Meals</h4>
+                    </button>
+                </div>
 
-                        <div class="d-flex gap-2 mt-3">
-                            <button type="button" id="btnPrevMeal" class="btn btn-secondary" style="display:none">← Back</button>
-                            <button type="button" id="btnNextMeal" class="btn btn-primary" style="display:none">Next →</button>
-                            <button type="submit" id="btnGeneratePlan" class="buttonBlue" style="display:none">
+                <!-- Step 2: per-meal configuration (populated by JS) -->
+                <div id="step2" style="display:none">
+                    <p id="mealStepLabel" class="text-muted mb-2"></p>
+                    <div id="mealPreferenceSections"></div>
+
+                    <div class="d-flex gap-2 mt-3">
+                        <div class="buttonRow">
+                            <button type="button" id="btnPrevMeal" class="buttonGreyInline" style="display:none">
+                                <h4 class="buttonText">← Back</h4>
+                            </button>
+                            <button type="button" id="btnNextMeal" class="buttonBlueInline" style="display:none">
+                                <h4 class="buttonText">Next →</h4>
+                            </button>
+                            <button type="submit" id="btnGeneratePlan" class="buttonBlueInline" style="display:none">
                                 <h4 class="buttonText">Generate Day Plan</h4>
                             </button>
                         </div>
                     </div>
-                </form>
-            </div>
+                </div>
+            </form>
         </div>
     </div>
 </div>
@@ -172,6 +194,22 @@
         <h4 class="buttonText">Create Meal</h4>
     </button>
 </div>
+
+<!-- Tag selector template cloned by generateDayPlan.js for each meal section -->
+<template id="mealTagTemplate">
+    <div class="tags-container d-flex flex-wrap gap-1 mb-2"></div>
+    <div class="d-flex align-items-center gap-2 flex-wrap">
+        <select class="tag-select back2-textbox">
+            <option value="">Select a tag...</option>
+        </select>
+        <div class="tag-input-wrapper">
+            <input type="text" class="custom-tag-input back2-textbox" placeholder="Or type a custom tag..." />
+            <button type="button" class="add-tag-btn buttonGreenInline">
+                <h4 class="buttonText">Add</h4>
+            </button>
+        </div>
+    </div>
+</template>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />

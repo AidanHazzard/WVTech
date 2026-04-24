@@ -383,6 +383,22 @@ label {
   border-radius: 0 20px 20px 0;
 }
 
+.buttonRow .buttonBlueInline:only-child {
+  border-radius: 20px
+}
+
+.buttonRow .buttonGreyInline:first-child {
+  border-radius: 20px 0 0 20px;
+}
+
+.buttonRow .buttonGreyInline:last-child {
+  border-radius: 0 20px 20px 0;
+}
+
+.buttonRow .buttonGreyInline:only-child {
+  border-radius: 20px
+}
+
 .buttonBlueInline {
   flex: 1;
   background-color: var(--button-blue-bg);
@@ -399,6 +415,63 @@ label {
 }
 
 .buttonBlueInline:hover .buttonText {
+  transform: scale(1.08);
+}
+
+.tag-input-wrapper {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+}
+
+.tag-input-wrapper .back2-textbox {
+  padding-right: 90px;
+}
+
+.tag-input-wrapper .add-tag-btn {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  transform: translateY(-50%);
+  height: 86.5%;
+  width: 80px;
+  border-radius: 19px;
+}
+
+.buttonGreenInline {
+  background-color: var(--button-green-bg);
+  padding: 4px 12px;
+  border: none;
+  border-radius: 20px;
+  transition: background-color 0.3s ease-in-out;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.buttonGreenInline:hover {
+  background-color: var(--button-green-hover-bg);
+}
+
+.buttonGreenInline:hover .buttonText {
+  transform: scale(1.08);
+}
+
+.buttonGreyInline {
+  flex: 1;
+  background-color: var(--button-grey-bg);
+  padding: 4px;
+  border: none;
+  transition: background-color 0.3s ease-in-out;
+  text-align: center;
+  text-decoration: none;
+  display: block;
+}
+
+.buttonGreyInline:hover {
+  background-color: var(--button-grey-hover-bg);
+}
+
+.buttonGreyInline:hover .buttonText {
   transform: scale(1.08);
 }
 
@@ -482,6 +555,42 @@ label {
     color: var(--text-primary);
     font-weight: bold;
     white-space: nowrap;
+}
+
+/* Red button — for regenerate/destructive attention actions */
+.buttonRed {
+  border-radius: 20px;
+  background-color: #e05555;
+  margin-top: 24px;
+  padding: 4px;
+  width: 100%;
+  box-sizing: border-box;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  border: none;
+  transition: background-color 0.3s ease-in-out;
+}
+
+.buttonRed:hover {
+  background-color: #c04040;
+}
+
+.buttonRed .buttonText {
+  color: #fff;
+}
+
+.buttonRed:hover .buttonText {
+  transform: scale(1.08);
+}
+
+/* Remove default <a> decoration when anchors are styled as buttons */
+a.buttonBlue,
+a.buttonBlueInline,
+a.buttonGreyInline,
+a.buttonRed {
+  text-decoration: none;
+  display: block;
 }
 
 .recipe-tag {

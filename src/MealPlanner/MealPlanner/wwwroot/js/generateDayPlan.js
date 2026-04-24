@@ -3,10 +3,99 @@ let currentMeal = 0;
 
 function showMeal(index) {
     mealSections.forEach((s, i) => s.style.display = i === index ? '' : 'none');
-    document.getElementById('btnPrevMeal').style.display = index > 0 ? '' : 'none';
-    document.getElementById('btnNextMeal').style.display = index < mealSections.length - 1 ? '' : 'none';
-    document.getElementById('btnGeneratePlan').style.display = index === mealSections.length - 1 ? '' : 'none';
+
+    const prev = document.getElementById('btnPrevMeal');
+    const next = document.getElementById('btnNextMeal');
+    const generate = document.getElementById('btnGeneratePlan');
+
+    prev.style.display = index > 0 ? '' : 'none';
+    next.style.display = index < mealSections.length - 1 ? '' : 'none';
+    generate.style.display = index === mealSections.length - 1 ? '' : 'none';
+
+    // Rounding: :first-child/:last-child counts hidden elements, so set explicitly.
+    const visible = [prev, next, generate].filter(b => b.style.display !== 'none');
+    visible.forEach((btn, i) => {
+        if (visible.length === 1) btn.style.borderRadius = '20px';
+        else if (i === 0) btn.style.borderRadius = '20px 0 0 20px';
+        else if (i === visible.length - 1) btn.style.borderRadius = '0 20px 20px 0';
+        else btn.style.borderRadius = '0';
+    });
+
     document.getElementById('mealStepLabel').textContent = `Meal ${index + 1} of ${mealSections.length}`;
+}
+
+function initTagManager(section, mealIndex, availableTags) {
+    const container = section.querySelector('.tags-container');
+    const select = section.querySelector('.tag-select');
+    const customInput = section.querySelector('.custom-tag-input');
+    const addBtn = section.querySelector('.add-tag-btn');
+
+    availableTags.forEach(t => {
+        const opt = document.createElement('option');
+        opt.value = t.id;
+        opt.textContent = t.name;
+        select.appendChild(opt);
+    });
+
+    function addPredefinedTag(tagId, tagName) {
+        if (section.querySelector(`input[name="MealPreferences[${mealIndex}].TagIds"][value="${tagId}"]`)) {
+            select.value = '';
+            return;
+        }
+        const opt = Array.from(select.options).find(o => o.value == tagId);
+        if (opt) opt.remove();
+
+        const pill = document.createElement('button');
+        pill.type = 'button';
+        pill.className = 'tag-pill badge rounded-pill recipe-tag recipe-tag-removable';
+        pill.title = `Remove ${tagName}`;
+        pill.dataset.predefined = 'true';
+        pill.innerHTML = `${tagName}<input type="hidden" name="MealPreferences[${mealIndex}].TagIds" value="${tagId}" />`;
+        pill.addEventListener('click', () => {
+            const opt = document.createElement('option');
+            opt.value = tagId;
+            opt.textContent = tagName;
+            const opts = Array.from(select.options).slice(1);
+            const before = opts.find(o => o.textContent.toLowerCase() > tagName.toLowerCase());
+            if (before) select.insertBefore(opt, before);
+            else select.appendChild(opt);
+            pill.remove();
+        });
+        container.appendChild(pill);
+        select.value = '';
+    }
+
+    function addCustomTag(tagName) {
+        if (!tagName.trim()) return;
+        const existing = container.querySelector('.custom-tag-pill');
+        if (existing) existing.remove();
+
+        const pill = document.createElement('button');
+        pill.type = 'button';
+        pill.className = 'tag-pill badge rounded-pill recipe-tag recipe-tag-removable custom-tag-pill';
+        pill.title = `Remove ${tagName}`;
+        pill.innerHTML = `${tagName}<input type="hidden" name="MealPreferences[${mealIndex}].CustomTagName" value="${tagName}" />`;
+        pill.addEventListener('click', () => pill.remove());
+        container.appendChild(pill);
+    }
+
+    select.addEventListener('change', () => {
+        if (!select.value) return;
+        addPredefinedTag(select.value, select.options[select.selectedIndex].textContent);
+    });
+
+    addBtn.addEventListener('click', () => {
+        addCustomTag(customInput.value.trim());
+        customInput.value = '';
+    });
+
+    customInput.addEventListener('keydown', e => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            addCustomTag(customInput.value.trim());
+            customInput.value = '';
+        }
+    });
 }
 
 document.querySelector('[data-action="next-step"]').addEventListener('click', function () {
@@ -15,56 +104,39 @@ document.querySelector('[data-action="next-step"]').addEventListener('click', fu
     const container = document.getElementById('mealPreferenceSections');
     container.innerHTML = '';
 
-    const today = new Date();
-    document.getElementById('hiddenMonth').value = today.getMonth() + 1;
-    document.getElementById('hiddenDay').value = today.getDate();
+    document.getElementById('hiddenMonth').value = document.getElementById('dayPlanMonth').value;
+    document.getElementById('hiddenDay').value = document.getElementById('dayPlanDay').value;
 
     for (let i = 0; i < count; i++) {
-        const tagOptions = availableTags
-            .map(t => `<option value="${t.id}">${t.name}</option>`)
-            .join('');
-
         const section = document.createElement('div');
-        section.className = 'back2 mb-3 p-3';
         section.style.display = 'none';
         section.innerHTML = `
-            <div class="row g-3 mb-3">
-                <div class="col-md-8">
+            <div class="d-flex flex-column gap-3 mb-3">
+                <div>
                     <label class="form-label">Meal title (optional)</label>
                     <input type="text"
-                           id="MealPreferences_${i}__Title"
                            name="MealPreferences[${i}].Title"
-                           class="form-control"
+                           class="back2-textbox"
                            placeholder="e.g. Lunch, Weekend Brunch…" />
                 </div>
-            </div>
-            <div class="row g-3">
-                <div class="col-md-4">
+                <div>
                     <label class="form-label">Size</label>
-                    <select id="MealPreferences_${i}__Size"
-                            name="MealPreferences[${i}].Size"
-                            class="form-control">
+                    <select name="MealPreferences[${i}].Size" class="back2-textbox">
                         <option value="Small">Small</option>
                         <option value="Average" selected>Average</option>
                         <option value="Large">Large</option>
                     </select>
                 </div>
-                <div class="col-md-8">
-                    <label class="form-label">Food type (tags)</label>
-                    <select id="MealPreferences_${i}__TagIds"
-                            name="MealPreferences[${i}].TagIds"
-                            class="form-control"
-                            multiple>
-                        ${tagOptions}
-                    </select>
-                    <input type="text"
-                           id="MealPreferences_${i}__CustomTagName"
-                           name="MealPreferences[${i}].CustomTagName"
-                           class="form-control mt-2"
-                           placeholder="Or type a custom tag…" />
+                <div>
+                    <label class="form-label">Tags</label>
+                    <div class="tag-area mt-1"></div>
                 </div>
             </div>`;
+
+        const tagClone = document.getElementById('mealTagTemplate').content.cloneNode(true);
+        section.querySelector('.tag-area').appendChild(tagClone);
         container.appendChild(section);
+        initTagManager(section, i, availableTags);
     }
 
     mealSections = Array.from(container.children);

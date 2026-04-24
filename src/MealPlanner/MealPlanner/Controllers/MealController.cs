@@ -220,6 +220,8 @@ public class MealController : Controller
             _mealRepo.CreateOrUpdate(meal);
         _context.SaveChanges();
 
+        TempData["GeneratedMealIds"] = string.Join(",", meals.Select(m => m.Id));
+
         return RedirectToAction("DayPlanSummary", new { date = selectedDate.ToString("yyyy-MM-dd") });
     }
 
@@ -253,19 +255,24 @@ public class MealController : Controller
         {
             mealId = meal.Id,
             title = meal.Title,
-            recipes = meal.Recipes.Select(r => new { r.Name, r.Calories })
+            recipes = meal.Recipes.Select(r => new { r.Id, r.Name, r.Calories })
         });
     }
 
     [HttpGet]
     public async Task<IActionResult> DayPlanSummary(string? date)
     {
+        var generatedIdsRaw = TempData["GeneratedMealIds"] as string;
+        if (string.IsNullOrEmpty(generatedIdsRaw))
+            return RedirectToAction("Index", "Home");
+
+        var generatedIds = generatedIdsRaw.Split(',').Select(int.Parse).ToList();
+
         var user = await _registrationService.FindUserByClaimAsync(User);
         if (user == null) return Challenge();
 
         DateTime selectedDate = DateTime.TryParse(date, out var parsed) ? parsed.Date : DateTime.Today;
-        var meals = await _mealRepo.GetUserMealsByDateAsync(user, selectedDate);
-        await Task.WhenAll(meals.Select(m => _mealRepo.LoadRecipesAsync(m)));
+        var meals = await _mealRepo.GetMealsByIdsAsync(generatedIds);
 
         var vm = new ViewModels.DayPlanSummaryViewModel
         {

@@ -129,14 +129,15 @@ public class MealRecommendationService : IMealRecommendationService
 
         var userVotes = await _userRecipeRepository.GetUserVotesByUserIdAsync(user.Id);
         var votePercentages = await _userRecipeRepository.GetAllVotePercentagesAsync();
+        var upvoted = await _userRecipeRepository.GetUserRecipesByVoteType(user.Id, UserVoteType.UpVote);
+        var allWithTags = await _recipeRepository.GetAllWithTagsAsync();
 
+        var usedRecipeIds = new HashSet<int>();
         int mealIndex = 0;
         foreach (var pref in preferences)
         {
             var calorieTarget = pref.Size.Calories();
 
-            var upvoted = await _userRecipeRepository.GetUserRecipesByVoteType(user.Id, UserVoteType.UpVote);
-            var allWithTags = await _recipeRepository.GetAllWithTagsAsync();
             var upvotedIds = upvoted.Select(r => r.Id).ToHashSet();
             var rest = allWithTags
                 .Where(r => userVotes.GetValueOrDefault(r.Id, UserVoteType.NoVote) != UserVoteType.DownVote
@@ -144,7 +145,9 @@ public class MealRecommendationService : IMealRecommendationService
                 .OrderByDescending(r => votePercentages.GetValueOrDefault(r.Id, 0f))
                 .ToList();
 
-            var candidates = upvoted.Concat(rest).ToList();
+            var candidates = upvoted.Concat(rest)
+                .Where(r => !usedRecipeIds.Contains(r.Id))
+                .ToList();
             candidates = ApplyDietaryFilter(candidates, restrictionNames);
 
             if (pref.TagIds.Any())
@@ -165,6 +168,8 @@ public class MealRecommendationService : IMealRecommendationService
                     running += recipe.Calories;
                 }
             }
+
+            usedRecipeIds.UnionWith(recipes.Select(r => r.Id));
 
             result.Add(new Meal
             {

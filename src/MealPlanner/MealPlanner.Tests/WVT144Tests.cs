@@ -6,6 +6,7 @@ using MealPlanner.Services;
 using MealPlanner.ViewModels;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Moq;
@@ -73,6 +74,10 @@ public class WVT144Tests
         {
             HttpContext = new DefaultHttpContext { User = _user }
         };
+
+        _controller.TempData = new TempDataDictionary(
+            new DefaultHttpContext(),
+            Mock.Of<ITempDataProvider>());
     }
 
     [TearDown]
@@ -169,10 +174,41 @@ public class WVT144Tests
     // Controller — DayPlanSummary GET
 
     [Test]
-    public async Task DayPlanSummary_Get_IncludesAvailableTagsInViewModel()
+    public async Task DayPlanSummary_WithNoTempData_RedirectsToHomeIndex()
     {
+        var result = await _controller.DayPlanSummary(DateTime.Today.ToString("yyyy-MM-dd"));
+
+        Assert.That(result, Is.TypeOf<RedirectToActionResult>());
+        var redirect = (RedirectToActionResult)result;
+        Assert.That(redirect.ActionName, Is.EqualTo("Index"));
+        Assert.That(redirect.ControllerName, Is.EqualTo("Home"));
+    }
+
+    [Test]
+    public async Task DayPlanSummary_WithTempData_CallsGetMealsByIdsAsync()
+    {
+        _controller.TempData["GeneratedMealIds"] = "10,20";
+        _mealRepoMock
+            .Setup(r => r.GetMealsByIdsAsync(It.IsAny<IEnumerable<int>>()))
+            .ReturnsAsync([]);
+        _tagRepoMock.Setup(r => r.GetTagsByPopularityAsync()).ReturnsAsync([]);
+
+        await _controller.DayPlanSummary(DateTime.Today.ToString("yyyy-MM-dd"));
+
+        _mealRepoMock.Verify(
+            r => r.GetMealsByIdsAsync(It.Is<IEnumerable<int>>(ids => ids.SequenceEqual(new[] { 10, 20 }))),
+            Times.Once);
+    }
+
+    [Test]
+    public async Task DayPlanSummary_WithTempData_IncludesAvailableTagsInViewModel()
+    {
+        _controller.TempData["GeneratedMealIds"] = "1";
         var tags = new List<Tag> { new Tag { Id = 3, Name = "Vegan" } };
         _tagRepoMock.Setup(r => r.GetTagsByPopularityAsync()).ReturnsAsync(tags);
+        _mealRepoMock
+            .Setup(r => r.GetMealsByIdsAsync(It.IsAny<IEnumerable<int>>()))
+            .ReturnsAsync([]);
 
         var result = (ViewResult)await _controller.DayPlanSummary(DateTime.Today.ToString("yyyy-MM-dd"));
         var model = (DayPlanSummaryViewModel)result.Model!;

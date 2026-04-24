@@ -158,6 +158,33 @@ public class WVT144RecommendationTests
     }
 
     [Test]
+    public async Task GetRecommendedDayPlanForUser_WithMultipleMeals_DoesNotRepeatRecipesAcrossMeals()
+    {
+        var recipe1 = new Recipe { Id = 1, Name = "Recipe 1", Calories = 100, Tags = [] };
+        var recipe2 = new Recipe { Id = 2, Name = "Recipe 2", Calories = 100, Tags = [] };
+        var recipe3 = new Recipe { Id = 3, Name = "Recipe 3", Calories = 100, Tags = [] };
+        _recipeRepoMock.Setup(r => r.GetAllWithTagsAsync()).ReturnsAsync([recipe1, recipe2, recipe3]);
+
+        var config = new DayPlanConfigViewModel
+        {
+            MealCount = 2,
+            SelectedMonth = DateTime.Today.Month,
+            SelectedDay = DateTime.Today.Day,
+            MealPreferences =
+            [
+                new MealPreferenceViewModel { Size = MealSize.Average },
+                new MealPreferenceViewModel { Size = MealSize.Average }
+            ]
+        };
+
+        var result = await _service.GetRecommendedDayPlanForUser(_user, DateTime.Today, config);
+
+        var allAssigned = result.SelectMany(m => m.Recipes).ToList();
+        var distinctIds = allAssigned.Select(r => r.Id).Distinct().ToList();
+        Assert.That(allAssigned.Count, Is.EqualTo(distinctIds.Count), "Each recipe should appear in at most one meal");
+    }
+
+    [Test]
     public async Task GetRecommendedDayPlanForUser_WithMultipleRestrictions_RequiresAllTagsToMatch()
     {
         var veganOnly = new Recipe { Id = 1, Name = "Vegan Only", Calories = 300, Tags = [VeganTag] };
