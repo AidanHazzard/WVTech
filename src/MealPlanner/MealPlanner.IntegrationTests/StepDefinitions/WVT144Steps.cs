@@ -150,7 +150,7 @@ public class WVT144Steps
         {
             try
             {
-                return d.FindElements(By.CssSelector("[id^='MealPreferences_']"))
+                return d.FindElements(By.CssSelector("select[name*='MealPreferences']"))
                     .FirstOrDefault(e => e.Displayed);
             }
             catch { return null; }
@@ -162,7 +162,7 @@ public class WVT144Steps
     public void ThenMealSizeOptionsInclude(string option1, string option2, string option3)
     {
         var select = new SelectElement(
-            _driver.FindElement(By.CssSelector("[id^='MealPreferences_'][id$='_Size']")));
+            _driver.FindElement(By.CssSelector("select[name*='MealPreferences'][name$='.Size']")));
         var optionTexts = select.Options.Select(o => o.Text).ToList();
         Assert.That(optionTexts, Does.Contain(option1), $"Meal size option '{option1}' not found");
         Assert.That(optionTexts, Does.Contain(option2), $"Meal size option '{option2}' not found");
@@ -176,7 +176,7 @@ public class WVT144Steps
         {
             try
             {
-                return d.FindElements(By.CssSelector("[id^='MealPreferences_'][id$='_TagIds']"))
+                return d.FindElements(By.CssSelector(".tag-select"))
                     .FirstOrDefault(e => e.Displayed);
             }
             catch { return null; }
@@ -189,10 +189,10 @@ public class WVT144Steps
     {
         var input = _wait.Until(d =>
         {
-            try { return d.FindElement(By.Id("MealPreferences_0__Title")); }
+            try { return d.FindElement(By.CssSelector("input[name='MealPreferences[0].Title']")); }
             catch (NoSuchElementException) { return null; }
         });
-        Assert.That(input, Is.Not.Null, "Could not find title input for first meal (#MealPreferences_0__Title)");
+        Assert.That(input, Is.Not.Null, "Could not find title input for first meal (input[name='MealPreferences[0].Title'])");
         input!.Clear();
         input.SendKeys(title);
     }
@@ -222,7 +222,7 @@ public class WVT144Steps
         {
             try
             {
-                return d.FindElements(By.CssSelector("[id^='MealPreferences_'][id$='__CustomTagName']"))
+                return d.FindElements(By.CssSelector(".custom-tag-input"))
                     .FirstOrDefault(e => e.Displayed);
             }
             catch { return null; }
@@ -233,8 +233,7 @@ public class WVT144Steps
     [When("{string} types {string} as a custom tag and generates the plan")]
     public void WhenUserTypesCustomTagAndGenerates(string userName, string tagName)
     {
-        var input = _driver.FindElement(
-            By.CssSelector("[id^='MealPreferences_'][id$='__CustomTagName']"));
+        var input = _driver.FindElement(By.CssSelector(".custom-tag-input"));
         input.Clear();
         input.SendKeys(tagName);
 
@@ -386,7 +385,7 @@ public class WVT144Steps
         {
             try
             {
-                return d.FindElements(By.CssSelector("[data-regen-field='size']"))
+                return d.FindElements(By.CssSelector("[id^='regenerate-form-']"))
                     .Any(e => e.Displayed);
             }
             catch { return false; }
@@ -400,12 +399,13 @@ public class WVT144Steps
         {
             try
             {
-                return d.FindElements(By.CssSelector("[data-regen-field='size']"))
-                    .FirstOrDefault(e => e.Displayed);
+                var visibleForm = d.FindElements(By.CssSelector("[id^='regenerate-form-']"))
+                    .FirstOrDefault(f => f.Displayed);
+                return visibleForm?.FindElement(By.CssSelector("select[name='Size']"));
             }
-            catch (NoSuchElementException) { return null; }
+            catch { return null; }
         });
-        Assert.That(sizeSelect, Is.Not.Null, "Could not find inline size selector ([data-regen-field='size'])");
+        Assert.That(sizeSelect, Is.Not.Null, "Could not find inline size selector (select[name='Size'] inside visible regenerate form)");
 
         var select = new SelectElement(sizeSelect!);
         Assert.That(select.SelectedOption.Text, Is.Not.Empty, "Size selector has no selection");
@@ -516,16 +516,16 @@ public class WVT144Steps
     [Then("the day plan summary includes a recipe named {string}")]
     public void ThenDayPlanSummaryIncludesRecipeNamed(string recipeName)
     {
-        var items = _driver.FindElements(By.CssSelector("#day-plan-summary li"));
-        Assert.That(items.Any(li => li.Text.Contains(recipeName, StringComparison.OrdinalIgnoreCase)), Is.True,
+        var items = _driver.FindElements(By.CssSelector("#day-plan-summary .mealRecipeItem h4"));
+        Assert.That(items.Any(el => el.Text.Contains(recipeName, StringComparison.OrdinalIgnoreCase)), Is.True,
             $"Expected recipe '{recipeName}' in the day plan summary but it was not found");
     }
 
     [Then("the day plan summary does not include a recipe named {string}")]
     public void ThenDayPlanSummaryDoesNotIncludeRecipeNamed(string recipeName)
     {
-        var items = _driver.FindElements(By.CssSelector("#day-plan-summary li"));
-        Assert.That(items.All(li => !li.Text.Contains(recipeName, StringComparison.OrdinalIgnoreCase)), Is.True,
+        var items = _driver.FindElements(By.CssSelector("#day-plan-summary .mealRecipeItem h4"));
+        Assert.That(items.All(el => !el.Text.Contains(recipeName, StringComparison.OrdinalIgnoreCase)), Is.True,
             $"Expected recipe '{recipeName}' NOT to be in the day plan summary but it was found");
     }
 
