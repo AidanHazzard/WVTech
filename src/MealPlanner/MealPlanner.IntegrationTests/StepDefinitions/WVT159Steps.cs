@@ -22,13 +22,16 @@ public class WVT159Steps
     public void GivenJackIsOnTheHomePageForToday()
     {
         _driver.Navigate().GoToUrl($"{_baseUrl}/Home/Index?date={DateTime.Today:yyyy-MM-dd}");
-        _wait.Until(d => ((IJavaScriptExecutor)d).ExecuteScript("return document.readyState").ToString() == "complete");
+        _wait.Until(d => ((IJavaScriptExecutor)d).ExecuteScript("return document.readyState")?.ToString() == "complete");
     }
 
     [When("'Jack' deletes a meal from the home page")]
     public void WhenJackDeletesAMealFromTheHomePage()
     {
-        _wait.Until(d => d.FindElement(By.CssSelector(".mealDeleteButton"))).Click();
+        ((IJavaScriptExecutor)_driver).ExecuteScript("window.confirm = function() { return true; };");
+        var btn = _wait.Until(d => d.FindElement(By.CssSelector(".mealDeleteButton")));
+        ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].scrollIntoView(true);", btn);
+        ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].click();", btn);
     }
 
     [When("'Jack' checks off a meal on the home page")]

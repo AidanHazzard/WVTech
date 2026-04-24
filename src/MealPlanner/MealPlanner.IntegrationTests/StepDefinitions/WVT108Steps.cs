@@ -25,9 +25,11 @@ public class WVT108Steps
     [When("'Jack' clicks the delete meal button")]
     public void WhenJackClicksTheDeleteMealButton()
     {
+        ((IJavaScriptExecutor)_driver).ExecuteScript("window.confirm = function() { return true; };");
         var deleteButton = new WebDriverWait(_driver, TimeSpan.FromSeconds(5))
             .Until(d => d.FindElement(By.CssSelector(".mealDeleteButton, button[data-testid='delete-meal'], button[type='submit']")));
-        deleteButton.Click();
+        ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].scrollIntoView(true);", deleteButton);
+        ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].click();", deleteButton);
     }
 
     [When("'Jack' confirms meal deletion")]

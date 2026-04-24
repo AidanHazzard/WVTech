@@ -36,12 +36,27 @@ public class WVT99Steps
     [Given("{string} adds the custom tag {string}")]
     public void GivenUserAddsCustomTag(string username, string tag)
     {
-        var input = _driver.FindElement(By.Id("custom-tag-input"));
+        var input = new WebDriverWait(_driver, TimeSpan.FromSeconds(5))
+            .Until(d =>
+            {
+                try { var e = d.FindElement(By.Id("custom-tag-input")); return e.Displayed ? e : null; }
+                catch (NoSuchElementException) { return null; }
+            })!;
         ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].scrollIntoView(true);", input);
         input.Clear();
         input.SendKeys(tag);
-        var btn = _driver.FindElement(By.Id("add-custom-tag-btn"));
+        var btn = new WebDriverWait(_driver, TimeSpan.FromSeconds(5))
+            .Until(d =>
+            {
+                try { var e = d.FindElement(By.Id("add-custom-tag-btn")); return e.Displayed ? e : null; }
+                catch (NoSuchElementException) { return null; }
+            })!;
+        ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].scrollIntoView(true);", btn);
         ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].click();", btn);
+
+        // Wait for the tag pill to appear in the DOM confirming the JS event fired
+        new WebDriverWait(_driver, TimeSpan.FromSeconds(5))
+            .Until(d => d.FindElements(By.CssSelector("#tags-container .tag-wrapper")).Count > 0);
     }
 
     [Given("{string} has a recipe named {string} with the tag {string}")]

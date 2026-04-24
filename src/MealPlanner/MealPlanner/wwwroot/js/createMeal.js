@@ -3,27 +3,19 @@ const API_ROUTE = "/api/recipe/";
 
 $(document).ready(() => {
     $(document).on("click", ".recipeSearchRow", addRecipe);
-
-    $(document).on("click", ".delete-recipe-btn", function () {
-        if (!confirm("Are you sure you want to remove this recipe?")) return;
-        const $row = $(this).closest(".mealRecipeItem");
-        const recipeId = $row.find(".recipeIdInput").val();
-        $row.remove();
-        $(`#createMealForm input[value="${recipeId}"]`).remove();
-    });
 });
 
-async function addRecipe(event) {
+async function addRecipe() {
     // Get info from the search
     let recipeId = Number($(".recipeId", this).text());
     const recipeName = $(".recipeName", this).text();
-    
+
     // Get recipe id from external source
     const externalUri = encodeURIComponent($(this).attr("externaluri"));
     if (!recipeId && externalUri)
     {
         const externalUrl = API_ROUTE + `external?recipeName=${encodeURIComponent(recipeName)}&externalUri=${externalUri}`;
-        
+
         const response = await fetch(externalUrl);
         if (!response.ok) return;
         recipeId = await response.json();
@@ -48,5 +40,17 @@ async function addRecipe(event) {
     $("#recipeName", row).text(recipeName);
     $(".recipeIdInput", row).val(recipeId);
     $(".mealRecipeItem", row).attr("onclick", `location.href='/FoodEntries/Recipes/${recipeId}'`);
+
+    // Attach delete handler directly so it fires despite button's stopPropagation
+    const $btn = $(".delete-recipe-btn", row);
+    $btn.on("click", function(e) {
+        e.stopPropagation();
+        if (!confirm("Are you sure you want to remove this recipe?")) return;
+        const $row = $(this).closest(".mealRecipeItem");
+        const rId = $row.find(".recipeIdInput").val();
+        $row.remove();
+        $(`#createMealForm input[value="${rId}"]`).remove();
+    });
+
     $("#createMealList").append(row);
 }

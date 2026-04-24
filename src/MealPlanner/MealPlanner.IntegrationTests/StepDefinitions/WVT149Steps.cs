@@ -23,11 +23,13 @@ namespace Mealplanner.IntegrationTests
         [Given("'Jack' is on the user settings page")]
         public void GivenJackIsOnTheUserSettingsPage()
         {
+            try { _wait.Until(d => !d.Url.Contains("/Login", StringComparison.OrdinalIgnoreCase)); }
+            catch (WebDriverTimeoutException) { }
             _driver.Navigate().GoToUrl($"{_baseUrl}/UserSettings/Index");
             _wait.Until(driver =>
                 ((IJavaScriptExecutor)driver)
                     .ExecuteScript("return document.readyState")
-                    .ToString() == "complete");
+                    ?.ToString() == "complete");
         }
 
         [Then("a theme toggle is shown on the settings page")]

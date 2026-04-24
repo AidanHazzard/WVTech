@@ -55,11 +55,10 @@
     <div class="col mx-1">
         <div class="row mb-5">
             <h1 class="back1Title col-8">@Model.Name</h1>
-            @if (@Model.VotePercentage != null)
-            {
-                string voterPercentage = $"{(int)@Model.VotePercentage * 100}%";
-                <h4 id="votePercent" class="col-2" style="color: color-mix(in oklch, red, green @voterPercentage);">@voterPercentage</h4>
+            @{
+                string voterPercentage = Model.VotePercentage != null ? $"{(int)Model.VotePercentage * 100}%" : "0%";
             }
+            <h4 id="votePercent" class="col-2" style="color: color-mix(in oklch, red, green @voterPercentage);">@voterPercentage</h4>
             <div class="col-2">
                 
                 @if (Model.UserVote == UserVoteType.UpVote)

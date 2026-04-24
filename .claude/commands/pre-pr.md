@@ -31,6 +31,8 @@ Run this before opening any PR to `dev`. Executes the full pre-PR workflow for t
    3. If neither is available, stop and warn the user — the test suite calls `EnsureDeleted()` on startup and will wipe whatever database it connects to. Never proceed without a confirmed test database connection string.
 
    After resolving the connection string, if it is not already saved in `CLAUDE.local.md`, ask the user: *"Would you like me to save this connection string to CLAUDE.local.md so it can be reused? It is gitignored and will not be committed."* Only write it if the user confirms.
+
+   The integration test suite starts the app itself as part of `BDDSetup` — do not ask the user to run the app manually before executing this step.
    ```
    dotnet test ./src/MealPlanner/MealPlanner.IntegrationTests/Mealplanner.IntegrationTests.csproj
    ```

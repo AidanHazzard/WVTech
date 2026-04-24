@@ -32,14 +32,13 @@ public class WVT156Steps
     public void WhenJackClicksAddAMeal()
     {
         _driver.Navigate().GoToUrl($"{_baseUrl}/Meal/NewMeal?date={_futureDate:yyyy-MM-dd}");
-        _wait.Until(d => d.Url.Contains("NewMeal"));
     }
 
     [Then("the create meal form is pre-filled with that date")]
     public void ThenTheCreateMealFormIsPreFilledWithThatDate()
     {
-        var monthSelect = new SelectElement(_driver.FindElement(By.Name("SelectedMonth")));
-        var daySelect = new SelectElement(_driver.FindElement(By.Name("SelectedDay")));
+        var monthSelect = new SelectElement(_driver.FindElement(By.CssSelector("#createMealForm #SelectedMonth")));
+        var daySelect = new SelectElement(_driver.FindElement(By.CssSelector("#createMealForm #SelectedDay")));
 
         Assert.That(monthSelect.SelectedOption.GetAttribute("value"), Is.EqualTo(_futureDate.Month.ToString()));
         Assert.That(daySelect.SelectedOption.GetAttribute("value"), Is.EqualTo(_futureDate.Day.ToString()));
