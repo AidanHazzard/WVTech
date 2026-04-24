@@ -135,7 +135,16 @@ public class MealRepository : Repository<Meal>, IMealRepository
 }
 
     public async Task<Meal> ReadAsync(int id)
-{
-    return await _dbset.FindAsync(id);
-}
+    {
+        return await _dbset.FindAsync(id);
+    }
+
+    public async Task<List<Meal>> GetMealsByIdsAsync(IEnumerable<int> ids)
+    {
+        var idSet = ids.ToHashSet();
+        return await _dbset
+            .Include(m => m.Recipes)
+            .Where(m => idSet.Contains(m.Id))
+            .ToListAsync();
+    }
 }

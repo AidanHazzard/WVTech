@@ -112,9 +112,32 @@ public class UserRecipeRepository :  Repository<UserRecipe>, IUserRecipeReposito
     
     public async Task<List<Recipe>> GetUserRecipesByVoteType(string userId, UserVoteType voteType)
     {
-        return await _dbset
+        var userRecipes = await _dbset
             .Where(ur => ur.UserId == userId && ur.UserVote == voteType)
-            .Select(ur => ur.Recipe)
+            .Include(ur => ur.Recipe).ThenInclude(r => r.Tags)
             .ToListAsync();
+        return userRecipes.Select(ur => ur.Recipe!).ToList();
+    }
+
+    public async Task<Dictionary<int, UserVoteType>> GetUserVotesByUserIdAsync(string userId)
+    {
+        return await _dbset
+            .Where(ur => ur.UserId == userId)
+            .ToDictionaryAsync(ur => ur.RecipeId, ur => ur.UserVote);
+    }
+
+    public async Task<Dictionary<int, float>> GetAllVotePercentagesAsync()
+    {
+        var groups = await _dbset
+            .Where(ur => ur.UserVote != UserVoteType.NoVote)
+            .GroupBy(ur => ur.RecipeId)
+            .Select(g => new
+            {
+                RecipeId = g.Key,
+                Total = g.Count(),
+                UpVotes = g.Count(ur => ur.UserVote == UserVoteType.UpVote)
+            })
+            .ToListAsync();
+        return groups.ToDictionary(d => d.RecipeId, d => (float)d.UpVotes / d.Total);
     }
 }

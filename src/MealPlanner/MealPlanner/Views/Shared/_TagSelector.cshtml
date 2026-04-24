@@ -1,0 +1,33 @@
+@model MealPlanner.ViewModels.RecipeViewModel
+
+<div class="back2 backHasButton">
+    <h2 class="back1Title">Tags</h2>
+    <div id="tags-container" class="d-flex flex-wrap gap-1 mb-2">
+        @foreach (var tag in Model.Tags)
+        {
+            <button type="button"
+                    class="tag-pill badge rounded-pill recipe-tag recipe-tag-removable"
+                    title="Remove @tag"
+                    data-predefined="@Model.AvailableTags.Contains(tag).ToString().ToLower()">
+                @tag
+                <input type="hidden" name="Tags" value="@tag" />
+            </button>
+        }
+    </div>
+    <div class="d-flex align-items-center gap-2 flex-wrap">
+        <select id="tag-select" class="back2-textbox">
+            <option value="">Select a tag...</option>
+            @foreach (var tag in Model.AvailableTags.Where(t => !Model.Tags.Contains(t)))
+            {
+                <option value="@tag">@tag</option>
+            }
+        </select>
+        <div class="tag-input-wrapper">
+            <input type="text" id="custom-tag-input" class="back2-textbox"
+                   placeholder="Or type a custom tag..." />
+            <button type="button" class="add-tag-btn buttonGreenInline" id="add-custom-tag-btn">
+                <h4 class="buttonText">Add</h4>
+            </button>
+        </div>
+    </div>
+</div>
