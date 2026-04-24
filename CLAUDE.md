@@ -161,6 +161,241 @@ Never suggest opening a PR to `main` mid-sprint. Always target `dev`.
 
 ---
 
+## Repository Pattern & Data Access Layer
+
+### Generic Repository (`IRepository<T>`)
+
+The DAL uses a tiered repository pattern with a generic base (`IRepository<T>`) and specialized repositories that extend it:
+
+```csharp
+public interface IRepository<TEntity> where TEntity : class, new()
+{
+    public TEntity? Read(int id);
+    public List<TEntity> ReadAll();
+    public TEntity CreateOrUpdate(TEntity entity);
+    public void Delete(TEntity entity);
+    public bool Exists(int id);
+}
+```
+
+- `Read(id)` returns `null` if not found — always null-check after calling it
+- `CreateOrUpdate(entity)` adds new entities (id=0) and updates existing ones
+- **Important:** `SaveChanges()` is NOT called in repositories; controllers call `_context.SaveChanges()` after repository operations
+
+### Specialized Repositories
+
+Repositories extend `Repository<T>` and add domain-specific methods:
+
+```csharp
+public class RecipeRepository : Repository<Recipe>, IRecipeRepository
+{
+    public RecipeRepository(MealPlannerDBContext context) : base(context) { }
+    
+    public override Recipe CreateOrUpdate(Recipe recipe) { /* deduplication + validation */ }
+    public List<Recipe> GetRecipesByName(string name) { /* search */ }
+    public Task<Recipe?> ReadRecipeWithIngredientsAsync(int id) { /* eager load */ }
+}
+```
+
+**Key patterns:**
+- Override `CreateOrUpdate()` to add business logic (deduplication, validation, related entity resolution)
+- Use `async Task<T>` for methods that do I/O (database queries)
+- Return `List<T>`, not `IQueryable<T>` or `IEnumerable<T>` (execute queries in the repo)
+- Access other DbSets via `context.Set<T>()` for deduplication/validation logic
+
+**DI Registration** (in `Program.cs`):
+```csharp
+builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
+builder.Services.AddScoped<IRecipeRepository, RecipeRepository>();
+builder.Services.AddScoped<IMealRepository, MealRepository>();
+// ... other specialized repos
+```
+
+All repositories are `AddScoped` — one instance per HTTP request.
+
+---
+
+## Controller Design: Keep Them Thin
+
+Controllers should be **HTTP handlers only** — they parse requests, validate input, delegate business logic to services/repositories, and return responses. No business logic should live in controllers.
+
+### Controller Structure
+
+```csharp
+[Authorize]
+public class MealController : Controller
+{
+    // Inject only repositories and services, never DbContext
+    private readonly IRegistrationService _registrationService;
+    private readonly IRecipeRepository _recipeRepo;
+    private readonly IMealRepository _mealRepo;
+    private readonly IMealRecommendationService? _recommendationService;
+    private readonly MealPlannerDBContext _context;
+
+    public MealController(
+        IRegistrationService registrationService,
+        IRecipeRepository recipeRepo,
+        IMealRepository mealRepo,
+        MealPlannerDBContext context,
+        IMealRecommendationService? mealRecommendationService = null)
+    {
+        _registrationService = registrationService;
+        _recipeRepo = recipeRepo;
+        _mealRepo = mealRepo;
+        _context = context;
+        _recommendationService = mealRecommendationService;
+    }
+}
+```
+
+### Naming & DI Conventions
+
+- **Field names:** `_camelCase` with underscore prefix
+- **Inject repositories + services:** Never inject `DbContext` directly (goal: migrate all DB work to repositories)
+- **Nullable optional dependencies:** Use `?` for features that may not be registered:
+  ```csharp
+  private readonly IMealRecommendationService? _recommendationService;
+  // Constructor parameter with default null
+  public MealController(..., IMealRecommendationService? mealRecommendationService = null)
+  ```
+  - Check before use: `if (_recommendationService != null) { ... }`
+
+### Thin Controller Patterns
+
+**Pattern 1: GET action → delegate to repo → render view**
+```csharp
+[HttpGet]
+public async Task<IActionResult> NewMeal()
+{
+    ViewBag.AvailableTags = await _tagRepo.GetTagsByPopularityAsync();
+    return View(new CreateMealViewModel { /* ... */ });
+}
+```
+
+**Pattern 2: POST action → validate → call service/repo → persist → redirect**
+```csharp
+[HttpPost]
+[ValidateAntiForgeryToken]
+public async Task<IActionResult> NewMeal(CreateMealViewModel model)
+{
+    if (!ModelState.IsValid) return View(model);
+
+    var user = await _registrationService.FindUserByClaimAsync(User);
+    if (user == null) return Challenge();
+
+    // Do work via service/repo
+    var meal = new Meal { /* ... */ };
+    _mealRepo.CreateOrUpdate(meal);
+    _context.SaveChanges(); // Controller's job
+    
+    return RedirectToAction("PlannerHome");
+}
+```
+
+**Pattern 3: Handle null reads**
+```csharp
+var recipe = _recipeRepository.Read(recipeId);
+if (recipe == null) return NotFound(); // Always check after Read()
+```
+
+### Authorization & CSRF
+
+- `[Authorize]` on the controller redirects unauthorized requests to `/Login`
+- POST actions MUST have `[ValidateAntiForgeryToken]` unless the endpoint has no side effects
+- JS `fetch` calls that POST need either:
+  - Token included in request body (from `@Html.AntiForgeryToken()`)
+  - Or `[IgnoreAntiForgeryToken]` if the endpoint is idempotent/safe
+
+**Known issue:** Several POST actions are missing `[ValidateAntiForgeryToken]` (see Known Bugs section below)
+
+---
+
+## Service Layer: Business Logic Home
+
+Services encapsulate business logic. Controllers delegate complex operations to services, which in turn use repositories for data access.
+
+### Service Dependencies
+
+```csharp
+public class MealRecommendationService : IMealRecommendationService
+{
+    private IUserRecipeRepository _userRecipeRepository;
+    private IRecipeRepository _recipeRepository;
+    private IMealRepository _mealRepository;
+    private IUserNutritionPreferenceRepository _nutrionRepository;
+    private IExternalRecipeService? _externalRecipeService;
+
+    public MealRecommendationService(
+        IUserRecipeRepository userRecipeRepository,
+        IRecipeRepository recipeRepository,
+        IMealRepository mealRepository,
+        IUserNutritionPreferenceRepository nutritionRepository,
+        IExternalRecipeService? externalRecipeService = null)
+    {
+        _userRecipeRepository = userRecipeRepository;
+        _recipeRepository = recipeRepository;
+        _mealRepository = mealRepository;
+        _nutrionRepository = nutritionRepository;
+        _externalRecipeService = externalRecipeService;
+    }
+}
+```
+
+**Services inject:**
+- **Repositories** (for data access) — never `DbContext`
+- **Other services** (for orchestration)
+- **Optional dependencies** (marked `?`) for features that may be disabled
+
+### Async Conventions
+
+If a service calls an `async` repository method, the service method must also be `async Task<T>`:
+
+```csharp
+// ✅ Correct: repo is async, so service is async
+public async Task<List<Recipe>> GetRecommendedRecipesForUser(User user, DateTime date)
+{
+    var recipes = await _recipeRepository.GetRecipesByVoteAsync(...);
+    return recipes;
+}
+
+// ❌ Wrong: can't await in sync method
+public List<Recipe> GetRecommendedRecipes(User user, DateTime date)
+{
+    var recipes = await _repo.GetRecipesAsync(); // Error
+}
+```
+
+### Service Responsibilities
+
+**What services DO:**
+- Complex filtering, sorting, aggregation (e.g., recommendation algorithm)
+- Multi-step workflows (e.g., user registration)
+- Calculation/transformation logic
+- External API integration (e.g., Edamam)
+
+**What services DON'T do:**
+- Call `SaveChanges()` (controller does that)
+- Inject `DbContext` directly
+- Return HTTP status codes or objects
+- Handle HTTP concerns (headers, cookies, etc.)
+
+### DI Registration
+
+In `Program.cs`:
+```csharp
+builder.Services.AddScoped<INutritionProgressService, NutritionProgressService>();
+builder.Services.AddScoped<IMealRecommendationService, MealRecommendationService>();
+builder.Services.AddScoped<IRegistrationService, RegistrationService>();
+builder.Services.AddScoped<IUserSettingsService, UserSettingsService>();
+builder.Services.AddScoped<ShoppingListService>();
+builder.Services.AddTransient<IEmailService, EmailService>();
+```
+
+- `AddScoped` — one instance per HTTP request (most services)
+- `AddTransient` — new instance every time (stateless utilities)
+
+---
+
 ## Key Implementation Details
 
 ### NoApi feature flag
