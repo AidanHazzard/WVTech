@@ -4,6 +4,8 @@ const API_ROUTE = "/api/recipe/";
 
 $(document).ready(() => {
     $("#searchText").on("input", throttle(recipeSearchHandler, 1000));
+    $("#tagFilter").on("change", recipeSearchHandler);
+    loadTags();
 
     if ($("#editMealForm").length) {
         $(document).on("click", ".mealRecipeItem", function (e) {
@@ -109,13 +111,34 @@ function throttle(func, delay)
     }
 }
 
+async function loadTags()
+{
+    const response = await fetch(`${API_ROUTE}tags`);
+    if (!response.ok) return;
+    const tags = await response.json();
+    const $select = $("#tagFilter");
+    tags.forEach(tag => {
+        $select.append(`<option value="${tag}">${tag}</option>`);
+    });
+}
+
 async function recipeSearchHandler(event)
 {
+    const search = $("#searchText").val();
+    const tag = $("#tagFilter").val();
+
+    if (search.length < 3 && !tag)
+    {
+        $("#recipeResults").text("");
+        return;
+    }
+
     $("#error").hide();
 
-    const search = $("#searchText").val();
+    let url = `${API_ROUTE}search?name=${encodeURIComponent(search)}`;
+    if (tag) url += `&tag=${encodeURIComponent(tag)}`;
 
-    const response = await fetch(`/api/recipe/search?name=${search}`);
+    const response = await fetch(url);
 
     $("#recipeResults").text("");
     if (!response.ok)
