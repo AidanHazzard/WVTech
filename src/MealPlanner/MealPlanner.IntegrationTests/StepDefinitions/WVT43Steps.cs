@@ -26,13 +26,29 @@ public class WVT43Steps
     public void GivenUserIsOnRecipePage()
     {
         _driver.Navigate().GoToUrl($"{_baseUrl}/FoodEntries/Recipes");
+        new WebDriverWait(_driver, TimeSpan.FromSeconds(10))
+            .Until(d => ((IJavaScriptExecutor)d).ExecuteScript("return document.readyState").ToString() == "complete");
+        // If redirected away (e.g. pending logout navigation clobbered this GoToUrl), retry once
+        if (!_driver.Url.Contains("/FoodEntries/Recipes", StringComparison.OrdinalIgnoreCase))
+        {
+            _driver.Navigate().GoToUrl($"{_baseUrl}/FoodEntries/Recipes");
+            new WebDriverWait(_driver, TimeSpan.FromSeconds(10))
+                .Until(d => ((IJavaScriptExecutor)d).ExecuteScript("return document.readyState").ToString() == "complete");
+        }
     }
 
     // This step definition uses Cucumber Expressions. See https://github.com/gasparnagy/CucumberExpressions.SpecFlow
     [When("User types {string} in the search")]
     public void WhenUserTypesInTheSearch(string searchString)
     {
-        _driver.FindElement(By.Id("searchText")).SendKeys(searchString);
+        var el = new WebDriverWait(_driver, TimeSpan.FromSeconds(5)).Until(d =>
+        {
+            try { var e = d.FindElement(By.Id("searchText")); return e.Displayed ? e : null; }
+            catch (NoSuchElementException) { return null; }
+        })!;
+        el.Clear();
+        el.SendKeys(searchString);
+        Thread.Sleep(1100); // wait for search debounce to fire
     }
 
     // This step definition uses Cucumber Expressions. See https://github.com/gasparnagy/CucumberExpressions.SpecFlow
@@ -74,11 +90,13 @@ public class WVT43Steps
     [Then("User is told there are no recipes found")]
     public void ThenUserIsToldThereAreNoRecipesFound()
     {
-        IWebElement error = _driver.FindElement(By.Id("error"));
-        WebDriverWait wait = new WebDriverWait(_driver, TimeSpan.FromSeconds(5));
-        wait.Until(d => error.Displayed);
-        string message = error.Text;
-        Assert.That(message, Is.EqualTo(_noRecipeFoundMessage));
+        var error = new WebDriverWait(_driver, TimeSpan.FromSeconds(5)).Until(d =>
+        {
+            try { var el = d.FindElement(By.Id("error")); return el.Displayed ? el : null; }
+            catch (NoSuchElementException) { return null; }
+            catch (StaleElementReferenceException) { return null; }
+        })!;
+        Assert.That(error.Text, Is.EqualTo(_noRecipeFoundMessage));
     }
 
     // This step definition uses Cucumber Expressions. See https://github.com/gasparnagy/CucumberExpressions.SpecFlow

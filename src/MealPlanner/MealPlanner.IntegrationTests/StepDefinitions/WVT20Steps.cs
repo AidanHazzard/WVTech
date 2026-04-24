@@ -29,6 +29,8 @@ public class WVT20Steps
     private void NavigateToShoppingList()
     {
         _driver.Manage().Cookies.DeleteCookieNamed("ShoppingListSynced");
+        _driver.Manage().Cookies.DeleteCookieNamed("ShoppingListDateFrom");
+        _driver.Manage().Cookies.DeleteCookieNamed("ShoppingListDateTo");
         _driver.Navigate().GoToUrl($"{_baseUrl}/ShoppingList");
         _wait.Until(d => d.Url.Contains("ShoppingList"));
     }

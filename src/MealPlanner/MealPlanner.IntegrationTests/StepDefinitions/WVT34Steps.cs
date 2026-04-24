@@ -93,6 +93,8 @@ public class WVT34Steps
     [Given("he is on the recipe page for the recipe")]
     public void GivenHeIsOnTheRecipePageForTheRecipe()
     {
+        try { _wait.Until(d => !d.Url.Contains("/Login", StringComparison.OrdinalIgnoreCase)); }
+        catch (WebDriverTimeoutException) { }
         _driver.Navigate().GoToUrl($"{_baseUrl}/FoodEntries/Recipes/{_recipeId}");
         _wait.Until(d => ((IJavaScriptExecutor) d).ExecuteScript("return document.readyState")!.ToString() == "complete");
     }

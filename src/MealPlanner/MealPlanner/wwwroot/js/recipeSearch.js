@@ -6,6 +6,12 @@ $(document).ready(() => {
     $("#searchText").on("input", throttle(recipeSearchHandler, 1000));
 
     if ($("#editMealForm").length) {
+        $(document).on("click", ".mealRecipeItem", function (e) {
+            if ($(e.target).closest(".delete-recipe-btn").length) return;
+            const recipeId = $(this).data("id");
+            if (recipeId) window.location.href = `/FoodEntries/Recipes/${recipeId}`;
+        });
+
         $(document).on("click", ".recipeSearchRow", async function () {
             const $row = $(this);
             const recipeName = $row.find(".recipeName").text();
@@ -28,15 +34,22 @@ $(document).ready(() => {
             addRecipeToMealForm($mealForm, recipeId, recipeName);
         });
 
-        $(document).on("click", ".delete-recipe-btn", function () {
+        $(document).on("click", ".delete-recipe-btn", function (e) {
+            e.stopPropagation();
             if (!confirm("Are you sure you want to remove this recipe?")) return;
-            
+
             const $row = $(this).closest(".mealRecipeItem");
             const recipeId = $row.data("id");
             const mealId = $("#editMealForm input[name='Id']").val();
 
+            if (!mealId || mealId === "0") {
+                $row.remove();
+                return;
+            }
+
             fetch("/Meal/DeleteRecipeFromMeal", {
                 method: "POST",
+                keepalive: true,
                 headers: { "Content-Type": "application/x-www-form-urlencoded" },
                 body: `mealId=${mealId}&recipeId=${recipeId}`
             }).then(response => {
@@ -68,9 +81,9 @@ async function resolveRecipeId(recipeId, recipeName, externalUri) {
 
 function addRecipeToMealForm($mealForm, recipeId, recipeName) {
     const $rowWrapper = $(`
-        <div class="mealRecipeItem d-flex align-items-center justify-content-between mb-2 back2 back2-textbox" data-id="${recipeId}" style="cursor:pointer;" onclick="location.href='/FoodEntries/Recipes/${recipeId}'">
+        <div class="mealRecipeItem d-flex align-items-center justify-content-between mb-2 back2 back2-textbox" data-id="${recipeId}" style="cursor:pointer;">
             <h4 class="buttonText mb-0">${recipeName}</h4>
-            <button type="button" class="btn btn-danger delete-recipe-btn" data-id="${recipeId}" onclick="event.stopPropagation()">X</button>
+            <button type="button" class="btn btn-danger delete-recipe-btn" data-id="${recipeId}">X</button>
             <input type="hidden" name="RecipeIds" value="${recipeId}" />
         </div>
     `);
@@ -129,5 +142,5 @@ async function recipeSearchHandler(event)
         $(".recipeRating", row).attr("style", `color: color-mix(in oklch, ${LOW_RATING_COLOR}, ${HIGH_RATING_COLOR} ${rating});`)
         $("#recipeResults").append(row);
     }
-  
+
 }
