@@ -75,15 +75,21 @@ function addTag(tagName, fromSelect) {
         }
     }
 
+    const wrapper = document.createElement('span');
+    wrapper.className = 'tag-wrapper';
+
+    const hiddenInput = document.createElement('input');
+    hiddenInput.type = 'hidden';
+    hiddenInput.name = 'Tags';
+    hiddenInput.value = trimmed;
+
     const pill = document.createElement('button');
     pill.type = 'button';
     pill.className = 'tag-pill badge rounded-pill recipe-tag recipe-tag-removable';
     pill.title = `Remove ${trimmed}`;
+    pill.textContent = trimmed;
     if (fromSelect) pill.dataset.predefined = 'true';
-    pill.innerHTML = `
-        ${trimmed}
-        <input type="hidden" name="Tags" value="${trimmed}" />
-    `;
+
     pill.addEventListener('click', function () {
         // If this was a predefined tag, put its option back in the select
         if (pill.dataset.predefined === 'true' && select) {
@@ -95,9 +101,12 @@ function addTag(tagName, fromSelect) {
             if (insertBefore) select.insertBefore(opt, insertBefore);
             else select.appendChild(opt);
         }
-        pill.remove();
+        wrapper.remove();
     });
-    container.appendChild(pill);
+
+    wrapper.appendChild(pill);
+    wrapper.appendChild(hiddenInput);
+    container.appendChild(wrapper);
 
     if (fromSelect) {
         // Remove the chosen option from the dropdown
@@ -126,8 +135,11 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // Wire remove handler for tags pre-rendered by EditRecipe view
-    document.querySelectorAll('.tag-pill').forEach(function (pill) {
-        const tagName = pill.querySelector('input[name="Tags"]').value;
+    document.querySelectorAll('.tag-wrapper').forEach(function (wrapper) {
+        const pill = wrapper.querySelector('.tag-pill');
+        const hiddenInput = wrapper.querySelector('input[name="Tags"]');
+        if (!pill || !hiddenInput) return;
+        const tagName = hiddenInput.value;
         pill.addEventListener('click', function () {
             if (pill.dataset.predefined === 'true' && select) {
                 const opt = document.createElement('option');
@@ -138,7 +150,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (insertBefore) select.insertBefore(opt, insertBefore);
                 else select.appendChild(opt);
             }
-            pill.remove();
+            wrapper.remove();
         });
     });
 });

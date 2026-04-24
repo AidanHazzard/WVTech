@@ -30,8 +30,11 @@ public class SharedSteps
     {
         try
         {
+            try { _driver.SwitchTo().Alert().Dismiss(); } catch { }
             _driver.Navigate().GoToUrl($"{_baseUrl}/UserSettings");
             _driver.FindElement(By.TagName("form")).Click();
+            new WebDriverWait(_driver, TimeSpan.FromSeconds(5)).Until(d =>
+                ((IJavaScriptExecutor)d).ExecuteScript("return document.readyState").ToString() == "complete");
         }
         catch
         {}
@@ -69,15 +72,19 @@ public class SharedSteps
         _driver.FindElement(By.Id("Email")).SendKeys($"{userName}{_emailBase}");
         _driver.FindElement(By.Id("Password")).SendKeys(_userPassword);
         _driver.FindElement(By.ClassName("btn")).Click();
+        new WebDriverWait(_driver, TimeSpan.FromSeconds(10))
+            .Until(d => !d.Url.Contains("/Login", StringComparison.OrdinalIgnoreCase));
     }
 
     // This step definition uses Cucumber Expressions. See https://github.com/gasparnagy/CucumberExpressions.SpecFlow
-    [Given("he is on the {string} page")]  
-    [Given("she is on the {string} page")]  
+    [Given("he is on the {string} page")]
+    [Given("she is on the {string} page")]
     [When("he navigates to the {string} page")]
     public void GivenTheyAreOnThePage(string pagePath)
     {
         WebDriverWait wait = new WebDriverWait(_driver, TimeSpan.FromSeconds(5));
+        try { wait.Until(d => !d.Url.Contains("/Login", StringComparison.OrdinalIgnoreCase)); }
+        catch (WebDriverTimeoutException) { }
         _driver.Navigate().GoToUrl($"{_baseUrl}/{pagePath}");
         wait.Until(d => d.Url == $"{_baseUrl}/{pagePath}");
     }

@@ -19,17 +19,13 @@ namespace Mealplanner.IntegrationTests
         [Then("an error is shown saying the recipe is already in the meal")]
         public void ThenAnErrorIsShownSayingTheRecipeIsAlreadyInTheMeal()
         {
-            var alert = _wait.Until(driver =>
+            var message = _wait.Until(driver =>
             {
-                try
-                {
-                    return driver.SwitchTo().Alert();
-                }
-                catch (NoAlertPresentException) { return null; }
+                var msg = ((IJavaScriptExecutor)driver).ExecuteScript("return window._alertMessage;");
+                return msg?.ToString();
             });
 
-            Assert.That(alert!.Text, Does.Contain("already in the meal"));
-            alert.Accept();
+            Assert.That(message, Does.Contain("already in the meal"));
         }
     }
 }
