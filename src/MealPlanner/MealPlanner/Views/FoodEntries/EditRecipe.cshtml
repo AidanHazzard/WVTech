@@ -78,13 +78,15 @@
                 <div id="tags-container" class="d-flex flex-wrap gap-1 mb-2">
                     @foreach (var tag in Model.Tags)
                     {
-                        <button type="button"
-                                class="tag-pill badge rounded-pill recipe-tag recipe-tag-removable"
-                                title="Remove @tag"
-                                data-predefined="@Model.AvailableTags.Contains(tag).ToString().ToLower()">
-                            @tag
+                        <span class="tag-wrapper">
+                            <button type="button"
+                                    class="tag-pill badge rounded-pill recipe-tag recipe-tag-removable"
+                                    title="Remove @tag"
+                                    data-predefined="@Model.AvailableTags.Contains(tag).ToString().ToLower()">
+                                @tag
+                            </button>
                             <input type="hidden" name="Tags" value="@tag" />
-                        </button>
+                        </span>
                     }
                 </div>
                 <div class="d-flex align-items-center gap-2 flex-wrap">
