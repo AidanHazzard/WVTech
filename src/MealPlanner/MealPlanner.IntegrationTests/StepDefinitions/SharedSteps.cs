@@ -33,6 +33,8 @@ public class SharedSteps
             try { _driver.SwitchTo().Alert().Dismiss(); } catch { }
             _driver.Navigate().GoToUrl($"{_baseUrl}/UserSettings");
             _driver.FindElement(By.TagName("form")).Click();
+            new WebDriverWait(_driver, TimeSpan.FromSeconds(5)).Until(d =>
+                ((IJavaScriptExecutor)d).ExecuteScript("return document.readyState").ToString() == "complete");
         }
         catch
         {}

@@ -112,7 +112,17 @@ public class WVT158Steps
         _driver.FindElement(By.CssSelector("select[name='measurement']")).FindElement(By.XPath(".//option[@value='Count']")).Click();
         _driver.FindElement(By.CssSelector("input[name='itemName']")).SendKeys(IngredientName);
         _driver.FindElement(By.CssSelector("button[type='submit'].btn-success")).Click();
-        _wait.Until(d => ((IJavaScriptExecutor)d).ExecuteScript("return document.readyState").ToString() == "complete");
+
+        // Wait for the POST navigation to start, then fully complete back on the shopping list
+        try
+        {
+            new WebDriverWait(_driver, TimeSpan.FromSeconds(3))
+                .Until(d => ((IJavaScriptExecutor)d).ExecuteScript("return document.readyState")?.ToString() != "complete");
+        }
+        catch (WebDriverTimeoutException) { }
+        _wait.Until(d =>
+            ((IJavaScriptExecutor)d).ExecuteScript("return document.readyState")?.ToString() == "complete"
+            && d.Url.Contains("ShoppingList"));
     }
 
     [When("'Alice' changes the shopping list to a date range that excludes today")]

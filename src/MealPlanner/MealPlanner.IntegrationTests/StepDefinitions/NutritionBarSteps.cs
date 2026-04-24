@@ -223,15 +223,26 @@ public class NutritionBarSteps
     {
         var today = DateTime.Today.ToString("yyyy-MM-dd");
         _driver.Navigate().GoToUrl($"{_baseUrl}/Meal/PlannerHome?date={today}");
+        new WebDriverWait(_driver, TimeSpan.FromSeconds(10)).Until(d =>
+            ((IJavaScriptExecutor)d).ExecuteScript("return document.readyState").ToString() == "complete");
 
         var checkbox = new WebDriverWait(_driver, TimeSpan.FromSeconds(5))
             .Until(d => d.FindElement(By.CssSelector("input[type='checkbox'][name='isCompleted']")));
 
         checkbox.Click();
 
-        // Wait for page to reload after form submit
-        new WebDriverWait(_driver, TimeSpan.FromSeconds(5))
-            .Until(d => d.FindElement(By.CssSelector("input[type='checkbox'][name='isCompleted']")));
+        // Wait for readyState to leave "complete" (form submit navigation started)
+        try
+        {
+            new WebDriverWait(_driver, TimeSpan.FromSeconds(3))
+                .Until(d => ((IJavaScriptExecutor)d).ExecuteScript("return document.readyState").ToString() != "complete");
+        }
+        catch (WebDriverTimeoutException) { }
+
+        // Wait for the POST + redirect to fully complete back on PlannerHome
+        new WebDriverWait(_driver, TimeSpan.FromSeconds(10)).Until(d =>
+            ((IJavaScriptExecutor)d).ExecuteScript("return document.readyState").ToString() == "complete"
+            && d.FindElements(By.CssSelector("input[type='checkbox'][name='isCompleted']")).Count > 0);
     }
 
     [Then("Meal Bars callories are at {int}\\/{int}")]
@@ -299,6 +310,23 @@ public class NutritionBarSteps
         new WebDriverWait(_driver, TimeSpan.FromSeconds(10)).Until(driver =>
             ((IJavaScriptExecutor)driver)
                 .ExecuteScript("return document.readyState").ToString() == "complete");
+
+        if (!_driver.Url.Contains(pageName, StringComparison.OrdinalIgnoreCase))
+        {
+            // Redirected away — re-authenticate if needed, then retry
+            if (_driver.Url.Contains("/Login", StringComparison.OrdinalIgnoreCase))
+            {
+                _driver.FindElement(By.Id("Email")).SendKeys($"{username}@fakeemail.com");
+                _driver.FindElement(By.Id("Password")).SendKeys("1234!Abcd");
+                _driver.FindElement(By.ClassName("btn")).Click();
+                new WebDriverWait(_driver, TimeSpan.FromSeconds(10)).Until(d =>
+                    !d.Url.Contains("/Login", StringComparison.OrdinalIgnoreCase));
+            }
+            _driver.Navigate().GoToUrl($"{_baseUrl}/{pageName}");
+            new WebDriverWait(_driver, TimeSpan.FromSeconds(10)).Until(driver =>
+                ((IJavaScriptExecutor)driver)
+                    .ExecuteScript("return document.readyState").ToString() == "complete");
+        }
     }
 
     [Given("{string} fills in the nutrition targets")]
