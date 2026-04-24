@@ -199,6 +199,7 @@ public class EditRecipeSteps
     [Then("{string} is redirected away from the edit recipe page")]
     public void ThenUserIsRedirectedAwayFromEditRecipePage(string username)
     {
-        Assert.That(_driver.Url, Does.Not.Contain("/FoodEntries/EditRecipe"));
+        new WebDriverWait(_driver, TimeSpan.FromSeconds(10)).Until(d =>
+            !d.Url.Contains("/FoodEntries/EditRecipe"));
     }
 }

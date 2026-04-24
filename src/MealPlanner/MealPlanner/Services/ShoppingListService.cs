@@ -17,11 +17,11 @@ public class ShoppingListService
         _shoppingListRepository.RemoveAutoAddedByUserId(userId);
 
         var grouped = ingredients
-            .GroupBy(i => i.IngredientBase.Name.ToLower())
+            .GroupBy(i => (IngredientNameNormalizer.NormalizeKey(i.IngredientBase.Name), i.Measurement.Name.ToLower()))
             .Select(g => new ShoppingListItem
             {
                 UserId = userId,
-                Name = g.First().IngredientBase.Name,
+                Name = IngredientNameNormalizer.Normalize(g.First().IngredientBase.Name),
                 Amount = g.Sum(i => i.Amount),
                 Measurement = g.First().Measurement.Name,
                 IsAutoAdded = true
@@ -41,7 +41,7 @@ public class ShoppingListService
         var item = new ShoppingListItem
         {
             UserId = userId,
-            Name = itemName.Trim(),
+            Name = IngredientNameNormalizer.Normalize(itemName),
             Amount = amount,
             Measurement = measurement.Trim()
         };
@@ -72,11 +72,11 @@ public class ShoppingListService
     public IEnumerable<ShoppingListItem> GetItemsForUser(string userId)
     {
         return _shoppingListRepository.GetByUserId(userId)
-            .GroupBy(i => i.Name.ToLower())
+            .GroupBy(i => (IngredientNameNormalizer.NormalizeKey(i.Name), i.Measurement.ToLower()))
             .Select(g => new ShoppingListItem
             {
                 UserId = userId,
-                Name = g.First().Name,
+                Name = IngredientNameNormalizer.Normalize(g.First().Name),
                 Amount = g.Sum(i => i.Amount),
                 Measurement = g.First().Measurement,
                 IsAutoAdded = g.Any(i => i.IsAutoAdded)
