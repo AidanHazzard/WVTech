@@ -38,10 +38,19 @@ public class WVT72Steps
     [Then("the meal repeat rule is saved as weekly")]
     public void ThenTheMealRepeatRuleIsSavedAsWeekly()
     {
-        var repeatCheckbox = new WebDriverWait(_driver, TimeSpan.FromSeconds(5))
-            .Until(d => d.FindElement(By.Name("RepeatWeekly")));
-
-        Assert.That(repeatCheckbox.Selected, Is.True);
+        bool? isSelected = null;
+        new WebDriverWait(_driver, TimeSpan.FromSeconds(5))
+            .Until(d =>
+            {
+                try
+                {
+                    isSelected = d.FindElement(By.Name("RepeatWeekly")).Selected;
+                    return true;
+                }
+                catch (StaleElementReferenceException) { return false; }
+                catch (NoSuchElementException) { return false; }
+            });
+        Assert.That(isSelected, Is.True);
     }
 
     // This step definition uses Cucumber Expressions. See https://github.com/gasparnagy/CucumberExpressions.SpecFlow
@@ -58,21 +67,37 @@ public class WVT72Steps
     [Then("the meal month field is saved as {string}")]
     public void ThenTheMealMonthFieldIsSavedAs(string expectedMonth)
     {
-        var monthElement = new WebDriverWait(_driver, TimeSpan.FromSeconds(5))
-            .Until(d => d.FindElement(By.Name("SelectedMonth")));
-        var monthSelect = new SelectElement(monthElement);
-        var resultMonth = monthSelect.SelectedOption;
-        Assert.That(resultMonth.Text, Does.Contain(expectedMonth));
+        string? selectedText = null;
+        new WebDriverWait(_driver, TimeSpan.FromSeconds(5))
+            .Until(d =>
+            {
+                try
+                {
+                    selectedText = new SelectElement(d.FindElement(By.Name("SelectedMonth"))).SelectedOption.Text;
+                    return true;
+                }
+                catch (StaleElementReferenceException) { return false; }
+                catch (NoSuchElementException) { return false; }
+            });
+        Assert.That(selectedText, Does.Contain(expectedMonth));
     }
 
     // This step definition uses Cucumber Expressions. See https://github.com/gasparnagy/CucumberExpressions.SpecFlow
     [Then("the meal day field is saved as {string}")]
     public void ThenTheMealDayFieldIsSavedAs(string expectedDay)
     {
-        var dayElement = new WebDriverWait(_driver, TimeSpan.FromSeconds(5))
-            .Until(d => d.FindElement(By.Name("SelectedDay")));
-        var daySelect = new SelectElement(dayElement);
-        var resultDay = daySelect.SelectedOption;
-        Assert.That(resultDay.Text, Does.Contain(expectedDay));
+        string? selectedText = null;
+        new WebDriverWait(_driver, TimeSpan.FromSeconds(5))
+            .Until(d =>
+            {
+                try
+                {
+                    selectedText = new SelectElement(d.FindElement(By.Name("SelectedDay"))).SelectedOption.Text;
+                    return true;
+                }
+                catch (StaleElementReferenceException) { return false; }
+                catch (NoSuchElementException) { return false; }
+            });
+        Assert.That(selectedText, Does.Contain(expectedDay));
     }
 }

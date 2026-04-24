@@ -29,6 +29,8 @@ public class WVT158Steps
     private void NavigateToShoppingList()
     {
         _driver.Manage().Cookies.DeleteCookieNamed("ShoppingListSynced");
+        _driver.Manage().Cookies.DeleteCookieNamed("ShoppingListDateFrom");
+        _driver.Manage().Cookies.DeleteCookieNamed("ShoppingListDateTo");
         _driver.Navigate().GoToUrl($"{_baseUrl}/ShoppingList");
         _wait.Until(d => d.Url.Contains("ShoppingList"));
     }
@@ -48,6 +50,14 @@ public class WVT158Steps
     {
         using var ctx = BDDSetup.CreateContext();
         var userId = GetAliceId(ctx);
+
+        var staleItems = ctx.Set<ShoppingListItem>()
+            .Where(i => i.UserId == userId && i.Name == IngredientName).ToList();
+        ctx.Set<ShoppingListItem>().RemoveRange(staleItems);
+        var staleMeals = ctx.Meals
+            .Where(m => m.UserId == userId && m.Title == "WVT158 Meal").ToList();
+        ctx.Meals.RemoveRange(staleMeals);
+        ctx.SaveChanges();
 
         var ingredientBase = ctx.Set<IngredientBase>().FirstOrDefault(ib => ib.Name == IngredientName);
         if (ingredientBase == null)
@@ -102,7 +112,17 @@ public class WVT158Steps
         _driver.FindElement(By.CssSelector("select[name='measurement']")).FindElement(By.XPath(".//option[@value='Count']")).Click();
         _driver.FindElement(By.CssSelector("input[name='itemName']")).SendKeys(IngredientName);
         _driver.FindElement(By.CssSelector("button[type='submit'].btn-success")).Click();
-        _wait.Until(d => ((IJavaScriptExecutor)d).ExecuteScript("return document.readyState").ToString() == "complete");
+
+        // Wait for the POST navigation to start, then fully complete back on the shopping list
+        try
+        {
+            new WebDriverWait(_driver, TimeSpan.FromSeconds(3))
+                .Until(d => ((IJavaScriptExecutor)d).ExecuteScript("return document.readyState")?.ToString() != "complete");
+        }
+        catch (WebDriverTimeoutException) { }
+        _wait.Until(d =>
+            ((IJavaScriptExecutor)d).ExecuteScript("return document.readyState")?.ToString() == "complete"
+            && d.Url.Contains("ShoppingList"));
     }
 
     [When("'Alice' changes the shopping list to a date range that excludes today")]

@@ -1,12 +1,20 @@
-$(document).on("click", ".delete-recipe-btn", function () {
+$(document).on("click", ".mealRecipeItem", function (e) {
+    if ($(e.target).closest(".delete-recipe-btn").length) return;
+    const recipeId = $(this).data("recipe-id");
+    if (recipeId) window.location.href = `/FoodEntries/Recipes/${recipeId}`;
+});
+
+$(document).on("click", ".delete-recipe-btn", function (e) {
+    e.stopPropagation();
     if (!confirm("Are you sure you want to remove this recipe?")) return;
-    
+
     const $row = $(this).closest(".mealRecipeItem");
     const recipeId = $row.data("recipe-id");
     const mealId = $row.data("meal-id");
 
     fetch("/Meal/DeleteRecipeFromMeal", {
         method: "POST",
+        keepalive: true,
         headers: { "Content-Type": "application/x-www-form-urlencoded" },
         body: `mealId=${mealId}&recipeId=${recipeId}`
     }).then(response => {
