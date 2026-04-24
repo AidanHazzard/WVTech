@@ -689,6 +689,59 @@ public class UserRecipeRepositoryTests
     }
 
     
+    [Test]
+    public async Task GetUserVotesByUserIdAsync_ReturnsCorrectVotes()
+    {
+        var repo = new UserRecipeRepository(_context);
+        _context.AddRange(
+            new UserRecipe { User = _user, Recipe = _recipes[0], UserVote = UserVoteType.UpVote },
+            new UserRecipe { User = _user, Recipe = _recipes[1], UserVote = UserVoteType.DownVote }
+        );
+        _context.SaveChanges();
+
+        var result = await repo.GetUserVotesByUserIdAsync(_user.Id);
+
+        Assert.That(result[_recipes[0].Id], Is.EqualTo(UserVoteType.UpVote));
+        Assert.That(result[_recipes[1].Id], Is.EqualTo(UserVoteType.DownVote));
+    }
+
+    [Test]
+    public async Task GetUserVotesByUserIdAsync_ReturnsEmptyDict_WhenNoVotes()
+    {
+        var repo = new UserRecipeRepository(_context);
+
+        var result = await repo.GetUserVotesByUserIdAsync(_user.Id);
+
+        Assert.That(result, Is.Empty);
+    }
+
+    [Test]
+    public async Task GetAllVotePercentagesAsync_ReturnsCorrectPercentage()
+    {
+        var repo = new UserRecipeRepository(_context);
+        var u2 = new User { Id = "XYZ", FullName = "" };
+        _context.Add(u2);
+        _context.AddRange(
+            new UserRecipe { User = _user, Recipe = _recipes[0], UserVote = UserVoteType.UpVote },
+            new UserRecipe { User = u2, Recipe = _recipes[0], UserVote = UserVoteType.DownVote }
+        );
+        _context.SaveChanges();
+
+        var result = await repo.GetAllVotePercentagesAsync();
+
+        Assert.That(result[_recipes[0].Id], Is.EqualTo(0.5f).Within(ERROR));
+    }
+
+    [Test]
+    public async Task GetAllVotePercentagesAsync_ReturnsEmptyDict_WhenNoVotes()
+    {
+        var repo = new UserRecipeRepository(_context);
+
+        var result = await repo.GetAllVotePercentagesAsync();
+
+        Assert.That(result, Is.Empty);
+    }
+
     [TestCase("ABCD", 0)]
     [TestCase("", 10)]
     public async Task GetUserRecipeVoteAsync_ReturnsNoVote_IfUserOrRecipeNotFound(string userId, int recipeId)

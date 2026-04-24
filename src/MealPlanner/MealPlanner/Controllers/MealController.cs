@@ -17,6 +17,7 @@ public class MealController : Controller
     private readonly IRecipeRepository _recipeRepo;
     private readonly IMealRepository _mealRepo;
     private readonly MealPlannerDBContext _context;
+    private readonly ITagRepository _tagRepo;
     private readonly IMealRecommendationService? _recommendationService;
 
     public MealController(
@@ -24,12 +25,14 @@ public class MealController : Controller
         IRecipeRepository recipeRepo,
         IMealRepository mealRepo,
         MealPlannerDBContext context,
+        ITagRepository tagRepo,
         IMealRecommendationService? mealRecommendationService = null)
     {
         _registrationService = registrationService;
         _recipeRepo = recipeRepo;
         _mealRepo = mealRepo;
         _context = context;
+        _tagRepo = tagRepo;
         _recommendationService = mealRecommendationService;
     }
 
@@ -114,8 +117,9 @@ public class MealController : Controller
     }
 
     [HttpGet]
-    public IActionResult NewMeal(string? date)
+    public async Task<IActionResult> NewMeal(string? date)
     {
+        ViewBag.AvailableTags = await _tagRepo.GetTagsByPopularityAsync();
         var selected = DateTime.TryParse(date, out var parsed) ? parsed : DateTime.Today;
         return View(new CreateMealViewModel
         {
@@ -198,6 +202,91 @@ public class MealController : Controller
         _context.SaveChanges();
         Response.Cookies.Delete("ShoppingListSynced");
         return RedirectToAction("ViewMeal", new {id = newMeal.Id });
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> GenerateDayPlan(ViewModels.DayPlanConfigViewModel model)
+    {
+        var user = await _registrationService.FindUserByClaimAsync(User);
+        if (user == null) return Challenge();
+        if (_recommendationService == null) return Problem(statusCode: 500);
+
+        await ResolveCustomTagNamesAsync(model.MealPreferences);
+
+        var selectedDate = new DateTime(DateTime.Today.Year, model.SelectedMonth, model.SelectedDay);
+        var meals = await _recommendationService.GetRecommendedDayPlanForUser(user, selectedDate, model);
+
+        foreach (var meal in meals)
+            _mealRepo.CreateOrUpdate(meal);
+        _context.SaveChanges();
+
+        TempData["GeneratedMealIds"] = string.Join(",", meals.Select(m => m.Id));
+
+        return RedirectToAction("DayPlanSummary", new { date = selectedDate.ToString("yyyy-MM-dd") });
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> RegenerateMeal(int mealId, ViewModels.MealPreferenceViewModel preferences)
+    {
+        var user = await _registrationService.FindUserByClaimAsync(User);
+        if (user == null) return Challenge();
+        if (_recommendationService == null) return Problem(statusCode: 500);
+
+        var meal = await _mealRepo.ReadAsync(mealId);
+        if (meal == null || meal.UserId != user.Id) return NotFound();
+
+        var mealDate = meal.StartTime?.Date ?? DateTime.Today;
+        await ResolveCustomTagNamesAsync([preferences]);
+        var config = new ViewModels.DayPlanConfigViewModel
+        {
+            MealCount = 1,
+            SelectedMonth = mealDate.Month,
+            SelectedDay = mealDate.Day,
+            MealPreferences = [preferences]
+        };
+
+        var newMeals = await _recommendationService.GetRecommendedDayPlanForUser(user, mealDate, config);
+        await _mealRepo.LoadRecipesAsync(meal);
+        meal.Recipes = newMeals.FirstOrDefault()?.Recipes ?? [];
+        _mealRepo.CreateOrUpdate(meal);
+        _context.SaveChanges();
+
+        return Json(new
+        {
+            mealId = meal.Id,
+            title = meal.Title,
+            recipes = meal.Recipes.Select(r => new { r.Id, r.Name, r.Calories })
+        });
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> DayPlanSummary(string? date)
+    {
+        var generatedIdsRaw = TempData["GeneratedMealIds"] as string;
+        if (string.IsNullOrEmpty(generatedIdsRaw))
+            return RedirectToAction("Index", "Home");
+
+        var generatedIds = generatedIdsRaw.Split(',').Select(int.Parse).ToList();
+
+        var user = await _registrationService.FindUserByClaimAsync(User);
+        if (user == null) return Challenge();
+
+        DateTime selectedDate = DateTime.TryParse(date, out var parsed) ? parsed.Date : DateTime.Today;
+        var meals = await _mealRepo.GetMealsByIdsAsync(generatedIds);
+
+        var vm = new ViewModels.DayPlanSummaryViewModel
+        {
+            Date = selectedDate,
+            AvailableTags = await _tagRepo.GetTagsByPopularityAsync(),
+            Meals = meals.Select(m => new ViewModels.DayPlanMealViewModel
+            {
+                MealId = m.Id,
+                Title = m.Title ?? string.Empty,
+                Recipes = m.Recipes
+            }).ToList()
+        };
+
+        return View(vm);
     }
 
     [HttpGet]
@@ -407,5 +496,19 @@ public class MealController : Controller
         return source == "home"
             ? RedirectToAction("Index", "Home", new { date })
             : RedirectToAction("PlannerHome", "Meal", new { date });
+    }
+
+    private async Task ResolveCustomTagNamesAsync(IEnumerable<ViewModels.MealPreferenceViewModel> preferences)
+    {
+        foreach (var pref in preferences)
+        {
+            foreach (var name in new[] { pref.CustomTagName, pref.Title }
+                .Where(n => !string.IsNullOrWhiteSpace(n)))
+            {
+                var tag = await _tagRepo.FindByNameAsync(name!.Trim());
+                if (tag != null && !pref.TagIds.Contains(tag.Id))
+                    pref.TagIds.Add(tag.Id);
+            }
+        }
     }
 }
