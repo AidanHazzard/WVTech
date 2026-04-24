@@ -1,4 +1,5 @@
 using MealPlanner.DAL.Abstract;
+using MealPlanner.Helpers;
 using MealPlanner.Models;
 using MealPlanner.Services;
 using MealPlanner.ViewModels;
@@ -161,7 +162,8 @@ public class MealController : Controller
             UserId = user.Id,
             Title = model.Title.Trim(),
             StartTime = selectedDate,
-            RepeatRule = model.RepeatWeekly ? "Weekly" : null
+            RepeatRule = model.RepeatWeekly ? "Weekly" : null,
+            RepeatDays = model.RepeatWeekly ? MealSchedule.EncodeRepeatDays(model.RepeatDays) : null
         };
 
         foreach (int id in model.RecipeIds)
@@ -337,6 +339,7 @@ public class MealController : Controller
             SelectedMonth = meal.StartTime?.Month ?? DateTime.Today.Month,
             SelectedDay = meal.StartTime?.Day ?? DateTime.Today.Day,
             RepeatWeekly = meal.RepeatRule == "Weekly",
+            RepeatDays = MealSchedule.ParseRepeatDays(meal.RepeatDays).ToList(),
             RecipeIds = meal.Recipes?.Select(r => r.Id).ToList() ?? new List<int>(),
             Recipes = meal.Recipes?.Select(r => new RecipeDisplayViewModel
             {
@@ -374,6 +377,7 @@ public class MealController : Controller
         meal.Title = model.Title.Trim();
         meal.StartTime = selectedDate;
         meal.RepeatRule = model.RepeatWeekly ? "Weekly" : null;
+        meal.RepeatDays = model.RepeatWeekly ? MealSchedule.EncodeRepeatDays(model.RepeatDays) : null;
 
         var incomingRecipeIds = model.RecipeIds
             .Distinct()
@@ -438,7 +442,21 @@ public class MealController : Controller
             return Forbid();
         }
 
-        _context.Meals.Remove(meal);
+        if (meal.RepeatRule == "Weekly")
+        {
+            var exclusionDate = DateTime.TryParse(date, out var pd) ? pd.Date : DateTime.Today;
+            var alreadyExcluded = await _context.MealExclusions
+                .FindAsync(meal.Id, exclusionDate);
+            if (alreadyExcluded == null)
+            {
+                _context.MealExclusions.Add(new MealExclusion { MealId = meal.Id, ExclusionDate = exclusionDate });
+            }
+        }
+        else
+        {
+            _context.Meals.Remove(meal);
+        }
+
         await _context.SaveChangesAsync();
 
         Response.Cookies.Delete("ShoppingListSynced");
@@ -490,7 +508,19 @@ public class MealController : Controller
             return Forbid();
         }
 
-        meal.IsCompleted = isCompleted == true;
+        var completionDate = DateTime.TryParse(date, out var parsedDate) ? parsedDate.Date : DateTime.Today;
+        var existing = await _context.MealCompletions
+            .FindAsync(meal.Id, completionDate);
+
+        if (isCompleted == true && existing == null)
+        {
+            _context.MealCompletions.Add(new MealCompletion { MealId = meal.Id, CompletionDate = completionDate });
+        }
+        else if (isCompleted != true && existing != null)
+        {
+            _context.MealCompletions.Remove(existing);
+        }
+
         await _context.SaveChangesAsync();
 
         return source == "home"

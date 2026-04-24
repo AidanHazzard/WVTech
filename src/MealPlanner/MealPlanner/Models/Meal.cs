@@ -24,6 +24,11 @@ public class Meal
     public DateTime? EndTime { get; set; }
 
     public string? RepeatRule { get; set; }
+
+    // Comma-separated DayOfWeek integers (e.g. "1,3" = Monday+Wednesday).
+    // Null means fall back to StartTime.DayOfWeek for backward compatibility.
+    public string? RepeatDays { get; set; }
+
     public bool IsCompleted { get; set; }
 
     public List<Recipe> Recipes { get; set; } = [];
