@@ -19,6 +19,8 @@ namespace MealPlanner.Models
 
         public DbSet<Tag> Tags { get; set; }
         public DbSet<ShoppingListItem> ShoppingListItems { get; set; }
+        public DbSet<MealCompletion> MealCompletions { get; set; }
+        public DbSet<MealExclusion> MealExclusions { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -38,6 +40,24 @@ namespace MealPlanner.Models
                     new Recipe { Id = -9, Name = "Ceasar Salad", Directions = "", Calories = 300 }
                 );
             });
+
+            modelBuilder.Entity<MealCompletion>()
+                .HasKey(mc => new { mc.MealId, mc.CompletionDate });
+
+            modelBuilder.Entity<MealCompletion>()
+                .HasOne(mc => mc.Meal)
+                .WithMany()
+                .HasForeignKey(mc => mc.MealId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<MealExclusion>()
+                .HasKey(me => new { me.MealId, me.ExclusionDate });
+
+            modelBuilder.Entity<MealExclusion>()
+                .HasOne(me => me.Meal)
+                .WithMany()
+                .HasForeignKey(me => me.MealId)
+                .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<UserDietaryRestriction>()
                 .HasKey(udr => new { udr.UserId, udr.DietaryRestrictionId });
