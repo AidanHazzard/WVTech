@@ -109,6 +109,22 @@ public class RecipeRepository : Repository<Recipe>, IRecipeRepository
         return base.CreateOrUpdate(recipe);
     }
 
+    public List<Recipe> GetRecipesByNameAndTag(string name, string tag)
+    {
+        var query = _dbset.Include(r => r.Tags)
+            .Where(r => r.ExternalUri == null &&
+                        r.Tags.Any(t => t.Name.ToLower() == tag.ToLower()));
+
+        if (!string.IsNullOrEmpty(name))
+        {
+            query = query.Where(r =>
+                r.Name.ToLower().Contains($" {name.ToLower()}") ||
+                r.Name.ToLower().StartsWith(name.ToLower()));
+        }
+
+        return query.ToList();
+    }
+
     public async Task<Recipe?> ReadRecipeWithIngredientsAsync(int id)
     {
         return await _dbset
