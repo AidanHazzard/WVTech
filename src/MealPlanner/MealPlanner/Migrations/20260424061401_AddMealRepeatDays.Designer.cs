@@ -4,6 +4,7 @@ using MealPlanner.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace MealPlanner.Migrations
 {
     [DbContext(typeof(MealPlannerDBContext))]
-    partial class MealPlannerDBContextModelSnapshot : ModelSnapshot
+    [Migration("20260424061401_AddMealRepeatDays")]
+    partial class AddMealRepeatDays
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -128,32 +131,6 @@ namespace MealPlanner.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("Meal");
-                });
-
-            modelBuilder.Entity("MealPlanner.Models.MealCompletion", b =>
-                {
-                    b.Property<int>("MealId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("CompletionDate")
-                        .HasColumnType("datetime2");
-
-                    b.HasKey("MealId", "CompletionDate");
-
-                    b.ToTable("MealCompletion");
-                });
-
-            modelBuilder.Entity("MealPlanner.Models.MealExclusion", b =>
-                {
-                    b.Property<int>("MealId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("ExclusionDate")
-                        .HasColumnType("datetime2");
-
-                    b.HasKey("MealId", "ExclusionDate");
-
-                    b.ToTable("MealExclusion");
                 });
 
             modelBuilder.Entity("MealPlanner.Models.Measurement", b =>
@@ -753,28 +730,6 @@ namespace MealPlanner.Migrations
                         .IsRequired();
 
                     b.Navigation("User");
-                });
-
-            modelBuilder.Entity("MealPlanner.Models.MealCompletion", b =>
-                {
-                    b.HasOne("MealPlanner.Models.Meal", "Meal")
-                        .WithMany()
-                        .HasForeignKey("MealId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Meal");
-                });
-
-            modelBuilder.Entity("MealPlanner.Models.MealExclusion", b =>
-                {
-                    b.HasOne("MealPlanner.Models.Meal", "Meal")
-                        .WithMany()
-                        .HasForeignKey("MealId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Meal");
                 });
 
             modelBuilder.Entity("MealPlanner.Models.UserDietaryRestriction", b =>

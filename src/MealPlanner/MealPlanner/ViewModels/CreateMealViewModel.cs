@@ -19,4 +19,6 @@ public class CreateMealViewModel
     public int SelectedDay { get; set; }
 
     public bool RepeatWeekly { get; set; }
+
+    public List<DayOfWeek> RepeatDays { get; set; } = [];
 }
