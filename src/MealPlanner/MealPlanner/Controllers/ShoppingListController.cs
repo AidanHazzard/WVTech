@@ -100,14 +100,14 @@ public class ShoppingListController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> RemoveItem(int itemId)
+    public async Task<IActionResult> RemoveItem(string itemName)
     {
         User? user = await _userManager.GetUserAsync(User);
         if (user == null) return Challenge();
 
         try
         {
-            _shoppingListService.RemoveItem(itemId, user.Id);
+            _shoppingListService.RemoveItemsByName(user.Id, itemName);
         }
         catch (ArgumentException ex)
         {

@@ -179,26 +179,17 @@ namespace Mealplanner.IntegrationTests
             searchInput.Click();
             searchInput.Clear();
             searchInput.SendKeys(searchTerm);
-            Thread.Sleep(1100);
+            Thread.Sleep(1100); // Use a wait!!
         }
 
         [Given("'Jack' clicks the first search result")]
         [When("'Jack' clicks the first search result")]
         public void GivenJackClicksTheFirstSearchResult()
         {
-            var firstResult = _wait.Until(driver =>
-            {
-                try
-                {
-                    var el = driver.FindElement(By.CssSelector(".recipeSearchRow"));
-                    return el.Displayed ? el : null;
-                }
-                catch (NoSuchElementException) { return null; }
-            })!;
-
+            var firstResult = _wait.Until(driver => driver.FindElement(By.CssSelector(".recipeSearchRow")));
+            
             ((IJavaScriptExecutor)_driver)
-                .ExecuteScript("arguments[0].scrollIntoView(true);", firstResult);
-            firstResult.Click();
+                .ExecuteScript("arguments[0].click();", firstResult);
         }
     }
 }

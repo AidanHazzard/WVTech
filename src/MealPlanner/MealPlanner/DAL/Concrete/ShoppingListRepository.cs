@@ -15,7 +15,9 @@ public class ShoppingListRepository : IShoppingListRepository
     public void Add(ShoppingListItem item)
     {
         var existing = _context.ShoppingListItems
-            .FirstOrDefault(i => i.UserId == item.UserId && i.Name.ToLower() == item.Name.ToLower());
+            .FirstOrDefault(i => i.UserId == item.UserId
+                              && i.Name.ToLower() == item.Name.ToLower()
+                              && i.IsAutoAdded == item.IsAutoAdded);
 
         if (existing != null)
         {
@@ -37,6 +39,19 @@ public class ShoppingListRepository : IShoppingListRepository
         if (item != null)
         {
             _context.ShoppingListItems.Remove(item);
+            _context.SaveChanges();
+        }
+    }
+
+    public void RemoveAllByName(string userId, string name)
+    {
+        var items = _context.ShoppingListItems
+            .Where(i => i.UserId == userId && i.Name.ToLower() == name.ToLower())
+            .ToList();
+
+        if (items.Count > 0)
+        {
+            _context.ShoppingListItems.RemoveRange(items);
             _context.SaveChanges();
         }
     }
