@@ -29,7 +29,7 @@ public class ShoppingListServiceTests
     }
 
     [Test]
-    public void AddItem_ShouldTrimName_WhenNameHasExtraSpaces()
+    public void AddItem_ShouldTrimAndNormalizeName_WhenNameHasExtraSpaces()
     {
         var repo = new Mock<IShoppingListRepository>();
         var service = new ShoppingListService(repo.Object);
@@ -39,9 +39,10 @@ public class ShoppingListServiceTests
 
         service.AddItem(userId, itemName, 1, "");
 
+        // Normalize trims whitespace and singularizes: "  Eggs  " → "Egg"
         repo.Verify(r => r.Add(It.Is<ShoppingListItem>(i =>
             i.UserId == userId &&
-            i.Name == "Eggs"
+            i.Name == "Egg"
         )), Times.Once);
     }
 
