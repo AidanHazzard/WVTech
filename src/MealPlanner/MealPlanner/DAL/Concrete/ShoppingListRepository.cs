@@ -1,5 +1,6 @@
 using MealPlanner.DAL.Abstract;
 using MealPlanner.Models;
+using MealPlanner.Services;
 
 namespace MealPlanner.DAL.Concrete;
 
@@ -14,9 +15,13 @@ public class ShoppingListRepository : IShoppingListRepository
 
     public void Add(ShoppingListItem item)
     {
+        var normalizedKey = IngredientNameNormalizer.NormalizeKey(item.Name);
+        var normalizedMeasurement = item.Measurement.ToLower();
         var existing = _context.ShoppingListItems
+            .AsEnumerable()
             .FirstOrDefault(i => i.UserId == item.UserId
-                              && i.Name.ToLower() == item.Name.ToLower()
+                              && IngredientNameNormalizer.NormalizeKey(i.Name) == normalizedKey
+                              && i.Measurement.ToLower() == normalizedMeasurement
                               && i.IsAutoAdded == item.IsAutoAdded);
 
         if (existing != null)
