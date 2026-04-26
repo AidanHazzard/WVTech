@@ -78,4 +78,19 @@ public class ShoppingListRepository : IShoppingListRepository
             .OrderBy(i => i.Name)
             .ToList();
     }
+
+    public void UpdateAmountByName(string userId, string name, float newAmount)
+    {
+        var items = _context.ShoppingListItems
+            .Where(i => i.UserId == userId && i.Name.ToLower() == name.ToLower())
+            .ToList();
+
+        if (items.Count == 0) return;
+
+        items[0].Amount = newAmount;
+        if (items.Count > 1)
+            _context.ShoppingListItems.RemoveRange(items.Skip(1));
+
+        _context.SaveChanges();
+    }
 }
