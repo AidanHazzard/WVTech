@@ -224,6 +224,11 @@ button {
     line-height: 0;
     border-radius: 20px;
     overflow: hidden;
+    flex-shrink: 0;
+}
+
+.mealCardInner {
+    position: relative;
 }
 
 .mealViewForm {

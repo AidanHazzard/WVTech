@@ -13,4 +13,6 @@ public interface IShoppingListRepository
     void RemoveAutoAddedByUserId(string userId);
 
     IEnumerable<ShoppingListItem> GetByUserId(string userId);
+
+    void UpdateAmountByName(string userId, string name, float newAmount);
 }
