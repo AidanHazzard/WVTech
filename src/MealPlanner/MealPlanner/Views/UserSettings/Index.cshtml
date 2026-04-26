@@ -91,10 +91,10 @@
                 {
                     <form asp-action="RemoveFoodPreference" method="post" class="d-inline">
                         @Html.AntiForgeryToken()
+                        <input type="hidden" name="tagName" value="@pref" />
                         <button type="submit" class="food-pref-item tag-pill badge rounded-pill recipe-tag food-pref-remove-btn"
                                 data-tag-name="@pref" title="Remove @pref">
                             @pref ×
-                            <input type="hidden" name="tagName" value="@pref" />
                         </button>
                     </form>
                 }
