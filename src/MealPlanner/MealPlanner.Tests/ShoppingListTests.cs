@@ -91,6 +91,37 @@ public class ShoppingListServiceTests
     }
 
     [Test]
+    public void UpdateItemAmount_ShouldCallRepositoryUpdateAmountByName_WhenValid()
+    {
+        var repo = new Mock<IShoppingListRepository>();
+        var service = new ShoppingListService(repo.Object);
+
+        service.UpdateItemAmount("user-1", "Milk", 3.5f);
+
+        repo.Verify(r => r.UpdateAmountByName("user-1", "Milk", 3.5f), Times.Once);
+    }
+
+    [Test]
+    public void UpdateItemAmount_ShouldThrowArgumentException_WhenNameIsEmpty()
+    {
+        var repo = new Mock<IShoppingListRepository>();
+        var service = new ShoppingListService(repo.Object);
+
+        Assert.Throws<ArgumentException>(() => service.UpdateItemAmount("user-1", "", 1f));
+        repo.Verify(r => r.UpdateAmountByName(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<float>()), Times.Never);
+    }
+
+    [Test]
+    public void UpdateItemAmount_ShouldThrowArgumentException_WhenAmountIsNegative()
+    {
+        var repo = new Mock<IShoppingListRepository>();
+        var service = new ShoppingListService(repo.Object);
+
+        Assert.Throws<ArgumentException>(() => service.UpdateItemAmount("user-1", "Milk", -1f));
+        repo.Verify(r => r.UpdateAmountByName(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<float>()), Times.Never);
+    }
+
+    [Test]
     public void GetItemsForUser_ShouldReturnOnlyThatUsersItems()
     {
         var repo = new Mock<IShoppingListRepository>();

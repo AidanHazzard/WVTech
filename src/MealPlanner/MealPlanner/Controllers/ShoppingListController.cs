@@ -100,6 +100,25 @@ public class ShoppingListController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    public async Task<IActionResult> UpdateItemAmount(string itemName, float newAmount)
+    {
+        User? user = await _userManager.GetUserAsync(User);
+        if (user == null) return Challenge();
+
+        try
+        {
+            _shoppingListService.UpdateItemAmount(user.Id, itemName, newAmount);
+        }
+        catch (ArgumentException ex)
+        {
+            TempData["ShoppingListError"] = ex.Message;
+        }
+
+        return RedirectToAction(nameof(Index));
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> RemoveItem(string itemName)
     {
         User? user = await _userManager.GetUserAsync(User);
