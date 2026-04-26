@@ -18,6 +18,7 @@ namespace MealPlanner.Models
         public DbSet<UserDietaryRestriction> UserDietaryRestrictions { get; set; }
 
         public DbSet<Tag> Tags { get; set; }
+        public DbSet<UserFoodPreference> UserFoodPreferences { get; set; }
         public DbSet<ShoppingListItem> ShoppingListItems { get; set; }
         public DbSet<MealCompletion> MealCompletions { get; set; }
         public DbSet<MealExclusion> MealExclusions { get; set; }

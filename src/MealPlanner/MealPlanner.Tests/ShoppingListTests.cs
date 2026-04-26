@@ -29,7 +29,7 @@ public class ShoppingListServiceTests
     }
 
     [Test]
-    public void AddItem_ShouldTrimName_WhenNameHasExtraSpaces()
+    public void AddItem_ShouldTrimAndNormalizeName_WhenNameHasExtraSpaces()
     {
         var repo = new Mock<IShoppingListRepository>();
         var service = new ShoppingListService(repo.Object);
@@ -39,9 +39,10 @@ public class ShoppingListServiceTests
 
         service.AddItem(userId, itemName, 1, "");
 
+        // Normalize trims whitespace and singularizes: "  Eggs  " → "Egg"
         repo.Verify(r => r.Add(It.Is<ShoppingListItem>(i =>
             i.UserId == userId &&
-            i.Name == "Eggs"
+            i.Name == "Egg"
         )), Times.Once);
     }
 
@@ -87,6 +88,37 @@ public class ShoppingListServiceTests
 
         Assert.Throws<ArgumentException>(() => service.RemoveItem(0, "user-1"));
         repo.Verify(r => r.Remove(It.IsAny<int>(), It.IsAny<string>()), Times.Never);
+    }
+
+    [Test]
+    public void UpdateItemAmount_ShouldCallRepositoryUpdateAmountByName_WhenValid()
+    {
+        var repo = new Mock<IShoppingListRepository>();
+        var service = new ShoppingListService(repo.Object);
+
+        service.UpdateItemAmount("user-1", "Milk", 3.5f);
+
+        repo.Verify(r => r.UpdateAmountByName("user-1", "Milk", 3.5f), Times.Once);
+    }
+
+    [Test]
+    public void UpdateItemAmount_ShouldThrowArgumentException_WhenNameIsEmpty()
+    {
+        var repo = new Mock<IShoppingListRepository>();
+        var service = new ShoppingListService(repo.Object);
+
+        Assert.Throws<ArgumentException>(() => service.UpdateItemAmount("user-1", "", 1f));
+        repo.Verify(r => r.UpdateAmountByName(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<float>()), Times.Never);
+    }
+
+    [Test]
+    public void UpdateItemAmount_ShouldThrowArgumentException_WhenAmountIsNegative()
+    {
+        var repo = new Mock<IShoppingListRepository>();
+        var service = new ShoppingListService(repo.Object);
+
+        Assert.Throws<ArgumentException>(() => service.UpdateItemAmount("user-1", "Milk", -1f));
+        repo.Verify(r => r.UpdateAmountByName(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<float>()), Times.Never);
     }
 
     [Test]
