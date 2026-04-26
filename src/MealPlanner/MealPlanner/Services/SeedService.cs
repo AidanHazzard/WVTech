@@ -108,7 +108,9 @@ public class SeedService
         [
             "Breakfast", "Lunch", "Dinner", "Snack", "Dessert", "Quick & Easy",
             "High Protein", "Low Calorie", "Vegetarian", "Vegan", "Gluten-Free",
-            "Dairy-Free", "Keto", "Halal", "Kosher", "Nut Allergy", "Appetizer"
+            "Dairy-Free", "Keto", "Halal", "Kosher", "Nut Allergy", "Appetizer",
+            "Italian", "Mexican", "Mediterranean", "Japanese", "Thai", "Chinese",
+            "Indian", "American", "Spicy", "Comfort Food", "BBQ", "Sushi",
         ];
         var toAdd = names.Where(n => !existing.Contains(n)).Select(n => new Tag { Name = n }).ToList();
 
