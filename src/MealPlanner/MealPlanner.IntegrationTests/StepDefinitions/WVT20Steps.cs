@@ -16,8 +16,7 @@ public class WVT20Steps
     private string _testIngredientName = string.Empty;
     private readonly string _manualItemName = "ManualShoppingItem";
     private int _testMealId;
-    private float _testIngredientAmount;
-    private float _expectedConvertedAmount;
+
 
     public WVT20Steps()
     {
@@ -271,40 +270,46 @@ public class WVT20Steps
         Assert.That(items.Any(i => i.Name.ToLower() == _testIngredientName.ToLower()), Is.True);
     }
 
-    [Given("'Alice' has an upcoming meal with an ingredient measured in cups")]
-    public void GivenAliceHasAnUpcomingMealWithAnIngredientMeasuredInCups()
+    [Given("'Alice' has an upcoming meal with an ingredient named {string}")]
+    public void GivenAliceHasAnUpcomingMealWithAnIngredientNamed(string ingredientName)
     {
-        _testIngredientName = "CupIngredient";
-        _testIngredientAmount = 1f;
-        _expectedConvertedAmount = 8f; // 1 Cup(s) × 8 = 8 Ounce(s)
+        _testIngredientName = ingredientName;
 
         using var ctx = BDDSetup.CreateContext();
         var userId = GetAliceId(ctx);
 
-        var ingredientBase = ctx.Set<IngredientBase>().FirstOrDefault(ib => ib.Name == _testIngredientName);
+        var staleItems = ctx.Set<ShoppingListItem>()
+            .Where(i => i.UserId == userId && i.Name.ToLower() == ingredientName.ToLower()).ToList();
+        ctx.Set<ShoppingListItem>().RemoveRange(staleItems);
+        var staleMeals = ctx.Meals
+            .Where(m => m.UserId == userId && m.Title == $"{ingredientName} Meal").ToList();
+        ctx.Meals.RemoveRange(staleMeals);
+        ctx.SaveChanges();
+
+        var ingredientBase = ctx.Set<IngredientBase>().FirstOrDefault(ib => ib.Name == ingredientName);
         if (ingredientBase == null)
         {
-            ingredientBase = new IngredientBase { Name = _testIngredientName };
+            ingredientBase = new IngredientBase { Name = ingredientName };
             ctx.Set<IngredientBase>().Add(ingredientBase);
             ctx.SaveChanges();
         }
 
-        var measurement = ctx.Set<Measurement>().FirstOrDefault(m => m.Name == "Cup(s)");
+        var measurement = ctx.Set<Measurement>().FirstOrDefault(m => m.Name == "Count");
         if (measurement == null)
         {
-            measurement = new Measurement { Name = "Cup(s)" };
+            measurement = new Measurement { Name = "Count" };
             ctx.Set<Measurement>().Add(measurement);
             ctx.SaveChanges();
         }
 
         var recipe = new Recipe
         {
-            Name = "CupIngredientRecipe",
+            Name = $"{ingredientName}Recipe",
             Directions = "Test",
             Calories = 100, Protein = 5, Carbs = 10, Fat = 3,
             Ingredients = new List<Ingredient>
             {
-                new Ingredient { IngredientBase = ingredientBase, Measurement = measurement, Amount = _testIngredientAmount }
+                new Ingredient { IngredientBase = ingredientBase, Measurement = measurement, Amount = 10 }
             }
         };
         ctx.Recipes.Add(recipe);
@@ -312,7 +317,7 @@ public class WVT20Steps
         var meal = new Meal
         {
             UserId = userId,
-            Title = "Cup Ingredient Meal",
+            Title = $"{ingredientName} Meal",
             StartTime = DateTime.Today.AddHours(12)
         };
         meal.Recipes.Add(recipe);
@@ -321,19 +326,74 @@ public class WVT20Steps
         _testMealId = meal.Id;
     }
 
-    [When("'Alice' changes the display unit to 'Ounce\\(s\\)'")]
-    public void WhenAliceChangesTheDisplayUnitToOunces()
+    [Given("'Alice' has manually added {string} to her shopping list")]
+    public void GivenAliceHasManuallyAddedNamedItemToShoppingList(string itemName)
     {
-        var select = new SelectElement(_driver.FindElement(By.Id("unitConvertSelect")));
-        select.SelectByValue("Ounce(s)");
+        using var ctx = BDDSetup.CreateContext();
+        var userId = GetAliceId(ctx);
+
+        ctx.Set<ShoppingListItem>().Add(new ShoppingListItem
+        {
+            UserId = userId,
+            Name = itemName,
+            Amount = 1,
+            Measurement = "Count",
+            IsAutoAdded = false
+        });
+        ctx.SaveChanges();
     }
 
-    [Then("the ingredient is displayed converted to ounces")]
-    public void ThenTheIngredientIsDisplayedConvertedToOunces()
+    [Then("{string} appears only once on the shopping list")]
+    public void ThenIngredientAppearsOnlyOnce(string ingredientName)
     {
-        var expectedText = $"{_expectedConvertedAmount:G} Ounce(s) of {_testIngredientName}";
-        _wait.Until(d => d.PageSource.Contains(expectedText));
-        Assert.That(_driver.PageSource, Does.Contain(expectedText));
+        _wait.Until(d => d.Url.Contains("ShoppingList"));
+        var occurrences = _driver.FindElements(
+            By.XPath($"//*[contains(@class,'item-display') and contains(translate(., 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), '{ingredientName.ToLower()}')]")
+        ).Count;
+        Assert.That(occurrences, Is.EqualTo(1));
+    }
+
+    [When("'Alice' updates the quantity of '(.*)' to (.*)")]
+    public void WhenAliceUpdatesTheQuantityOf(string itemName, float newAmount)
+    {
+        _wait.Until(d => d.FindElements(By.CssSelector("input[name='newAmount']")).Count > 0);
+
+        var rows = _driver.FindElements(By.CssSelector(".back2 .d-flex.gap-2"));
+        foreach (var row in rows)
+        {
+            if (row.Text.Contains(itemName))
+            {
+                var input = row.FindElement(By.CssSelector("input[name='newAmount']"));
+                input.Clear();
+                input.SendKeys(newAmount.ToString(System.Globalization.CultureInfo.InvariantCulture));
+                row.FindElement(By.CssSelector("button[type='submit']")).Click();
+                break;
+            }
+        }
+    }
+
+    [Then("the shopping list shows quantity (.*) for '(.*)'")]
+    public void ThenTheShoppingListShowsQuantityFor(float expectedAmount, string itemName)
+    {
+        NavigateToShoppingList();
+        _wait.Until(d => d.Url.Contains("ShoppingList"));
+
+        var input = _wait.Until(d =>
+        {
+            var rows = d.FindElements(By.CssSelector(".back2 .d-flex.gap-2"));
+            foreach (var row in rows)
+            {
+                if (row.Text.Contains(itemName))
+                    return row.FindElement(By.CssSelector("input[name='newAmount']"));
+            }
+            return null;
+        });
+
+        Assert.That(input, Is.Not.Null);
+        var displayedAmount = float.Parse(
+            input!.GetAttribute("value") ?? "0",
+            System.Globalization.CultureInfo.InvariantCulture);
+        Assert.That(displayedAmount, Is.EqualTo(expectedAmount));
     }
 
     [Then("the associated shopping list items are removed from the database")]
