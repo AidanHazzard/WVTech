@@ -33,7 +33,12 @@ public class UserFoodPreferenceRepository : Repository<UserFoodPreference>, IUse
                       ?? _tagRepository.CreateOrUpdate(new Tag { Name = name });
 
             if (!existingTagIds.Contains(tag.Id))
-                _dbset.Add(new UserFoodPreference { UserId = userId, TagId = tag.Id });
+            {
+                var pref = tag.Id > 0
+                    ? new UserFoodPreference { UserId = userId, TagId = tag.Id }
+                    : new UserFoodPreference { UserId = userId, Tag = tag };
+                _dbset.Add(pref);
+            }
         }
     }
 

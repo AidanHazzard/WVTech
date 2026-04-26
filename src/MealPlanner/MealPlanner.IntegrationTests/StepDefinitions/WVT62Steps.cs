@@ -143,6 +143,8 @@ public class WVT62Steps
     [When("he types {string} into the custom food preference input")]
     public void WhenHeTypesIntoCustomInput(string tagName)
     {
+        _mostPopularTag = tagName;
+
         var input = _wait.Until(d =>
         {
             try { return d.FindElement(By.Id("food-pref-custom-input")); }
@@ -177,7 +179,6 @@ public class WVT62Steps
     public void GivenUserHasFoodPreference(string userName, string tagName)
     {
         var user = _context.Set<User>()
-            .Include(u => u.FoodPreferences)
             .First(u => u.NormalizedEmail == $"{userName}@fakeemail.com".ToUpper());
 
         var tag = _context.Set<Tag>().FirstOrDefault(t => t.Name == tagName);
@@ -188,9 +189,12 @@ public class WVT62Steps
             _context.SaveChanges();
         }
 
-        if (!user.FoodPreferences.Any(t => t.Id == tag.Id))
+        var alreadyExists = _context.Set<UserFoodPreference>()
+            .Any(p => p.UserId == user.Id && p.TagId == tag.Id);
+
+        if (!alreadyExists)
         {
-            user.FoodPreferences.Add(tag);
+            _context.Set<UserFoodPreference>().Add(new UserFoodPreference { UserId = user.Id, TagId = tag.Id });
             _context.SaveChanges();
         }
     }
