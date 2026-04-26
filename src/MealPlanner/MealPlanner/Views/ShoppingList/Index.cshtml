@@ -41,25 +41,13 @@
         </div>
     </form>
 
-    <div class="d-flex align-items-center gap-2 mb-3">
-        <label class="mb-0">Display units:</label>
-        <select id="unitConvertSelect" class="back2-textbox-partial" onchange="convertUnits(this.value)">
-            <option value="original">Original</option>
-            <option value="Cup(s)">Cup(s)</option>
-            <option value="Ounce(s)">Ounce(s)</option>
-            <option value="Pound(s)">Pound(s)</option>
-            <option value="L">Liters</option>
-            <option value="KG">KG</option>
-        </select>
-    </div>
-
     <div class="back2">
         @if (Model.Items.Any())
         {
             <div class="d-flex flex-column gap-3">
                 @foreach (var item in Model.Items)
                 {
-                    <div class="d-flex justify-content-between align-items-center back2-textbox gap-2">
+                    <div class="d-flex justify-content-between align-items-center gap-2">
                         <span class="fs-5 item-display flex-grow-1"
                               data-amount="@item.Amount.ToString(System.Globalization.CultureInfo.InvariantCulture)"
                               data-measurement="@item.Measurement"
@@ -94,7 +82,6 @@
     </div>
 </div>
 
-<script src="~/js/shoppingListConvert.js"></script>
 <script>
     function toggleSaveButton(input) {
         const btn = input.closest('form').querySelector('.qty-save');

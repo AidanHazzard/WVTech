@@ -45,11 +45,11 @@ Feature: WVT-20
     When 'Alice' deletes that meal
     Then the associated shopping list items are removed from the database
 
-  Scenario: User can convert shopping list item measurements to a different unit
-    Given 'Alice' has an upcoming meal with an ingredient measured in cups
+  Scenario: Plural and singular forms of the same ingredient are combined
+    Given 'Alice' has an upcoming meal with an ingredient named 'Potato'
+    And 'Alice' has manually added 'potatoes' to her shopping list
     When 'Alice' views her shopping list
-    And 'Alice' changes the display unit to 'Ounce(s)'
-    Then the ingredient is displayed converted to ounces
+    Then 'Potato' appears only once on the shopping list
 
   Scenario: User can edit the quantity of a shopping list item
     Given 'Alice' has manually added an item to her shopping list

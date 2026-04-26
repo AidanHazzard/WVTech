@@ -1,10 +1,21 @@
-// To add a new unit: add an entry with its equivalent value in ounces.
-const UNIT_CONVERSIONS = {
-    "Cup(s)":   { label: "Cup(s)",   toOz: 8       },
-    "Ounce(s)": { label: "Ounce(s)", toOz: 1       },
-    "Pound(s)": { label: "Pound(s)", toOz: 16      },
-    "L":        { label: "L",        toOz: 33.814  },
-    "KG":       { label: "KG",       toOz: 35.274  }
+const LIQUID_UNITS = {
+    "fl oz":     { toFlOz: 1            },
+    "Cup(s)":    { toFlOz: 8            },
+    "Pint(s)":   { toFlOz: 16           },
+    "Quart(s)":  { toFlOz: 32           },
+    "Gallon(s)": { toFlOz: 128          },
+    "mL":        { toFlOz: 1 / 29.5735  },
+    "L":         { toFlOz: 1 / 0.0295735 }
+};
+
+const SOLID_UNITS = {
+    "oz":       { toOz: 1            },
+    "Ounce(s)": { toOz: 1            },
+    "lb":       { toOz: 16           },
+    "Pound(s)": { toOz: 16           },
+    "g":        { toOz: 1 / 28.3495  },
+    "kg":       { toOz: 1 / 0.0283495 },
+    "KG":       { toOz: 1 / 0.0283495 }
 };
 
 function convertUnits(target) {
@@ -18,16 +29,19 @@ function convertUnits(target) {
             return;
         }
 
-        const source = UNIT_CONVERSIONS[measurement];
-        const dest = UNIT_CONVERSIONS[target];
-
-        if (!source || !dest) {
+        if (LIQUID_UNITS[measurement]) {
+            const destKey = target === "us" ? "fl oz" : target === "metric" ? "mL" : null;
+            if (!destKey) { span.textContent = formatAmount(amount) + " " + measurement + " of " + name; return; }
+            const converted = (amount * LIQUID_UNITS[measurement].toFlOz) / LIQUID_UNITS[destKey].toFlOz;
+            span.textContent = formatAmount(converted) + " " + destKey + " of " + name;
+        } else if (SOLID_UNITS[measurement]) {
+            const destKey = target === "us" ? "oz" : target === "metric" ? "g" : null;
+            if (!destKey) { span.textContent = formatAmount(amount) + " " + measurement + " of " + name; return; }
+            const converted = (amount * SOLID_UNITS[measurement].toOz) / SOLID_UNITS[destKey].toOz;
+            span.textContent = formatAmount(converted) + " " + destKey + " of " + name;
+        } else {
             span.textContent = formatAmount(amount) + " " + measurement + " of " + name;
-            return;
         }
-
-        const converted = (amount * source.toOz) / dest.toOz;
-        span.textContent = formatAmount(converted) + " " + dest.label + " of " + name;
     });
 }
 
