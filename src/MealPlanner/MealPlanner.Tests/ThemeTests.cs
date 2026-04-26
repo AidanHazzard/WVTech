@@ -1,4 +1,5 @@
 using MealPlanner.Controllers;
+using MealPlanner.DAL.Abstract;
 using MealPlanner.DAL.Concrete;
 using MealPlanner.Models;
 using MealPlanner.Services;
@@ -28,7 +29,7 @@ namespace MealPlanner.Tests
             _userProfileRepository = new UserSettingsRepository(_context);
             _mockUserSettingsService = new Mock<IUserSettingsService>();
 
-            _controller = new UserSettingsController(_context, _userProfileRepository, new Mock<IUserSettingsService>().Object);
+            _controller = new UserSettingsController(_context, _userProfileRepository, new Mock<IUserSettingsService>().Object, new Mock<ITagRepository>().Object, new Mock<IUserFoodPreferenceRepository>().Object);
 
             var claims = new List<Claim>
             {
