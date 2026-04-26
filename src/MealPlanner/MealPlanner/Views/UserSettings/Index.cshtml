@@ -52,47 +52,53 @@
 <div class="back1 mt-3">
     <h2 class="back1Title">Food Preferences</h2>
 
-    <form asp-action="SaveFoodPreferences" method="post" id="food-pref-form" class="p-3">
+    <form asp-action="SaveFoodPreferences" method="post" id="food-pref-form">
         @Html.AntiForgeryToken()
 
-        <div class="mb-2">
-            <label for="food-pref-select" class="form-label baseText">Add from popular tags</label>
-            <select id="food-pref-select" class="form-select">
-                <option value="">-- Select a tag --</option>
+        <div class="back2 backHasButton">
+            <h2 class="back1Title">Add Preferences</h2>
+
+            <select id="food-pref-select" class="back2-textbox mb-2">
+                <option value="">-- Select a popular tag --</option>
                 @foreach (var tag in Model.AvailableTags)
                 {
                     <option value="@tag">@tag</option>
                 }
             </select>
+
+            <div class="tag-input-wrapper mb-2">
+                <input type="text" id="food-pref-custom-input" class="back2-textbox"
+                       placeholder="Or type a custom tag..." />
+                <button type="button" id="food-pref-add-btn" class="add-tag-btn buttonGreenInline">
+                    <h4 class="buttonText">Add</h4>
+                </button>
+            </div>
+
+            <div id="food-pref-pending-container" class="d-flex flex-wrap gap-1 mb-2"></div>
+
+            <button type="submit" id="food-pref-save-btn" class="buttonGreen">
+                <h2 class="buttonText">Save Preferences</h2>
+            </button>
         </div>
-
-        <div class="input-group mb-2">
-            <input type="text" id="food-pref-custom-input" class="form-control" placeholder="Or type a custom tag" />
-            <button type="button" id="food-pref-add-btn" class="btn buttonBlue">Add</button>
-        </div>
-
-        <div id="food-pref-pending-container" class="mb-2"></div>
-
-        <button type="submit" id="food-pref-save-btn" class="btn buttonGreen">Save Preferences</button>
     </form>
 
     @if (Model.CurrentPreferences.Count > 0)
     {
-        <div class="p-3">
-            <h5 class="baseText">Your saved preferences</h5>
-            @foreach (var pref in Model.CurrentPreferences)
-            {
-                <form asp-action="RemoveFoodPreference" method="post" class="d-inline">
-                    @Html.AntiForgeryToken()
-                    <div class="food-pref-item d-inline-flex align-items-center badge bg-primary me-1 mb-1 p-2"
-                         data-tag-name="@pref">
-                        <span class="me-1">@pref</span>
-                        <input type="hidden" name="tagName" value="@pref" />
-                        <button type="submit" class="food-pref-remove-btn btn-close btn-close-white"
-                                style="font-size:0.6rem;" aria-label="Remove"></button>
-                    </div>
-                </form>
-            }
+        <div class="back2">
+            <h2 class="back1Title">Your Saved Preferences</h2>
+            <div class="d-flex flex-wrap gap-1">
+                @foreach (var pref in Model.CurrentPreferences)
+                {
+                    <form asp-action="RemoveFoodPreference" method="post" class="d-inline">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="food-pref-item tag-pill badge rounded-pill recipe-tag food-pref-remove-btn"
+                                data-tag-name="@pref" title="Remove @pref">
+                            @pref ×
+                            <input type="hidden" name="tagName" value="@pref" />
+                        </button>
+                    </form>
+                }
+            </div>
         </div>
     }
 </div>

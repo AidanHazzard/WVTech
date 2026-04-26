@@ -206,7 +206,7 @@ public class WVT62Steps
         {
             try
             {
-                return d.FindElement(By.CssSelector($"[data-tag-name='{tagName}'] .food-pref-remove-btn"));
+                return d.FindElement(By.CssSelector($".food-pref-remove-btn[data-tag-name='{tagName}']"));
             }
             catch (NoSuchElementException) { return null; }
         });
