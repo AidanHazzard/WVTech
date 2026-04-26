@@ -69,6 +69,17 @@ public class ShoppingListService
         _shoppingListRepository.RemoveAllByName(userId, itemName.Trim());
     }
 
+    public void UpdateItemAmount(string userId, string itemName, float newAmount)
+    {
+        if (string.IsNullOrWhiteSpace(itemName))
+            throw new ArgumentException("Item name cannot be empty.");
+
+        if (newAmount < 0)
+            throw new ArgumentException("Amount cannot be negative.");
+
+        _shoppingListRepository.UpdateAmountByName(userId, itemName.Trim(), newAmount);
+    }
+
     public IEnumerable<ShoppingListItem> GetItemsForUser(string userId)
     {
         return _shoppingListRepository.GetByUserId(userId)

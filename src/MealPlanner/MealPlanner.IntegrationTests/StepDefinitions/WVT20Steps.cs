@@ -336,6 +336,49 @@ public class WVT20Steps
         Assert.That(_driver.PageSource, Does.Contain(expectedText));
     }
 
+    [When("'Alice' updates the quantity of '(.*)' to (.*)")]
+    public void WhenAliceUpdatesTheQuantityOf(string itemName, float newAmount)
+    {
+        _wait.Until(d => d.FindElements(By.CssSelector("input[name='newAmount']")).Count > 0);
+
+        var rows = _driver.FindElements(By.CssSelector(".back2-textbox"));
+        foreach (var row in rows)
+        {
+            if (row.Text.Contains(itemName))
+            {
+                var input = row.FindElement(By.CssSelector("input[name='newAmount']"));
+                input.Clear();
+                input.SendKeys(newAmount.ToString(System.Globalization.CultureInfo.InvariantCulture));
+                row.FindElement(By.CssSelector("button[type='submit']")).Click();
+                break;
+            }
+        }
+    }
+
+    [Then("the shopping list shows quantity (.*) for '(.*)'")]
+    public void ThenTheShoppingListShowsQuantityFor(float expectedAmount, string itemName)
+    {
+        NavigateToShoppingList();
+        _wait.Until(d => d.Url.Contains("ShoppingList"));
+
+        var input = _wait.Until(d =>
+        {
+            var rows = d.FindElements(By.CssSelector(".back2-textbox"));
+            foreach (var row in rows)
+            {
+                if (row.Text.Contains(itemName))
+                    return row.FindElement(By.CssSelector("input[name='newAmount']"));
+            }
+            return null;
+        });
+
+        Assert.That(input, Is.Not.Null);
+        var displayedAmount = float.Parse(
+            input!.GetAttribute("value") ?? "0",
+            System.Globalization.CultureInfo.InvariantCulture);
+        Assert.That(displayedAmount, Is.EqualTo(expectedAmount));
+    }
+
     [Then("the associated shopping list items are removed from the database")]
     public void ThenAssociatedShoppingListItemsAreRemovedFromDatabase()
     {

@@ -50,3 +50,9 @@ Feature: WVT-20
     When 'Alice' views her shopping list
     And 'Alice' changes the display unit to 'Ounce(s)'
     Then the ingredient is displayed converted to ounces
+
+  Scenario: User can edit the quantity of a shopping list item
+    Given 'Alice' has manually added an item to her shopping list
+    When 'Alice' views her shopping list
+    And 'Alice' updates the quantity of 'ManualShoppingItem' to 5
+    Then the shopping list shows quantity 5 for 'ManualShoppingItem'
