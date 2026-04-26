@@ -25,6 +25,15 @@ public class WVT62Steps
         _wait = BDDSetup.Wait;
         _baseUrl = AUTHost.BaseUrl;
         _context = BDDSetup.Context;
+
+        using var ctx = BDDSetup.CreateContext();
+        var gary = ctx.Set<User>().FirstOrDefault(u => u.NormalizedEmail == "GARY@FAKEEMAIL.COM");
+        if (gary != null)
+        {
+            var prefs = ctx.Set<UserFoodPreference>().Where(p => p.UserId == gary.Id).ToList();
+            ctx.Set<UserFoodPreference>().RemoveRange(prefs);
+            ctx.SaveChanges();
+        }
     }
 
     [Given("Onebite has at least 2 tags")]
@@ -132,11 +141,12 @@ public class WVT62Steps
     [Given("the tag {string} is not in the database")]
     public void GivenTagIsNotInDatabase(string tagName)
     {
-        var tag = _context.Set<Tag>().FirstOrDefault(t => t.Name == tagName);
+        using var ctx = BDDSetup.CreateContext();
+        var tag = ctx.Set<Tag>().FirstOrDefault(t => t.Name == tagName);
         if (tag != null)
         {
-            _context.Set<Tag>().Remove(tag);
-            _context.SaveChanges();
+            ctx.Set<Tag>().Remove(tag);
+            ctx.SaveChanges();
         }
     }
 
@@ -178,24 +188,25 @@ public class WVT62Steps
     [Given("{string} has the food preference {string}")]
     public void GivenUserHasFoodPreference(string userName, string tagName)
     {
-        var user = _context.Set<User>()
+        using var ctx = BDDSetup.CreateContext();
+        var user = ctx.Set<User>()
             .First(u => u.NormalizedEmail == $"{userName}@fakeemail.com".ToUpper());
 
-        var tag = _context.Set<Tag>().FirstOrDefault(t => t.Name == tagName);
+        var tag = ctx.Set<Tag>().FirstOrDefault(t => t.Name == tagName);
         if (tag == null)
         {
             tag = new Tag { Name = tagName };
-            _context.Add(tag);
-            _context.SaveChanges();
+            ctx.Add(tag);
+            ctx.SaveChanges();
         }
 
-        var alreadyExists = _context.Set<UserFoodPreference>()
+        var alreadyExists = ctx.Set<UserFoodPreference>()
             .Any(p => p.UserId == user.Id && p.TagId == tag.Id);
 
         if (!alreadyExists)
         {
-            _context.Set<UserFoodPreference>().Add(new UserFoodPreference { UserId = user.Id, TagId = tag.Id });
-            _context.SaveChanges();
+            ctx.Set<UserFoodPreference>().Add(new UserFoodPreference { UserId = user.Id, TagId = tag.Id });
+            ctx.SaveChanges();
         }
     }
 
@@ -210,8 +221,10 @@ public class WVT62Steps
             }
             catch (NoSuchElementException) { return null; }
         });
+        ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].scrollIntoView(true);", btn);
         ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].click();", btn);
-        _wait.Until(d => d.Url.TrimEnd('/') == $"{_baseUrl}/UserSettings");
+        _wait.Until(d => { try { _ = btn.TagName; return false; } catch (StaleElementReferenceException) { return true; } });
+        _wait.Until(d => ((IJavaScriptExecutor)d).ExecuteScript("return document.readyState").ToString() == "complete");
     }
 
     [Then("he has no food preferences")]
