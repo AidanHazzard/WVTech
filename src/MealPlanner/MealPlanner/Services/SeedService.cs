@@ -29,6 +29,9 @@ public class SeedService
             logger.LogInformation("Seeding tags.");
             await SeedTagsAsync(context, logger);
 
+            logger.LogInformation("Seeding recipes.");
+            await SeedRecipesAsync(context, logger);
+
             logger.LogInformation("Seeding roles.");
             await AddRoleAsync(roleManager, "Admin");
             await AddRoleAsync(roleManager, "User");
@@ -75,56 +78,118 @@ public class SeedService
 
     private static async Task SeedDietaryRestrictionsAsync(MealPlannerDBContext context, ILogger logger)
     {
-        if (await context.DietaryRestrictions.AnyAsync())
+        HashSet<string> existing = (await context.DietaryRestrictions
+            .Select(d => d.Name)
+            .ToListAsync())
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        string[] names = ["Gluten-Free", "Dairy-Free", "Vegetarian", "Vegan", "Keto", "Halal", "Kosher", "Nut Allergy"];
+        var toAdd = names.Where(n => !existing.Contains(n)).Select(n => new DietaryRestriction { Name = n }).ToList();
+
+        if (toAdd.Count == 0)
         {
-            logger.LogInformation("Dietary restrictions already exist; skipping seed.");
+            logger.LogInformation("All dietary restrictions already exist; skipping seed.");
             return;
         }
 
-        context.DietaryRestrictions.AddRange(
-            new DietaryRestriction { Name = "Gluten-Free" },
-            new DietaryRestriction { Name = "Dairy-Free" },
-            new DietaryRestriction { Name = "Vegetarian" },
-            new DietaryRestriction { Name = "Vegan" },
-            new DietaryRestriction { Name = "Keto" },
-            new DietaryRestriction { Name = "Halal" },
-            new DietaryRestriction { Name = "Kosher" },
-            new DietaryRestriction { Name = "Nut Allergy" }
-        );
-
+        context.DietaryRestrictions.AddRange(toAdd);
         await context.SaveChangesAsync();
-        logger.LogInformation("Seeded dietary restrictions.");
+        logger.LogInformation("Seeded {Count} dietary restrictions.", toAdd.Count);
     }
 
     private static async Task SeedTagsAsync(MealPlannerDBContext context, ILogger logger)
     {
-        if (await context.Tags.AnyAsync())
+        HashSet<string> existing = (await context.Tags
+            .Select(t => t.Name)
+            .ToListAsync())
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        string[] names =
+        [
+            "Breakfast", "Lunch", "Dinner", "Snack", "Dessert", "Quick & Easy",
+            "High Protein", "Low Calorie", "Vegetarian", "Vegan", "Gluten-Free",
+            "Dairy-Free", "Keto", "Halal", "Kosher", "Nut Allergy", "Appetizer"
+        ];
+        var toAdd = names.Where(n => !existing.Contains(n)).Select(n => new Tag { Name = n }).ToList();
+
+        if (toAdd.Count == 0)
         {
-            logger.LogInformation("Tags already exist; skipping seed.");
+            logger.LogInformation("All tags already exist; skipping seed.");
             return;
         }
 
-        context.Tags.AddRange(
-            new Tag { Name = "Breakfast" },
-            new Tag { Name = "Lunch" },
-            new Tag { Name = "Dinner" },
-            new Tag { Name = "Snack" },
-            new Tag { Name = "Dessert" },
-            new Tag { Name = "Quick & Easy" },
-            new Tag { Name = "High Protein" },
-            new Tag { Name = "Low Calorie" },
-            new Tag { Name = "Vegetarian" },
-            new Tag { Name = "Vegan" },
-            new Tag { Name = "Gluten-Free" },
-            new Tag { Name = "Dairy-Free" },
-            new Tag { Name = "Keto" },
-            new Tag { Name = "Halal" },
-            new Tag { Name = "Kosher" },
-            new Tag { Name = "Nut Allergy" }
-        );
-
+        context.Tags.AddRange(toAdd);
         await context.SaveChangesAsync();
-        logger.LogInformation("Seeded tags.");
+        logger.LogInformation("Seeded {Count} tags.", toAdd.Count);
+    }
+
+    private static async Task SeedRecipesAsync(MealPlannerDBContext context, ILogger logger)
+    {
+        Dictionary<string, Tag> tagsByName = await context.Tags
+            .ToDictionaryAsync(t => t.Name, StringComparer.OrdinalIgnoreCase);
+        Dictionary<string, IngredientBase> basesByName = (await context.Set<IngredientBase>().ToListAsync())
+            .ToDictionary(b => b.Name, StringComparer.OrdinalIgnoreCase);
+        Dictionary<string, Measurement> measurementsByName = (await context.Set<Measurement>().ToListAsync())
+            .ToDictionary(m => m.Name, StringComparer.OrdinalIgnoreCase);
+
+        HashSet<string> existingNames = (await context.Recipes
+            .Select(r => r.Name)
+            .ToListAsync())
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        List<Recipe> recipes = RecipeSeedData.GetRecipes();
+        int seededCount = 0;
+
+        foreach (Recipe recipe in recipes)
+        {
+            if (existingNames.Contains(recipe.Name))
+            {
+                logger.LogInformation("Recipe '{Name}' already exists; skipping.", recipe.Name);
+                continue;
+            }
+            List<Tag> resolvedTags = new(recipe.Tags.Count);
+            foreach (Tag tagShell in recipe.Tags)
+            {
+                if (!tagsByName.TryGetValue(tagShell.Name, out Tag? tag))
+                {
+                    throw new InvalidOperationException(
+                        $"Seed recipe '{recipe.Name}' references unknown tag '{tagShell.Name}'. Add it to SeedTagsAsync.");
+                }
+                resolvedTags.Add(tag);
+            }
+            recipe.Tags.Clear();
+            recipe.Tags.AddRange(resolvedTags);
+
+            foreach (Ingredient ingredient in recipe.Ingredients)
+            {
+                string baseName = ingredient.IngredientBase.Name;
+                if (basesByName.TryGetValue(baseName, out IngredientBase? existingBase))
+                {
+                    ingredient.IngredientBase = existingBase;
+                }
+                else
+                {
+                    basesByName[baseName] = ingredient.IngredientBase;
+                }
+
+                string measurementName = ingredient.Measurement.Name;
+                if (measurementsByName.TryGetValue(measurementName, out Measurement? existingMeasurement))
+                {
+                    ingredient.Measurement = existingMeasurement;
+                }
+                else
+                {
+                    measurementsByName[measurementName] = ingredient.Measurement;
+                }
+            }
+
+            context.Recipes.Add(recipe);
+            seededCount++;
+        }
+
+        if (seededCount > 0)
+            await context.SaveChangesAsync();
+        logger.LogInformation("Seeded {Count} recipes.", seededCount);
     }
 
     private static async Task AddRoleAsync(RoleManager<IdentityRole> roleManager, string roleName)
