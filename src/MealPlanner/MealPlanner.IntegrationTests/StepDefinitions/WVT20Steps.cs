@@ -358,7 +358,7 @@ public class WVT20Steps
     {
         _wait.Until(d => d.FindElements(By.CssSelector("input[name='newAmount']")).Count > 0);
 
-        var rows = _driver.FindElements(By.CssSelector(".back2-textbox"));
+        var rows = _driver.FindElements(By.CssSelector(".back2 .d-flex.gap-2"));
         foreach (var row in rows)
         {
             if (row.Text.Contains(itemName))
@@ -380,7 +380,7 @@ public class WVT20Steps
 
         var input = _wait.Until(d =>
         {
-            var rows = d.FindElements(By.CssSelector(".back2-textbox"));
+            var rows = d.FindElements(By.CssSelector(".back2 .d-flex.gap-2"));
             foreach (var row in rows)
             {
                 if (row.Text.Contains(itemName))
