@@ -52,36 +52,6 @@
 <div class="back1 mt-3">
     <h2 class="back1Title">Food Preferences</h2>
 
-    <form asp-action="SaveFoodPreferences" method="post" id="food-pref-form">
-        @Html.AntiForgeryToken()
-
-        <div class="back2 backHasButton">
-            <h2 class="back1Title">Add Preferences</h2>
-
-            <select id="food-pref-select" class="back2-textbox mb-2">
-                <option value="">-- Select a popular tag --</option>
-                @foreach (var tag in Model.AvailableTags)
-                {
-                    <option value="@tag">@tag</option>
-                }
-            </select>
-
-            <div class="tag-input-wrapper mb-2">
-                <input type="text" id="food-pref-custom-input" class="back2-textbox"
-                       placeholder="Or type a custom tag..." />
-                <button type="button" id="food-pref-add-btn" class="add-tag-btn buttonGreenInline">
-                    <h4 class="buttonText">Add</h4>
-                </button>
-            </div>
-
-            <div id="food-pref-pending-container" class="d-flex flex-wrap gap-1 mb-2"></div>
-
-            <button type="submit" id="food-pref-save-btn" class="buttonGreen">
-                <h2 class="buttonText">Save Preferences</h2>
-            </button>
-        </div>
-    </form>
-
     @if (Model.CurrentPreferences.Count > 0)
     {
         <div class="back2">
@@ -94,13 +64,43 @@
                         <input type="hidden" name="tagName" value="@pref" />
                         <button type="submit" class="food-pref-item tag-pill badge rounded-pill recipe-tag food-pref-remove-btn"
                                 data-tag-name="@pref" title="Remove @pref">
-                            @pref ×
+                            @pref
                         </button>
                     </form>
                 }
             </div>
         </div>
     }
+
+    <form asp-action="SaveFoodPreferences" method="post" id="food-pref-form">
+        @Html.AntiForgeryToken()
+
+        <div class="back2 backHasButton">
+            <h2 class="back1Title">Add Preferences</h2>
+
+            <select id="food-pref-select" class="back2-textbox mb-2">
+                <option value="">-- Select a Preference --</option>
+                @foreach (var tag in Model.AvailableTags)
+                {
+                    <option value="@tag">@tag</option>
+                }
+            </select>
+
+            <div class="tag-input-wrapper mb-2">
+                <input type="text" id="food-pref-custom-input" class="back2-textbox"
+                       placeholder="Or type a custom preference..." />
+                <button type="button" id="food-pref-add-btn" class="add-tag-btn buttonGreenInline">
+                    <h4 class="buttonText">Add</h4>
+                </button>
+            </div>
+
+            <div id="food-pref-pending-container" class="d-flex flex-wrap gap-1 mb-2"></div>
+
+            <button type="submit" id="food-pref-save-btn" class="buttonGreen">
+                <h2 class="buttonText">Save Preferences</h2>
+            </button>
+        </div>
+    </form>
 </div>
 
 @section Scripts {

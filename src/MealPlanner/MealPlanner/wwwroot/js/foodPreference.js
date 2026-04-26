@@ -9,7 +9,7 @@ function addPendingTag(name, form, pendingContainer) {
     const pill = document.createElement('button');
     pill.type = 'button';
     pill.className = 'food-pref-pending-pill tag-pill badge rounded-pill recipe-tag recipe-tag-removable';
-    pill.textContent = name + ' ×';
+    pill.textContent = name;
     pill.style.cursor = 'pointer';
     pill.dataset.tagName = name;
     pill.addEventListener('click', function () {
