@@ -45,11 +45,12 @@ async function addRecipe() {
     const $btn = $(".delete-recipe-btn", row);
     $btn.on("click", function(e) {
         e.stopPropagation();
-        if (!confirm("Are you sure you want to remove this recipe?")) return;
         const $row = $(this).closest(".mealRecipeItem");
         const rId = $row.find(".recipeIdInput").val();
-        $row.remove();
-        $(`#createMealForm input[value="${rId}"]`).remove();
+        showInlineConfirm(this, "Remove this recipe?", function () {
+            $row.remove();
+            $(`#createMealForm input[value="${rId}"]`).remove();
+        });
     });
 
     $("#createMealList").append(row);

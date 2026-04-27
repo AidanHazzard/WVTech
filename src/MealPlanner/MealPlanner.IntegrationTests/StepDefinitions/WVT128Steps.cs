@@ -117,8 +117,9 @@ namespace Mealplanner.IntegrationTests
         public void WhenJackConfirmsTheDeletion()
         {
             var btn = (IWebElement)_scenarioContext["DeleteBtn"];
-            ((IJavaScriptExecutor)_driver).ExecuteScript("window.confirm = function() { return true; };");
             btn.Click();
+            var confirmBtn = _wait.Until(d => d.FindElement(By.CssSelector(".inline-confirm-yes")));
+            confirmBtn.Click();
             Thread.Sleep(600);
         }
 
@@ -126,8 +127,9 @@ namespace Mealplanner.IntegrationTests
         public void WhenJackDeniesTheDeletion()
         {
             var btn = (IWebElement)_scenarioContext["DeleteBtn"];
-            ((IJavaScriptExecutor)_driver).ExecuteScript("window.confirm = function() { return false; };");
             btn.Click();
+            var cancelBtn = _wait.Until(d => d.FindElement(By.CssSelector(".inline-confirm-no")));
+            cancelBtn.Click();
         }
 
         [Then("the recipe is removed from the meal immediately")]
@@ -140,16 +142,12 @@ namespace Mealplanner.IntegrationTests
 
             if (page == "ViewMeal" && _mealId > 0)
             {
+                // ViewMeal deletes immediately via AJAX — navigate back to confirm DB removal
                 _driver.Navigate().GoToUrl($"{_baseUrl}/Meal/ViewMeal?id={_mealId}");
                 _wait.Until(driver =>
                     ((IJavaScriptExecutor)driver).ExecuteScript("return document.readyState").ToString() == "complete");
             }
-            else if (page == "EditMeal" && _mealId > 0)
-            {
-                _driver.Navigate().GoToUrl($"{_baseUrl}/Meal/EditMeal?id={_mealId}");
-                _wait.Until(driver =>
-                    ((IJavaScriptExecutor)driver).ExecuteScript("return document.readyState").ToString() == "complete");
-            }
+            // EditMeal and CreateMeal remove from DOM immediately; DB is updated on Save Changes — check DOM directly
 
             _wait.Until(driver =>
             {
