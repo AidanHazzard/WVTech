@@ -7,7 +7,6 @@
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
     <UserSecretsId>7921d461-93e8-458d-b65a-55f370b5370d</UserSecretsId>
-    <RunSettingsFilePath>$(MSBuildThisFileDirectory)../../../.vscode/.runsettings</RunSettingsFilePath>
   </PropertyGroup>
 
   <ItemGroup>
