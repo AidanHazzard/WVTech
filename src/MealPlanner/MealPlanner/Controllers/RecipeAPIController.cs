@@ -19,44 +19,103 @@ public class RecipeAPIController : ControllerBase
     private readonly IRegistrationService _registrationSerivice;
     private readonly MealPlannerDBContext _context;
     private readonly IExternalRecipeService? _recipeService;
+    private readonly ITagRepository? _tagRepository;
+    private readonly IUserDietaryRestrictionRepository? _userDietaryRestrictionRepo;
 
     public RecipeAPIController(
         MealPlannerDBContext context,
         IRecipeRepository recipeRepository,
         IUserRecipeRepository userRecipeRepository,
         IRegistrationService registrationService,
-        IExternalRecipeService? recipeService = null)
+        IExternalRecipeService? recipeService = null,
+        ITagRepository? tagRepository = null,
+        IUserDietaryRestrictionRepository? userDietaryRestrictionRepo = null)
     {
         _context = context;
         _recipeRepository = recipeRepository;
         _userRecipeRepository = userRecipeRepository;
         _registrationSerivice = registrationService;
         _recipeService = recipeService;
+        _tagRepository = tagRepository;
+        _userDietaryRestrictionRepo = userDietaryRestrictionRepo;
+    }
+
+    [HttpGet("tags")]
+    [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<string>))]
+    public async Task<IActionResult> GetRecipeTags()
+    {
+        if (_tagRepository == null) return Ok(new List<string>());
+        var tags = await _tagRepository.GetTagsByPopularityAsync();
+        return Ok(tags.Select(t => t.Name).ToList());
     }
 
     [HttpGet("search")]
     [ProducesResponseType(StatusCodes.Status200OK, Type = typeof(List<RecipeDTO>))]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> SearchRecipesByName(string name, int count=10)
+    public async Task<IActionResult> SearchRecipesByName(string name, int count=10, string? tag=null)
     {
-        var results = _recipeRepository.GetRecipesByName(name).Select(r => new RecipeDTO(r));
-        if (results.Count() < count && _recipeService != null)
+        IEnumerable<RecipeDTO> results;
+
+        // Resolve active dietary restriction names for the current user (empty when unauthenticated)
+        List<string> activeRestrictionNames = [];
+        if (_userDietaryRestrictionRepo != null && User.Identity?.IsAuthenticated == true)
         {
-            try
+            var user = await _registrationSerivice.FindUserByClaimAsync(User);
+            if (user != null)
             {
-                var externalResults = await _recipeService.SearchExternalRecipesByName(name);
-                results = results.Concat(externalResults).Take(20).ToList();
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e.Message);
+                var userRestrictions = await _userDietaryRestrictionRepo.GetByUserIdAsync(user.Id);
+                activeRestrictionNames = userRestrictions
+                    .Select(r => r.DietaryRestriction.Name!)
+                    .Where(n => !string.IsNullOrEmpty(n))
+                    .ToList();
             }
         }
+
+        if (!string.IsNullOrEmpty(tag))
+        {
+            // Existing tag-filter path — unchanged
+            results = _recipeRepository.GetRecipesByNameAndTag(name ?? "", tag).Select(r => new RecipeDTO(r));
+        }
+        else if (activeRestrictionNames.Count > 0)
+        {
+            // New path: filter by user's active dietary restrictions and annotate matching tags
+            var recipes = _recipeRepository.GetRecipesByNameAndRestrictions(name, activeRestrictionNames);
+            results = recipes.Select(r => new RecipeDTO(r)
+            {
+                MatchedRestrictionTags = r.Tags
+                    .Select(t => t.Name!)
+                    .Where(n => activeRestrictionNames.Contains(n, StringComparer.OrdinalIgnoreCase))
+                    .ToList()
+            });
+
+            if (results.IsNullOrEmpty())
+            {
+                return NoContent();
+            }
+        }
+        else
+        {
+            // Existing name-only path with Edamam fallback — unchanged
+            results = _recipeRepository.GetRecipesByName(name).Select(r => new RecipeDTO(r));
+            if (results.Count() < count && _recipeService != null)
+            {
+                try
+                {
+                    var externalResults = await _recipeService.SearchExternalRecipesByName(name);
+                    results = results.Concat(externalResults).Take(20).ToList();
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e.Message);
+                }
+            }
+        }
+
         if (results.IsNullOrEmpty())
         {
             return NotFound();
         }
-        
+
         foreach (RecipeDTO r in results)
         {
             r.VotePercentage = await _userRecipeRepository.GetRecipeVotePercentage(r.Id);

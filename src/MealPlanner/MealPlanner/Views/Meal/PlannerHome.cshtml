@@ -81,9 +81,8 @@
                                 <input type="hidden" name="date" value="@Model.SelectedDate.ToString("yyyy-MM-dd")" />
 
                                 <button type="button"
-                                        class="btn btn-danger btn-sm mealDeleteButton"
-                                        data-testid="delete-meal"
-                                        onclick="if (confirm('Are you sure you want to delete this meal?')) this.closest('form').submit();">
+                                        class="btn btn-danger btn-sm mealDeleteButton btn-delete-meal"
+                                        data-testid="delete-meal">
                                     Delete
                                 </button>
                             </form>

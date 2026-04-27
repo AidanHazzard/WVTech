@@ -4,6 +4,8 @@ const API_ROUTE = "/api/recipe/";
 
 $(document).ready(() => {
     $("#searchText").on("input", throttle(recipeSearchHandler, 1000));
+    $("#tagFilter").on("change", recipeSearchHandler);
+    loadTags();
 
     if ($("#editMealForm").length) {
         $(document).on("click", ".mealRecipeItem", function (e) {
@@ -36,28 +38,11 @@ $(document).ready(() => {
 
         $(document).on("click", ".delete-recipe-btn", function (e) {
             e.stopPropagation();
-            if (!confirm("Are you sure you want to remove this recipe?")) return;
 
             const $row = $(this).closest(".mealRecipeItem");
-            const recipeId = $row.data("id");
-            const mealId = $("#editMealForm input[name='Id']").val();
 
-            if (!mealId || mealId === "0") {
+            showInlineConfirm(this, "Remove this recipe?", function () {
                 $row.remove();
-                return;
-            }
-
-            fetch("/Meal/DeleteRecipeFromMeal", {
-                method: "POST",
-                keepalive: true,
-                headers: { "Content-Type": "application/x-www-form-urlencoded" },
-                body: `mealId=${mealId}&recipeId=${recipeId}`
-            }).then(response => {
-                if (response.ok) {
-                    $row.remove();
-                } else {
-                    alert("Failed to remove recipe.");
-                }
             });
         });
     }
@@ -109,15 +94,45 @@ function throttle(func, delay)
     }
 }
 
+async function loadTags()
+{
+    const response = await fetch(`${API_ROUTE}tags`);
+    if (!response.ok) return;
+    const tags = await response.json();
+    const $select = $("#tagFilter");
+    tags.forEach(tag => {
+        $select.append(`<option value="${tag}">${tag}</option>`);
+    });
+}
+
 async function recipeSearchHandler(event)
 {
+    const search = $("#searchText").val();
+    const tag = $("#tagFilter").val();
+
+    if (search.length < 3 && !tag)
+    {
+        $("#recipeResults").text("");
+        return;
+    }
+
     $("#error").hide();
 
-    const search = $("#searchText").val();
+    let url = `${API_ROUTE}search?name=${encodeURIComponent(search)}`;
+    if (tag) url += `&tag=${encodeURIComponent(tag)}`;
 
-    const response = await fetch(`/api/recipe/search?name=${search}`);
+    const response = await fetch(url);
 
     $("#recipeResults").text("");
+    if (response.status === 204)
+    {
+        $("#error").show();
+        $("#error").html(
+            "No recipes match your active dietary filters. " +
+            "<a href='/UserSettings/Dietary'>Adjust your dietary restrictions</a>."
+        );
+        return;
+    }
     if (!response.ok)
     {
         $("#error").show();
@@ -139,7 +154,17 @@ async function recipeSearchHandler(event)
         $(".recipeId", row).text(recipe.id);
         $(".recipeIdInput", row).val(recipe.id);
         $(".recipeRating", row).text(rating);
-        $(".recipeRating", row).attr("style", `color: color-mix(in oklch, ${LOW_RATING_COLOR}, ${HIGH_RATING_COLOR} ${rating});`)
+        $(".recipeRating", row).attr("style", `color: color-mix(in oklch, ${LOW_RATING_COLOR}, ${HIGH_RATING_COLOR} ${rating});`);
+
+        if (recipe.matchedRestrictionTags && recipe.matchedRestrictionTags.length > 0)
+        {
+            recipe.matchedRestrictionTags.forEach(tag => {
+                $(".recipeTags", row).append(
+                    `<span class="badge bg-success restriction-tag">${tag}</span>`
+                );
+            });
+        }
+
         $("#recipeResults").append(row);
     }
 

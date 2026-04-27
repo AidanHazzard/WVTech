@@ -8,10 +8,9 @@
             &larr; Back
         </a>
 
-        <form asp-action="DeleteMeal" asp-controller="Meal" method="post"
-              onsubmit="return confirm('Are you sure you want to delete this meal?');" class="m-0">
+        <form asp-action="DeleteMeal" asp-controller="Meal" method="post" class="m-0">
             <input type="hidden" name="id" value="@Model.Id" />
-            <button type="submit" class="btn btn-danger">Delete</button>
+            <button type="button" class="btn btn-danger btn-delete-meal">Delete</button>
         </form>
     </div>
 
@@ -63,10 +62,28 @@
 
             <div class="col-md-4 d-flex align-items-end">
                 <div class="form-check">
-                    <input asp-for="RepeatWeekly" class="form-check-input" />
+                    <input asp-for="RepeatWeekly" id="repeatWeeklyToggle" class="form-check-input" />
                     <label asp-for="RepeatWeekly" class="form-check-label back1Title">
                         Repeat Weekly
                     </label>
+                </div>
+            </div>
+
+            <div id="repeatDaysPanel" class="col-12 mt-2" style="@(Model.RepeatWeekly ? "" : "display:none;")">
+                <label class="form-label back1Title">Repeat on days</label>
+                <div class="d-flex flex-wrap gap-3">
+                    @foreach (DayOfWeek day in Enum.GetValues(typeof(DayOfWeek)))
+                    {
+                        <div class="form-check" data-day="@day">
+                            <input class="form-check-input repeat-day-checkbox"
+                                   type="checkbox"
+                                   name="RepeatDays"
+                                   value="@((int)day)"
+                                   id="repeatDay_@day"
+                                   @(Model.RepeatDays.Contains(day) ? "checked" : "") />
+                            <label class="form-check-label back1Title" for="repeatDay_@day">@day</label>
+                        </div>
+                    }
                 </div>
             </div>
         </div>
@@ -115,4 +132,13 @@
 
 @section Scripts {
     <script src="~/js/recipeSearch.js"></script>
+    <script>
+        (function () {
+            const toggle = document.getElementById('repeatWeeklyToggle');
+            const panel  = document.getElementById('repeatDaysPanel');
+            function sync() { panel.style.display = toggle.checked ? '' : 'none'; }
+            toggle.addEventListener('change', sync);
+            sync();
+        })();
+    </script>
 }

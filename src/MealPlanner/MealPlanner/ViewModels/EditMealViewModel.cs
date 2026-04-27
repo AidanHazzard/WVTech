@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
 namespace MealPlanner.ViewModels
@@ -19,6 +21,8 @@ namespace MealPlanner.ViewModels
         public int SelectedDay { get; set; }
 
         public bool RepeatWeekly { get; set; }
+
+        public List<DayOfWeek> RepeatDays { get; set; } = new List<DayOfWeek>();
 
         public List<int> RecipeIds { get; set; } = new List<int>();
 

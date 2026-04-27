@@ -105,6 +105,9 @@ namespace MealPlanner.Migrations
                     b.Property<bool>("IsCompleted")
                         .HasColumnType("bit");
 
+                    b.Property<string>("RepeatDays")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("RepeatRule")
                         .HasColumnType("nvarchar(max)");
 
@@ -125,6 +128,32 @@ namespace MealPlanner.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("Meal");
+                });
+
+            modelBuilder.Entity("MealPlanner.Models.MealCompletion", b =>
+                {
+                    b.Property<int>("MealId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CompletionDate")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("MealId", "CompletionDate");
+
+                    b.ToTable("MealCompletion");
+                });
+
+            modelBuilder.Entity("MealPlanner.Models.MealExclusion", b =>
+                {
+                    b.Property<int>("MealId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("ExclusionDate")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("MealId", "ExclusionDate");
+
+                    b.ToTable("MealExclusion");
                 });
 
             modelBuilder.Entity("MealPlanner.Models.Measurement", b =>
@@ -414,6 +443,21 @@ namespace MealPlanner.Migrations
                     b.HasIndex("DietaryRestrictionId");
 
                     b.ToTable("UserDietaryRestriction");
+                });
+
+            modelBuilder.Entity("MealPlanner.Models.UserFoodPreference", b =>
+                {
+                    b.Property<string>("UserId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int>("TagId")
+                        .HasColumnType("int");
+
+                    b.HasKey("UserId", "TagId");
+
+                    b.HasIndex("TagId");
+
+                    b.ToTable("UserFoodPreference");
                 });
 
             modelBuilder.Entity("MealPlanner.Models.UserNutritionPreference", b =>
@@ -726,6 +770,28 @@ namespace MealPlanner.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("MealPlanner.Models.MealCompletion", b =>
+                {
+                    b.HasOne("MealPlanner.Models.Meal", "Meal")
+                        .WithMany()
+                        .HasForeignKey("MealId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Meal");
+                });
+
+            modelBuilder.Entity("MealPlanner.Models.MealExclusion", b =>
+                {
+                    b.HasOne("MealPlanner.Models.Meal", "Meal")
+                        .WithMany()
+                        .HasForeignKey("MealId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Meal");
+                });
+
             modelBuilder.Entity("MealPlanner.Models.UserDietaryRestriction", b =>
                 {
                     b.HasOne("MealPlanner.Models.DietaryRestriction", "DietaryRestriction")
@@ -741,6 +807,25 @@ namespace MealPlanner.Migrations
                         .IsRequired();
 
                     b.Navigation("DietaryRestriction");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("MealPlanner.Models.UserFoodPreference", b =>
+                {
+                    b.HasOne("MealPlanner.Models.Tag", "Tag")
+                        .WithMany()
+                        .HasForeignKey("TagId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("MealPlanner.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Tag");
 
                     b.Navigation("User");
                 });

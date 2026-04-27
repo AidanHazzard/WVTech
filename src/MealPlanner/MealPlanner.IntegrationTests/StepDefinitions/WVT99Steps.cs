@@ -16,6 +16,7 @@ public class WVT99Steps
     MealPlannerDBContext _context;
     int _recipeId;
     string _excludedTag = string.Empty;
+    string _selectedTag = string.Empty;
 
     [BeforeScenario]
     public void SetUp()
@@ -31,6 +32,24 @@ public class WVT99Steps
     {
         var select = new SelectElement(_driver.FindElement(By.Id("tag-select")));
         select.SelectByValue(tag);
+    }
+
+    [Given("{string} selects a predefined tag from the tag dropdown")]
+    public void GivenUserSelectsAnyPredefinedTag(string username)
+    {
+        var select = new SelectElement(_driver.FindElement(By.Id("tag-select")));
+        // Skip the placeholder option (index 0) and pick the first real tag (most popular)
+        var firstOption = select.Options.FirstOrDefault(o => !string.IsNullOrEmpty(o.GetAttribute("value")));
+        Assert.That(firstOption, Is.Not.Null, "No predefined tags available in the dropdown.");
+        _selectedTag = firstOption!.GetAttribute("value");
+        select.SelectByValue(_selectedTag);
+    }
+
+    [Then("the recipe {string} has the selected tag in the database")]
+    public void ThenRecipeHasSelectedTagInDatabase(string recipeName)
+    {
+        Assert.That(_selectedTag, Is.Not.Empty, "No tag was selected in a prior step.");
+        ThenRecipeHasTagInDatabase(recipeName, _selectedTag);
     }
 
     [Given("{string} adds the custom tag {string}")]
