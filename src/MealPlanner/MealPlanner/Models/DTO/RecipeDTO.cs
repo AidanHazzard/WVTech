@@ -15,4 +15,5 @@ public class RecipeDTO
     public int Id { get; set; }
     public float VotePercentage { get; set; }
     public string? ExternalUri { get; set; }
+    public List<string> MatchedRestrictionTags { get; set; } = [];
 }
