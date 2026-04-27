@@ -8,6 +8,15 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    services:
+      mssql:
+        image: mcr.microsoft.com/mssql/server:2025-latest
+        env:
+          MSSQL_SA_PASSWORD: Testp@ssw0rd
+          ACCEPT_EULA: 'Y'
+        ports:
+          - 1433:1433
+
     steps:
       - uses: actions/checkout@v4
       - name: Setup dotnet
@@ -19,10 +28,7 @@ jobs:
         run: dotnet restore ./src/MealPlanner/MealPlanner.Tests/MealPlanner.IntegrationTests.csproj
       - name: Build test project
         run: dotnet build --no-restore ./src/MealPlanner/MealPlanner.IntegrationTests/Mealplanner.IntegrationTests.csproj
-      - name: Workflow Queue
-        uses: ahmadnassri/action-workflow-queue@v1.2.0
-        with:
-            timeout: 900000
-      # only runs additional steps if there is no other instance of `acceptance.yml` currently running
       - name: Test
-        run: dotnet test --no-build ./src/MealPlanner/MealPlanner.Tests/Mealplanner.Tests.csproj -e ConnectionString='${{ secrets.TESTING_CONNECTIONSTRING }}'
+        run: dotnet test --no-build ./src/MealPlanner/MealPlanner.Tests/Mealplanner.Tests.csproj
+        env:
+          ConnectionString: "Server=localhost,1433;Initial Catalog=OneBiteTesting;User Id=sa;Password=Testp@ssw0rd;"
