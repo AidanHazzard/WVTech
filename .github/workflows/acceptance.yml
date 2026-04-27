@@ -34,5 +34,7 @@ jobs:
       - name: Build test project
         run: dotnet build --no-restore
       - name: Test
-        run: dotnet test --no-build -e ConnectionString="Server=localhost,1433;Initial Catalog=OneBiteTesting;User Id=sa;Password=Testp@ssw0rd;"
+        run: dotnet test --no-build
+        env:
+          ConnectionString: "Server=localhost,1433;Initial Catalog=OneBiteTesting;User Id=sa;Password=Testp@ssw0rd;"
           
