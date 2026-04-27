@@ -138,6 +138,24 @@ public class RecipeRepository : Repository<Recipe>, IRecipeRepository
         return _dbset.FirstOrDefault(r => r.ExternalUri == uri);
     }
 
+    public List<Recipe> GetRecipesByNameAndRestrictions(string name, IEnumerable<string> restrictionTagNames)
+    {
+        var required = restrictionTagNames.Select(n => n.ToLower()).ToList();
+
+        var query = _dbset.Include(r => r.Tags)
+            .Where(r => r.ExternalUri == null &&
+                        required.All(tag => r.Tags.Any(t => t.Name.ToLower() == tag)));
+
+        if (!string.IsNullOrEmpty(name))
+        {
+            query = query.Where(r =>
+                r.Name.ToLower().Contains($" {name.ToLower()}") ||
+                r.Name.ToLower().StartsWith(name.ToLower()));
+        }
+
+        return query.ToList();
+    }
+
     public async Task<List<Recipe>> GetAllWithTagsAsync()
     {
         return await _dbset.Include(r => r.Tags).ToListAsync();

@@ -141,6 +141,15 @@ async function recipeSearchHandler(event)
     const response = await fetch(url);
 
     $("#recipeResults").text("");
+    if (response.status === 204)
+    {
+        $("#error").show();
+        $("#error").html(
+            "No recipes match your active dietary filters. " +
+            "<a href='/UserSettings/Dietary'>Adjust your dietary restrictions</a>."
+        );
+        return;
+    }
     if (!response.ok)
     {
         $("#error").show();
@@ -162,7 +171,17 @@ async function recipeSearchHandler(event)
         $(".recipeId", row).text(recipe.id);
         $(".recipeIdInput", row).val(recipe.id);
         $(".recipeRating", row).text(rating);
-        $(".recipeRating", row).attr("style", `color: color-mix(in oklch, ${LOW_RATING_COLOR}, ${HIGH_RATING_COLOR} ${rating});`)
+        $(".recipeRating", row).attr("style", `color: color-mix(in oklch, ${LOW_RATING_COLOR}, ${HIGH_RATING_COLOR} ${rating});`);
+
+        if (recipe.matchedRestrictionTags && recipe.matchedRestrictionTags.length > 0)
+        {
+            recipe.matchedRestrictionTags.forEach(tag => {
+                $(".recipeTags", row).append(
+                    `<span class="badge bg-success restriction-tag">${tag}</span>`
+                );
+            });
+        }
+
         $("#recipeResults").append(row);
     }
 
