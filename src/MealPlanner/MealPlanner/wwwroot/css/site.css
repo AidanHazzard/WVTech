@@ -614,3 +614,10 @@ a.buttonRed {
     color: #fff !important;
     opacity: 1;
 }
+
+.inline-confirm {
+    padding: 4px 8px;
+    border-radius: 8px;
+    background-color: var(--layer2-bg);
+    white-space: nowrap;
+}
