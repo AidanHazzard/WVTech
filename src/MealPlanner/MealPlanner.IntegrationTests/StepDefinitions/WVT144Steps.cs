@@ -443,6 +443,10 @@ public class WVT144Steps
         var ctx = BDDSetup.Context;
         var user = ctx.Set<User>().First(u => u.NormalizedEmail == $"{userName}@fakeemail.com".ToUpper());
 
+        var stale = ctx.Set<UserDietaryRestriction>().Where(udr => udr.UserId == user.Id).ToList();
+        ctx.Set<UserDietaryRestriction>().RemoveRange(stale);
+        ctx.SaveChanges();
+
         var restriction = ctx.Set<DietaryRestriction>().FirstOrDefault(dr => dr.Name == restrictionName);
         if (restriction == null)
         {
@@ -451,13 +455,8 @@ public class WVT144Steps
             ctx.SaveChanges();
         }
 
-        var existing = ctx.Set<UserDietaryRestriction>()
-            .FirstOrDefault(udr => udr.UserId == user.Id && udr.DietaryRestrictionId == restriction.Id);
-        if (existing == null)
-        {
-            ctx.Add(new UserDietaryRestriction { UserId = user.Id, DietaryRestrictionId = restriction.Id });
-            ctx.SaveChanges();
-        }
+        ctx.Add(new UserDietaryRestriction { UserId = user.Id, DietaryRestrictionId = restriction.Id });
+        ctx.SaveChanges();
     }
 
     [Given("{string} has a recipe tagged {string} named {string}")]
