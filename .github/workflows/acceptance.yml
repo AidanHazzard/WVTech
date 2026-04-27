@@ -36,5 +36,5 @@ jobs:
       - name: Test
         run: dotnet test --no-build
         env:
-          ConnectionString: "Server=localhost,1433;Initial Catalog=OneBiteTesting;User Id=sa;Password=Testp@ssw0rd;"
+          ConnectionString: "Data Source=localhost,1433;Database=OneBiteTesting;User Id=SA;Password=Testp@ssw0rd;Pooling=False;Trust Server Certificate=True;Authentication=SqlPassword"
           
