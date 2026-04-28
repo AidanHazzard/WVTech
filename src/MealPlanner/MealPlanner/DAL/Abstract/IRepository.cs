@@ -1,3 +1,5 @@
+using System.Linq.Expressions;
+
 namespace MealPlanner.DAL.Abstract;
 
 public interface IRepository<TEntity> where TEntity : class, new()
@@ -11,4 +13,6 @@ public interface IRepository<TEntity> where TEntity : class, new()
     public void Delete(TEntity entity);
 
     public bool Exists(int id);
+
+    public TEntity FindOrCreate(Expression<Func<TEntity, bool>> predicate, Func<TEntity> factory);
 }

@@ -1,7 +1,6 @@
 using MealPlanner.Models;
 using MealPlanner.Services;
 using MealPlanner.ViewModels;
-using Moq;
 
 namespace MealPlanner.Tests;
 
@@ -189,6 +188,21 @@ public class ViewModelServiceTests
 
         // Assert
         Assert.That(result.Tags.Select(t => t.Name), Is.EquivalentTo(new[] { "Dinner" }));
+    }
+
+    [Test]
+    public void IngredientFromPantryItemVM_ReturnsIngredientWithCorrectFields()
+    {
+        var vm = new PantryItemViewModel { Name = "Milk", Amount = 2f, Measurement = "cups" };
+
+        var result = ViewModelService.IngredientFromPantryItemVM(vm);
+
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(result.Amount, Is.EqualTo(2f));
+            Assert.That(result.IngredientBase.Name, Is.EqualTo("Milk"));
+            Assert.That(result.Measurement.Name, Is.EqualTo("cups"));
+        }
     }
 
     [Test]

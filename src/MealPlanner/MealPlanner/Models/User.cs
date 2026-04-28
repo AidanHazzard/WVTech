@@ -9,4 +9,5 @@ public class User : IdentityUser
     
     public List<Recipe> Recipes { get; } = [];
     public List<UserRecipe> UserRecipes { get; } = [];
+    public List<Ingredient> PantryItems { get; set; } = [];
 }

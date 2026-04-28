@@ -44,6 +44,16 @@ public class ViewModelService
         return recipe;
     }
 
+    public static Ingredient IngredientFromPantryItemVM(PantryItemViewModel vm)
+    {
+        return new Ingredient
+        {
+            Amount = vm.Amount,
+            IngredientBase = new IngredientBase { Name = vm.Name },
+            Measurement = new Measurement { Name = vm.Measurement }
+        };
+    }
+
     public static Recipe EditRecipeVMToModel(Recipe recipeFromDataBase, RecipeViewModel vm)
     {
         Recipe updated = RecipeFromRecipeVM(vm);

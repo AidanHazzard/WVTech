@@ -1,0 +1,58 @@
+@model List<MealPlanner.Models.Ingredient>
+@using MealPlanner.ViewModels
+
+@{
+    ViewData["Title"] = "My Pantry";
+}
+
+<div class="back1">
+    <h1 class="back1Title">My Pantry</h1>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success text-center">@TempData["SuccessMessage"]</div>
+    }
+    @if (TempData["ValidationError"] != null)
+    {
+        <div class="field-validation-error text-danger text-center">@TempData["ValidationError"]</div>
+    }
+
+    <form asp-action="Add" method="post" class="mb-4">
+        @Html.AntiForgeryToken()
+        <div class="row align-items-start">
+            <div class="col">
+                <input id="Name" name="Name" class="back2-textbox-partial w-100" placeholder="Ingredient name" />
+                <span class="field-validation-error text-danger" data-valmsg-for="Name"></span>
+            </div>
+            <div class="col-2">
+                <input id="Amount" name="Amount" type="number" step="any" min="0.01" class="back2-textbox-partial w-100" placeholder="Amount" />
+            </div>
+            <div class="col-2">
+                <input id="Measurement" name="Measurement" class="back2-textbox-partial w-100" placeholder="Unit" />
+            </div>
+            <div class="col-auto">
+                <button id="addPantryItemBtn" type="submit" class="btn btn-success rounded-4 px-4">Add to Pantry</button>
+            </div>
+        </div>
+    </form>
+
+    <div class="back2">
+        @if (Model.Any())
+        {
+            <div class="d-flex flex-column gap-3">
+                @foreach (var item in Model)
+                {
+                    <div class="pantry-item d-flex align-items-center gap-2">
+                        <span class="pantry-item-name fs-5 flex-grow-1">
+                            @($"{item.Amount:G} {item.Measurement?.Name} of {item.IngredientBase?.Name}")
+                        </span>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <p class="text-center fs-5 mb-0">Your pantry is empty. Add an item above.</p>
+        }
+    </div>
+</div>
