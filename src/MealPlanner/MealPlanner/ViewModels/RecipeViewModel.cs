@@ -24,7 +24,7 @@ public class RecipeViewModel
 
         Name = recipe.Name;
         Id = recipe.Id;
-        Ingredients = recipe.Ingredients.Select(i => i.IngredientBase.Name).ToList();
+        Ingredients = recipe.Ingredients.Select(i => i.DisplayName).ToList();
         IngredientAmounts = recipe.Ingredients.Select(i => i.Amount).ToList();
         IngredientMeasurements = recipe.Ingredients.Select(i => i.Measurement.Name).ToList();
         Directions = recipe.Directions;

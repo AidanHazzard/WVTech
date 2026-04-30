@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using MealPlanner.Models;
 using MealPlanner.Services;
 using MealPlanner.DAL.Abstract;
@@ -11,130 +12,109 @@ namespace MealPlanner.Tests;
 
 public class ShoppingListServiceTests
 {
+    private Mock<IShoppingListRepository> _repo;
+    private Mock<IRepository<IngredientBase>> _ingredientBaseRepo;
+    private Mock<IRepository<Measurement>> _measurementRepo;
+    private ShoppingListService _service;
+
+    [SetUp]
+    public void SetUp()
+    {
+        _repo = new Mock<IShoppingListRepository>();
+        _ingredientBaseRepo = new Mock<IRepository<IngredientBase>>();
+        _measurementRepo = new Mock<IRepository<Measurement>>();
+
+        _ingredientBaseRepo
+            .Setup(r => r.FindOrCreate(It.IsAny<Expression<Func<IngredientBase, bool>>>(), It.IsAny<Func<IngredientBase>>()))
+            .Returns((Expression<Func<IngredientBase, bool>> _, Func<IngredientBase> factory) => factory());
+
+        _measurementRepo
+            .Setup(r => r.FindOrCreate(It.IsAny<Expression<Func<Measurement, bool>>>(), It.IsAny<Func<Measurement>>()))
+            .Returns((Expression<Func<Measurement, bool>> _, Func<Measurement> factory) => factory());
+
+        _service = new ShoppingListService(_repo.Object, _ingredientBaseRepo.Object, _measurementRepo.Object);
+    }
+
     [Test]
     public void AddItem_ShouldAddShoppingListItem_WhenNameIsValid()
     {
-        var repo = new Mock<IShoppingListRepository>();
-        var service = new ShoppingListService(repo.Object);
+        _service.AddItem("user-1", "Milk", 1, "");
 
-        string userId = "user-1";
-        string itemName = "Milk";
-
-        service.AddItem(userId, itemName, 1, "");
-
-        repo.Verify(r => r.Add(It.Is<ShoppingListItem>(i =>
-            i.UserId == userId &&
-            i.Name == "Milk"
+        _repo.Verify(r => r.Add(It.Is<ShoppingListItem>(i =>
+            i.UserId == "user-1" &&
+            i.DisplayName == "Milk"
         )), Times.Once);
     }
 
     [Test]
-    public void AddItem_ShouldTrimAndNormalizeName_WhenNameHasExtraSpaces()
+    public void AddItem_ShouldNormalizeIngredientBaseName_WhenNameIsPlural()
     {
-        var repo = new Mock<IShoppingListRepository>();
-        var service = new ShoppingListService(repo.Object);
+        _service.AddItem("user-1", "  Eggs  ", 1, "");
 
-        string userId = "user-1";
-        string itemName = "  Eggs  ";
-
-        service.AddItem(userId, itemName, 1, "");
-
-        // Normalize trims whitespace and singularizes: "  Eggs  " → "Egg"
-        repo.Verify(r => r.Add(It.Is<ShoppingListItem>(i =>
-            i.UserId == userId &&
-            i.Name == "Egg"
+        _repo.Verify(r => r.Add(It.Is<ShoppingListItem>(i =>
+            i.DisplayName == "Eggs" &&
+            i.IngredientBase.Name == IngredientNameNormalizer.NormalizeKey("Eggs")
         )), Times.Once);
     }
 
     [Test]
     public void AddItem_ShouldThrowArgumentException_WhenNameIsEmpty()
     {
-        var repo = new Mock<IShoppingListRepository>();
-        var service = new ShoppingListService(repo.Object);
-
-        Assert.Throws<ArgumentException>(() => service.AddItem("user-1", "", 1, ""));
-        repo.Verify(r => r.Add(It.IsAny<ShoppingListItem>()), Times.Never);
+        Assert.Throws<ArgumentException>(() => _service.AddItem("user-1", "", 1, ""));
+        _repo.Verify(r => r.Add(It.IsAny<ShoppingListItem>()), Times.Never);
     }
 
     [Test]
     public void AddItem_ShouldThrowArgumentException_WhenNameIsWhitespace()
     {
-        var repo = new Mock<IShoppingListRepository>();
-        var service = new ShoppingListService(repo.Object);
-
-        Assert.Throws<ArgumentException>(() => service.AddItem("user-1", "   ", 1, ""));
-        repo.Verify(r => r.Add(It.IsAny<ShoppingListItem>()), Times.Never);
+        Assert.Throws<ArgumentException>(() => _service.AddItem("user-1", "   ", 1, ""));
+        _repo.Verify(r => r.Add(It.IsAny<ShoppingListItem>()), Times.Never);
     }
 
     [Test]
     public void RemoveItem_ShouldCallRepositoryRemove_WhenItemExists()
     {
-        var repo = new Mock<IShoppingListRepository>();
-        var service = new ShoppingListService(repo.Object);
+        _service.RemoveItem(5, "user-1");
 
-        int itemId = 5;
-        string userId = "user-1";
-
-        service.RemoveItem(itemId, userId);
-
-        repo.Verify(r => r.Remove(itemId, userId), Times.Once);
+        _repo.Verify(r => r.Remove(5, "user-1"), Times.Once);
     }
 
     [Test]
     public void RemoveItem_ShouldThrowArgumentException_WhenItemIdIsInvalid()
     {
-        var repo = new Mock<IShoppingListRepository>();
-        var service = new ShoppingListService(repo.Object);
-
-        Assert.Throws<ArgumentException>(() => service.RemoveItem(0, "user-1"));
-        repo.Verify(r => r.Remove(It.IsAny<int>(), It.IsAny<string>()), Times.Never);
+        Assert.Throws<ArgumentException>(() => _service.RemoveItem(0, "user-1"));
+        _repo.Verify(r => r.Remove(It.IsAny<int>(), It.IsAny<string>()), Times.Never);
     }
 
     [Test]
-    public void UpdateItemAmount_ShouldCallRepositoryUpdateAmountByName_WhenValid()
+    public void UpdateItemAmount_ShouldCallRepositoryUpdate_WhenValid()
     {
-        var repo = new Mock<IShoppingListRepository>();
-        var service = new ShoppingListService(repo.Object);
+        _service.UpdateItemAmount("user-1", 42, 3.5f);
 
-        service.UpdateItemAmount("user-1", "Milk", 3.5f);
-
-        repo.Verify(r => r.UpdateAmountByName("user-1", "Milk", 3.5f), Times.Once);
-    }
-
-    [Test]
-    public void UpdateItemAmount_ShouldThrowArgumentException_WhenNameIsEmpty()
-    {
-        var repo = new Mock<IShoppingListRepository>();
-        var service = new ShoppingListService(repo.Object);
-
-        Assert.Throws<ArgumentException>(() => service.UpdateItemAmount("user-1", "", 1f));
-        repo.Verify(r => r.UpdateAmountByName(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<float>()), Times.Never);
+        _repo.Verify(r => r.UpdateAmountByIngredientBase("user-1", 42, 3.5f), Times.Once);
     }
 
     [Test]
     public void UpdateItemAmount_ShouldThrowArgumentException_WhenAmountIsNegative()
     {
-        var repo = new Mock<IShoppingListRepository>();
-        var service = new ShoppingListService(repo.Object);
-
-        Assert.Throws<ArgumentException>(() => service.UpdateItemAmount("user-1", "Milk", -1f));
-        repo.Verify(r => r.UpdateAmountByName(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<float>()), Times.Never);
+        Assert.Throws<ArgumentException>(() => _service.UpdateItemAmount("user-1", 42, -1f));
+        _repo.Verify(r => r.UpdateAmountByIngredientBase(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<float>()), Times.Never);
     }
 
     [Test]
     public void GetItemsForUser_ShouldReturnOnlyThatUsersItems()
     {
-        var repo = new Mock<IShoppingListRepository>();
+        var ingredientBase = new IngredientBase { Id = 1, Name = "milk" };
+        var measurement = new Measurement { Id = 1, Name = "Cup(s)" };
         var expectedItems = new List<ShoppingListItem>
         {
-            new ShoppingListItem { Id = 1, UserId = "user-1", Name = "Milk" },
-            new ShoppingListItem { Id = 2, UserId = "user-1", Name = "Eggs" }
+            new ShoppingListItem { Id = 1, UserId = "user-1", DisplayName = "Milk", IngredientBase = ingredientBase, Measurement = measurement },
+            new ShoppingListItem { Id = 2, UserId = "user-1", DisplayName = "Eggs", IngredientBase = new IngredientBase { Id = 2, Name = "egg" }, Measurement = measurement }
         };
 
-        repo.Setup(r => r.GetByUserId("user-1")).Returns(expectedItems);
-        var service = new ShoppingListService(repo.Object);
+        _repo.Setup(r => r.GetByUserId("user-1")).Returns(expectedItems);
 
-        var result = service.GetItemsForUser("user-1");
+        var result = _service.GetItemsForUser("user-1");
 
         Assert.That(result.Count(), Is.EqualTo(2));
         Assert.That(result.All(item => item.UserId == "user-1"), Is.True);

@@ -37,10 +37,12 @@ public class ViewModelServiceTests
             Assert.That(r.Carbs, Is.EqualTo(3));
             Assert.That(r.Fat, Is.EqualTo(4));
             Assert.That(r.Ingredients[0].Amount, Is.EqualTo(1));
-            Assert.That(r.Ingredients[0].IngredientBase.Name, Is.EqualTo("i1_Base"));
+            Assert.That(r.Ingredients[0].DisplayName, Is.EqualTo("i1_Base"));
+            Assert.That(r.Ingredients[0].IngredientBase.Name, Is.EqualTo(IngredientNameNormalizer.NormalizeKey("i1_Base")));
             Assert.That(r.Ingredients[0].Measurement.Name, Is.EqualTo("i1_Measure"));
             Assert.That(r.Ingredients[1].Amount, Is.EqualTo(1));
-            Assert.That(r.Ingredients[1].IngredientBase.Name, Is.EqualTo("i2_Base"));
+            Assert.That(r.Ingredients[1].DisplayName, Is.EqualTo("i2_Base"));
+            Assert.That(r.Ingredients[1].IngredientBase.Name, Is.EqualTo(IngredientNameNormalizer.NormalizeKey("i2_Base")));
             Assert.That(r.Ingredients[1].Measurement.Name, Is.EqualTo("i2_Measure"));
         }
     }
@@ -105,12 +107,14 @@ public class ViewModelServiceTests
         // Arrange
         Ingredient i1 = new Ingredient
         {
+            DisplayName = "i1_display",
             Amount = 1,
             IngredientBase = new IngredientBase { Name = "i1_base"},
             Measurement = new Measurement { Name = "i1_measure" }
         };
         Ingredient i2 = new Ingredient
         {
+            DisplayName = "i2_display",
             Amount = 2,
             IngredientBase = new IngredientBase { Name = "i2_base"},
             Measurement = new Measurement { Name = "i2_measure" }
@@ -140,10 +144,10 @@ public class ViewModelServiceTests
             Assert.That(vm.Carbs, Is.EqualTo(3));
             Assert.That(vm.Fat, Is.EqualTo(4));
             Assert.That(vm.IngredientAmounts[0], Is.EqualTo(1));
-            Assert.That(vm.Ingredients[0], Is.EqualTo("i1_base"));
+            Assert.That(vm.Ingredients[0], Is.EqualTo("i1_display"));
             Assert.That(vm.IngredientMeasurements[0], Is.EqualTo("i1_measure"));
             Assert.That(vm.IngredientAmounts[1], Is.EqualTo(2));
-            Assert.That(vm.Ingredients[1], Is.EqualTo("i2_base"));
+            Assert.That(vm.Ingredients[1], Is.EqualTo("i2_display"));
             Assert.That(vm.IngredientMeasurements[1], Is.EqualTo("i2_measure"));
         }
     }
@@ -200,7 +204,8 @@ public class ViewModelServiceTests
         using (Assert.EnterMultipleScope())
         {
             Assert.That(result.Amount, Is.EqualTo(2f));
-            Assert.That(result.IngredientBase.Name, Is.EqualTo("Milk"));
+            Assert.That(result.DisplayName, Is.EqualTo("Milk"));
+            Assert.That(result.IngredientBase.Name, Is.EqualTo(IngredientNameNormalizer.NormalizeKey("Milk")));
             Assert.That(result.Measurement.Name, Is.EqualTo("cups"));
         }
     }

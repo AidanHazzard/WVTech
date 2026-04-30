@@ -61,8 +61,8 @@ public class PantryController : Controller
 
         var ingredient = ViewModelService.IngredientFromPantryItemVM(model);
         ingredient.IngredientBase = _ingredientBaseRepo.FindOrCreate(
-            b => b.Name == model.Name,
-            () => new IngredientBase { Name = model.Name });
+            b => b.Name == IngredientNameNormalizer.NormalizeKey(model.Name),
+            () => new IngredientBase { Name = IngredientNameNormalizer.NormalizeKey(model.Name) });
         ingredient.Measurement = _measurementRepo.FindOrCreate(
             m => m.Name == model.Measurement,
             () => new Measurement { Name = model.Measurement });

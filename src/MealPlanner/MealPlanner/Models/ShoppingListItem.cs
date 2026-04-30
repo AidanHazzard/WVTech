@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace MealPlanner.Models;
 
 public class ShoppingListItem
@@ -6,11 +8,17 @@ public class ShoppingListItem
 
     public string UserId { get; set; } = string.Empty;
 
-    public string Name { get; set; } = string.Empty;
+    public int IngredientBaseId { get; set; }
+    public IngredientBase IngredientBase { get; set; } = null!;
+
+    public int MeasurementId { get; set; }
+    public Measurement Measurement { get; set; } = null!;
+
+    [Required]
+    [MaxLength(128)]
+    public string DisplayName { get; set; } = string.Empty;
 
     public float Amount { get; set; }
-
-    public string Measurement { get; set; } = string.Empty;
 
     public bool IsAutoAdded { get; set; }
 }

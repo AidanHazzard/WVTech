@@ -6,6 +6,7 @@ using MealPlanner.DAL.Abstract;
 using MealPlanner.Models;
 using MealPlanner.Services;
 using MealPlanner.ViewModels;
+
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
@@ -104,7 +105,8 @@ public class PantryControllerTests
             .FirstAsync(u => u.Id == "user-1");
 
         Assert.That(user.PantryItems, Has.Count.EqualTo(1));
-        Assert.That(user.PantryItems[0].IngredientBase.Name, Is.EqualTo("Milk"));
+        Assert.That(user.PantryItems[0].DisplayName, Is.EqualTo("Milk"));
+        Assert.That(user.PantryItems[0].IngredientBase.Name, Is.EqualTo(IngredientNameNormalizer.NormalizeKey("Milk")));
     }
 
     [Test]
@@ -112,7 +114,8 @@ public class PantryControllerTests
     {
         var ingredient = new Ingredient
         {
-            IngredientBase = new IngredientBase { Name = "Eggs" },
+            DisplayName = "Eggs",
+            IngredientBase = new IngredientBase { Name = "egg" },
             Measurement = new Measurement { Name = "pieces" },
             Amount = 12f
         };
@@ -125,7 +128,7 @@ public class PantryControllerTests
         var items = result!.Model as List<Ingredient>;
         Assert.That(items, Is.Not.Null);
         Assert.That(items!, Has.Count.EqualTo(1));
-        Assert.That(items![0].IngredientBase.Name, Is.EqualTo("Eggs"));
+        Assert.That(items![0].DisplayName, Is.EqualTo("Eggs"));
     }
 
     // --- Scenario 4: validation prevents empty name ---

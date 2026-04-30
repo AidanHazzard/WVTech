@@ -6,10 +6,17 @@ namespace MealPlanner.Services;
 public class ShoppingListService
 {
     private readonly IShoppingListRepository _shoppingListRepository;
+    private readonly IRepository<IngredientBase> _ingredientBaseRepo;
+    private readonly IRepository<Measurement> _measurementRepo;
 
-    public ShoppingListService(IShoppingListRepository shoppingListRepository)
+    public ShoppingListService(
+        IShoppingListRepository shoppingListRepository,
+        IRepository<IngredientBase> ingredientBaseRepo,
+        IRepository<Measurement> measurementRepo)
     {
         _shoppingListRepository = shoppingListRepository;
+        _ingredientBaseRepo = ingredientBaseRepo;
+        _measurementRepo = measurementRepo;
     }
 
     public void SyncFromMeals(string userId, IEnumerable<Ingredient> ingredients)
@@ -17,13 +24,14 @@ public class ShoppingListService
         _shoppingListRepository.RemoveAutoAddedByUserId(userId);
 
         var grouped = ingredients
-            .GroupBy(i => (IngredientNameNormalizer.NormalizeKey(i.IngredientBase.Name), i.Measurement.Name.ToLower()))
+            .GroupBy(i => (i.IngredientBase.Id, i.Measurement.Id))
             .Select(g => new ShoppingListItem
             {
                 UserId = userId,
-                Name = IngredientNameNormalizer.Normalize(g.First().IngredientBase.Name),
+                IngredientBase = g.First().IngredientBase,
+                Measurement = g.First().Measurement,
+                DisplayName = g.First().DisplayName,
                 Amount = g.Sum(i => i.Amount),
-                Measurement = g.First().Measurement.Name,
                 IsAutoAdded = true
             });
 
@@ -34,16 +42,24 @@ public class ShoppingListService
     public void AddItem(string userId, string itemName, float amount, string measurement)
     {
         if (string.IsNullOrWhiteSpace(itemName))
-        {
             throw new ArgumentException("Item name cannot be empty.");
-        }
+
+        var ingredientBase = _ingredientBaseRepo.FindOrCreate(
+            b => b.Name == IngredientNameNormalizer.NormalizeKey(itemName),
+            () => new IngredientBase { Name = IngredientNameNormalizer.NormalizeKey(itemName) });
+
+        var measurementEntity = _measurementRepo.FindOrCreate(
+            m => m.Name.ToLower() == measurement.Trim().ToLower(),
+            () => new Measurement { Name = measurement.Trim() });
 
         var item = new ShoppingListItem
         {
             UserId = userId,
-            Name = IngredientNameNormalizer.Normalize(itemName),
+            IngredientBase = ingredientBase,
+            Measurement = measurementEntity,
+            DisplayName = itemName.Trim(),
             Amount = amount,
-            Measurement = measurement.Trim()
+            IsAutoAdded = false
         };
 
         _shoppingListRepository.Add(item);
@@ -52,47 +68,28 @@ public class ShoppingListService
     public void RemoveItem(int itemId, string userId)
     {
         if (itemId <= 0)
-        {
             throw new ArgumentException("Invalid item id.");
-        }
 
         _shoppingListRepository.Remove(itemId, userId);
     }
 
-    public void RemoveItemsByName(string userId, string itemName)
+    public void RemoveItemsByIngredientBase(string userId, int ingredientBaseId)
     {
-        if (string.IsNullOrWhiteSpace(itemName))
-        {
-            throw new ArgumentException("Item name cannot be empty.");
-        }
-
-        _shoppingListRepository.RemoveAllByName(userId, itemName.Trim());
+        _shoppingListRepository.RemoveAllByIngredientBase(userId, ingredientBaseId);
     }
 
-    public void UpdateItemAmount(string userId, string itemName, float newAmount)
+    public void UpdateItemAmount(string userId, int ingredientBaseId, float newAmount)
     {
-        if (string.IsNullOrWhiteSpace(itemName))
-            throw new ArgumentException("Item name cannot be empty.");
-
         if (newAmount < 0)
             throw new ArgumentException("Amount cannot be negative.");
 
-        _shoppingListRepository.UpdateAmountByName(userId, itemName.Trim(), newAmount);
+        _shoppingListRepository.UpdateAmountByIngredientBase(userId, ingredientBaseId, newAmount);
     }
 
     public IEnumerable<ShoppingListItem> GetItemsForUser(string userId)
     {
         return _shoppingListRepository.GetByUserId(userId)
-            .GroupBy(i => (IngredientNameNormalizer.NormalizeKey(i.Name), i.Measurement.ToLower()))
-            .Select(g => new ShoppingListItem
-            {
-                UserId = userId,
-                Name = IngredientNameNormalizer.Normalize(g.First().Name),
-                Amount = g.Sum(i => i.Amount),
-                Measurement = g.First().Measurement,
-                IsAutoAdded = g.Any(i => i.IsAutoAdded)
-            })
-            .OrderBy(i => i.Name)
+            .OrderBy(i => i.DisplayName)
             .ToList();
     }
 }

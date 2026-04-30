@@ -1,6 +1,6 @@
 using MealPlanner.DAL.Abstract;
 using MealPlanner.Models;
-using MealPlanner.Services;
+using Microsoft.EntityFrameworkCore;
 
 namespace MealPlanner.DAL.Concrete;
 
@@ -15,13 +15,10 @@ public class ShoppingListRepository : IShoppingListRepository
 
     public void Add(ShoppingListItem item)
     {
-        var normalizedKey = IngredientNameNormalizer.NormalizeKey(item.Name);
-        var normalizedMeasurement = item.Measurement.ToLower();
         var existing = _context.ShoppingListItems
-            .AsEnumerable()
             .FirstOrDefault(i => i.UserId == item.UserId
-                              && IngredientNameNormalizer.NormalizeKey(i.Name) == normalizedKey
-                              && i.Measurement.ToLower() == normalizedMeasurement
+                              && i.IngredientBaseId == item.IngredientBase.Id
+                              && i.MeasurementId == item.Measurement.Id
                               && i.IsAutoAdded == item.IsAutoAdded);
 
         if (existing != null)
@@ -48,10 +45,10 @@ public class ShoppingListRepository : IShoppingListRepository
         }
     }
 
-    public void RemoveAllByName(string userId, string name)
+    public void RemoveAllByIngredientBase(string userId, int ingredientBaseId)
     {
         var items = _context.ShoppingListItems
-            .Where(i => i.UserId == userId && i.Name.ToLower() == name.ToLower())
+            .Where(i => i.UserId == userId && i.IngredientBaseId == ingredientBaseId)
             .ToList();
 
         if (items.Count > 0)
@@ -75,14 +72,14 @@ public class ShoppingListRepository : IShoppingListRepository
     {
         return _context.ShoppingListItems
             .Where(i => i.UserId == userId)
-            .OrderBy(i => i.Name)
+            .OrderBy(i => i.DisplayName)
             .ToList();
     }
 
-    public void UpdateAmountByName(string userId, string name, float newAmount)
+    public void UpdateAmountByIngredientBase(string userId, int ingredientBaseId, float newAmount)
     {
         var items = _context.ShoppingListItems
-            .Where(i => i.UserId == userId && i.Name.ToLower() == name.ToLower())
+            .Where(i => i.UserId == userId && i.IngredientBaseId == ingredientBaseId)
             .ToList();
 
         if (items.Count == 0) return;
