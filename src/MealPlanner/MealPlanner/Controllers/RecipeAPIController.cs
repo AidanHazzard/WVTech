@@ -20,6 +20,7 @@ public class RecipeAPIController : ControllerBase
     private readonly MealPlannerDBContext _context;
     private readonly IExternalRecipeService? _recipeService;
     private readonly ITagRepository? _tagRepository;
+    private readonly IUserDietaryRestrictionRepository? _userDietaryRestrictionRepo;
 
     public RecipeAPIController(
         MealPlannerDBContext context,
@@ -27,7 +28,8 @@ public class RecipeAPIController : ControllerBase
         IUserRecipeRepository userRecipeRepository,
         IRegistrationService registrationService,
         IExternalRecipeService? recipeService = null,
-        ITagRepository? tagRepository = null)
+        ITagRepository? tagRepository = null,
+        IUserDietaryRestrictionRepository? userDietaryRestrictionRepo = null)
     {
         _context = context;
         _recipeRepository = recipeRepository;
@@ -35,6 +37,7 @@ public class RecipeAPIController : ControllerBase
         _registrationSerivice = registrationService;
         _recipeService = recipeService;
         _tagRepository = tagRepository;
+        _userDietaryRestrictionRepo = userDietaryRestrictionRepo;
     }
 
     [HttpGet("tags")]
@@ -53,12 +56,46 @@ public class RecipeAPIController : ControllerBase
     {
         IEnumerable<RecipeDTO> results;
 
+        // Resolve active dietary restriction names for the current user (empty when unauthenticated)
+        List<string> activeRestrictionNames = [];
+        if (_userDietaryRestrictionRepo != null && User.Identity?.IsAuthenticated == true)
+        {
+            var user = await _registrationSerivice.FindUserByClaimAsync(User);
+            if (user != null)
+            {
+                var userRestrictions = await _userDietaryRestrictionRepo.GetByUserIdAsync(user.Id);
+                activeRestrictionNames = userRestrictions
+                    .Select(r => r.DietaryRestriction.Name!)
+                    .Where(n => !string.IsNullOrEmpty(n))
+                    .ToList();
+            }
+        }
+
         if (!string.IsNullOrEmpty(tag))
         {
+            // Existing tag-filter path — unchanged
             results = _recipeRepository.GetRecipesByNameAndTag(name ?? "", tag).Select(r => new RecipeDTO(r));
+        }
+        else if (activeRestrictionNames.Count > 0)
+        {
+            // New path: filter by user's active dietary restrictions and annotate matching tags
+            var recipes = _recipeRepository.GetRecipesByNameAndRestrictions(name, activeRestrictionNames);
+            results = recipes.Select(r => new RecipeDTO(r)
+            {
+                MatchedRestrictionTags = r.Tags
+                    .Select(t => t.Name!)
+                    .Where(n => activeRestrictionNames.Contains(n, StringComparer.OrdinalIgnoreCase))
+                    .ToList()
+            });
+
+            if (results.IsNullOrEmpty())
+            {
+                return NoContent();
+            }
         }
         else
         {
+            // Existing name-only path with Edamam fallback — unchanged
             results = _recipeRepository.GetRecipesByName(name).Select(r => new RecipeDTO(r));
             if (results.Count() < count && _recipeService != null)
             {

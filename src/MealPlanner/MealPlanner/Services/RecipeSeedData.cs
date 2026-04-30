@@ -113,7 +113,7 @@ public static class RecipeSeedData
                 I(0.25f, "teaspoon", "Salt"),
                 I(0.125f, "teaspoon", "Black Pepper"),
             },
-            Tags = T("Lunch", "High Protein", "Quick & Easy", "Halal"),
+            Tags = T("Lunch", "High Protein", "Quick & Easy", "Halal", "American", "BBQ"),
         },
 
         // 6. Quinoa Buddha Bowl
@@ -152,7 +152,7 @@ public static class RecipeSeedData
                 I(0.25f, "whole", "Cucumber"),
                 I(0.25f, "whole", "Red Bell Pepper"),
             },
-            Tags = T("Lunch", "High Protein", "Quick & Easy", "Dairy-Free", "Halal", "Nut Allergy"),
+            Tags = T("Lunch", "High Protein", "Quick & Easy", "Dairy-Free", "Halal", "Nut Allergy", "Mediterranean"),
         },
 
         // 8. Tomato Basil Soup
@@ -172,7 +172,7 @@ public static class RecipeSeedData
                 I(0.5f, "teaspoon", "Salt"),
                 I(0.25f, "teaspoon", "Black Pepper"),
             },
-            Tags = T("Lunch", "Dinner", "Vegan", "Vegetarian", "Gluten-Free", "Dairy-Free", "Low Calorie", "Halal", "Kosher", "Nut Allergy"),
+            Tags = T("Lunch", "Dinner", "Vegan", "Vegetarian", "Gluten-Free", "Dairy-Free", "Low Calorie", "Halal", "Kosher", "Nut Allergy", "Italian"),
         },
 
         // 9. Grilled Salmon with Asparagus
@@ -191,7 +191,7 @@ public static class RecipeSeedData
                 I(0.5f, "teaspoon", "Salt"),
                 I(0.25f, "teaspoon", "Black Pepper"),
             },
-            Tags = T("Dinner", "Gluten-Free", "Dairy-Free", "High Protein", "Keto", "Kosher", "Nut Allergy"),
+            Tags = T("Dinner", "Gluten-Free", "Dairy-Free", "High Protein", "Keto", "Kosher", "Nut Allergy", "BBQ"),
         },
 
         // 10. Vegetable Tofu Stir Fry
@@ -211,7 +211,7 @@ public static class RecipeSeedData
                 I(2, "clove", "Garlic"),
                 I(1, "tablespoon", "Fresh Ginger"),
             },
-            Tags = T("Dinner", "Vegan", "Vegetarian", "Dairy-Free", "High Protein", "Halal", "Kosher", "Nut Allergy"),
+            Tags = T("Dinner", "Vegan", "Vegetarian", "Dairy-Free", "High Protein", "Halal", "Kosher", "Nut Allergy", "Chinese"),
         },
 
         // 11. Chicken Fajita Bowl
@@ -235,7 +235,7 @@ public static class RecipeSeedData
                 I(1, "teaspoon", "Cumin"),
                 I(0.25f, "teaspoon", "Salt"),
             },
-            Tags = T("Dinner", "Lunch", "Gluten-Free", "Dairy-Free", "High Protein", "Halal", "Nut Allergy"),
+            Tags = T("Dinner", "Lunch", "Gluten-Free", "Dairy-Free", "High Protein", "Halal", "Nut Allergy", "Mexican", "Spicy"),
         },
 
         // 12. Baked Lemon Garlic Tilapia
@@ -254,7 +254,7 @@ public static class RecipeSeedData
                 I(0.5f, "teaspoon", "Salt"),
                 I(0.25f, "teaspoon", "Black Pepper"),
             },
-            Tags = T("Dinner", "Gluten-Free", "Dairy-Free", "High Protein", "Low Calorie", "Keto", "Kosher", "Nut Allergy"),
+            Tags = T("Dinner", "Gluten-Free", "Dairy-Free", "High Protein", "Low Calorie", "Keto", "Kosher", "Nut Allergy", "Mediterranean"),
         },
 
         // 13. Hearty Beef Chili
@@ -276,7 +276,7 @@ public static class RecipeSeedData
                 I(1, "teaspoon", "Paprika"),
                 I(0.5f, "teaspoon", "Salt"),
             },
-            Tags = T("Dinner", "Lunch", "Gluten-Free", "Dairy-Free", "High Protein", "Halal", "Nut Allergy"),
+            Tags = T("Dinner", "Lunch", "Gluten-Free", "Dairy-Free", "High Protein", "Halal", "Nut Allergy", "American", "Mexican", "Spicy", "Comfort Food"),
         },
 
         // 14. Apple with Almond Butter
@@ -330,7 +330,7 @@ public static class RecipeSeedData
                 I(0.5f, "cup", "Blueberries"),
                 I(2, "tablespoon", "Maple Syrup"),
             },
-            Tags = T("Breakfast", "Vegetarian", "Quick & Easy", "Halal", "Kosher", "Nut Allergy"),
+            Tags = T("Breakfast", "Vegetarian", "Quick & Easy", "Halal", "Kosher", "Nut Allergy", "American", "Comfort Food"),
         },
 
         // 17. Western Omelet
@@ -350,7 +350,7 @@ public static class RecipeSeedData
                 I(0.25f, "teaspoon", "Salt"),
                 I(0.125f, "teaspoon", "Black Pepper"),
             },
-            Tags = T("Breakfast", "Gluten-Free", "High Protein", "Quick & Easy", "Keto", "Nut Allergy"),
+            Tags = T("Breakfast", "Gluten-Free", "High Protein", "Quick & Easy", "Keto", "Nut Allergy", "American", "Comfort Food"),
         },
 
         // 18. Overnight Oats
@@ -388,7 +388,7 @@ public static class RecipeSeedData
                 I(1, "tablespoon", "Butter"),
                 I(0.25f, "teaspoon", "Salt"),
             },
-            Tags = T("Breakfast", "High Protein", "Halal", "Nut Allergy"),
+            Tags = T("Breakfast", "High Protein", "Halal", "Nut Allergy", "Mexican", "American", "Comfort Food"),
         },
 
         // 20. Spinach Feta Egg Muffins
@@ -408,7 +408,7 @@ public static class RecipeSeedData
                 I(0.125f, "teaspoon", "Black Pepper"),
                 I(1, "tablespoon", "Olive Oil"),
             },
-            Tags = T("Breakfast", "Snack", "Vegetarian", "Gluten-Free", "Low Calorie", "High Protein", "Keto", "Quick & Easy", "Halal", "Kosher", "Nut Allergy"),
+            Tags = T("Breakfast", "Snack", "Vegetarian", "Gluten-Free", "Low Calorie", "High Protein", "Keto", "Quick & Easy", "Halal", "Kosher", "Nut Allergy", "Mediterranean"),
         },
 
         // 21. Chia Seed Pudding
@@ -462,7 +462,7 @@ public static class RecipeSeedData
                 I(0.25f, "teaspoon", "Salt"),
                 I(0.125f, "teaspoon", "Black Pepper"),
             },
-            Tags = T("Lunch", "Gluten-Free", "High Protein", "Keto", "Halal", "Nut Allergy"),
+            Tags = T("Lunch", "Gluten-Free", "High Protein", "Keto", "Halal", "Nut Allergy", "American"),
         },
 
         // 24. Turkey Club Sandwich
@@ -481,7 +481,7 @@ public static class RecipeSeedData
                 I(2, "tablespoon", "Mayonnaise"),
                 I(2, "slice", "Swiss Cheese"),
             },
-            Tags = T("Lunch", "High Protein", "Quick & Easy", "Halal", "Nut Allergy"),
+            Tags = T("Lunch", "High Protein", "Quick & Easy", "Halal", "Nut Allergy", "American"),
         },
 
         // 25. Chickpea Smash Sandwich
@@ -501,7 +501,7 @@ public static class RecipeSeedData
                 I(0.125f, "teaspoon", "Salt"),
                 I(0.125f, "teaspoon", "Black Pepper"),
             },
-            Tags = T("Lunch", "Vegan", "Vegetarian", "Dairy-Free", "High Protein", "Quick & Easy", "Halal", "Kosher", "Nut Allergy"),
+            Tags = T("Lunch", "Vegan", "Vegetarian", "Dairy-Free", "High Protein", "Quick & Easy", "Halal", "Kosher", "Nut Allergy", "Mediterranean"),
         },
 
         // 26. Nicoise Salad
@@ -524,7 +524,7 @@ public static class RecipeSeedData
                 I(1, "teaspoon", "Dijon Mustard"),
                 I(0.25f, "teaspoon", "Salt"),
             },
-            Tags = T("Lunch", "Dinner", "Gluten-Free", "Dairy-Free", "High Protein", "Halal", "Nut Allergy"),
+            Tags = T("Lunch", "Dinner", "Gluten-Free", "Dairy-Free", "High Protein", "Halal", "Nut Allergy", "Mediterranean"),
         },
 
         // 27. Red Lentil Soup
@@ -546,7 +546,7 @@ public static class RecipeSeedData
                 I(0.5f, "teaspoon", "Salt"),
                 I(1, "tablespoon", "Lemon Juice"),
             },
-            Tags = T("Lunch", "Dinner", "Vegan", "Vegetarian", "Gluten-Free", "Dairy-Free", "High Protein", "Low Calorie", "Halal", "Kosher", "Nut Allergy"),
+            Tags = T("Lunch", "Dinner", "Vegan", "Vegetarian", "Gluten-Free", "Dairy-Free", "High Protein", "Low Calorie", "Halal", "Kosher", "Nut Allergy", "Indian", "Mediterranean"),
         },
 
         // 28. Thai Peanut Noodles
@@ -568,7 +568,7 @@ public static class RecipeSeedData
                 I(0.25f, "cup", "Peanuts"),
                 I(2, "tablespoon", "Fresh Cilantro"),
             },
-            Tags = T("Lunch", "Dinner", "Vegan", "Vegetarian", "Dairy-Free", "Quick & Easy", "Halal", "Kosher"),
+            Tags = T("Lunch", "Dinner", "Vegan", "Vegetarian", "Dairy-Free", "Quick & Easy", "Halal", "Kosher", "Thai"),
         },
 
         // 29. Buffalo Chicken Wrap
@@ -589,7 +589,7 @@ public static class RecipeSeedData
                 I(1, "tablespoon", "Olive Oil"),
                 I(0.25f, "teaspoon", "Salt"),
             },
-            Tags = T("Lunch", "High Protein", "Quick & Easy", "Halal", "Nut Allergy"),
+            Tags = T("Lunch", "High Protein", "Quick & Easy", "Halal", "Nut Allergy", "American", "Spicy"),
         },
 
         // 30. Cobb Salad
@@ -609,7 +609,7 @@ public static class RecipeSeedData
                 I(0.33f, "cup", "Cherry Tomatoes"),
                 I(3, "tablespoon", "Ranch Dressing"),
             },
-            Tags = T("Lunch", "Dinner", "Gluten-Free", "High Protein", "Keto", "Halal", "Nut Allergy"),
+            Tags = T("Lunch", "Dinner", "Gluten-Free", "High Protein", "Keto", "Halal", "Nut Allergy", "American"),
         },
 
         // 31. Greek Salad
@@ -631,7 +631,7 @@ public static class RecipeSeedData
                 I(1, "teaspoon", "Dried Oregano"),
                 I(0.25f, "teaspoon", "Salt"),
             },
-            Tags = T("Lunch", "Dinner", "Vegetarian", "Gluten-Free", "Low Calorie", "Halal", "Kosher", "Nut Allergy"),
+            Tags = T("Lunch", "Dinner", "Vegetarian", "Gluten-Free", "Low Calorie", "Halal", "Kosher", "Nut Allergy", "Mediterranean"),
         },
 
         // 32. Teriyaki Chicken Bowl
@@ -651,7 +651,7 @@ public static class RecipeSeedData
                 I(1, "tablespoon", "Sesame Seeds"),
                 I(1, "whole", "Green Onion"),
             },
-            Tags = T("Lunch", "Dinner", "Dairy-Free", "High Protein", "Halal", "Nut Allergy"),
+            Tags = T("Lunch", "Dinner", "Dairy-Free", "High Protein", "Halal", "Nut Allergy", "Japanese"),
         },
 
         // 33. Herb Roasted Chicken Thighs with Root Vegetables
@@ -673,7 +673,7 @@ public static class RecipeSeedData
                 I(0.5f, "teaspoon", "Salt"),
                 I(0.25f, "teaspoon", "Black Pepper"),
             },
-            Tags = T("Dinner", "Gluten-Free", "Dairy-Free", "High Protein", "Halal", "Nut Allergy"),
+            Tags = T("Dinner", "Gluten-Free", "Dairy-Free", "High Protein", "Halal", "Nut Allergy", "American", "Comfort Food"),
         },
 
         // 34. Mongolian Beef Stir Fry
@@ -695,7 +695,7 @@ public static class RecipeSeedData
                 I(2, "tablespoon", "Vegetable Oil"),
                 I(0.5f, "cup", "Broccoli Floret"),
             },
-            Tags = T("Dinner", "Dairy-Free", "High Protein", "Halal", "Nut Allergy"),
+            Tags = T("Dinner", "Dairy-Free", "High Protein", "Halal", "Nut Allergy", "Chinese"),
         },
 
         // 35. Garlic Shrimp Scampi
@@ -716,7 +716,7 @@ public static class RecipeSeedData
                 I(0.5f, "teaspoon", "Red Pepper Flakes"),
                 I(0.25f, "teaspoon", "Salt"),
             },
-            Tags = T("Dinner", "Dairy-Free", "High Protein", "Quick & Easy", "Halal"),
+            Tags = T("Dinner", "Dairy-Free", "High Protein", "Quick & Easy", "Halal", "Italian"),
         },
 
         // 36. Basil Pesto Pasta
@@ -735,7 +735,7 @@ public static class RecipeSeedData
                 I(0.125f, "teaspoon", "Salt"),
                 I(0.125f, "teaspoon", "Black Pepper"),
             },
-            Tags = T("Lunch", "Dinner", "Vegetarian", "Quick & Easy", "Halal", "Kosher"),
+            Tags = T("Lunch", "Dinner", "Vegetarian", "Quick & Easy", "Halal", "Kosher", "Italian"),
         },
 
         // 37. Chicken Coconut Curry
@@ -758,7 +758,7 @@ public static class RecipeSeedData
                 I(1, "tablespoon", "Vegetable Oil"),
                 I(1, "tablespoon", "Fish Sauce"),
             },
-            Tags = T("Dinner", "Gluten-Free", "Dairy-Free", "High Protein", "Halal"),
+            Tags = T("Dinner", "Gluten-Free", "Dairy-Free", "High Protein", "Halal", "Thai", "Spicy"),
         },
 
         // 38. Vegetable Lasagna
@@ -784,7 +784,7 @@ public static class RecipeSeedData
                 I(0.25f, "teaspoon", "Black Pepper"),
                 I(1, "tablespoon", "Fresh Basil"),
             },
-            Tags = T("Dinner", "Vegetarian", "Halal", "Kosher", "Nut Allergy"),
+            Tags = T("Dinner", "Vegetarian", "Halal", "Kosher", "Nut Allergy", "Italian", "Comfort Food"),
         },
 
         // 39. Chicken Tikka Masala
@@ -809,7 +809,7 @@ public static class RecipeSeedData
                 I(1, "tablespoon", "Vegetable Oil"),
                 I(0.5f, "teaspoon", "Salt"),
             },
-            Tags = T("Dinner", "Gluten-Free", "High Protein", "Halal", "Nut Allergy"),
+            Tags = T("Dinner", "Gluten-Free", "High Protein", "Halal", "Nut Allergy", "Indian", "Spicy", "Comfort Food"),
         },
 
         // 40. Bison Burger
@@ -830,7 +830,7 @@ public static class RecipeSeedData
                 I(0.25f, "teaspoon", "Salt"),
                 I(0.125f, "teaspoon", "Black Pepper"),
             },
-            Tags = T("Dinner", "High Protein", "Halal", "Nut Allergy"),
+            Tags = T("Dinner", "High Protein", "Halal", "Nut Allergy", "American", "BBQ", "Comfort Food"),
         },
 
         // 41. Vegetarian Three Bean Chili
@@ -855,7 +855,7 @@ public static class RecipeSeedData
                 I(0.5f, "teaspoon", "Salt"),
                 I(1, "cup", "Vegetable Broth"),
             },
-            Tags = T("Dinner", "Lunch", "Vegan", "Vegetarian", "Gluten-Free", "Dairy-Free", "High Protein", "Halal", "Kosher", "Nut Allergy"),
+            Tags = T("Dinner", "Lunch", "Vegan", "Vegetarian", "Gluten-Free", "Dairy-Free", "High Protein", "Halal", "Kosher", "Nut Allergy", "American", "Mexican", "Spicy"),
         },
 
         // 42. Baked Cod with Roasted Vegetables
@@ -877,7 +877,7 @@ public static class RecipeSeedData
                 I(0.25f, "teaspoon", "Salt"),
                 I(0.125f, "teaspoon", "Black Pepper"),
             },
-            Tags = T("Dinner", "Gluten-Free", "Dairy-Free", "High Protein", "Low Calorie", "Keto", "Halal", "Kosher", "Nut Allergy"),
+            Tags = T("Dinner", "Gluten-Free", "Dairy-Free", "High Protein", "Low Calorie", "Keto", "Halal", "Kosher", "Nut Allergy", "Mediterranean"),
         },
 
         // 43. Steak and Garlic Potatoes
@@ -897,7 +897,7 @@ public static class RecipeSeedData
                 I(0.5f, "teaspoon", "Salt"),
                 I(0.25f, "teaspoon", "Black Pepper"),
             },
-            Tags = T("Dinner", "Gluten-Free", "High Protein", "Halal", "Nut Allergy"),
+            Tags = T("Dinner", "Gluten-Free", "High Protein", "Halal", "Nut Allergy", "American", "BBQ", "Comfort Food"),
         },
 
         // 44. Salmon Sushi Bowl
@@ -920,7 +920,7 @@ public static class RecipeSeedData
                 I(1, "whole", "Green Onion"),
                 I(1, "sheet", "Nori"),
             },
-            Tags = T("Dinner", "Lunch", "Gluten-Free", "Dairy-Free", "High Protein", "Kosher", "Nut Allergy"),
+            Tags = T("Dinner", "Lunch", "Gluten-Free", "Dairy-Free", "High Protein", "Kosher", "Nut Allergy", "Japanese", "Sushi"),
         },
 
         // 45. Pad Thai with Chicken
@@ -944,7 +944,7 @@ public static class RecipeSeedData
                 I(2, "clove", "Garlic"),
                 I(2, "tablespoon", "Vegetable Oil"),
             },
-            Tags = T("Dinner", "Dairy-Free", "High Protein", "Halal"),
+            Tags = T("Dinner", "Dairy-Free", "High Protein", "Halal", "Thai", "Spicy"),
         },
 
         // 46. Eggplant Parmesan
@@ -968,7 +968,7 @@ public static class RecipeSeedData
                 I(0.25f, "teaspoon", "Black Pepper"),
                 I(2, "tablespoon", "Fresh Basil"),
             },
-            Tags = T("Dinner", "Vegetarian", "Halal", "Kosher", "Nut Allergy"),
+            Tags = T("Dinner", "Vegetarian", "Halal", "Kosher", "Nut Allergy", "Italian", "Comfort Food"),
         },
 
         // 47. Hummus and Vegetable Platter
@@ -986,7 +986,7 @@ public static class RecipeSeedData
                 I(0.5f, "cup", "Cherry Tomatoes"),
                 I(0.5f, "cup", "Snap Peas"),
             },
-            Tags = T("Snack", "Appetizer", "Vegan", "Vegetarian", "Gluten-Free", "Dairy-Free", "Low Calorie", "Quick & Easy", "Halal", "Kosher", "Nut Allergy"),
+            Tags = T("Snack", "Appetizer", "Vegan", "Vegetarian", "Gluten-Free", "Dairy-Free", "Low Calorie", "Quick & Easy", "Halal", "Kosher", "Nut Allergy", "Mediterranean"),
         },
 
         // 48. Homemade Trail Mix
@@ -1043,7 +1043,7 @@ public static class RecipeSeedData
                 I(0.125f, "teaspoon", "Paprika"),
                 I(1, "whole", "Green Onion"),
             },
-            Tags = T("Snack", "Appetizer", "Vegetarian", "Gluten-Free", "Dairy-Free", "Low Calorie", "High Protein", "Keto", "Halal", "Kosher", "Nut Allergy"),
+            Tags = T("Snack", "Appetizer", "Vegetarian", "Gluten-Free", "Dairy-Free", "Low Calorie", "High Protein", "Keto", "Halal", "Kosher", "Nut Allergy", "American"),
         },
 
         // 51. Cheese and Crackers Plate
@@ -1060,7 +1060,7 @@ public static class RecipeSeedData
                 I(0.5f, "cup", "Grapes"),
                 I(2, "tablespoon", "Honey"),
             },
-            Tags = T("Snack", "Appetizer", "Vegetarian", "Quick & Easy", "Halal", "Kosher", "Nut Allergy"),
+            Tags = T("Snack", "Appetizer", "Vegetarian", "Quick & Easy", "Halal", "Kosher", "Nut Allergy", "American"),
         },
 
         // 52. Rice Cakes with Peanut Butter and Banana
@@ -1096,7 +1096,7 @@ public static class RecipeSeedData
                 I(1, "tablespoon", "Balsamic Vinegar"),
                 I(0.25f, "teaspoon", "Salt"),
             },
-            Tags = T("Appetizer", "Snack", "Vegan", "Vegetarian", "Dairy-Free", "Quick & Easy", "Halal", "Kosher", "Nut Allergy"),
+            Tags = T("Appetizer", "Snack", "Vegan", "Vegetarian", "Dairy-Free", "Quick & Easy", "Halal", "Kosher", "Nut Allergy", "Italian"),
         },
 
         // 54. Spinach Artichoke Dip
@@ -1118,7 +1118,7 @@ public static class RecipeSeedData
                 I(0.25f, "teaspoon", "Salt"),
                 I(0.125f, "teaspoon", "Black Pepper"),
             },
-            Tags = T("Appetizer", "Vegetarian", "Gluten-Free", "Halal", "Kosher", "Nut Allergy"),
+            Tags = T("Appetizer", "Vegetarian", "Gluten-Free", "Halal", "Kosher", "Nut Allergy", "American", "Comfort Food"),
         },
 
         // 55. Stuffed Mushrooms
@@ -1139,7 +1139,7 @@ public static class RecipeSeedData
                 I(0.25f, "teaspoon", "Salt"),
                 I(0.125f, "teaspoon", "Black Pepper"),
             },
-            Tags = T("Appetizer", "Vegetarian", "Gluten-Free", "Low Calorie", "Halal", "Kosher", "Nut Allergy"),
+            Tags = T("Appetizer", "Vegetarian", "Gluten-Free", "Low Calorie", "Halal", "Kosher", "Nut Allergy", "Italian"),
         },
 
         // 56. Caprese Skewers
@@ -1158,7 +1158,7 @@ public static class RecipeSeedData
                 I(1, "tablespoon", "Balsamic Glaze"),
                 I(0.125f, "teaspoon", "Salt"),
             },
-            Tags = T("Appetizer", "Snack", "Vegetarian", "Gluten-Free", "Low Calorie", "Quick & Easy", "Halal", "Kosher", "Nut Allergy"),
+            Tags = T("Appetizer", "Snack", "Vegetarian", "Gluten-Free", "Low Calorie", "Quick & Easy", "Halal", "Kosher", "Nut Allergy", "Italian"),
         },
 
         // 57. Shrimp Cocktail
@@ -1177,7 +1177,7 @@ public static class RecipeSeedData
                 I(1, "whole", "Lemon"),
                 I(0.25f, "teaspoon", "Salt"),
             },
-            Tags = T("Appetizer", "Gluten-Free", "Dairy-Free", "Low Calorie", "High Protein", "Quick & Easy", "Halal", "Nut Allergy"),
+            Tags = T("Appetizer", "Gluten-Free", "Dairy-Free", "Low Calorie", "High Protein", "Quick & Easy", "Halal", "Nut Allergy", "American"),
         },
 
         // 58. Summer Fruit Salad
@@ -1219,7 +1219,7 @@ public static class RecipeSeedData
                 I(0.5f, "teaspoon", "Salt"),
                 I(2, "cup", "Chocolate Chips"),
             },
-            Tags = T("Dessert", "Snack", "Vegetarian", "Halal", "Kosher", "Nut Allergy"),
+            Tags = T("Dessert", "Snack", "Vegetarian", "Halal", "Kosher", "Nut Allergy", "American", "Comfort Food"),
         },
 
         // 60. Mixed Berry Crumble
@@ -1240,7 +1240,7 @@ public static class RecipeSeedData
                 I(1, "tablespoon", "Lemon Juice"),
                 I(0.25f, "teaspoon", "Salt"),
             },
-            Tags = T("Dessert", "Vegetarian", "Halal", "Kosher", "Nut Allergy"),
+            Tags = T("Dessert", "Vegetarian", "Halal", "Kosher", "Nut Allergy", "American", "Comfort Food"),
         },
 
         // 61. Coconut Rice Pudding
@@ -1260,7 +1260,7 @@ public static class RecipeSeedData
                 I(0.25f, "teaspoon", "Salt"),
                 I(0.5f, "teaspoon", "Cinnamon"),
             },
-            Tags = T("Dessert", "Vegan", "Vegetarian", "Gluten-Free", "Dairy-Free", "Halal", "Kosher"),
+            Tags = T("Dessert", "Vegan", "Vegetarian", "Gluten-Free", "Dairy-Free", "Halal", "Kosher", "Comfort Food"),
         },
 
         // 62. Ahi Tuna Poke Bowl
@@ -1284,7 +1284,7 @@ public static class RecipeSeedData
                 I(1, "whole", "Green Onion"),
                 I(1, "tablespoon", "Sesame Seeds"),
             },
-            Tags = T("Dinner", "Lunch", "Dairy-Free", "High Protein", "Halal", "Kosher", "Nut Allergy"),
+            Tags = T("Dinner", "Lunch", "Dairy-Free", "High Protein", "Halal", "Kosher", "Nut Allergy", "Japanese", "Sushi", "Spicy"),
         },
 
         // 63. Tropical Smoothie Bowl
@@ -1325,7 +1325,7 @@ public static class RecipeSeedData
                 I(0.25f, "teaspoon", "Salt"),
                 I(0.5f, "teaspoon", "Chili Powder"),
             },
-            Tags = T("Lunch", "Dinner", "Vegan", "Vegetarian", "Gluten-Free", "Dairy-Free", "High Protein", "Halal", "Kosher", "Nut Allergy"),
+            Tags = T("Lunch", "Dinner", "Vegan", "Vegetarian", "Gluten-Free", "Dairy-Free", "High Protein", "Halal", "Kosher", "Nut Allergy", "Mexican", "Spicy"),
         },
 
         // 65. Mediterranean Baked Chicken
@@ -1347,7 +1347,7 @@ public static class RecipeSeedData
                 I(0.25f, "teaspoon", "Salt"),
                 I(0.125f, "teaspoon", "Black Pepper"),
             },
-            Tags = T("Dinner", "Gluten-Free", "High Protein", "Keto", "Halal", "Nut Allergy"),
+            Tags = T("Dinner", "Gluten-Free", "High Protein", "Keto", "Halal", "Nut Allergy", "Mediterranean"),
         },
     };
 }

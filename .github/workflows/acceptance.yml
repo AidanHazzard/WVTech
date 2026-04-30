@@ -1,0 +1,39 @@
+name: Build and run e2e acceptance tests against a live database
+
+on:
+  pull_request:
+    branches: [dev]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      mssql:
+        image: mcr.microsoft.com/mssql/server:2025-latest
+        env:
+          MSSQL_SA_PASSWORD: Testp@ssw0rd
+          ACCEPT_EULA: 'Y'
+        ports:
+          - 1433:1433
+
+    defaults:
+      run:
+        working-directory: ./src/MealPlanner/MealPlanner.IntegrationTests
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup dotnet
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+          dotnet-quality: 'preview'
+      - name: Restore dependencies
+        run: dotnet restore
+      - name: Build test project
+        run: dotnet build --no-restore
+      - name: Test
+        run: dotnet test --no-build
+        env:
+          ConnectionString: "Data Source=localhost,1433;Database=OneBiteTesting;User Id=SA;Password=Testp@ssw0rd;Pooling=False;Trust Server Certificate=True;Authentication=SqlPassword"
+          
