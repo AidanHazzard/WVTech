@@ -52,7 +52,7 @@ public class WVT158Steps
         var userId = GetAliceId(ctx);
 
         var staleItems = ctx.Set<ShoppingListItem>()
-            .Where(i => i.UserId == userId && i.Name == IngredientName).ToList();
+            .Where(i => i.UserId == userId && i.IngredientBase.Name == IngredientName).ToList();
         ctx.Set<ShoppingListItem>().RemoveRange(staleItems);
         var staleMeals = ctx.Meals
             .Where(m => m.UserId == userId && m.Title == "WVT158 Meal").ToList();
@@ -82,7 +82,7 @@ public class WVT158Steps
             Calories = 100, Protein = 5, Carbs = 10, Fat = 3,
             Ingredients = new List<Ingredient>
             {
-                new Ingredient { IngredientBase = ingredientBase, Measurement = measurement, Amount = AutoAmount }
+                new Ingredient { DisplayName = IngredientName, IngredientBase = ingredientBase, Measurement = measurement, Amount = AutoAmount }
             }
         };
         ctx.Recipes.Add(recipe);
@@ -146,7 +146,7 @@ public class WVT158Steps
         using var ctx = BDDSetup.CreateContext();
         var userId = GetAliceId(ctx);
         var items = ctx.Set<ShoppingListItem>()
-            .Where(i => i.UserId == userId && i.Name == IngredientName)
+            .Where(i => i.UserId == userId && i.IngredientBase.Name == IngredientName)
             .ToList();
 
         var manualItem = items.FirstOrDefault(i => !i.IsAutoAdded);
@@ -161,7 +161,7 @@ public class WVT158Steps
         using var ctx = BDDSetup.CreateContext();
         var userId = GetAliceId(ctx);
         var manualItem = ctx.Set<ShoppingListItem>()
-            .FirstOrDefault(i => i.UserId == userId && i.Name == IngredientName && !i.IsAutoAdded);
+            .FirstOrDefault(i => i.UserId == userId && i.IngredientBase.Name == IngredientName && !i.IsAutoAdded);
 
         Assert.That(manualItem, Is.Not.Null, "Manually added item should not have been deleted when date range changed");
     }
