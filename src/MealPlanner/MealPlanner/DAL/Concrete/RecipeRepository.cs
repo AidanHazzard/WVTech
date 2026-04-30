@@ -1,5 +1,6 @@
 using MealPlanner.DAL.Abstract;
 using MealPlanner.Models;
+using MealPlanner.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 
@@ -66,6 +67,8 @@ public class RecipeRepository : Repository<Recipe>, IRecipeRepository
         {
             if (i.IngredientBase.Id == 0)
             {
+                i.IngredientBase.Name = IngredientNameNormalizer.NormalizeKey(i.IngredientBase.Name);
+
                 // Use existing db entry for IngredientBase if it exits, ensuring Unique constraint
                 try
                 {

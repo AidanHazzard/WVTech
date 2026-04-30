@@ -29,7 +29,7 @@ public class RecipeRepositoryTests
             // Normally we'd add more test data here, but we will use the seed data definined in MealPlannerDBContext as well
             Ingredient ingredient = new Ingredient
             {
-                IngredientBase = new IngredientBase { Name="Test" },
+                IngredientBase = new IngredientBase { Name="test" },
                 Measurement = new Measurement { Name="Test" },
                 Amount = 0
             };
@@ -210,7 +210,7 @@ public class RecipeRepositoryTests
         var result = await repo.ReadRecipeWithIngredientsAsync(10);
 
         // Assert
-        Assert.That(result?.Ingredients[0].IngredientBase.Name, Is.EqualTo("Test"));
+        Assert.That(result?.Ingredients[0].IngredientBase.Name, Is.EqualTo("test"));
     }
 
     [Test]

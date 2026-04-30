@@ -24,7 +24,7 @@ public class PantryControllerTests
     private MealPlannerDBContext _context;
     private ClaimsPrincipal _claimsPrincipal;
     private Mock<IRegistrationService> _registrationServiceMock;
-    private Mock<IRepository<IngredientBase>> _ingredientBaseRepoMock;
+    private Mock<IIngredientBaseRepository> _ingredientBaseRepoMock;
     private Mock<IRepository<Measurement>> _measurementRepoMock;
     private User _user;
 
@@ -54,10 +54,10 @@ public class PantryControllerTests
             .Setup(r => r.FindUserByClaimAsync(_claimsPrincipal))
             .ReturnsAsync(_user);
 
-        _ingredientBaseRepoMock = new Mock<IRepository<IngredientBase>>();
+        _ingredientBaseRepoMock = new Mock<IIngredientBaseRepository>();
         _ingredientBaseRepoMock
-            .Setup(r => r.FindOrCreate(It.IsAny<System.Linq.Expressions.Expression<Func<IngredientBase, bool>>>(), It.IsAny<Func<IngredientBase>>()))
-            .Returns((System.Linq.Expressions.Expression<Func<IngredientBase, bool>> _, Func<IngredientBase> factory) => factory());
+            .Setup(r => r.FindOrCreateByName(It.IsAny<string>()))
+            .Returns((string name) => new IngredientBase { Name = IngredientNameNormalizer.NormalizeKey(name) });
 
         _measurementRepoMock = new Mock<IRepository<Measurement>>();
         _measurementRepoMock

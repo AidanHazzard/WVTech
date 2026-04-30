@@ -6,12 +6,12 @@ namespace MealPlanner.Services;
 public class ShoppingListService
 {
     private readonly IShoppingListRepository _shoppingListRepository;
-    private readonly IRepository<IngredientBase> _ingredientBaseRepo;
+    private readonly IIngredientBaseRepository _ingredientBaseRepo;
     private readonly IRepository<Measurement> _measurementRepo;
 
     public ShoppingListService(
         IShoppingListRepository shoppingListRepository,
-        IRepository<IngredientBase> ingredientBaseRepo,
+        IIngredientBaseRepository ingredientBaseRepo,
         IRepository<Measurement> measurementRepo)
     {
         _shoppingListRepository = shoppingListRepository;
@@ -43,9 +43,7 @@ public class ShoppingListService
         if (string.IsNullOrWhiteSpace(itemName))
             throw new ArgumentException("Item name cannot be empty.");
 
-        var ingredientBase = _ingredientBaseRepo.FindOrCreate(
-            b => b.Name == IngredientNameNormalizer.NormalizeKey(itemName),
-            () => new IngredientBase { Name = IngredientNameNormalizer.NormalizeKey(itemName) });
+        var ingredientBase = _ingredientBaseRepo.FindOrCreateByName(itemName);
 
         var measurementEntity = _measurementRepo.FindOrCreate(
             m => m.Name.ToLower() == measurement.Trim().ToLower(),

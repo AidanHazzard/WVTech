@@ -13,7 +13,7 @@ namespace MealPlanner.Tests;
 public class ShoppingListServiceTests
 {
     private Mock<IShoppingListRepository> _repo;
-    private Mock<IRepository<IngredientBase>> _ingredientBaseRepo;
+    private Mock<IIngredientBaseRepository> _ingredientBaseRepo;
     private Mock<IRepository<Measurement>> _measurementRepo;
     private ShoppingListService _service;
 
@@ -21,12 +21,12 @@ public class ShoppingListServiceTests
     public void SetUp()
     {
         _repo = new Mock<IShoppingListRepository>();
-        _ingredientBaseRepo = new Mock<IRepository<IngredientBase>>();
+        _ingredientBaseRepo = new Mock<IIngredientBaseRepository>();
         _measurementRepo = new Mock<IRepository<Measurement>>();
 
         _ingredientBaseRepo
-            .Setup(r => r.FindOrCreate(It.IsAny<Expression<Func<IngredientBase, bool>>>(), It.IsAny<Func<IngredientBase>>()))
-            .Returns((Expression<Func<IngredientBase, bool>> _, Func<IngredientBase> factory) => factory());
+            .Setup(r => r.FindOrCreateByName(It.IsAny<string>()))
+            .Returns((string name) => new IngredientBase { Name = IngredientNameNormalizer.NormalizeKey(name) });
 
         _measurementRepo
             .Setup(r => r.FindOrCreate(It.IsAny<Expression<Func<Measurement, bool>>>(), It.IsAny<Func<Measurement>>()))
