@@ -97,6 +97,11 @@ public class ShoppingListServiceTests
     [Test]
     public void UpdateItemAmount_ShouldThrowArgumentException_WhenAmountIsNegative()
     {
+        // Confirm the same id/user succeeds with a valid amount, proving the negative case is not a false positive
+        _service.UpdateItemAmount("user-1", 42, 1f);
+        _repo.Verify(r => r.UpdateAmountByIngredientBase("user-1", 42, 1f), Times.Once);
+        _repo.Invocations.Clear();
+
         Assert.Throws<ArgumentException>(() => _service.UpdateItemAmount("user-1", 42, -1f));
         _repo.Verify(r => r.UpdateAmountByIngredientBase(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<float>()), Times.Never);
     }
