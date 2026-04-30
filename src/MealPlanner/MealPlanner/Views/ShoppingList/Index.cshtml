@@ -68,7 +68,7 @@
                         </form>
                         <form asp-action="RemoveItem" method="post" class="m-0">
                             @Html.AntiForgeryToken()
-                            <input type="hidden" name="ingredientBaseId" value="@item.IngredientBase.Id" />
+                            <input type="hidden" name="itemId" value="@item.Id" />
                             <button type="submit" class="btn btn-danger delete-recipe-btn">X</button>
                         </form>
                     </div>

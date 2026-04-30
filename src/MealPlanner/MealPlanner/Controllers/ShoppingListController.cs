@@ -119,12 +119,12 @@ public class ShoppingListController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> RemoveItem(int ingredientBaseId)
+    public async Task<IActionResult> RemoveItem(int itemId)
     {
         User? user = await _userManager.GetUserAsync(User);
         if (user == null) return Challenge();
 
-        _shoppingListService.RemoveItemsByIngredientBase(user.Id, ingredientBaseId);
+        _shoppingListService.RemoveItem(itemId, user.Id);
 
         return RedirectToAction(nameof(Index));
     }
