@@ -42,17 +42,16 @@ public class ShoppingListServiceTests
 
         _repo.Verify(r => r.Add(It.Is<ShoppingListItem>(i =>
             i.UserId == "user-1" &&
-            i.DisplayName == "Milk"
+            i.IngredientBase.Name == IngredientNameNormalizer.NormalizeKey("Milk")
         )), Times.Once);
     }
 
     [Test]
-    public void AddItem_ShouldNormalizeIngredientBaseName_WhenNameIsPlural()
+    public void AddItem_ShouldNormalizeIngredientBaseName_WhenNameHasWhitespaceAndIsPlural()
     {
         _service.AddItem("user-1", "  Eggs  ", 1, "");
 
         _repo.Verify(r => r.Add(It.Is<ShoppingListItem>(i =>
-            i.DisplayName == "Eggs" &&
             i.IngredientBase.Name == IngredientNameNormalizer.NormalizeKey("Eggs")
         )), Times.Once);
     }
@@ -113,8 +112,8 @@ public class ShoppingListServiceTests
         var measurement = new Measurement { Id = 1, Name = "Cup(s)" };
         var expectedItems = new List<ShoppingListItem>
         {
-            new ShoppingListItem { Id = 1, UserId = "user-1", DisplayName = "Milk", IngredientBase = ingredientBase, Measurement = measurement },
-            new ShoppingListItem { Id = 2, UserId = "user-1", DisplayName = "Eggs", IngredientBase = new IngredientBase { Id = 2, Name = "egg" }, Measurement = measurement }
+            new ShoppingListItem { Id = 1, UserId = "user-1", IngredientBase = ingredientBase, Measurement = measurement },
+            new ShoppingListItem { Id = 2, UserId = "user-1", IngredientBase = new IngredientBase { Id = 2, Name = "egg" }, Measurement = measurement }
         };
 
         _repo.Setup(r => r.GetByUserId("user-1")).Returns(expectedItems);

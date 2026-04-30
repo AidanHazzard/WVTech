@@ -30,7 +30,6 @@ public class ShoppingListService
                 UserId = userId,
                 IngredientBase = g.First().IngredientBase,
                 Measurement = g.First().Measurement,
-                DisplayName = g.First().DisplayName,
                 Amount = g.Sum(i => i.Amount),
                 IsAutoAdded = true
             });
@@ -57,7 +56,6 @@ public class ShoppingListService
             UserId = userId,
             IngredientBase = ingredientBase,
             Measurement = measurementEntity,
-            DisplayName = itemName.Trim(),
             Amount = amount,
             IsAutoAdded = false
         };
@@ -89,7 +87,7 @@ public class ShoppingListService
     public IEnumerable<ShoppingListItem> GetItemsForUser(string userId)
     {
         return _shoppingListRepository.GetByUserId(userId)
-            .OrderBy(i => i.DisplayName)
+            .OrderBy(i => i.IngredientBase.Name)
             .ToList();
     }
 }

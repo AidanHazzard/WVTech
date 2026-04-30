@@ -51,7 +51,7 @@
                         <span class="fs-5 item-display flex-grow-1"
                               data-amount="@item.Amount.ToString(System.Globalization.CultureInfo.InvariantCulture)"
                               data-measurement="@item.Measurement.Name"
-                              data-name="@item.DisplayName">@($"{item.Amount:G} {item.Measurement.Name} of {item.DisplayName}")</span>
+                              data-name="@item.IngredientBase.Name">@($"{item.Amount:G} {item.Measurement.Name} of {item.IngredientBase.Name}")</span>
                         <form asp-action="UpdateItemAmount" method="post" class="d-flex align-items-center gap-2 m-0">
                             @Html.AntiForgeryToken()
                             <input type="hidden" name="ingredientBaseId" value="@item.IngredientBase.Id" />

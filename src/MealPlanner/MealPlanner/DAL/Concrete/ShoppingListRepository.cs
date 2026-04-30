@@ -72,7 +72,7 @@ public class ShoppingListRepository : IShoppingListRepository
     {
         return _context.ShoppingListItems
             .Where(i => i.UserId == userId)
-            .OrderBy(i => i.DisplayName)
+            .OrderBy(i => i.IngredientBase.Name)
             .ToList();
     }
 
