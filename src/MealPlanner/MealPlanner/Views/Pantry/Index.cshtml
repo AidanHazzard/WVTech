@@ -44,7 +44,7 @@
                 {
                     <div class="pantry-item d-flex align-items-center gap-2">
                         <span class="pantry-item-name fs-5 flex-grow-1">
-                            @($"{item.Amount:G} {item.Measurement?.Name} of {item.DisplayName}")
+                            @($"{item.Amount:G} {item.Measurement?.Name} of {item.IngredientBase.Display()}")
                         </span>
                     </div>
                 }
