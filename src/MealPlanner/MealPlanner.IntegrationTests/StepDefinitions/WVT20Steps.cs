@@ -1,4 +1,5 @@
 using MealPlanner.Models;
+using MealPlanner.Services;
 using Microsoft.EntityFrameworkCore;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Support.UI;
@@ -290,22 +291,23 @@ public class WVT20Steps
     public void GivenAliceHasAnUpcomingMealWithAnIngredientNamed(string ingredientName)
     {
         _testIngredientName = ingredientName;
+        var normalizedName = IngredientNameNormalizer.NormalizeKey(ingredientName);
 
         using var ctx = BDDSetup.CreateContext();
         var userId = GetAliceId(ctx);
 
         var staleItems = ctx.Set<ShoppingListItem>()
-            .Where(i => i.UserId == userId && i.IngredientBase.Name.ToLower() == ingredientName.ToLower()).ToList();
+            .Where(i => i.UserId == userId && i.IngredientBase.Name == normalizedName).ToList();
         ctx.Set<ShoppingListItem>().RemoveRange(staleItems);
         var staleMeals = ctx.Meals
             .Where(m => m.UserId == userId && m.Title == $"{ingredientName} Meal").ToList();
         ctx.Meals.RemoveRange(staleMeals);
         ctx.SaveChanges();
 
-        var ingredientBase = ctx.Set<IngredientBase>().FirstOrDefault(ib => ib.Name == ingredientName);
+        var ingredientBase = ctx.Set<IngredientBase>().FirstOrDefault(ib => ib.Name == normalizedName);
         if (ingredientBase == null)
         {
-            ingredientBase = new IngredientBase { Name = ingredientName };
+            ingredientBase = new IngredientBase { Name = normalizedName };
             ctx.Set<IngredientBase>().Add(ingredientBase);
             ctx.SaveChanges();
         }
@@ -345,13 +347,15 @@ public class WVT20Steps
     [Given("'Alice' has manually added {string} to her shopping list")]
     public void GivenAliceHasManuallyAddedNamedItemToShoppingList(string itemName)
     {
+        var normalizedName = IngredientNameNormalizer.NormalizeKey(itemName);
+
         using var ctx = BDDSetup.CreateContext();
         var userId = GetAliceId(ctx);
 
-        var ingredientBase = ctx.Set<IngredientBase>().FirstOrDefault(ib => ib.Name == itemName);
+        var ingredientBase = ctx.Set<IngredientBase>().FirstOrDefault(ib => ib.Name == normalizedName);
         if (ingredientBase == null)
         {
-            ingredientBase = new IngredientBase { Name = itemName };
+            ingredientBase = new IngredientBase { Name = normalizedName };
             ctx.Set<IngredientBase>().Add(ingredientBase);
             ctx.SaveChanges();
         }

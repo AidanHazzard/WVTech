@@ -23,6 +23,8 @@ public class ShoppingListService
     {
         _shoppingListRepository.RemoveAutoAddedByUserId(userId);
 
+        var manualItems = _shoppingListRepository.GetByUserId(userId).ToList();
+
         var grouped = ingredients
             .GroupBy(i => (i.IngredientBase.Id, i.Measurement.Id))
             .Select(g => new ShoppingListItem
@@ -35,7 +37,13 @@ public class ShoppingListService
             });
 
         foreach (var item in grouped)
-            _shoppingListRepository.Add(item);
+        {
+            var alreadyCovered = manualItems.Any(m =>
+                m.IngredientBaseId == item.IngredientBase.Id &&
+                m.MeasurementId == item.Measurement.Id);
+            if (!alreadyCovered)
+                _shoppingListRepository.Add(item);
+        }
     }
 
     public void AddItem(string userId, string itemName, float amount, string measurement)
