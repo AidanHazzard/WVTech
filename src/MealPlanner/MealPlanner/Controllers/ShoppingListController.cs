@@ -12,24 +12,36 @@ namespace MealPlanner.Controllers;
 public class ShoppingListController : Controller
 {
     private readonly ShoppingListService _shoppingListService;
+    private readonly PantryService _pantryService;
     private readonly UserManager<User> _userManager;
+    private readonly IRegistrationService _registrationService;
     private readonly IMealRepository _mealRepo;
     private readonly MealPlannerDBContext _context;
 
     public ShoppingListController(
         ShoppingListService shoppingListService,
+        PantryService pantryService,
         UserManager<User> userManager,
+        IRegistrationService registrationService,
         IMealRepository mealRepo,
         MealPlannerDBContext context)
     {
         _shoppingListService = shoppingListService;
+        _pantryService = pantryService;
         _userManager = userManager;
+        _registrationService = registrationService;
         _mealRepo = mealRepo;
         _context = context;
     }
 
     [HttpGet]
-    public async Task<IActionResult> Index()
+    public IActionResult Index()
+    {
+        return View();
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> ShoppingList()
     {
         User? user = await _userManager.GetUserAsync(User);
         if (user == null) return Challenge();
@@ -76,7 +88,7 @@ public class ShoppingListController : Controller
 
         Response.Cookies.Delete("ShoppingListSynced");
 
-        return RedirectToAction(nameof(Index));
+        return RedirectToAction(nameof(ShoppingList));
     }
 
     [HttpPost]
@@ -95,7 +107,7 @@ public class ShoppingListController : Controller
             TempData["ShoppingListError"] = ex.Message;
         }
 
-        return RedirectToAction(nameof(Index));
+        return RedirectToAction(nameof(ShoppingList));
     }
 
     [HttpPost]
@@ -114,7 +126,7 @@ public class ShoppingListController : Controller
             TempData["ShoppingListError"] = ex.Message;
         }
 
-        return RedirectToAction(nameof(Index));
+        return RedirectToAction(nameof(ShoppingList));
     }
 
     [HttpPost]
@@ -126,7 +138,41 @@ public class ShoppingListController : Controller
 
         _shoppingListService.RemoveItem(itemId, user.Id);
 
-        return RedirectToAction(nameof(Index));
+        return RedirectToAction(nameof(ShoppingList));
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> Pantry()
+    {
+        var user = await _registrationService.FindUserByClaimAsync(User);
+        if (user == null) return Challenge();
+
+        var items = _pantryService.GetPantryItems(user.Id);
+        return View(items);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> AddPantryItem(PantryItemViewModel model)
+    {
+        if (!ModelState.IsValid)
+        {
+            TempData["ValidationError"] = ModelState.Values
+                .SelectMany(v => v.Errors)
+                .Select(e => e.ErrorMessage)
+                .FirstOrDefault() ?? "Please correct the form errors.";
+            return RedirectToAction(nameof(Pantry));
+        }
+
+        var user = await _registrationService.FindUserByClaimAsync(User);
+        if (user == null) return Challenge();
+
+        var ingredient = _pantryService.BuildPantryItem(model.Name, model.Amount, model.Measurement);
+        user.PantryItems.Add(ingredient);
+        _context.SaveChanges();
+
+        TempData["SuccessMessage"] = $"{model.Name} was added to your pantry.";
+        return RedirectToAction(nameof(Pantry));
     }
 
     private async Task SyncMealIngredients(User user, DateTime dateFrom, DateTime dateTo)

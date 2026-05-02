@@ -20,10 +20,11 @@ namespace MealPlanner.Tests;
 [TestFixture]
 public class PantryControllerTests
 {
-    private PantryController _controller;
+    private ShoppingListController _controller;
     private MealPlannerDBContext _context;
     private ClaimsPrincipal _claimsPrincipal;
     private Mock<IRegistrationService> _registrationServiceMock;
+    private Mock<IPantryRepository> _pantryRepoMock;
     private Mock<IIngredientBaseRepository> _ingredientBaseRepoMock;
     private Mock<IRepository<Measurement>> _measurementRepoMock;
     private User _user;
@@ -54,6 +55,8 @@ public class PantryControllerTests
             .Setup(r => r.FindUserByClaimAsync(_claimsPrincipal))
             .ReturnsAsync(_user);
 
+        _pantryRepoMock = new Mock<IPantryRepository>();
+
         _ingredientBaseRepoMock = new Mock<IIngredientBaseRepository>();
         _ingredientBaseRepoMock
             .Setup(r => r.FindOrCreateByName(It.IsAny<string>()))
@@ -64,7 +67,19 @@ public class PantryControllerTests
             .Setup(r => r.FindOrCreate(It.IsAny<System.Linq.Expressions.Expression<Func<Measurement, bool>>>(), It.IsAny<Func<Measurement>>()))
             .Returns((System.Linq.Expressions.Expression<Func<Measurement, bool>> _, Func<Measurement> factory) => factory());
 
-        _controller = new PantryController(_registrationServiceMock.Object, _context, _ingredientBaseRepoMock.Object, _measurementRepoMock.Object);
+        var pantryService = new PantryService(_pantryRepoMock.Object, _ingredientBaseRepoMock.Object, _measurementRepoMock.Object);
+        var shoppingListService = new ShoppingListService(
+            new Mock<IShoppingListRepository>().Object,
+            _ingredientBaseRepoMock.Object,
+            _measurementRepoMock.Object);
+
+        _controller = new ShoppingListController(
+            shoppingListService,
+            pantryService,
+            null!,
+            _registrationServiceMock.Object,
+            new Mock<IMealRepository>().Object,
+            _context);
         _controller.ControllerContext = new ControllerContext
         {
             HttpContext = new DefaultHttpContext { User = _claimsPrincipal }
@@ -82,22 +97,22 @@ public class PantryControllerTests
     // --- Scenario 1: item appears in pantry list after add ---
 
     [Test]
-    public async Task Add_WithValidModel_RedirectsToIndex()
+    public async Task AddPantryItem_WithValidModel_RedirectsToPantry()
     {
         var model = new PantryItemViewModel { Name = "Milk", Amount = 2f, Measurement = "cups" };
 
-        var result = await _controller.Add(model);
+        var result = await _controller.AddPantryItem(model);
 
         Assert.That(result, Is.TypeOf<RedirectToActionResult>());
-        Assert.That(((RedirectToActionResult)result).ActionName, Is.EqualTo("Index"));
+        Assert.That(((RedirectToActionResult)result).ActionName, Is.EqualTo("Pantry"));
     }
 
     [Test]
-    public async Task Add_WithValidModel_AddsPantryItemToUser()
+    public async Task AddPantryItem_WithValidModel_AddsPantryItemToUser()
     {
         var model = new PantryItemViewModel { Name = "Milk", Amount = 2f, Measurement = "cups" };
 
-        await _controller.Add(model);
+        await _controller.AddPantryItem(model);
 
         var user = await _context.Users
             .Include(u => u.PantryItems)
@@ -110,7 +125,7 @@ public class PantryControllerTests
     }
 
     [Test]
-    public async Task Index_WhenUserHasPantryItems_ReturnsThemInModel()
+    public async Task Pantry_WhenUserHasPantryItems_ReturnsThemInModel()
     {
         var ingredient = new Ingredient
         {
@@ -119,10 +134,11 @@ public class PantryControllerTests
             Measurement = new Measurement { Name = "pieces" },
             Amount = 12f
         };
-        _user.PantryItems.Add(ingredient);
-        _context.SaveChanges();
+        _pantryRepoMock
+            .Setup(r => r.GetByUserId("user-1"))
+            .Returns(new List<Ingredient> { ingredient });
 
-        var result = await _controller.Index() as ViewResult;
+        var result = await _controller.Pantry() as ViewResult;
 
         Assert.That(result, Is.Not.Null);
         var items = result!.Model as List<Ingredient>;
@@ -134,24 +150,24 @@ public class PantryControllerTests
     // --- Scenario 4: validation prevents empty name ---
 
     [Test]
-    public async Task Add_WithEmptyName_RedirectsToIndex()
+    public async Task AddPantryItem_WithEmptyName_RedirectsToPantry()
     {
         var model = new PantryItemViewModel { Name = "", Amount = 3f, Measurement = "cups" };
         _controller.ModelState.AddModelError("Name", "Required");
 
-        var result = await _controller.Add(model);
+        var result = await _controller.AddPantryItem(model);
 
         Assert.That(result, Is.TypeOf<RedirectToActionResult>());
-        Assert.That(((RedirectToActionResult)result).ActionName, Is.EqualTo("Index"));
+        Assert.That(((RedirectToActionResult)result).ActionName, Is.EqualTo("Pantry"));
     }
 
     [Test]
-    public async Task Add_WithEmptyName_DoesNotAddPantryItem()
+    public async Task AddPantryItem_WithEmptyName_DoesNotAddPantryItem()
     {
         var model = new PantryItemViewModel { Name = "", Amount = 3f, Measurement = "cups" };
         _controller.ModelState.AddModelError("Name", "Required");
 
-        await _controller.Add(model);
+        await _controller.AddPantryItem(model);
 
         var user = await _context.Users
             .Include(u => u.PantryItems)
