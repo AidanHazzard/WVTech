@@ -13,13 +13,13 @@ public class PantryController : Controller
 {
     private readonly IRegistrationService _registrationService;
     private readonly MealPlannerDBContext _context;
-    private readonly IRepository<IngredientBase> _ingredientBaseRepo;
+    private readonly IIngredientBaseRepository _ingredientBaseRepo;
     private readonly IRepository<Measurement> _measurementRepo;
 
     public PantryController(
         IRegistrationService registrationService,
         MealPlannerDBContext context,
-        IRepository<IngredientBase> ingredientBaseRepo,
+        IIngredientBaseRepository ingredientBaseRepo,
         IRepository<Measurement> measurementRepo)
     {
         _registrationService = registrationService;
@@ -60,9 +60,7 @@ public class PantryController : Controller
         if (user == null) return Challenge();
 
         var ingredient = ViewModelService.IngredientFromPantryItemVM(model);
-        ingredient.IngredientBase = _ingredientBaseRepo.FindOrCreate(
-            b => b.Name == model.Name,
-            () => new IngredientBase { Name = model.Name });
+        ingredient.IngredientBase = _ingredientBaseRepo.FindOrCreateByName(model.Name);
         ingredient.Measurement = _measurementRepo.FindOrCreate(
             m => m.Name == model.Measurement,
             () => new Measurement { Name = model.Measurement });

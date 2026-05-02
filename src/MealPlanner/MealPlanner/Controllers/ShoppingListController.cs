@@ -100,14 +100,14 @@ public class ShoppingListController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> UpdateItemAmount(string itemName, float newAmount)
+    public async Task<IActionResult> UpdateItemAmount(int ingredientBaseId, float newAmount)
     {
         User? user = await _userManager.GetUserAsync(User);
         if (user == null) return Challenge();
 
         try
         {
-            _shoppingListService.UpdateItemAmount(user.Id, itemName, newAmount);
+            _shoppingListService.UpdateItemAmount(user.Id, ingredientBaseId, newAmount);
         }
         catch (ArgumentException ex)
         {
@@ -119,19 +119,12 @@ public class ShoppingListController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> RemoveItem(string itemName)
+    public async Task<IActionResult> RemoveItem(int itemId)
     {
         User? user = await _userManager.GetUserAsync(User);
         if (user == null) return Challenge();
 
-        try
-        {
-            _shoppingListService.RemoveItemsByName(user.Id, itemName);
-        }
-        catch (ArgumentException ex)
-        {
-            TempData["ShoppingListError"] = ex.Message;
-        }
+        _shoppingListService.RemoveItem(itemId, user.Id);
 
         return RedirectToAction(nameof(Index));
     }

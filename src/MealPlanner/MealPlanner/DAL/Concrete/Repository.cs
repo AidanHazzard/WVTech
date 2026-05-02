@@ -82,7 +82,7 @@ public class Repository<TEntity> : IRepository<TEntity> where TEntity : class, n
     /// <param name="predicate">Condition used to search for an existing entity</param>
     /// <param name="factory">Produces the new entity when no match is found</param>
     /// <returns>Existing or newly added entity</returns>
-    public TEntity FindOrCreate(Expression<Func<TEntity, bool>> predicate, Func<TEntity> factory)
+    public virtual TEntity FindOrCreate(Expression<Func<TEntity, bool>> predicate, Func<TEntity> factory)
     {
         return _dbset.FirstOrDefault(predicate) ?? _dbset.Add(factory()).Entity;
     }

@@ -15,6 +15,9 @@ public class IngredientBase
     [MaxLength(64)]
     public string Name { get; set; }
 
+    public string Display() =>
+        string.IsNullOrEmpty(Name) ? Name : char.ToUpper(Name[0]) + Name[1..];
+
     public override int GetHashCode()
     {
         return this.Name.GetHashCode();

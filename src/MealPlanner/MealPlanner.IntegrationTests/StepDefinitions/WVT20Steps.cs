@@ -1,4 +1,5 @@
 using MealPlanner.Models;
+using MealPlanner.Services;
 using Microsoft.EntityFrameworkCore;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Support.UI;
@@ -65,7 +66,7 @@ public class WVT20Steps
             Fat = 3,
             Ingredients = new List<Ingredient>
             {
-                new Ingredient { IngredientBase = ingredientBase, Measurement = measurement, Amount = 2 }
+                new Ingredient { DisplayName = ingredientName, IngredientBase = ingredientBase, Measurement = measurement, Amount = 2 }
             }
         };
 
@@ -195,7 +196,7 @@ public class WVT20Steps
             Calories = 100, Protein = 5, Carbs = 10, Fat = 3,
             Ingredients = new List<Ingredient>
             {
-                new Ingredient { IngredientBase = ingredientBase, Measurement = measurement, Amount = 1 }
+                new Ingredient { DisplayName = _testIngredientName, IngredientBase = ingredientBase, Measurement = measurement, Amount = 1 }
             }
         };
         var recipe2 = new Recipe
@@ -205,7 +206,7 @@ public class WVT20Steps
             Calories = 100, Protein = 5, Carbs = 10, Fat = 3,
             Ingredients = new List<Ingredient>
             {
-                new Ingredient { IngredientBase = ingredientBase, Measurement = measurement, Amount = 2 }
+                new Ingredient { DisplayName = _testIngredientName, IngredientBase = ingredientBase, Measurement = measurement, Amount = 2 }
             }
         };
 
@@ -233,12 +234,28 @@ public class WVT20Steps
         using var ctx = BDDSetup.CreateContext();
         var userId = GetAliceId(ctx);
 
+        var ingredientBase = ctx.Set<IngredientBase>().FirstOrDefault(ib => ib.Name == _manualItemName);
+        if (ingredientBase == null)
+        {
+            ingredientBase = new IngredientBase { Name = _manualItemName };
+            ctx.Set<IngredientBase>().Add(ingredientBase);
+            ctx.SaveChanges();
+        }
+
+        var measurement = ctx.Set<Measurement>().FirstOrDefault(m => m.Name == "Count");
+        if (measurement == null)
+        {
+            measurement = new Measurement { Name = "Count" };
+            ctx.Set<Measurement>().Add(measurement);
+            ctx.SaveChanges();
+        }
+
         ctx.Set<ShoppingListItem>().Add(new ShoppingListItem
         {
             UserId = userId,
-            Name = _manualItemName,
+            IngredientBase = ingredientBase,
+            Measurement = measurement,
             Amount = 1,
-            Measurement = "Count",
             IsAutoAdded = false
         });
         ctx.SaveChanges();
@@ -267,29 +284,30 @@ public class WVT20Steps
         using var ctx = BDDSetup.CreateContext();
         var userId = GetAliceId(ctx);
         var items = ctx.Set<ShoppingListItem>().Where(i => i.UserId == userId).ToList();
-        Assert.That(items.Any(i => i.Name.ToLower() == _testIngredientName.ToLower()), Is.True);
+        Assert.That(items.Any(i => i.IngredientBase.Name.ToLower() == _testIngredientName.ToLower()), Is.True);
     }
 
     [Given("'Alice' has an upcoming meal with an ingredient named {string}")]
     public void GivenAliceHasAnUpcomingMealWithAnIngredientNamed(string ingredientName)
     {
         _testIngredientName = ingredientName;
+        var normalizedName = IngredientNameNormalizer.NormalizeKey(ingredientName);
 
         using var ctx = BDDSetup.CreateContext();
         var userId = GetAliceId(ctx);
 
         var staleItems = ctx.Set<ShoppingListItem>()
-            .Where(i => i.UserId == userId && i.Name.ToLower() == ingredientName.ToLower()).ToList();
+            .Where(i => i.UserId == userId && i.IngredientBase.Name == normalizedName).ToList();
         ctx.Set<ShoppingListItem>().RemoveRange(staleItems);
         var staleMeals = ctx.Meals
             .Where(m => m.UserId == userId && m.Title == $"{ingredientName} Meal").ToList();
         ctx.Meals.RemoveRange(staleMeals);
         ctx.SaveChanges();
 
-        var ingredientBase = ctx.Set<IngredientBase>().FirstOrDefault(ib => ib.Name == ingredientName);
+        var ingredientBase = ctx.Set<IngredientBase>().FirstOrDefault(ib => ib.Name == normalizedName);
         if (ingredientBase == null)
         {
-            ingredientBase = new IngredientBase { Name = ingredientName };
+            ingredientBase = new IngredientBase { Name = normalizedName };
             ctx.Set<IngredientBase>().Add(ingredientBase);
             ctx.SaveChanges();
         }
@@ -309,7 +327,7 @@ public class WVT20Steps
             Calories = 100, Protein = 5, Carbs = 10, Fat = 3,
             Ingredients = new List<Ingredient>
             {
-                new Ingredient { IngredientBase = ingredientBase, Measurement = measurement, Amount = 10 }
+                new Ingredient { DisplayName = ingredientName, IngredientBase = ingredientBase, Measurement = measurement, Amount = 10 }
             }
         };
         ctx.Recipes.Add(recipe);
@@ -329,15 +347,33 @@ public class WVT20Steps
     [Given("'Alice' has manually added {string} to her shopping list")]
     public void GivenAliceHasManuallyAddedNamedItemToShoppingList(string itemName)
     {
+        var normalizedName = IngredientNameNormalizer.NormalizeKey(itemName);
+
         using var ctx = BDDSetup.CreateContext();
         var userId = GetAliceId(ctx);
+
+        var ingredientBase = ctx.Set<IngredientBase>().FirstOrDefault(ib => ib.Name == normalizedName);
+        if (ingredientBase == null)
+        {
+            ingredientBase = new IngredientBase { Name = normalizedName };
+            ctx.Set<IngredientBase>().Add(ingredientBase);
+            ctx.SaveChanges();
+        }
+
+        var measurement = ctx.Set<Measurement>().FirstOrDefault(m => m.Name == "Count");
+        if (measurement == null)
+        {
+            measurement = new Measurement { Name = "Count" };
+            ctx.Set<Measurement>().Add(measurement);
+            ctx.SaveChanges();
+        }
 
         ctx.Set<ShoppingListItem>().Add(new ShoppingListItem
         {
             UserId = userId,
-            Name = itemName,
+            IngredientBase = ingredientBase,
+            Measurement = measurement,
             Amount = 1,
-            Measurement = "Count",
             IsAutoAdded = false
         });
         ctx.SaveChanges();
@@ -405,6 +441,6 @@ public class WVT20Steps
         var items = ctx.Set<ShoppingListItem>()
             .Where(i => i.UserId == userId && i.IsAutoAdded)
             .ToList();
-        Assert.That(items.Any(i => i.Name.ToLower() == _testIngredientName.ToLower()), Is.False);
+        Assert.That(items.Any(i => i.IngredientBase.Name.ToLower() == _testIngredientName.ToLower()), Is.False);
     }
 }

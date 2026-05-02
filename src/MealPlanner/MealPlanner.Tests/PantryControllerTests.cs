@@ -6,6 +6,7 @@ using MealPlanner.DAL.Abstract;
 using MealPlanner.Models;
 using MealPlanner.Services;
 using MealPlanner.ViewModels;
+
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
@@ -23,7 +24,7 @@ public class PantryControllerTests
     private MealPlannerDBContext _context;
     private ClaimsPrincipal _claimsPrincipal;
     private Mock<IRegistrationService> _registrationServiceMock;
-    private Mock<IRepository<IngredientBase>> _ingredientBaseRepoMock;
+    private Mock<IIngredientBaseRepository> _ingredientBaseRepoMock;
     private Mock<IRepository<Measurement>> _measurementRepoMock;
     private User _user;
 
@@ -53,10 +54,10 @@ public class PantryControllerTests
             .Setup(r => r.FindUserByClaimAsync(_claimsPrincipal))
             .ReturnsAsync(_user);
 
-        _ingredientBaseRepoMock = new Mock<IRepository<IngredientBase>>();
+        _ingredientBaseRepoMock = new Mock<IIngredientBaseRepository>();
         _ingredientBaseRepoMock
-            .Setup(r => r.FindOrCreate(It.IsAny<System.Linq.Expressions.Expression<Func<IngredientBase, bool>>>(), It.IsAny<Func<IngredientBase>>()))
-            .Returns((System.Linq.Expressions.Expression<Func<IngredientBase, bool>> _, Func<IngredientBase> factory) => factory());
+            .Setup(r => r.FindOrCreateByName(It.IsAny<string>()))
+            .Returns((string name) => new IngredientBase { Name = IngredientNameNormalizer.NormalizeKey(name) });
 
         _measurementRepoMock = new Mock<IRepository<Measurement>>();
         _measurementRepoMock
@@ -104,7 +105,8 @@ public class PantryControllerTests
             .FirstAsync(u => u.Id == "user-1");
 
         Assert.That(user.PantryItems, Has.Count.EqualTo(1));
-        Assert.That(user.PantryItems[0].IngredientBase.Name, Is.EqualTo("Milk"));
+        Assert.That(user.PantryItems[0].DisplayName, Is.EqualTo("Milk"));
+        Assert.That(user.PantryItems[0].IngredientBase.Name, Is.EqualTo(IngredientNameNormalizer.NormalizeKey("Milk")));
     }
 
     [Test]
@@ -112,7 +114,8 @@ public class PantryControllerTests
     {
         var ingredient = new Ingredient
         {
-            IngredientBase = new IngredientBase { Name = "Eggs" },
+            DisplayName = "Eggs",
+            IngredientBase = new IngredientBase { Name = "egg" },
             Measurement = new Measurement { Name = "pieces" },
             Amount = 12f
         };
@@ -125,7 +128,7 @@ public class PantryControllerTests
         var items = result!.Model as List<Ingredient>;
         Assert.That(items, Is.Not.Null);
         Assert.That(items!, Has.Count.EqualTo(1));
-        Assert.That(items![0].IngredientBase.Name, Is.EqualTo("Eggs"));
+        Assert.That(items![0].DisplayName, Is.EqualTo("Eggs"));
     }
 
     // --- Scenario 4: validation prevents empty name ---
