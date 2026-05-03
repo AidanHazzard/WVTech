@@ -20,7 +20,7 @@ namespace MealPlanner.Tests;
 [TestFixture]
 public class PantryControllerTests
 {
-    private ShoppingListController _controller;
+    private ShoppingController _controller;
     private MealPlannerDBContext _context;
     private ClaimsPrincipal _claimsPrincipal;
     private Mock<IRegistrationService> _registrationServiceMock;
@@ -73,7 +73,7 @@ public class PantryControllerTests
             _ingredientBaseRepoMock.Object,
             _measurementRepoMock.Object);
 
-        _controller = new ShoppingListController(
+        _controller = new ShoppingController(
             shoppingListService,
             pantryService,
             null!,

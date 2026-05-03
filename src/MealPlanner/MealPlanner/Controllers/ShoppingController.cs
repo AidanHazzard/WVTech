@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace MealPlanner.Controllers;
 
 [Authorize]
-public class ShoppingListController : Controller
+public class ShoppingController : Controller
 {
     private readonly ShoppingListService _shoppingListService;
     private readonly PantryService _pantryService;
@@ -18,7 +18,7 @@ public class ShoppingListController : Controller
     private readonly IMealRepository _mealRepo;
     private readonly MealPlannerDBContext _context;
 
-    public ShoppingListController(
+    public ShoppingController(
         ShoppingListService shoppingListService,
         PantryService pantryService,
         UserManager<User> userManager,

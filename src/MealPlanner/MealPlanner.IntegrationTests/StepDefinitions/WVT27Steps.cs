@@ -25,7 +25,7 @@ public class WVT27Steps
     [Given("{string} is on the pantry page")]
     public void GivenUserIsOnThePantryPage(string userName)
     {
-        _driver.Navigate().GoToUrl($"{_baseUrl}/ShoppingList/Pantry");
+        _driver.Navigate().GoToUrl($"{_baseUrl}/Shopping/Pantry");
         _wait.Until(d => d.Url.Contains("/Pantry", StringComparison.OrdinalIgnoreCase));
     }
 
