@@ -107,8 +107,8 @@ builder.Services.AddScoped<IRegistrationService, RegistrationService>();
 builder.Services.AddScoped<IUserSettingsService, UserSettingsService>();
 builder.Services.AddScoped<IMealRecommendationService, MealRecommendationService>();
 builder.Services.AddScoped<ThemeFilter>();
-builder.Services.AddScoped<ShoppingListService>();
-builder.Services.AddScoped<PantryService>();
+builder.Services.AddScoped<IShoppingListService, ShoppingListService>();
+builder.Services.AddScoped<IPantryService, PantryService>();
 
 // External APIs
 if (builder.Configuration["NoApi"] != "true")

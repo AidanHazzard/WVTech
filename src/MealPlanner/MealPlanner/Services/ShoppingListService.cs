@@ -3,7 +3,7 @@ using MealPlanner.Models;
 
 namespace MealPlanner.Services;
 
-public class ShoppingListService
+public class ShoppingListService : IShoppingListService
 {
     private readonly IShoppingListRepository _shoppingListRepository;
     private readonly IIngredientBaseRepository _ingredientBaseRepo;

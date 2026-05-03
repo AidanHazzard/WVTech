@@ -11,16 +11,16 @@ namespace MealPlanner.Controllers;
 [Authorize]
 public class ShoppingController : Controller
 {
-    private readonly ShoppingListService _shoppingListService;
-    private readonly PantryService _pantryService;
+    private readonly IShoppingListService _shoppingListService;
+    private readonly IPantryService _pantryService;
     private readonly UserManager<User> _userManager;
     private readonly IRegistrationService _registrationService;
     private readonly IMealRepository _mealRepo;
     private readonly MealPlannerDBContext _context;
 
     public ShoppingController(
-        ShoppingListService shoppingListService,
-        PantryService pantryService,
+        IShoppingListService shoppingListService,
+        IPantryService pantryService,
         UserManager<User> userManager,
         IRegistrationService registrationService,
         IMealRepository mealRepo,

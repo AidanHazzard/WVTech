@@ -24,9 +24,8 @@ public class ShoppingControllerTests
     private MealPlannerDBContext _context;
     private ClaimsPrincipal _claimsPrincipal;
     private Mock<IRegistrationService> _registrationServiceMock;
-    private Mock<IPantryRepository> _pantryRepoMock;
-    private Mock<IIngredientBaseRepository> _ingredientBaseRepoMock;
-    private Mock<IRepository<Measurement>> _measurementRepoMock;
+    private Mock<IShoppingListService> _shoppingListServiceMock;
+    private Mock<IPantryService> _pantryServiceMock;
     private User _user;
 
     [SetUp]
@@ -55,27 +54,12 @@ public class ShoppingControllerTests
             .Setup(r => r.FindUserByClaimAsync(_claimsPrincipal))
             .ReturnsAsync(_user);
 
-        _pantryRepoMock = new Mock<IPantryRepository>();
-
-        _ingredientBaseRepoMock = new Mock<IIngredientBaseRepository>();
-        _ingredientBaseRepoMock
-            .Setup(r => r.FindOrCreateByName(It.IsAny<string>()))
-            .Returns((string name) => new IngredientBase { Name = IngredientNameNormalizer.NormalizeKey(name) });
-
-        _measurementRepoMock = new Mock<IRepository<Measurement>>();
-        _measurementRepoMock
-            .Setup(r => r.FindOrCreate(It.IsAny<System.Linq.Expressions.Expression<Func<Measurement, bool>>>(), It.IsAny<Func<Measurement>>()))
-            .Returns((System.Linq.Expressions.Expression<Func<Measurement, bool>> _, Func<Measurement> factory) => factory());
-
-        var pantryService = new PantryService(_pantryRepoMock.Object, _ingredientBaseRepoMock.Object, _measurementRepoMock.Object);
-        var shoppingListService = new ShoppingListService(
-            new Mock<IShoppingListRepository>().Object,
-            _ingredientBaseRepoMock.Object,
-            _measurementRepoMock.Object);
+        _shoppingListServiceMock = new Mock<IShoppingListService>();
+        _pantryServiceMock = new Mock<IPantryService>();
 
         _controller = new ShoppingController(
-            shoppingListService,
-            pantryService,
+            _shoppingListServiceMock.Object,
+            _pantryServiceMock.Object,
             null!,
             _registrationServiceMock.Object,
             new Mock<IMealRepository>().Object,
@@ -100,6 +84,9 @@ public class ShoppingControllerTests
     public async Task AddPantryItem_WithValidModel_RedirectsToPantry()
     {
         var model = new PantryItemViewModel { Name = "Milk", Amount = 2f, Measurement = "cups" };
+        _pantryServiceMock
+            .Setup(s => s.BuildPantryItem(model.Name, model.Amount, model.Measurement))
+            .Returns(new Ingredient { DisplayName = "Milk", IngredientBase = new IngredientBase { Name = "milk" }, Measurement = new Measurement { Name = "cups" }, Amount = 2f });
 
         var result = await _controller.AddPantryItem(model);
 
@@ -111,6 +98,16 @@ public class ShoppingControllerTests
     public async Task AddPantryItem_WithValidModel_AddsPantryItemToUser()
     {
         var model = new PantryItemViewModel { Name = "Milk", Amount = 2f, Measurement = "cups" };
+        var built = new Ingredient
+        {
+            DisplayName = "Milk",
+            IngredientBase = new IngredientBase { Name = IngredientNameNormalizer.NormalizeKey("Milk") },
+            Measurement = new Measurement { Name = "cups" },
+            Amount = 2f
+        };
+        _pantryServiceMock
+            .Setup(s => s.BuildPantryItem(model.Name, model.Amount, model.Measurement))
+            .Returns(built);
 
         await _controller.AddPantryItem(model);
 
@@ -134,8 +131,8 @@ public class ShoppingControllerTests
             Measurement = new Measurement { Name = "pieces" },
             Amount = 12f
         };
-        _pantryRepoMock
-            .Setup(r => r.GetByUserId("user-1"))
+        _pantryServiceMock
+            .Setup(s => s.GetPantryItems("user-1"))
             .Returns(new List<Ingredient> { ingredient });
 
         var result = await _controller.Pantry() as ViewResult;
@@ -169,10 +166,6 @@ public class ShoppingControllerTests
 
         await _controller.AddPantryItem(model);
 
-        var user = await _context.Users
-            .Include(u => u.PantryItems)
-            .FirstAsync(u => u.Id == "user-1");
-
-        Assert.That(user.PantryItems, Is.Empty);
+        _pantryServiceMock.Verify(s => s.BuildPantryItem(It.IsAny<string>(), It.IsAny<float>(), It.IsAny<string>()), Times.Never);
     }
 }

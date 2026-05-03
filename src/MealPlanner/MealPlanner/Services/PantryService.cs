@@ -3,7 +3,7 @@ using MealPlanner.Models;
 
 namespace MealPlanner.Services;
 
-public class PantryService
+public class PantryService : IPantryService
 {
     private readonly IPantryRepository _pantryRepo;
     private readonly IIngredientBaseRepository _ingredientBaseRepo;
