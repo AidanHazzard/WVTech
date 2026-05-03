@@ -18,7 +18,7 @@ using NUnit.Framework;
 namespace MealPlanner.Tests;
 
 [TestFixture]
-public class PantryControllerTests
+public class ShoppingControllerTests
 {
     private ShoppingController _controller;
     private MealPlannerDBContext _context;
