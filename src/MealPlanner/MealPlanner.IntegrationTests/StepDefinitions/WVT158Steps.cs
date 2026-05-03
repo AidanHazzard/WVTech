@@ -31,8 +31,8 @@ public class WVT158Steps
         _driver.Manage().Cookies.DeleteCookieNamed("ShoppingListSynced");
         _driver.Manage().Cookies.DeleteCookieNamed("ShoppingListDateFrom");
         _driver.Manage().Cookies.DeleteCookieNamed("ShoppingListDateTo");
-        _driver.Navigate().GoToUrl($"{_baseUrl}/Shopping/ShoppingList");
-        _wait.Until(d => d.Url.Contains("ShoppingList"));
+        _driver.Navigate().GoToUrl($"{_baseUrl}/Shopping/Index");
+        _wait.Until(d => d.Url.Contains("/Shopping/Index"));
     }
 
     private void SetDateRange(string dateFrom, string dateTo)
@@ -122,7 +122,7 @@ public class WVT158Steps
         catch (WebDriverTimeoutException) { }
         _wait.Until(d =>
             ((IJavaScriptExecutor)d).ExecuteScript("return document.readyState")?.ToString() == "complete"
-            && d.Url.Contains("ShoppingList"));
+            && d.Url.Contains("/Shopping/Index"));
     }
 
     [When("'Alice' changes the shopping list to a date range that excludes today")]
@@ -142,7 +142,7 @@ public class WVT158Steps
     [Then("the WVT158 ingredient amount has not been doubled on the shopping list")]
     public void ThenTheWVT158IngredientAmountHasNotBeenDoubled()
     {
-        _wait.Until(d => d.Url.Contains("ShoppingList"));
+        _wait.Until(d => d.Url.Contains("/Shopping/Index"));
         using var ctx = BDDSetup.CreateContext();
         var userId = GetAliceId(ctx);
         var items = ctx.Set<ShoppingListItem>()
@@ -157,7 +157,7 @@ public class WVT158Steps
     [Then("the manually added WVT158 ingredient is still on the shopping list")]
     public void ThenTheManuallyAddedWVT158IngredientIsStillOnTheShoppingList()
     {
-        _wait.Until(d => d.Url.Contains("ShoppingList"));
+        _wait.Until(d => d.Url.Contains("/Shopping/Index"));
         using var ctx = BDDSetup.CreateContext();
         var userId = GetAliceId(ctx);
         var manualItem = ctx.Set<ShoppingListItem>()

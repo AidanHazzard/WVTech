@@ -31,8 +31,8 @@ public class WVT20Steps
         _driver.Manage().Cookies.DeleteCookieNamed("ShoppingListSynced");
         _driver.Manage().Cookies.DeleteCookieNamed("ShoppingListDateFrom");
         _driver.Manage().Cookies.DeleteCookieNamed("ShoppingListDateTo");
-        _driver.Navigate().GoToUrl($"{_baseUrl}/Shopping/ShoppingList");
-        _wait.Until(d => d.Url.Contains("ShoppingList"));
+        _driver.Navigate().GoToUrl($"{_baseUrl}/Shopping/Index");
+        _wait.Until(d => d.Url.Contains("/Shopping/Index"));
     }
 
     private string GetAliceId(MealPlannerDBContext ctx) =>
@@ -161,7 +161,7 @@ public class WVT20Steps
     public void ThenIngredientsFromMealAreNoLongerOnShoppingList()
     {
         NavigateToShoppingList();
-        _wait.Until(d => d.Url.Contains("ShoppingList"));
+        _wait.Until(d => d.Url.Contains("/Shopping/Index"));
         Assert.That(_driver.PageSource, Does.Not.Contain(_testIngredientName));
     }
 
@@ -223,7 +223,7 @@ public class WVT20Steps
     [Then("that shared ingredient appears only once on the shopping list")]
     public void ThenSharedIngredientAppearsOnlyOnce()
     {
-        _wait.Until(d => d.Url.Contains("ShoppingList"));
+        _wait.Until(d => d.Url.Contains("/Shopping/Index"));
         var occurrences = _driver.FindElements(By.XPath($"//*[contains(text(), '{_testIngredientName}')]")).Count;
         Assert.That(occurrences, Is.EqualTo(1));
     }
@@ -264,7 +264,7 @@ public class WVT20Steps
     [Then("both the auto-populated ingredients and the manually added item are present")]
     public void ThenBothAutoAndManualItemsArePresent()
     {
-        _wait.Until(d => d.Url.Contains("ShoppingList"));
+        _wait.Until(d => d.Url.Contains("/Shopping/Index"));
         Assert.That(_driver.PageSource, Does.Contain(_testIngredientName));
         Assert.That(_driver.PageSource, Does.Contain(_manualItemName));
     }
@@ -273,7 +273,7 @@ public class WVT20Steps
     public void ThenManualItemIsStillOnShoppingList()
     {
         NavigateToShoppingList();
-        _wait.Until(d => d.Url.Contains("ShoppingList"));
+        _wait.Until(d => d.Url.Contains("/Shopping/Index"));
         Assert.That(_driver.PageSource, Does.Contain(_manualItemName));
     }
 
@@ -382,7 +382,7 @@ public class WVT20Steps
     [Then("{string} appears only once on the shopping list")]
     public void ThenIngredientAppearsOnlyOnce(string ingredientName)
     {
-        _wait.Until(d => d.Url.Contains("ShoppingList"));
+        _wait.Until(d => d.Url.Contains("/Shopping/Index"));
         var occurrences = _driver.FindElements(
             By.XPath($"//*[contains(@class,'item-display') and contains(translate(., 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), '{ingredientName.ToLower()}')]")
         ).Count;
@@ -412,7 +412,7 @@ public class WVT20Steps
     public void ThenTheShoppingListShowsQuantityFor(float expectedAmount, string itemName)
     {
         NavigateToShoppingList();
-        _wait.Until(d => d.Url.Contains("ShoppingList"));
+        _wait.Until(d => d.Url.Contains("/Shopping/Index"));
 
         var input = _wait.Until(d =>
         {

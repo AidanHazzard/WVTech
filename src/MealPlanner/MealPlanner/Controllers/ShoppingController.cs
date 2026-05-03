@@ -35,13 +35,7 @@ public class ShoppingController : Controller
     }
 
     [HttpGet]
-    public IActionResult Index()
-    {
-        return View();
-    }
-
-    [HttpGet]
-    public async Task<IActionResult> ShoppingList()
+    public async Task<IActionResult> Index()
     {
         User? user = await _userManager.GetUserAsync(User);
         if (user == null) return Challenge();
@@ -88,7 +82,7 @@ public class ShoppingController : Controller
 
         Response.Cookies.Delete("ShoppingListSynced");
 
-        return RedirectToAction(nameof(ShoppingList));
+        return RedirectToAction(nameof(Index));
     }
 
     [HttpPost]
@@ -107,7 +101,7 @@ public class ShoppingController : Controller
             TempData["ShoppingListError"] = ex.Message;
         }
 
-        return RedirectToAction(nameof(ShoppingList));
+        return RedirectToAction(nameof(Index));
     }
 
     [HttpPost]
@@ -126,7 +120,7 @@ public class ShoppingController : Controller
             TempData["ShoppingListError"] = ex.Message;
         }
 
-        return RedirectToAction(nameof(ShoppingList));
+        return RedirectToAction(nameof(Index));
     }
 
     [HttpPost]
@@ -138,7 +132,7 @@ public class ShoppingController : Controller
 
         _shoppingListService.RemoveItem(itemId, user.Id);
 
-        return RedirectToAction(nameof(ShoppingList));
+        return RedirectToAction(nameof(Index));
     }
 
     [HttpGet]

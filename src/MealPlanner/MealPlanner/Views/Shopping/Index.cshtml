@@ -1,12 +1,90 @@
+@model MealPlanner.ViewModels.ShoppingListViewModel
+
 @{
-    ViewData["Title"] = "My Cart";
+    ViewData["Title"] = "Shopping List";
 }
 
 <div class="back1">
-    <h1 class="back1Title">My Cart</h1>
+    <h1 class="back1Title">Shopping List</h1>
 
-    <div class="back2 d-flex justify-content-center gap-4 p-4">
-        <a asp-action="ShoppingList" class="btn btn-primary btn-lg rounded-4 px-5">Shopping List</a>
-        <a asp-action="Pantry" class="btn btn-success btn-lg rounded-4 px-5">My Pantry</a>
+    @if (TempData["ShoppingListError"] != null)
+    {
+        <div class="alert alert-danger text-center">
+            @TempData["ShoppingListError"]
+        </div>
+    }
+
+    <form asp-action="SetDateRange" method="post" class="mb-4" id="dateRangeForm">
+        @Html.AntiForgeryToken()
+        <div class="d-flex gap-3 align-items-center">
+            <input type="date" name="dateFrom" value="@Model.DateFrom.ToString("yyyy-MM-dd")" class="back2-textbox date-range-input" onchange="document.getElementById('dateRangeForm').submit()" />
+            <span>to</span>
+            <input type="date" name="dateTo" value="@Model.DateTo.ToString("yyyy-MM-dd")" class="back2-textbox date-range-input" onchange="document.getElementById('dateRangeForm').submit()" />
+        </div>
+    </form>
+
+    <form asp-action="AddItem" method="post" class="mb-4">
+        @Html.AntiForgeryToken()
+        <div class="row align-items-center">
+            <input type="number" class="col-1 back2-textbox-partial mx-1" name="amount" placeholder="0" min="0" step="any" />
+            <select class="col-2 back2-textbox-partial mx-1" name="measurement">
+                <option value="" selected>Select</option>
+                <option value="Count">Count</option>
+                <option value="Cup(s)">Cup(s)</option>
+                <option value="Ounce(s)">Ounce(s)</option>
+                <option value="Pound(s)">Pounds</option>
+                <option value="L">L</option>
+                <option value="KG">KG</option>
+            </select>
+            <input type="text" class="col back2-textbox-partial mx-1" name="itemName" placeholder="Enter Ingredient" required />
+            <button type="submit" class="btn btn-success col-auto mx-1 rounded-4 px-4">Add Item</button>
+        </div>
+    </form>
+
+    <div class="back2">
+        @if (Model.Items.Any())
+        {
+            <div class="d-flex flex-column gap-3">
+                @foreach (var item in Model.Items)
+                {
+                    <div class="d-flex justify-content-between align-items-center gap-2">
+                        <span class="fs-5 item-display flex-grow-1"
+                              data-amount="@item.Amount.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+                              data-measurement="@item.Measurement.Name"
+                              data-name="@item.IngredientBase.Name">@($"{item.Amount:G} {item.Measurement.Name} of {item.IngredientBase.Display()}")</span>
+                        <form asp-action="UpdateItemAmount" method="post" class="d-flex align-items-center gap-2 m-0">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="ingredientBaseId" value="@item.IngredientBase.Id" />
+                            <input type="number"
+                                   name="newAmount"
+                                   value="@item.Amount.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+                                   min="0"
+                                   step="any"
+                                   class="back2-textbox-partial qty-input"
+                                   style="width: 80px"
+                                   data-original="@item.Amount.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+                                   oninput="toggleSaveButton(this)" />
+                            <button type="submit" class="btn btn-primary btn-sm rounded-4 px-3 qty-save" style="display:none">Save</button>
+                        </form>
+                        <form asp-action="RemoveItem" method="post" class="m-0">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="itemId" value="@item.Id" />
+                            <button type="submit" class="btn btn-danger delete-recipe-btn">X</button>
+                        </form>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <p class="text-center fs-5 mb-0">No items in your shopping list yet.</p>
+        }
     </div>
 </div>
+
+<script>
+    function toggleSaveButton(input) {
+        const btn = input.closest('form').querySelector('.qty-save');
+        btn.style.display = parseFloat(input.value) !== parseFloat(input.dataset.original) ? 'inline-block' : 'none';
+    }
+</script>
