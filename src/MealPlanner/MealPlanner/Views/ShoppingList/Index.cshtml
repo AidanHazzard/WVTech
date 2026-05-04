@@ -14,6 +14,27 @@
         </div>
     }
 
+    @if (TempData["KrogerSuccess"] != null)
+    {
+        <div class="alert alert-success text-center">
+            @TempData["KrogerSuccess"]
+        </div>
+    }
+
+    @if (TempData["KrogerError"] != null)
+    {
+        <div class="alert alert-danger text-center">
+            @TempData["KrogerError"]
+        </div>
+    }
+
+    @if (TempData["KrogerInfo"] != null)
+    {
+        <div class="alert alert-info text-center">
+            @TempData["KrogerInfo"]
+        </div>
+    }
+
     <form asp-action="SetDateRange" method="post" class="mb-4" id="dateRangeForm">
         @Html.AntiForgeryToken()
         <div class="d-flex gap-3 align-items-center">
@@ -62,8 +83,7 @@
                                    step="any"
                                    class="back2-textbox-partial qty-input"
                                    style="width: 80px"
-                                   data-original="@item.Amount.ToString(System.Globalization.CultureInfo.InvariantCulture)"
-                                   oninput="toggleSaveButton(this)" />
+                                   data-original="@item.Amount.ToString(System.Globalization.CultureInfo.InvariantCulture)" />
                             <button type="submit" class="btn btn-primary btn-sm rounded-4 px-3 qty-save" style="display:none">Save</button>
                         </form>
                         <form asp-action="RemoveItem" method="post" class="m-0">
@@ -82,9 +102,48 @@
     </div>
 </div>
 
-<script>
-    function toggleSaveButton(input) {
-        const btn = input.closest('form').querySelector('.qty-save');
-        btn.style.display = parseFloat(input.value) !== parseFloat(input.dataset.original) ? 'inline-block' : 'none';
-    }
-</script>
+    <div class="back2 mt-4 p-3">
+        <h4 class="back1Title">Export to Kroger</h4>
+
+        @if (Model.KrogerConnected)
+        {
+            <p class="text-success mb-3">&#10003; Kroger account connected</p>
+        }
+
+        <ul class="mb-3" style="font-size:0.9rem">
+            <li>Select a nearby store — we use it to match your ingredients to that store's products.</li>
+            <li>Items are <strong>added</strong> to your existing Kroger cart. Clear your Kroger cart first if you don't want duplicates.</li>
+            <li>To change your pickup location, update it in the Kroger app before checking out.</li>
+        </ul>
+
+        <div class="d-flex gap-2 align-items-center flex-wrap mb-3">
+            <input type="text"
+                   id="ZipCode"
+                   value="@Model.ZipCode"
+                   placeholder="Zip code"
+                   maxlength="10"
+                   class="back2-textbox-partial"
+                   style="width:130px" />
+            <button type="button" id="findKrogerStores" class="btn btn-primary rounded-4 px-3">
+                Find Stores
+            </button>
+            <span id="krogerStoreSpinner" style="display:none" class="text-muted fst-italic">Searching...</span>
+        </div>
+
+        <div id="krogerStoreSection" style="display:none">
+            <p id="krogerStoreMessage" class="mb-2 fw-semibold" style="display:none"></p>
+            <form asp-controller="Kroger" asp-action="Export" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" id="zipCodeHidden" name="zipCode" />
+                <select id="krogerStoreSelect" name="storeId" class="back2-textbox-partial mb-3 rounded-4" style="width:100%;max-width:520px;padding:0.5rem 1rem;font-size:1rem;height:auto"></select>
+                <div>
+                    <button type="submit" id="exportToKroger" class="btn btn-success rounded-4 px-4">
+                        Export to Kroger Cart
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script src="~/js/shoppingList.js"></script>

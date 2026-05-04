@@ -5,6 +5,7 @@ using MealPlanner.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace MealPlanner.Controllers;
 
@@ -15,17 +16,20 @@ public class ShoppingListController : Controller
     private readonly UserManager<User> _userManager;
     private readonly IMealRepository _mealRepo;
     private readonly MealPlannerDBContext _context;
+    private readonly IUserSettingsRepository _userSettingsRepo;
 
     public ShoppingListController(
         ShoppingListService shoppingListService,
         UserManager<User> userManager,
         IMealRepository mealRepo,
-        MealPlannerDBContext context)
+        MealPlannerDBContext context,
+        IUserSettingsRepository userSettingsRepo)
     {
         _shoppingListService = shoppingListService;
         _userManager = userManager;
         _mealRepo = mealRepo;
         _context = context;
+        _userSettingsRepo = userSettingsRepo;
     }
 
     [HttpGet]
@@ -54,12 +58,15 @@ public class ShoppingListController : Controller
         }
 
         var items = _shoppingListService.GetItemsForUser(user.Id);
+        var profile = await _userSettingsRepo.GetByUserIdAsync(user.Id);
 
         return View(new ShoppingListViewModel
         {
             Items = items,
             DateFrom = dateFrom,
-            DateTo = dateTo
+            DateTo = dateTo,
+            ZipCode = profile?.ZipCode,
+            KrogerConnected = !string.IsNullOrEmpty(HttpContext.Session.GetString("KrogerAccessToken"))
         });
     }
 
@@ -140,9 +147,12 @@ public class ShoppingListController : Controller
     {
         var meals = await _mealRepo.GetUserMealsByDateRangeAsync(user, dateFrom, dateTo);
 
-        foreach (var meal in meals)
-            foreach (var recipe in meal.Recipes)
-                await _context.Entry(recipe).Collection(r => r.Ingredients).LoadAsync();
+        var recipeIds = meals.SelectMany(m => m.Recipes).Select(r => r.Id).Distinct().ToList();
+        if (recipeIds.Count > 0)
+            await _context.Set<Recipe>()
+                .Where(r => recipeIds.Contains(r.Id))
+                .Include(r => r.Ingredients)
+                .LoadAsync();
 
         var ingredients = meals
             .SelectMany(m => m.Recipes)

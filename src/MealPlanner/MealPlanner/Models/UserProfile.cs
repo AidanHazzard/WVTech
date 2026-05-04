@@ -29,4 +29,7 @@ public class UserProfile
     public string? ProfilePictureUrl { get; set; }
 
     public bool IsDarkTheme { get; set; } = false;
+
+    [MaxLength(10)]
+    public string? ZipCode { get; set; }
 }

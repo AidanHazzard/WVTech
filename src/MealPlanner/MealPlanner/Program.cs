@@ -79,6 +79,14 @@ builder.Services.AddIdentity<User, IdentityRole>(options =>
 
 builder.Services.AddHttpContextAccessor();
 
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromHours(2);
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
+    options.Cookie.SameSite = SameSiteMode.Lax;
+});
+
 //when an unauthorized user tries to access a protected resource, redirect them to the login page
 builder.Services.ConfigureApplicationCookie(options =>
 {
@@ -91,7 +99,7 @@ builder.Services.ConfigureApplicationCookie(options =>
 
     options.Cookie.HttpOnly = true;
     options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
-    options.Cookie.SameSite = SameSiteMode.Strict;
+    options.Cookie.SameSite = SameSiteMode.Lax;
 
     options.ExpireTimeSpan = TimeSpan.FromDays(30);
 
@@ -106,6 +114,16 @@ builder.Services.AddScoped<IUserSettingsService, UserSettingsService>();
 builder.Services.AddScoped<IMealRecommendationService, MealRecommendationService>();
 builder.Services.AddScoped<ThemeFilter>();
 builder.Services.AddScoped<ShoppingListService>();
+
+// Kroger API
+if (!string.IsNullOrEmpty(builder.Configuration["Kroger:ClientId"]))
+{
+    builder.Services.AddHttpClient<IKrogerService, KrogerService>(client =>
+    {
+        client.BaseAddress = new Uri("https://api.kroger.com/v1/");
+        client.DefaultRequestHeaders.Add("Accept", "application/json");
+    });
+}
 
 // External APIs
 if (builder.Configuration["NoApi"] != "true")
@@ -146,6 +164,7 @@ if (app.Environment.IsProduction())
 app.UseHttpsRedirection();
 app.UseRouting();
 
+app.UseSession();
 app.UseAuthentication();
 app.UseAuthorization();
 
