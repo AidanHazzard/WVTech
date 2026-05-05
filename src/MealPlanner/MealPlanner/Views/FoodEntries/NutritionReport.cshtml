@@ -1,0 +1,86 @@
+@model MealPlanner.ViewModels.NutritionReportViewModel
+
+@{
+    ViewData["Title"] = "Nutrition Report";
+}
+
+<div class="back1">
+    <h1 class="back1Title">Long Term Nutrition Report</h1>
+
+    <div class="d-flex justify-content-center mb-4">
+        <div class="btn-group" role="group" aria-label="Report period">
+            <a href="@Url.Action("NutritionReport", "FoodEntries", new { tab = "weekly" })"
+               class="btn @(Model.ActiveTab == "weekly" ? "btn-primary active" : "btn-outline-primary")"
+               id="tab-weekly">
+                Weekly
+            </a>
+            <a href="@Url.Action("NutritionReport", "FoodEntries", new { tab = "monthly" })"
+               class="btn @(Model.ActiveTab == "monthly" ? "btn-primary active" : "btn-outline-primary")"
+               id="tab-monthly">
+                Monthly
+            </a>
+        </div>
+    </div>
+
+    <div class="back2 text-center">
+        <h2 class="back1Title">
+            @(Model.ActiveTab == "weekly" ? "Weekly" : "Monthly") Summary
+        </h2>
+        <p class="back1Title">
+            @Model.Progress.StartDay.ToString("MMM d") – @Model.Progress.EndDay.ToString("MMM d, yyyy")
+        </p>
+        <canvas id="nutritionPieChart" width="400" height="400"></canvas>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col">
+            <div class="back2">
+                <h3 class="back1Title">Totals</h3>
+                <ul>
+                    <li><strong>Calories:</strong> @Model.Progress.Totals.Calories</li>
+                    <li><strong>Protein:</strong> @Model.Progress.Totals.Protein g</li>
+                    <li><strong>Carbs:</strong> @Model.Progress.Totals.Carbs g</li>
+                    <li><strong>Fat:</strong> @Model.Progress.Totals.Fat g</li>
+                </ul>
+            </div>
+        </div>
+        <div class="col">
+            <div class="back2">
+                <h3 class="back1Title">Targets</h3>
+                <ul>
+                    <li><strong>Calories:</strong> @Model.Progress.Targets.Calories</li>
+                    <li><strong>Protein:</strong> @Model.Progress.Targets.Protein g</li>
+                    <li><strong>Carbs:</strong> @Model.Progress.Targets.Carbs g</li>
+                    <li><strong>Fat:</strong> @Model.Progress.Targets.Fat g</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        const ctx = document.getElementById('nutritionPieChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: ['Protein', 'Carbs', 'Fat'],
+                datasets: [{
+                    data: [
+                        @Model.Progress.Totals.Protein,
+                        @Model.Progress.Totals.Carbs,
+                        @Model.Progress.Totals.Fat
+                    ],
+                    backgroundColor: ['#36a2eb', '#ffce56', '#ff6384']
+                }]
+            },
+            options: {
+                responsive: false,
+                plugins: {
+                    legend: { position: 'bottom' }
+                }
+            }
+        });
+    </script>
+}

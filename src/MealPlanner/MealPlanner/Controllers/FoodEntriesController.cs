@@ -49,6 +49,24 @@ public class FoodEntriesController : Controller
     }
 
     [Authorize]
+    public async Task<IActionResult> NutritionReport(string tab = "weekly")
+    {
+        if (_nutritionProgressService is null)
+            return StatusCode(500, "NutritionProgressService not configured.");
+
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrWhiteSpace(userId))
+            return Unauthorized();
+
+        var today = DateOnly.FromDateTime(DateTime.Today);
+        var startDay = tab == "monthly" ? today.AddDays(-29) : today.AddDays(-6);
+
+        var progress = await _nutritionProgressService.GetRangeProgressAsync(userId, startDay, today);
+
+        return View(new NutritionReportViewModel { ActiveTab = tab, Progress = progress });
+    }
+
+    [Authorize]
     public async Task<IActionResult> Nutrition()
     {
         if (_nutritionProgressService is null)
