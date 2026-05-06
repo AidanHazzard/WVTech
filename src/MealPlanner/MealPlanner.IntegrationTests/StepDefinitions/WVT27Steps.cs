@@ -1,4 +1,5 @@
 using MealPlanner.Models;
+using MealPlanner.Services;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Support.UI;
 using Reqnroll;
@@ -61,9 +62,10 @@ public class WVT27Steps
     [Then("{string} appears in the pantry list")]
     public void ThenItemAppearsInPantryList(string name)
     {
+        var display = DisplayName(name);
         var items = _driver.FindElements(By.CssSelector(".pantry-item-name"));
         Assert.That(
-            items.Any(el => el.Text.Contains(name, StringComparison.OrdinalIgnoreCase)),
+            items.Any(el => el.Text.Contains(display, StringComparison.OrdinalIgnoreCase)),
             Is.True,
             $"Expected '{name}' in pantry list but it was not found");
     }
@@ -71,9 +73,10 @@ public class WVT27Steps
     [Then("the pantry list shows {string} with an amount of {string} and measurement {string}")]
     public void ThenPantryListShowsItemWithDetails(string name, string amount, string measurement)
     {
+        var display = DisplayName(name);
         var items = _driver.FindElements(By.CssSelector(".pantry-item"));
         var match = items.FirstOrDefault(el =>
-            el.Text.Contains(name, StringComparison.OrdinalIgnoreCase));
+            el.Text.Contains(display, StringComparison.OrdinalIgnoreCase));
         Assert.That(match, Is.Not.Null, $"Expected '{name}' in pantry list but it was not found");
         Assert.That(match!.Text, Does.Contain(amount));
         Assert.That(match.Text, Does.Contain(measurement).IgnoreCase);
@@ -111,17 +114,19 @@ public class WVT27Steps
     {
         if (!_pantryPreCleared)
         {
-            _driver.Navigate().GoToUrl($"{_baseUrl}/Shopping/Pantry");
-            _wait.Until(d => d.Url.Contains("/Pantry", StringComparison.OrdinalIgnoreCase));
-            while (true)
+            var email = $"{userName}@fakeemail.com";
+            var pantryItems = BDDSetup.Context.Set<User>()
+                .Where(u => u.Email == email)
+                .SelectMany(u => u.PantryItems)
+                .ToList();
+            if (pantryItems.Any())
             {
-                var btn = _driver.FindElements(By.CssSelector(".remove-pantry-item")).FirstOrDefault();
-                if (btn == null) break;
-                btn.Click();
-                _wait.Until(d => d.Url.Contains("/Pantry", StringComparison.OrdinalIgnoreCase));
-                _wait.Until(d => ((IJavaScriptExecutor)d)
-                    .ExecuteScript("return document.readyState").ToString() == "complete");
+                BDDSetup.Context.Set<Ingredient>().RemoveRange(pantryItems);
+                BDDSetup.Context.SaveChanges();
             }
+            _driver.Navigate().GoToUrl($"{_baseUrl}/Shopping/Pantry");
+            _wait.Until(d =>
+                ((IJavaScriptExecutor)d).ExecuteScript("return document.readyState").ToString() == "complete");
             _pantryPreCleared = true;
         }
 
@@ -131,15 +136,20 @@ public class WVT27Steps
         _driver.FindElement(By.Id("Name")).Clear();
         _driver.FindElement(By.Id("Name")).SendKeys(name);
         _driver.FindElement(By.Id("addPantryItemBtn")).Click();
-        _wait.Until(d => ((IJavaScriptExecutor)d)
-            .ExecuteScript("return document.readyState").ToString() == "complete");
+        var displayName = DisplayName(name);
+        _wait.Until(d =>
+        {
+            var items = d.FindElements(By.CssSelector(".pantry-item"));
+            return items.Any(el => el.Text.Contains(displayName, StringComparison.OrdinalIgnoreCase));
+        });
     }
 
     [When("{string} removes the pantry item named {string}")]
     public void WhenUserRemovesPantryItem(string userName, string name)
     {
+        var display = DisplayName(name);
         var items = _driver.FindElements(By.CssSelector(".pantry-item"));
-        var row = items.FirstOrDefault(el => el.Text.Contains(name, StringComparison.OrdinalIgnoreCase));
+        var row = items.FirstOrDefault(el => el.Text.Contains(display, StringComparison.OrdinalIgnoreCase));
         Assert.That(row, Is.Not.Null, $"Could not find pantry item '{name}' to remove");
         row!.FindElement(By.CssSelector(".remove-pantry-item")).Click();
         _wait.Until(d => d.Url.Contains("/Pantry", StringComparison.OrdinalIgnoreCase));
@@ -158,20 +168,35 @@ public class WVT27Steps
     [Then("{string} does not appear in the pantry list")]
     public void ThenItemDoesNotAppearInPantryList(string name)
     {
+        var display = DisplayName(name);
         var items = _driver.FindElements(By.CssSelector(".pantry-item-name"));
         Assert.That(
-            items.Any(el => el.Text.Contains(name, StringComparison.OrdinalIgnoreCase)),
+            items.Any(el => el.Text.Contains(display, StringComparison.OrdinalIgnoreCase)),
             Is.False,
             $"Expected '{name}' to be absent from pantry list but it was found");
+    }
+
+    private static string DisplayName(string name) =>
+        IngredientNameNormalizer.Normalize(name);
+
+    private IWebElement FindPantryRow(string name)
+    {
+        var display = DisplayName(name);
+        IWebElement? row = null;
+        _wait.Until(d =>
+        {
+            var rows = d.FindElements(By.CssSelector(".pantry-item"));
+            row = rows.FirstOrDefault(el => el.Text.Contains(display, StringComparison.OrdinalIgnoreCase));
+            return row != null;
+        });
+        return row!;
     }
 
     [When("{string} updates the amount of {string} to {string}")]
     public void WhenUserUpdatesAmount(string userName, string name, string newAmount)
     {
-        var rows = _driver.FindElements(By.CssSelector(".pantry-item"));
-        var row = rows.FirstOrDefault(el => el.Text.Contains(name, StringComparison.OrdinalIgnoreCase));
-        Assert.That(row, Is.Not.Null, $"Could not find pantry item '{name}'");
-        var input = row!.FindElement(By.CssSelector(".pantry-qty-input"));
+        var row = FindPantryRow(name);
+        var input = row.FindElement(By.CssSelector(".pantry-qty-input"));
         input.Clear();
         input.SendKeys(newAmount);
         row.FindElement(By.CssSelector(".pantry-qty-save")).Click();
@@ -183,10 +208,8 @@ public class WVT27Steps
     [When("{string} updates the amount of {string} to {string} via javascript")]
     public void WhenUserUpdatesAmountViaJavascript(string userName, string name, string newAmount)
     {
-        var rows = _driver.FindElements(By.CssSelector(".pantry-item"));
-        var row = rows.FirstOrDefault(el => el.Text.Contains(name, StringComparison.OrdinalIgnoreCase));
-        Assert.That(row, Is.Not.Null, $"Could not find pantry item '{name}'");
-        var input = row!.FindElement(By.CssSelector(".pantry-qty-input"));
+        var row = FindPantryRow(name);
+        var input = row.FindElement(By.CssSelector(".pantry-qty-input"));
         ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].value = arguments[1]", input, newAmount);
         ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].form.submit()", input);
         _wait.Until(d => d.Url.Contains("/Pantry", StringComparison.OrdinalIgnoreCase));
@@ -197,8 +220,9 @@ public class WVT27Steps
     [Then("the pantry shows {string} with an amount of {string}")]
     public void ThenPantryShowsItemWithAmount(string name, string amount)
     {
+        var display = DisplayName(name);
         var rows = _driver.FindElements(By.CssSelector(".pantry-item"));
-        var row = rows.FirstOrDefault(el => el.Text.Contains(name, StringComparison.OrdinalIgnoreCase));
+        var row = rows.FirstOrDefault(el => el.Text.Contains(display, StringComparison.OrdinalIgnoreCase));
         Assert.That(row, Is.Not.Null, $"Expected '{name}' in pantry list but it was not found");
         var input = row!.FindElement(By.CssSelector(".pantry-qty-input"));
         Assert.That(input.GetAttribute("value"), Is.EqualTo(amount),

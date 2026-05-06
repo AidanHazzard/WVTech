@@ -39,3 +39,15 @@ Feature: Manually add item to pantry
     Given 'Gary' has a pantry item named 'Rice' with amount '2' and measurement 'Cup(s)'
     When 'Gary' updates the amount of 'Rice' to '5'
     Then the pantry shows 'Rice' with an amount of '5'
+
+  Scenario: Setting a pantry item amount to zero shows a validation error
+    Given 'Gary' has a pantry item named 'Oats' with amount '3' and measurement 'Cup(s)'
+    When 'Gary' updates the amount of 'Oats' to '0' via javascript
+    Then an error message is displayed on the pantry page
+    And 'Oats' still shows an amount of '3'
+
+  Scenario: Setting a pantry item amount to a non-number shows a validation error
+    Given 'Gary' has a pantry item named 'Honey' with amount '1' and measurement 'Count'
+    When 'Gary' updates the amount of 'Honey' to 'abc' via javascript
+    Then an error message is displayed on the pantry page
+    And 'Honey' still shows an amount of '1'
