@@ -132,11 +132,16 @@ public class MealRecommendationService : IMealRecommendationService
         var upvoted = await _userRecipeRepository.GetUserRecipesByVoteType(user.Id, UserVoteType.UpVote);
         var allWithTags = await _recipeRepository.GetAllWithTagsAsync();
 
+        var dailyCalorieTarget = (await _nutrionRepository.GetUsersNutritionPreferenceAsync(user.Id))?.CalorieTarget;
+        var totalWeight = preferences.Sum(p => p.Size.Weight());
+
         var usedRecipeIds = new HashSet<int>();
         int mealIndex = 0;
         foreach (var pref in preferences)
         {
-            var calorieTarget = pref.Size.Calories();
+            var calorieTarget = dailyCalorieTarget.HasValue
+                ? (int)Math.Round(pref.Size.Weight() / totalWeight * dailyCalorieTarget.Value)
+                : pref.Size.Calories();
 
             var upvotedIds = upvoted.Select(r => r.Id).ToHashSet();
             var rest = allWithTags
