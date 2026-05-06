@@ -7,18 +7,18 @@ Feature: Manually add item to pantry
     And 'Gary' is on the pantry page
 
   Scenario: User adds a pantry item and it appears in the pantry list
-    When 'Gary' submits the add pantry item form with name 'Milk', amount '2', and measurement 'cups'
+    When 'Gary' submits the add pantry item form with name 'Milk', amount '2', and measurement 'Cup(s)'
     Then 'Milk' appears in the pantry list
 
   Scenario: Added item shows the correct details in the pantry list
-    When 'Gary' submits the add pantry item form with name 'Butter', amount '1', and measurement 'lbs'
-    Then the pantry list shows 'Butter' with an amount of '1' and measurement 'lbs'
+    When 'Gary' submits the add pantry item form with name 'Butter', amount '1', and measurement 'Pounds'
+    Then the pantry list shows 'Butter' with an amount of '1' and measurement 'Pound'
 
   Scenario: A confirmation message is shown after successfully adding an item
-    When 'Gary' submits the add pantry item form with name 'Eggs', amount '12', and measurement 'pieces'
+    When 'Gary' submits the add pantry item form with name 'Eggs', amount '12', and measurement 'Count'
     Then a success message is displayed on the pantry page
 
   Scenario: Submitting the form with no name shows a validation error
-    When 'Gary' submits the add pantry item form with no name, amount '3', and measurement 'cups'
+    When 'Gary' submits the add pantry item form with no name, amount '3', and measurement 'Cup(s)'
     Then an error message is displayed on the pantry page
     And no new item is added to the pantry list

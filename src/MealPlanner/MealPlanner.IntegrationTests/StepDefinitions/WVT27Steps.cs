@@ -32,12 +32,11 @@ public class WVT27Steps
     [When("{string} submits the add pantry item form with name {string}, amount {string}, and measurement {string}")]
     public void WhenUserSubmitsAddPantryItemForm(string userName, string name, string amount, string measurement)
     {
-        _driver.FindElement(By.Id("Name")).Clear();
-        _driver.FindElement(By.Id("Name")).SendKeys(name);
         _driver.FindElement(By.Id("Amount")).Clear();
         _driver.FindElement(By.Id("Amount")).SendKeys(amount);
-        _driver.FindElement(By.Id("Measurement")).Clear();
-        _driver.FindElement(By.Id("Measurement")).SendKeys(measurement);
+        new SelectElement(_driver.FindElement(By.Id("Measurement"))).SelectByText(measurement);
+        _driver.FindElement(By.Id("Name")).Clear();
+        _driver.FindElement(By.Id("Name")).SendKeys(name);
         _driver.FindElement(By.Id("addPantryItemBtn")).Click();
         _wait.Until(d => ((IJavaScriptExecutor)d)
             .ExecuteScript("return document.readyState").ToString() == "complete");
@@ -47,11 +46,10 @@ public class WVT27Steps
     public void WhenUserSubmitsAddPantryItemFormNoName(string userName, string amount, string measurement)
     {
         _itemCountBeforeSubmit = _driver.FindElements(By.CssSelector(".pantry-item")).Count;
-        _driver.FindElement(By.Id("Name")).Clear();
         _driver.FindElement(By.Id("Amount")).Clear();
         _driver.FindElement(By.Id("Amount")).SendKeys(amount);
-        _driver.FindElement(By.Id("Measurement")).Clear();
-        _driver.FindElement(By.Id("Measurement")).SendKeys(measurement);
+        new SelectElement(_driver.FindElement(By.Id("Measurement"))).SelectByText(measurement);
+        _driver.FindElement(By.Id("Name")).Clear();
         _driver.FindElement(By.Id("addPantryItemBtn")).Click();
         _wait.Until(d => ((IJavaScriptExecutor)d)
             .ExecuteScript("return document.readyState").ToString() == "complete");

@@ -19,20 +19,23 @@
 
     <form asp-action="AddPantryItem" method="post" class="mb-4">
         @Html.AntiForgeryToken()
-        <div class="row align-items-start">
+        <div class="row align-items-center">
+            <input id="Amount" name="Amount" type="number" step="any" min="0" class="col-1 back2-textbox-partial mx-1" placeholder="0" />
+        
+            <select id="Measurement" name="Measurement" class="back2-textbox-partial col-2 mx-1">
+                <option value="" selected>Select</option>
+                <option value="Count">Count</option>
+                <option value="Cup(s)">Cup(s)</option>
+                <option value="Ounce(s)">Ounce(s)</option>
+                <option value="Pound(s)">Pounds</option>
+                <option value="L">L</option>
+                <option value="KG">KG</option>
+            </select>
             <div class="col">
                 <input id="Name" name="Name" class="back2-textbox-partial w-100" placeholder="Ingredient name" />
                 <span class="field-validation-error text-danger" data-valmsg-for="Name"></span>
             </div>
-            <div class="col-2">
-                <input id="Amount" name="Amount" type="number" step="any" min="0.01" class="back2-textbox-partial w-100" placeholder="Amount" />
-            </div>
-            <div class="col-2">
-                <input id="Measurement" name="Measurement" class="back2-textbox-partial w-100" placeholder="Unit" />
-            </div>
-            <div class="col-auto">
-                <button id="addPantryItemBtn" type="submit" class="btn btn-success rounded-4 px-4">Add to Pantry</button>
-            </div>
+                <button id="addPantryItemBtn" type="submit" class="btn btn-success col-auto mx-1 rounded-4 px-4">Add to Pantry</button>
         </div>
     </form>
 
