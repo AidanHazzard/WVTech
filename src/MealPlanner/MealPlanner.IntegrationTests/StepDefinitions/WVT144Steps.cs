@@ -564,7 +564,21 @@ public class WVT144Steps
     public void GivenUserHasUpvotedRecipesEachWithCalories(string userName, int count, int calories)
     {
         var ctx = BDDSetup.Context;
+        ctx.ChangeTracker.Clear();
         var user = ctx.Set<User>().First(u => u.NormalizedEmail == $"{userName}@fakeemail.com".ToUpper());
+
+        var existingUpvotes = ctx.Set<UserRecipe>()
+            .Where(ur => ur.UserId == user.Id && ur.UserVote == UserVoteType.UpVote)
+            .ToList();
+        ctx.Set<UserRecipe>().RemoveRange(existingUpvotes);
+
+        var existingRestrictions = ctx.Set<UserDietaryRestriction>()
+            .Where(udr => udr.UserId == user.Id)
+            .ToList();
+        ctx.Set<UserDietaryRestriction>().RemoveRange(existingRestrictions);
+
+        ctx.SaveChanges();
+
         for (int i = 0; i < count; i++)
         {
             var recipe = new Recipe
