@@ -31,8 +31,8 @@ public class WVT158Steps
         _driver.Manage().Cookies.DeleteCookieNamed("ShoppingListSynced");
         _driver.Manage().Cookies.DeleteCookieNamed("ShoppingListDateFrom");
         _driver.Manage().Cookies.DeleteCookieNamed("ShoppingListDateTo");
-        _driver.Navigate().GoToUrl($"{_baseUrl}/ShoppingList");
-        _wait.Until(d => d.Url.Contains("ShoppingList"));
+        _driver.Navigate().GoToUrl($"{_baseUrl}/Shopping");
+        _wait.Until(d => d.Url.Contains("/Shopping"));
     }
 
     private void SetDateRange(string dateFrom, string dateTo)
@@ -52,7 +52,7 @@ public class WVT158Steps
         var userId = GetAliceId(ctx);
 
         var staleItems = ctx.Set<ShoppingListItem>()
-            .Where(i => i.UserId == userId && i.Name == IngredientName).ToList();
+            .Where(i => i.UserId == userId && i.IngredientBase.Name == IngredientName).ToList();
         ctx.Set<ShoppingListItem>().RemoveRange(staleItems);
         var staleMeals = ctx.Meals
             .Where(m => m.UserId == userId && m.Title == "WVT158 Meal").ToList();
@@ -82,7 +82,7 @@ public class WVT158Steps
             Calories = 100, Protein = 5, Carbs = 10, Fat = 3,
             Ingredients = new List<Ingredient>
             {
-                new Ingredient { IngredientBase = ingredientBase, Measurement = measurement, Amount = AutoAmount }
+                new Ingredient { DisplayName = IngredientName, IngredientBase = ingredientBase, Measurement = measurement, Amount = AutoAmount }
             }
         };
         ctx.Recipes.Add(recipe);
@@ -122,7 +122,7 @@ public class WVT158Steps
         catch (WebDriverTimeoutException) { }
         _wait.Until(d =>
             ((IJavaScriptExecutor)d).ExecuteScript("return document.readyState")?.ToString() == "complete"
-            && d.Url.Contains("ShoppingList"));
+            && d.Url.Contains("/Shopping"));
     }
 
     [When("'Alice' changes the shopping list to a date range that excludes today")]
@@ -142,11 +142,11 @@ public class WVT158Steps
     [Then("the WVT158 ingredient amount has not been doubled on the shopping list")]
     public void ThenTheWVT158IngredientAmountHasNotBeenDoubled()
     {
-        _wait.Until(d => d.Url.Contains("ShoppingList"));
+        _wait.Until(d => d.Url.Contains("/Shopping"));
         using var ctx = BDDSetup.CreateContext();
         var userId = GetAliceId(ctx);
         var items = ctx.Set<ShoppingListItem>()
-            .Where(i => i.UserId == userId && i.Name == IngredientName)
+            .Where(i => i.UserId == userId && i.IngredientBase.Name == IngredientName)
             .ToList();
 
         var manualItem = items.FirstOrDefault(i => !i.IsAutoAdded);
@@ -157,11 +157,11 @@ public class WVT158Steps
     [Then("the manually added WVT158 ingredient is still on the shopping list")]
     public void ThenTheManuallyAddedWVT158IngredientIsStillOnTheShoppingList()
     {
-        _wait.Until(d => d.Url.Contains("ShoppingList"));
+        _wait.Until(d => d.Url.Contains("/Shopping"));
         using var ctx = BDDSetup.CreateContext();
         var userId = GetAliceId(ctx);
         var manualItem = ctx.Set<ShoppingListItem>()
-            .FirstOrDefault(i => i.UserId == userId && i.Name == IngredientName && !i.IsAutoAdded);
+            .FirstOrDefault(i => i.UserId == userId && i.IngredientBase.Name == IngredientName && !i.IsAutoAdded);
 
         Assert.That(manualItem, Is.Not.Null, "Manually added item should not have been deleted when date range changed");
     }

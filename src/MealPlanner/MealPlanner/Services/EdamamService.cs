@@ -76,8 +76,9 @@ public class EdamamService:IExternalRecipeService
     {
         return edamamIngredients.Select(i => new Ingredient
         {
+            DisplayName = i.Food,
             Amount = i.Quantity,
-            IngredientBase = new IngredientBase { Name = i.Food },
+            IngredientBase = new IngredientBase { Name = IngredientNameNormalizer.NormalizeKey(i.Food) },
             Measurement = new Measurement { Name = i.Measure }
         }).ToList();
     }
