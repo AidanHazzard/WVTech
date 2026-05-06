@@ -49,10 +49,24 @@
                         <span class="pantry-item-name fs-5 flex-grow-1">
                             @($"{item.Amount:G} {item.Measurement?.Name} of {item.IngredientBase.Display()}")
                         </span>
+                        <form asp-action="UpdatePantryItemAmount" method="post" class="d-flex align-items-center gap-2 m-0">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="ingredientId" value="@item.Id" />
+                            <input type="number"
+                                   name="newAmount"
+                                   value="@item.Amount.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+                                   min="0.01"
+                                   step="any"
+                                   class="back2-textbox-partial pantry-qty-input"
+                                   style="width: 80px"
+                                   data-original="@item.Amount.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+                                   oninput="togglePantryQtySave(this)" />
+                            <button type="submit" class="pantry-qty-save btn btn-primary btn-sm rounded-4 px-3" style="display:none">Save</button>
+                        </form>
                         <form asp-action="RemovePantryItem" method="post" class="d-inline">
                             @Html.AntiForgeryToken()
                             <input type="hidden" name="ingredientId" value="@item.Id" />
-                            <button type="submit" class="remove-pantry-item btn btn-danger btn-sm rounded-4">Remove</button>
+                            <button type="submit" class="remove-pantry-item btn btn-danger">X</button>
                         </form>
                     </div>
                 }
@@ -64,3 +78,10 @@
         }
     </div>
 </div>
+
+<script>
+    function togglePantryQtySave(input) {
+        const btn = input.closest('form').querySelector('.pantry-qty-save');
+        btn.style.display = parseFloat(input.value) !== parseFloat(input.dataset.original) ? 'inline-block' : 'none';
+    }
+</script>

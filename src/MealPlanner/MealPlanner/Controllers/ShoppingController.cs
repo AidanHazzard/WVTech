@@ -147,6 +147,25 @@ public class ShoppingController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    public async Task<IActionResult> UpdatePantryItemAmount(int ingredientId, float? newAmount)
+    {
+        if (newAmount == null || newAmount <= 0)
+        {
+            TempData["ValidationError"] = "Amount must be greater than zero.";
+            return RedirectToAction(nameof(Pantry));
+        }
+
+        var user = await _registrationService.FindUserByClaimAsync(User);
+        if (user == null) return Challenge();
+
+        _pantryService.UpdatePantryItemAmount(ingredientId, user.Id, newAmount.Value);
+        _context.SaveChanges();
+
+        return RedirectToAction(nameof(Pantry));
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> RemovePantryItem(int ingredientId)
     {
         var user = await _registrationService.FindUserByClaimAsync(User);

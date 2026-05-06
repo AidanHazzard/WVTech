@@ -31,4 +31,15 @@ public class PantryRepository : IPantryRepository
         if (item != null)
             _context.Set<Ingredient>().Remove(item);
     }
+
+    public void UpdateItemAmount(int ingredientId, string userId, float newAmount)
+    {
+        var user = _context.Set<User>()
+            .Include(u => u.PantryItems)
+            .FirstOrDefault(u => u.Id == userId);
+
+        var item = user?.PantryItems.FirstOrDefault(i => i.Id == ingredientId);
+        if (item != null)
+            item.Amount = newAmount;
+    }
 }

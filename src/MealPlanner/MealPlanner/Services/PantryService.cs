@@ -41,4 +41,9 @@ public class PantryService : IPantryService
     {
         _pantryRepo.RemoveItem(ingredientId, userId);
     }
+
+    public void UpdatePantryItemAmount(int ingredientId, string userId, float newAmount)
+    {
+        _pantryRepo.UpdateItemAmount(ingredientId, userId, newAmount);
+    }
 }
