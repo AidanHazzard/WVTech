@@ -36,4 +36,9 @@ public class PantryService : IPantryService
                 () => new Measurement { Name = measurement })
         };
     }
+
+    public void RemovePantryItem(int ingredientId, string userId)
+    {
+        _pantryRepo.RemoveItem(ingredientId, userId);
+    }
 }

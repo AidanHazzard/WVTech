@@ -147,6 +147,19 @@ public class ShoppingController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
+    public async Task<IActionResult> RemovePantryItem(int ingredientId)
+    {
+        var user = await _registrationService.FindUserByClaimAsync(User);
+        if (user == null) return Challenge();
+
+        _pantryService.RemovePantryItem(ingredientId, user.Id);
+        _context.SaveChanges();
+
+        return RedirectToAction(nameof(Pantry));
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> AddPantryItem(PantryItemViewModel model)
     {
         if (!ModelState.IsValid)

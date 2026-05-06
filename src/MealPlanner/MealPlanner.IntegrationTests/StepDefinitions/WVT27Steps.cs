@@ -14,12 +14,15 @@ public class WVT27Steps
 
     private int _itemCountBeforeSubmit;
 
+    private bool _pantryPreCleared;
+
     [BeforeScenario]
     public void SetUp()
     {
         _driver = BDDSetup.Driver;
         _wait = BDDSetup.Wait;
         _baseUrl = AUTHost.BaseUrl;
+        _pantryPreCleared = false;
     }
 
     [Given("{string} is on the pantry page")]
@@ -106,6 +109,22 @@ public class WVT27Steps
     [Given("{string} has a pantry item named {string} with amount {string} and measurement {string}")]
     public void GivenUserHasPantryItem(string userName, string name, string amount, string measurement)
     {
+        if (!_pantryPreCleared)
+        {
+            _driver.Navigate().GoToUrl($"{_baseUrl}/Shopping/Pantry");
+            _wait.Until(d => d.Url.Contains("/Pantry", StringComparison.OrdinalIgnoreCase));
+            while (true)
+            {
+                var btn = _driver.FindElements(By.CssSelector(".remove-pantry-item")).FirstOrDefault();
+                if (btn == null) break;
+                btn.Click();
+                _wait.Until(d => d.Url.Contains("/Pantry", StringComparison.OrdinalIgnoreCase));
+                _wait.Until(d => ((IJavaScriptExecutor)d)
+                    .ExecuteScript("return document.readyState").ToString() == "complete");
+            }
+            _pantryPreCleared = true;
+        }
+
         _driver.FindElement(By.Id("Amount")).Clear();
         _driver.FindElement(By.Id("Amount")).SendKeys(amount);
         new SelectElement(_driver.FindElement(By.Id("Measurement"))).SelectByText(measurement);
@@ -123,6 +142,7 @@ public class WVT27Steps
         var row = items.FirstOrDefault(el => el.Text.Contains(name, StringComparison.OrdinalIgnoreCase));
         Assert.That(row, Is.Not.Null, $"Could not find pantry item '{name}' to remove");
         row!.FindElement(By.CssSelector(".remove-pantry-item")).Click();
+        _wait.Until(d => d.Url.Contains("/Pantry", StringComparison.OrdinalIgnoreCase));
         _wait.Until(d => ((IJavaScriptExecutor)d)
             .ExecuteScript("return document.readyState").ToString() == "complete");
     }
@@ -130,9 +150,9 @@ public class WVT27Steps
     [Then("the pantry list is empty")]
     public void ThenPantryListIsEmpty()
     {
-        var emptyMsg = _driver.FindElements(By.CssSelector(".back2 p"))
-            .FirstOrDefault(el => el.Text.Contains("empty", StringComparison.OrdinalIgnoreCase));
-        Assert.That(emptyMsg, Is.Not.Null, "Expected pantry to show an empty state message");
+        var items = _driver.FindElements(By.CssSelector(".pantry-item"));
+        Assert.That(items.Count, Is.EqualTo(0),
+            $"Expected pantry to be empty but found {items.Count} item(s)");
     }
 
     [Then("{string} does not appear in the pantry list")]

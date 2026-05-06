@@ -49,6 +49,11 @@
                         <span class="pantry-item-name fs-5 flex-grow-1">
                             @($"{item.Amount:G} {item.Measurement?.Name} of {item.IngredientBase.Display()}")
                         </span>
+                        <form asp-action="RemovePantryItem" method="post" class="d-inline">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="ingredientId" value="@item.Id" />
+                            <button type="submit" class="remove-pantry-item btn btn-danger btn-sm rounded-4">Remove</button>
+                        </form>
                     </div>
                 }
             </div>
