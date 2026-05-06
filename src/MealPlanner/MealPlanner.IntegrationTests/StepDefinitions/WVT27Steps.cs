@@ -15,15 +15,12 @@ public class WVT27Steps
 
     private int _itemCountBeforeSubmit;
 
-    private bool _pantryPreCleared;
-
     [BeforeScenario]
     public void SetUp()
     {
         _driver = BDDSetup.Driver;
         _wait = BDDSetup.Wait;
         _baseUrl = AUTHost.BaseUrl;
-        _pantryPreCleared = false;
     }
 
     [Given("{string} is on the pantry page")]
@@ -109,27 +106,27 @@ public class WVT27Steps
             $"Expected {_itemCountBeforeSubmit} pantry items but found {items.Count}");
     }
 
+    [Given("{string} has no pantry items")]
+    public void GivenUserHasNoPantryItems(string userName)
+    {
+        var email = $"{userName}@fakeemail.com";
+        var pantryItems = BDDSetup.Context.Set<User>()
+            .Where(u => u.Email == email)
+            .SelectMany(u => u.PantryItems)
+            .ToList();
+        if (pantryItems.Any())
+        {
+            BDDSetup.Context.Set<Ingredient>().RemoveRange(pantryItems);
+            BDDSetup.Context.SaveChanges();
+        }
+        _driver.Navigate().GoToUrl($"{_baseUrl}/Shopping/Pantry");
+        _wait.Until(d =>
+            ((IJavaScriptExecutor)d).ExecuteScript("return document.readyState").ToString() == "complete");
+    }
+
     [Given("{string} has a pantry item named {string} with amount {string} and measurement {string}")]
     public void GivenUserHasPantryItem(string userName, string name, string amount, string measurement)
     {
-        if (!_pantryPreCleared)
-        {
-            var email = $"{userName}@fakeemail.com";
-            var pantryItems = BDDSetup.Context.Set<User>()
-                .Where(u => u.Email == email)
-                .SelectMany(u => u.PantryItems)
-                .ToList();
-            if (pantryItems.Any())
-            {
-                BDDSetup.Context.Set<Ingredient>().RemoveRange(pantryItems);
-                BDDSetup.Context.SaveChanges();
-            }
-            _driver.Navigate().GoToUrl($"{_baseUrl}/Shopping/Pantry");
-            _wait.Until(d =>
-                ((IJavaScriptExecutor)d).ExecuteScript("return document.readyState").ToString() == "complete");
-            _pantryPreCleared = true;
-        }
-
         _driver.FindElement(By.Id("Amount")).Clear();
         _driver.FindElement(By.Id("Amount")).SendKeys(amount);
         new SelectElement(_driver.FindElement(By.Id("Measurement"))).SelectByText(measurement);
