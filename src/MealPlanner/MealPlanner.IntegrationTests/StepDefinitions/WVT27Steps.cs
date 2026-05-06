@@ -61,23 +61,44 @@ public class WVT27Steps
     public void ThenItemAppearsInPantryList(string name)
     {
         var display = DisplayName(name);
-        var items = _driver.FindElements(By.CssSelector(".pantry-item-name"));
-        Assert.That(
-            items.Any(el => el.Text.Contains(display, StringComparison.OrdinalIgnoreCase)),
-            Is.True,
-            $"Expected '{name}' in pantry list but it was not found");
+        _wait.Until(d =>
+        {
+            try
+            {
+                var items = d.FindElements(By.CssSelector(".pantry-item-name"));
+                return items.Any(el => el.Text.Contains(display, StringComparison.OrdinalIgnoreCase));
+            }
+            catch (StaleElementReferenceException)
+            {
+                return false;
+            }
+        });
     }
 
     [Then("the pantry list shows {string} with an amount of {string} and measurement {string}")]
     public void ThenPantryListShowsItemWithDetails(string name, string amount, string measurement)
     {
         var display = DisplayName(name);
-        var items = _driver.FindElements(By.CssSelector(".pantry-item"));
-        var match = items.FirstOrDefault(el =>
-            el.Text.Contains(display, StringComparison.OrdinalIgnoreCase));
-        Assert.That(match, Is.Not.Null, $"Expected '{name}' in pantry list but it was not found");
-        Assert.That(match!.Text, Does.Contain(amount));
-        Assert.That(match.Text, Does.Contain(measurement).IgnoreCase);
+        string? matchText = null;
+        _wait.Until(d =>
+        {
+            try
+            {
+                var items = d.FindElements(By.CssSelector(".pantry-item"));
+                var match = items.FirstOrDefault(el =>
+                    el.Text.Contains(display, StringComparison.OrdinalIgnoreCase));
+                if (match == null) return false;
+                matchText = match.Text;
+                return true;
+            }
+            catch (StaleElementReferenceException)
+            {
+                return false;
+            }
+        });
+        Assert.That(matchText, Is.Not.Null, $"Expected '{name}' in pantry list but it was not found");
+        Assert.That(matchText, Does.Contain(amount));
+        Assert.That(matchText, Does.Contain(measurement).IgnoreCase);
     }
 
     [Then("a success message is displayed on the pantry page")]
@@ -94,8 +115,18 @@ public class WVT27Steps
     [Then("an error message is displayed on the pantry page")]
     public void ThenErrorMessageIsDisplayed()
     {
-        var el = _driver.FindElements(By.CssSelector(".field-validation-error, .text-danger"))
+        var el = _wait.Until(d =>
+        {
+            try
+            {
+                return d.FindElements(By.CssSelector(".field-validation-error, .text-danger"))
                         .FirstOrDefault(e => e.Displayed);
+            }
+            catch (StaleElementReferenceException)
+            {
+                return null;
+            }
+        });
         Assert.That(el, Is.Not.Null, "Expected a validation error message to be displayed");
     }
 
@@ -181,11 +212,21 @@ public class WVT27Steps
     public void ThenItemDoesNotAppearInPantryList(string name)
     {
         var display = DisplayName(name);
-        var items = _driver.FindElements(By.CssSelector(".pantry-item-name"));
-        Assert.That(
-            items.Any(el => el.Text.Contains(display, StringComparison.OrdinalIgnoreCase)),
-            Is.False,
-            $"Expected '{name}' to be absent from pantry list but it was found");
+        bool absent = false;
+        _wait.Until(d =>
+        {
+            try
+            {
+                var items = d.FindElements(By.CssSelector(".pantry-item-name"));
+                absent = !items.Any(el => el.Text.Contains(display, StringComparison.OrdinalIgnoreCase));
+                return true;
+            }
+            catch (StaleElementReferenceException)
+            {
+                return false;
+            }
+        });
+        Assert.That(absent, Is.True, $"Expected '{name}' to be absent from pantry list but it was found");
     }
 
     private static string DisplayName(string name) =>
