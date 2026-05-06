@@ -39,9 +39,9 @@ public class WVT27Steps
         new SelectElement(_driver.FindElement(By.Id("Measurement"))).SelectByText(measurement);
         _driver.FindElement(By.Id("Name")).Clear();
         _driver.FindElement(By.Id("Name")).SendKeys(name);
-        _driver.FindElement(By.Id("addPantryItemBtn")).Click();
-        _wait.Until(d => ((IJavaScriptExecutor)d)
-            .ExecuteScript("return document.readyState").ToString() == "complete");
+        var btn = _driver.FindElement(By.Id("addPantryItemBtn"));
+        btn.Click();
+        WaitForRedirect(btn);
     }
 
     [When("{string} submits the add pantry item form with no name, amount {string}, and measurement {string}")]
@@ -52,9 +52,9 @@ public class WVT27Steps
         _driver.FindElement(By.Id("Amount")).SendKeys(amount);
         new SelectElement(_driver.FindElement(By.Id("Measurement"))).SelectByText(measurement);
         _driver.FindElement(By.Id("Name")).Clear();
-        _driver.FindElement(By.Id("addPantryItemBtn")).Click();
-        _wait.Until(d => ((IJavaScriptExecutor)d)
-            .ExecuteScript("return document.readyState").ToString() == "complete");
+        var btn = _driver.FindElement(By.Id("addPantryItemBtn"));
+        btn.Click();
+        WaitForRedirect(btn);
     }
 
     [Then("{string} appears in the pantry list")]
@@ -190,22 +190,16 @@ public class WVT27Steps
     [When("{string} removes the pantry item named {string}")]
     public void WhenUserRemovesPantryItem(string userName, string name)
     {
-        var display = DisplayName(name);
-        var items = _driver.FindElements(By.CssSelector(".pantry-item"));
-        var row = items.FirstOrDefault(el => el.Text.Contains(display, StringComparison.OrdinalIgnoreCase));
-        Assert.That(row, Is.Not.Null, $"Could not find pantry item '{name}' to remove");
-        row!.FindElement(By.CssSelector(".remove-pantry-item")).Click();
-        _wait.Until(d => d.Url.Contains("/Pantry", StringComparison.OrdinalIgnoreCase));
-        _wait.Until(d => ((IJavaScriptExecutor)d)
-            .ExecuteScript("return document.readyState").ToString() == "complete");
+        var row = FindPantryRow(name);
+        var removeBtn = row.FindElement(By.CssSelector(".remove-pantry-item"));
+        removeBtn.Click();
+        WaitForRedirect(removeBtn);
     }
 
     [Then("the pantry list is empty")]
     public void ThenPantryListIsEmpty()
     {
-        var items = _driver.FindElements(By.CssSelector(".pantry-item"));
-        Assert.That(items.Count, Is.EqualTo(0),
-            $"Expected pantry to be empty but found {items.Count} item(s)");
+        _wait.Until(d => d.FindElements(By.CssSelector(".pantry-item")).Count == 0);
     }
 
     [Then("{string} does not appear in the pantry list")]
@@ -238,11 +232,29 @@ public class WVT27Steps
         IWebElement? row = null;
         _wait.Until(d =>
         {
-            var rows = d.FindElements(By.CssSelector(".pantry-item"));
-            row = rows.FirstOrDefault(el => el.Text.Contains(display, StringComparison.OrdinalIgnoreCase));
-            return row != null;
+            try
+            {
+                var rows = d.FindElements(By.CssSelector(".pantry-item"));
+                row = rows.FirstOrDefault(el => el.Text.Contains(display, StringComparison.OrdinalIgnoreCase));
+                return row != null;
+            }
+            catch (StaleElementReferenceException)
+            {
+                return false;
+            }
         });
         return row!;
+    }
+
+    private void WaitForRedirect(IWebElement anchor)
+    {
+        _wait.Until(d =>
+        {
+            try { _ = anchor.TagName; return false; }
+            catch (StaleElementReferenceException) { return true; }
+        });
+        _wait.Until(d => ((IJavaScriptExecutor)d)
+            .ExecuteScript("return document.readyState").ToString() == "complete");
     }
 
     [When("{string} updates the amount of {string} to {string}")]
@@ -252,10 +264,9 @@ public class WVT27Steps
         var input = row.FindElement(By.CssSelector(".pantry-qty-input"));
         input.Clear();
         input.SendKeys(newAmount);
-        row.FindElement(By.CssSelector(".pantry-qty-save")).Click();
-        _wait.Until(d => d.Url.Contains("/Pantry", StringComparison.OrdinalIgnoreCase));
-        _wait.Until(d => ((IJavaScriptExecutor)d)
-            .ExecuteScript("return document.readyState").ToString() == "complete");
+        var saveBtn = row.FindElement(By.CssSelector(".pantry-qty-save"));
+        saveBtn.Click();
+        WaitForRedirect(saveBtn);
     }
 
     [When("{string} updates the amount of {string} to {string} via javascript")]
@@ -265,9 +276,7 @@ public class WVT27Steps
         var input = row.FindElement(By.CssSelector(".pantry-qty-input"));
         ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].value = arguments[1]", input, newAmount);
         ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].form.submit()", input);
-        _wait.Until(d => d.Url.Contains("/Pantry", StringComparison.OrdinalIgnoreCase));
-        _wait.Until(d => ((IJavaScriptExecutor)d)
-            .ExecuteScript("return document.readyState").ToString() == "complete");
+        WaitForRedirect(input);
     }
 
     [Then("the pantry shows {string} with an amount of {string}")]
