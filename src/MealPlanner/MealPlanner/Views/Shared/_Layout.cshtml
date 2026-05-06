@@ -64,12 +64,14 @@
             </li>
 -->
 
-            <li class="nav-item">
-                <button
-                    class="nav-button @(currentController == "ShoppingList" && currentAction == "Index" ? "active" : "")"
-                    onclick="location.href='@Url.Action("Index", "ShoppingList")'">
-                    <span class="nav-text">MyCart</span>
+            <li class="nav-item nav-dropdown">
+                <button class="nav-button @(currentController == "Shopping" ? "active" : "")">
+                    <span class="nav-text">MyCart<span class="nav-caret">&#9660;</span></span>
                 </button>
+                <div class="nav-dropdown-menu">
+                    <a href="@Url.Action("Index", "Shopping")">Shopping List</a>
+                    <a href="@Url.Action("Pantry", "Shopping")">Pantry</a>
+                </div>
             </li>
 <!--
             @if (User?.IsInRole("Admin") == true)

@@ -17,8 +17,9 @@ public static class RecipeSeedData
     private static Ingredient I(float amount, string measurement, string ingredient) => new()
     {
         Amount = amount,
+        DisplayName = ingredient,
         Measurement = new Measurement { Name = measurement },
-        IngredientBase = new IngredientBase { Name = ingredient },
+        IngredientBase = new IngredientBase { Name = IngredientNameNormalizer.NormalizeKey(ingredient) },
     };
 
     private static List<Tag> T(params string[] names) =>

@@ -24,15 +24,15 @@ public class ViewModelService
             Meals = []
         };
 
-        // Adds the ingredients to the recipe
         // TODO: Change recipe view model to use IngredientViewModel or a dictionary
         for (int i = 0; i < vm.Ingredients.Count; i++)
         {
             recipe.Ingredients.Add(new Ingredient
             {
+                DisplayName = vm.Ingredients[i],
                 Amount = vm.IngredientAmounts[i],
-                IngredientBase = new IngredientBase { Name = vm.Ingredients[i] },
-                Measurement = new Measurement{ Name = vm.IngredientMeasurements[i] }
+                IngredientBase = new IngredientBase { Name = IngredientNameNormalizer.NormalizeKey(vm.Ingredients[i]) },
+                Measurement = new Measurement { Name = vm.IngredientMeasurements[i] }
             });
         }
 
@@ -42,6 +42,17 @@ public class ViewModelService
             .ToList();
 
         return recipe;
+    }
+
+    public static Ingredient IngredientFromPantryItemVM(PantryItemViewModel vm)
+    {
+        return new Ingredient
+        {
+            DisplayName = vm.Name,
+            Amount = vm.Amount,
+            IngredientBase = new IngredientBase { Name = IngredientNameNormalizer.NormalizeKey(vm.Name) },
+            Measurement = new Measurement { Name = vm.Measurement }
+        };
     }
 
     public static Recipe EditRecipeVMToModel(Recipe recipeFromDataBase, RecipeViewModel vm)

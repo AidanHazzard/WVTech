@@ -1,0 +1,87 @@
+@model List<MealPlanner.Models.Ingredient>
+@using MealPlanner.ViewModels
+
+@{
+    ViewData["Title"] = "My Pantry";
+}
+
+<div class="back1">
+    <h1 class="back1Title">My Pantry</h1>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success text-center">@TempData["SuccessMessage"]</div>
+    }
+    @if (TempData["ValidationError"] != null)
+    {
+        <div class="field-validation-error text-danger text-center">@TempData["ValidationError"]</div>
+    }
+
+    <form asp-action="AddPantryItem" method="post" class="mb-4">
+        @Html.AntiForgeryToken()
+        <div class="row align-items-center">
+            <input id="Amount" name="Amount" type="number" step="any" min="0" class="col-1 back2-textbox-partial mx-1" placeholder="0" />
+        
+            <select id="Measurement" name="Measurement" class="back2-textbox-partial col-2 mx-1">
+                <option value="" selected>Select</option>
+                <option value="Count">Count</option>
+                <option value="Cup(s)">Cup(s)</option>
+                <option value="Ounce(s)">Ounce(s)</option>
+                <option value="Pound(s)">Pounds</option>
+                <option value="L">L</option>
+                <option value="KG">KG</option>
+            </select>
+            <div class="col">
+                <input id="Name" name="Name" class="back2-textbox-partial w-100" placeholder="Ingredient name" />
+                <span class="field-validation-error text-danger" data-valmsg-for="Name"></span>
+            </div>
+                <button id="addPantryItemBtn" type="submit" class="btn btn-success col-auto mx-1 rounded-4 px-4">Add to Pantry</button>
+        </div>
+    </form>
+
+    <div class="back2">
+        @if (Model.Any())
+        {
+            <div class="d-flex flex-column gap-3">
+                @foreach (var item in Model)
+                {
+                    <div class="pantry-item d-flex align-items-center gap-2">
+                        <span class="pantry-item-name fs-5 flex-grow-1">
+                            @($"{item.Amount:G} {item.Measurement?.Name} of {item.IngredientBase.Display()}")
+                        </span>
+                        <form asp-action="UpdatePantryItemAmount" method="post" class="d-flex align-items-center gap-2 m-0">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="ingredientId" value="@item.Id" />
+                            <input type="number"
+                                   name="newAmount"
+                                   value="@item.Amount.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+                                   min="0.01"
+                                   step="any"
+                                   class="back2-textbox-partial pantry-qty-input"
+                                   style="width: 80px"
+                                   data-original="@item.Amount.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+                                   oninput="togglePantryQtySave(this)" />
+                            <button type="submit" class="pantry-qty-save btn btn-primary btn-sm rounded-4 px-3" style="display:none">Save</button>
+                        </form>
+                        <form asp-action="RemovePantryItem" method="post" class="d-inline">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="ingredientId" value="@item.Id" />
+                            <button type="submit" class="remove-pantry-item btn btn-danger">X</button>
+                        </form>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <p class="text-center fs-5 mb-0">Your pantry is empty. Add an item above.</p>
+        }
+    </div>
+</div>
+
+<script>
+    function togglePantryQtySave(input) {
+        const btn = input.closest('form').querySelector('.pantry-qty-save');
+        btn.style.display = parseFloat(input.value) !== parseFloat(input.dataset.original) ? 'inline-block' : 'none';
+    }
+</script>

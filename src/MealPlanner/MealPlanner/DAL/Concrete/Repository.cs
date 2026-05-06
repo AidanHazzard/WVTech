@@ -1,3 +1,4 @@
+using System.Linq.Expressions;
 using MealPlanner.DAL.Abstract;
 using Microsoft.EntityFrameworkCore;
 using MealPlanner.Models;
@@ -19,7 +20,7 @@ public class Repository<TEntity> : IRepository<TEntity> where TEntity : class, n
     /// </summary>
     /// <param name="id">Id of the entity to be read</param>
     /// <returns>Entity or Null</returns>
-    public TEntity? Read(int id)
+    public TEntity? Read(object id)
     {
         return _dbset.Find(id);
     }
@@ -66,8 +67,23 @@ public class Repository<TEntity> : IRepository<TEntity> where TEntity : class, n
     /// </summary>
     /// <param name="id">Id to find</param>
     /// <returns>true if found, false if not</returns>
-    public bool Exists(int id)
+    public bool Exists(object id)
     {
         return _dbset.Find(id) is not null;
+    }
+
+    /// <summary>
+    /// Returns the first entity matching <paramref name="predicate"/>, or adds and returns
+    /// the entity produced by <paramref name="factory"/> if no match is found.
+    ///
+    /// MealPlannerDbContext.SaveChanges() needs to be called after any change to the database
+    /// for the changes to be saved.
+    /// </summary>
+    /// <param name="predicate">Condition used to search for an existing entity</param>
+    /// <param name="factory">Produces the new entity when no match is found</param>
+    /// <returns>Existing or newly added entity</returns>
+    public virtual TEntity FindOrCreate(Expression<Func<TEntity, bool>> predicate, Func<TEntity> factory)
+    {
+        return _dbset.FirstOrDefault(predicate) ?? _dbset.Add(factory()).Entity;
     }
 }
