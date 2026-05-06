@@ -102,4 +102,46 @@ public class WVT27Steps
         Assert.That(items.Count, Is.EqualTo(_itemCountBeforeSubmit),
             $"Expected {_itemCountBeforeSubmit} pantry items but found {items.Count}");
     }
+
+    [Given("{string} has a pantry item named {string} with amount {string} and measurement {string}")]
+    public void GivenUserHasPantryItem(string userName, string name, string amount, string measurement)
+    {
+        _driver.FindElement(By.Id("Amount")).Clear();
+        _driver.FindElement(By.Id("Amount")).SendKeys(amount);
+        new SelectElement(_driver.FindElement(By.Id("Measurement"))).SelectByText(measurement);
+        _driver.FindElement(By.Id("Name")).Clear();
+        _driver.FindElement(By.Id("Name")).SendKeys(name);
+        _driver.FindElement(By.Id("addPantryItemBtn")).Click();
+        _wait.Until(d => ((IJavaScriptExecutor)d)
+            .ExecuteScript("return document.readyState").ToString() == "complete");
+    }
+
+    [When("{string} removes the pantry item named {string}")]
+    public void WhenUserRemovesPantryItem(string userName, string name)
+    {
+        var items = _driver.FindElements(By.CssSelector(".pantry-item"));
+        var row = items.FirstOrDefault(el => el.Text.Contains(name, StringComparison.OrdinalIgnoreCase));
+        Assert.That(row, Is.Not.Null, $"Could not find pantry item '{name}' to remove");
+        row!.FindElement(By.CssSelector(".remove-pantry-item")).Click();
+        _wait.Until(d => ((IJavaScriptExecutor)d)
+            .ExecuteScript("return document.readyState").ToString() == "complete");
+    }
+
+    [Then("the pantry list is empty")]
+    public void ThenPantryListIsEmpty()
+    {
+        var emptyMsg = _driver.FindElements(By.CssSelector(".back2 p"))
+            .FirstOrDefault(el => el.Text.Contains("empty", StringComparison.OrdinalIgnoreCase));
+        Assert.That(emptyMsg, Is.Not.Null, "Expected pantry to show an empty state message");
+    }
+
+    [Then("{string} does not appear in the pantry list")]
+    public void ThenItemDoesNotAppearInPantryList(string name)
+    {
+        var items = _driver.FindElements(By.CssSelector(".pantry-item-name"));
+        Assert.That(
+            items.Any(el => el.Text.Contains(name, StringComparison.OrdinalIgnoreCase)),
+            Is.False,
+            $"Expected '{name}' to be absent from pantry list but it was found");
+    }
 }
