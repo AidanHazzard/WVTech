@@ -1,5 +1,6 @@
 using MealPlanner.Models;
 using MealPlanner.Services;
+using Microsoft.EntityFrameworkCore;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Support.UI;
 using Reqnroll;
@@ -127,18 +128,32 @@ public class WVT27Steps
     [Given("{string} has a pantry item named {string} with amount {string} and measurement {string}")]
     public void GivenUserHasPantryItem(string userName, string name, string amount, string measurement)
     {
-        _driver.FindElement(By.Id("Amount")).Clear();
-        _driver.FindElement(By.Id("Amount")).SendKeys(amount);
-        new SelectElement(_driver.FindElement(By.Id("Measurement"))).SelectByText(measurement);
-        _driver.FindElement(By.Id("Name")).Clear();
-        _driver.FindElement(By.Id("Name")).SendKeys(name);
-        _driver.FindElement(By.Id("addPantryItemBtn")).Click();
-        var displayName = DisplayName(name);
-        _wait.Until(d =>
+        var email = $"{userName}@fakeemail.com";
+        var user = BDDSetup.Context.Set<User>()
+            .Include(u => u.PantryItems)
+            .FirstOrDefault(u => u.Email == email);
+        Assert.That(user, Is.Not.Null, $"Could not find user '{userName}'");
+
+        var measurementEntity = BDDSetup.Context.Set<Measurement>()
+            .FirstOrDefault(m => m.Name == measurement)
+            ?? BDDSetup.Context.Set<Measurement>().Add(new Measurement { Name = measurement }).Entity;
+
+        var ingredientBase = BDDSetup.Context.Set<IngredientBase>()
+            .FirstOrDefault(b => b.Name == name)
+            ?? BDDSetup.Context.Set<IngredientBase>().Add(new IngredientBase { Name = name }).Entity;
+
+        user!.PantryItems.Add(new Ingredient
         {
-            var items = d.FindElements(By.CssSelector(".pantry-item"));
-            return items.Any(el => el.Text.Contains(displayName, StringComparison.OrdinalIgnoreCase));
+            DisplayName = name,
+            Amount = float.Parse(amount),
+            IngredientBase = ingredientBase,
+            Measurement = measurementEntity
         });
+        BDDSetup.Context.SaveChanges();
+
+        _driver.Navigate().GoToUrl($"{_baseUrl}/Shopping/Pantry");
+        _wait.Until(d => ((IJavaScriptExecutor)d)
+            .ExecuteScript("return document.readyState").ToString() == "complete");
     }
 
     [When("{string} removes the pantry item named {string}")]
@@ -219,11 +234,23 @@ public class WVT27Steps
     public void ThenPantryShowsItemWithAmount(string name, string amount)
     {
         var display = DisplayName(name);
-        var rows = _driver.FindElements(By.CssSelector(".pantry-item"));
-        var row = rows.FirstOrDefault(el => el.Text.Contains(display, StringComparison.OrdinalIgnoreCase));
-        Assert.That(row, Is.Not.Null, $"Expected '{name}' in pantry list but it was not found");
-        var input = row!.FindElement(By.CssSelector(".pantry-qty-input"));
-        Assert.That(input.GetAttribute("value"), Is.EqualTo(amount),
-            $"Expected '{name}' to have amount '{amount}' but was '{input.GetAttribute("value")}'");
+        string? actualValue = null;
+        _wait.Until(d =>
+        {
+            try
+            {
+                var rows = d.FindElements(By.CssSelector(".pantry-item"));
+                var row = rows.FirstOrDefault(el => el.Text.Contains(display, StringComparison.OrdinalIgnoreCase));
+                if (row == null) return false;
+                actualValue = row.FindElement(By.CssSelector(".pantry-qty-input")).GetAttribute("value");
+                return true;
+            }
+            catch (StaleElementReferenceException)
+            {
+                return false;
+            }
+        });
+        Assert.That(actualValue, Is.EqualTo(amount),
+            $"Expected '{name}' to have amount '{amount}' but was '{actualValue}'");
     }
 }
