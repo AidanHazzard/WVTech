@@ -164,4 +164,50 @@ public class WVT27Steps
             Is.False,
             $"Expected '{name}' to be absent from pantry list but it was found");
     }
+
+    [When("{string} updates the amount of {string} to {string}")]
+    public void WhenUserUpdatesAmount(string userName, string name, string newAmount)
+    {
+        var rows = _driver.FindElements(By.CssSelector(".pantry-item"));
+        var row = rows.FirstOrDefault(el => el.Text.Contains(name, StringComparison.OrdinalIgnoreCase));
+        Assert.That(row, Is.Not.Null, $"Could not find pantry item '{name}'");
+        var input = row!.FindElement(By.CssSelector(".pantry-qty-input"));
+        input.Clear();
+        input.SendKeys(newAmount);
+        row.FindElement(By.CssSelector(".pantry-qty-save")).Click();
+        _wait.Until(d => d.Url.Contains("/Pantry", StringComparison.OrdinalIgnoreCase));
+        _wait.Until(d => ((IJavaScriptExecutor)d)
+            .ExecuteScript("return document.readyState").ToString() == "complete");
+    }
+
+    [When("{string} updates the amount of {string} to {string} via javascript")]
+    public void WhenUserUpdatesAmountViaJavascript(string userName, string name, string newAmount)
+    {
+        var rows = _driver.FindElements(By.CssSelector(".pantry-item"));
+        var row = rows.FirstOrDefault(el => el.Text.Contains(name, StringComparison.OrdinalIgnoreCase));
+        Assert.That(row, Is.Not.Null, $"Could not find pantry item '{name}'");
+        var input = row!.FindElement(By.CssSelector(".pantry-qty-input"));
+        ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].value = arguments[1]", input, newAmount);
+        ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].form.submit()", input);
+        _wait.Until(d => d.Url.Contains("/Pantry", StringComparison.OrdinalIgnoreCase));
+        _wait.Until(d => ((IJavaScriptExecutor)d)
+            .ExecuteScript("return document.readyState").ToString() == "complete");
+    }
+
+    [Then("the pantry shows {string} with an amount of {string}")]
+    public void ThenPantryShowsItemWithAmount(string name, string amount)
+    {
+        var rows = _driver.FindElements(By.CssSelector(".pantry-item"));
+        var row = rows.FirstOrDefault(el => el.Text.Contains(name, StringComparison.OrdinalIgnoreCase));
+        Assert.That(row, Is.Not.Null, $"Expected '{name}' in pantry list but it was not found");
+        var input = row!.FindElement(By.CssSelector(".pantry-qty-input"));
+        Assert.That(input.GetAttribute("value"), Is.EqualTo(amount),
+            $"Expected '{name}' to have amount '{amount}' but was '{input.GetAttribute("value")}'");
+    }
+
+    [Then("{string} still shows an amount of {string}")]
+    public void ThenItemStillShowsAmount(string name, string amount)
+    {
+        ThenPantryShowsItemWithAmount(name, amount);
+    }
 }

@@ -34,3 +34,8 @@ Feature: Manually add item to pantry
     When 'Gary' removes the pantry item named 'Sugar'
     Then 'Salt' appears in the pantry list
     And 'Sugar' does not appear in the pantry list
+
+  Scenario: User increases the amount of a pantry item and the change is saved
+    Given 'Gary' has a pantry item named 'Rice' with amount '2' and measurement 'Cup(s)'
+    When 'Gary' updates the amount of 'Rice' to '5'
+    Then the pantry shows 'Rice' with an amount of '5'
