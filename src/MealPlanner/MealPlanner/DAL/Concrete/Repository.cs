@@ -20,7 +20,7 @@ public class Repository<TEntity> : IRepository<TEntity> where TEntity : class, n
     /// </summary>
     /// <param name="id">Id of the entity to be read</param>
     /// <returns>Entity or Null</returns>
-    public TEntity? Read(int id)
+    public TEntity? Read(object id)
     {
         return _dbset.Find(id);
     }
@@ -67,7 +67,7 @@ public class Repository<TEntity> : IRepository<TEntity> where TEntity : class, n
     /// </summary>
     /// <param name="id">Id to find</param>
     /// <returns>true if found, false if not</returns>
-    public bool Exists(int id)
+    public bool Exists(object id)
     {
         return _dbset.Find(id) is not null;
     }

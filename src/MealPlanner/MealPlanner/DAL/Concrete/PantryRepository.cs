@@ -4,18 +4,18 @@ using Microsoft.EntityFrameworkCore;
 
 namespace MealPlanner.DAL.Concrete;
 
-public class PantryRepository : IPantryRepository
+public class PantryRepository : Repository<User>, IPantryRepository
 {
     private readonly MealPlannerDBContext _context;
 
-    public PantryRepository(MealPlannerDBContext context)
+    public PantryRepository(MealPlannerDBContext context) : base(context)
     {
         _context = context;
     }
 
     public List<Ingredient> GetByUserId(string userId)
     {
-        return _context.Set<User>()
+        return _dbset
             .Where(u => u.Id == userId)
             .SelectMany(u => u.PantryItems)
             .ToList();
@@ -23,7 +23,7 @@ public class PantryRepository : IPantryRepository
 
     public void RemoveItem(int ingredientId, string userId)
     {
-        var user = _context.Set<User>()
+        var user = _dbset
             .Include(u => u.PantryItems)
             .FirstOrDefault(u => u.Id == userId);
 
@@ -34,7 +34,7 @@ public class PantryRepository : IPantryRepository
 
     public void UpdateItemAmount(int ingredientId, string userId, float newAmount)
     {
-        var user = _context.Set<User>()
+        var user = _dbset
             .Include(u => u.PantryItems)
             .FirstOrDefault(u => u.Id == userId);
 
