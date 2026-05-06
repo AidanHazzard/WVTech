@@ -215,6 +215,7 @@ public class WVT27Steps
     }
 
     [Then("the pantry shows {string} with an amount of {string}")]
+    [Then("{string} still shows an amount of {string}")]
     public void ThenPantryShowsItemWithAmount(string name, string amount)
     {
         var display = DisplayName(name);
@@ -224,11 +225,5 @@ public class WVT27Steps
         var input = row!.FindElement(By.CssSelector(".pantry-qty-input"));
         Assert.That(input.GetAttribute("value"), Is.EqualTo(amount),
             $"Expected '{name}' to have amount '{amount}' but was '{input.GetAttribute("value")}'");
-    }
-
-    [Then("{string} still shows an amount of {string}")]
-    public void ThenItemStillShowsAmount(string name, string amount)
-    {
-        ThenPantryShowsItemWithAmount(name, amount);
     }
 }
