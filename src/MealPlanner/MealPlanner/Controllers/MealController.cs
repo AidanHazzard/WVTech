@@ -193,25 +193,29 @@ public class MealController : Controller
 
         var preference = new ViewModels.MealPreferenceViewModel
         {
+            Title = model.Title.Trim(),
             Size = model.Size,
             TagIds = model.TagIds,
             CustomTagName = model.CustomTagName
         };
         await ResolveCustomTagNamesAsync([preference]);
 
-        Meal newMeal = new Meal
+        var config = new ViewModels.DayPlanConfigViewModel
         {
-            User = user,
-            Title = model.Title.Trim(),
-            StartTime = selectedDate
+            MealCount = 1,
+            SelectedMonth = model.SelectedMonth,
+            SelectedDay = model.SelectedDay,
+            MealPreferences = [preference]
         };
-        newMeal.Recipes = await _recommendationService.GetRecommendedRecipesForUser(user, selectedDate, preference);
-        if (newMeal.Recipes.IsNullOrEmpty()) return NotFound();
+
+        var meals = await _recommendationService.GetRecommendedMealsForUser(user, selectedDate, config);
+        var newMeal = meals.FirstOrDefault();
+        if (newMeal == null || newMeal.Recipes.IsNullOrEmpty()) return NotFound();
 
         newMeal = _mealRepo.CreateOrUpdate(newMeal);
         _context.SaveChanges();
         Response.Cookies.Delete("ShoppingListSynced");
-        return RedirectToAction("ViewMeal", new {id = newMeal.Id });
+        return RedirectToAction("ViewMeal", new { id = newMeal.Id });
     }
 
     [HttpPost]
@@ -224,7 +228,7 @@ public class MealController : Controller
         await ResolveCustomTagNamesAsync(model.MealPreferences);
 
         var selectedDate = new DateTime(DateTime.Today.Year, model.SelectedMonth, model.SelectedDay);
-        var meals = await _recommendationService.GetRecommendedDayPlanForUser(user, selectedDate, model);
+        var meals = await _recommendationService.GetRecommendedMealsForUser(user, selectedDate, model);
 
         foreach (var meal in meals)
             _mealRepo.CreateOrUpdate(meal);
@@ -255,7 +259,7 @@ public class MealController : Controller
             MealPreferences = [preferences]
         };
 
-        var newMeals = await _recommendationService.GetRecommendedDayPlanForUser(user, mealDate, config);
+        var newMeals = await _recommendationService.GetRecommendedMealsForUser(user, mealDate, config);
         await _mealRepo.LoadRecipesAsync(meal);
         meal.Recipes = newMeals.FirstOrDefault()?.Recipes ?? [];
         _mealRepo.CreateOrUpdate(meal);
