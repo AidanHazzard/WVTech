@@ -36,6 +36,6 @@ Feature: WVT-167 — Recipe Images
 
   Scenario: Meal card on the home page shows a collage of recipe images ordered by calories
     Given 'Gary' has a meal planned for today containing multiple recipes with images
-    When 'Gary' visits the planner home page
+    When 'Gary' visits the home page
     Then 'Gary' sees multiple recipe images displayed on the meal card
     And the recipe images on the meal card appear in order from highest to lowest calorie count

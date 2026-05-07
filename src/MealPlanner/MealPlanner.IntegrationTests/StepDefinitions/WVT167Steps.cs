@@ -290,18 +290,18 @@ public class WVT167Steps
         _testMealId = meal.Id;
     }
 
-    [When("'Gary' visits the planner home page")]
-    public void WhenGaryVisitsPlannerHome()
+    [When("'Gary' visits the home page")]
+    public void WhenGaryVisitsHomePage()
     {
-        _driver.Navigate().GoToUrl($"{_baseUrl}/Meal/PlannerHome?date={DateTime.Today:yyyy-MM-dd}");
-        _wait.Until(d => d.Url.Contains("PlannerHome"));
+        _driver.Navigate().GoToUrl($"{_baseUrl}/?date={DateTime.Today:yyyy-MM-dd}");
+        _wait.Until(d => ((IJavaScriptExecutor)d).ExecuteScript("return document.readyState").ToString() == "complete");
     }
 
     [Then("'Gary' sees multiple recipe images displayed on the meal card")]
     public void ThenGarySeesMultipleRecipeImages()
     {
         var mealCard = _wait.Until(d =>
-            d.FindElements(By.CssSelector(".list-group-item"))
+            d.FindElements(By.CssSelector(".mealCardWrapper"))
              .FirstOrDefault(item => item.Text.Contains("WVT167CollageMeal")));
         Assert.That(mealCard, Is.Not.Null, "Could not find WVT167CollageMeal card on home page");
 
@@ -313,7 +313,7 @@ public class WVT167Steps
     public void ThenRecipeImagesAreOrderedByCalories()
     {
         var mealCard = _wait.Until(d =>
-            d.FindElements(By.CssSelector(".list-group-item"))
+            d.FindElements(By.CssSelector(".mealCardWrapper"))
              .FirstOrDefault(item => item.Text.Contains("WVT167CollageMeal")));
         Assert.That(mealCard, Is.Not.Null);
 
