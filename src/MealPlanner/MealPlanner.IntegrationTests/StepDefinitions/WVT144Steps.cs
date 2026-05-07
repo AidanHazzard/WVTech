@@ -542,4 +542,155 @@ public class WVT144Steps
         Assert.That(meals.Count, Is.EqualTo(1),
             "Expected the same number of meals in the summary after regenerating one");
     }
+
+    [Given("{string} has a daily calorie target of {int}")]
+    public void GivenUserHasSpecificCalorieTarget(string userName, int target)
+    {
+        var ctx = BDDSetup.Context;
+        var user = ctx.Set<User>().First(u => u.NormalizedEmail == $"{userName}@fakeemail.com".ToUpper());
+        var existing = ctx.Set<UserNutritionPreference>().FirstOrDefault(p => p.UserId == user.Id);
+        if (existing != null)
+        {
+            existing.CalorieTarget = target;
+        }
+        else
+        {
+            ctx.Add(new UserNutritionPreference { UserId = user.Id, CalorieTarget = target });
+        }
+        ctx.SaveChanges();
+    }
+
+    [Given("{string} has {int} upvoted recipes each with {int} calories")]
+    public void GivenUserHasUpvotedRecipesEachWithCalories(string userName, int count, int calories)
+    {
+        var ctx = BDDSetup.Context;
+        ctx.ChangeTracker.Clear();
+        var user = ctx.Set<User>().First(u => u.NormalizedEmail == $"{userName}@fakeemail.com".ToUpper());
+
+        var existingUpvotes = ctx.Set<UserRecipe>()
+            .Where(ur => ur.UserId == user.Id && ur.UserVote == UserVoteType.UpVote)
+            .ToList();
+        ctx.Set<UserRecipe>().RemoveRange(existingUpvotes);
+
+        var existingRestrictions = ctx.Set<UserDietaryRestriction>()
+            .Where(udr => udr.UserId == user.Id)
+            .ToList();
+        ctx.Set<UserDietaryRestriction>().RemoveRange(existingRestrictions);
+
+        ctx.SaveChanges();
+
+        for (int i = 0; i < count; i++)
+        {
+            var recipe = new Recipe
+            {
+                Name = $"WVT176 {calories}cal #{i + 1}",
+                Directions = "Test",
+                Calories = calories
+            };
+            ctx.Add(recipe);
+            ctx.SaveChanges();
+            ctx.Add(new UserRecipe { UserId = user.Id, RecipeId = recipe.Id, UserOwner = false, UserVote = UserVoteType.UpVote });
+            ctx.SaveChanges();
+        }
+    }
+
+    [When("{string} sets meal {int} to {string} and meal {int} to {string}")]
+    public void WhenUserSetsMealSizes(string userName, int meal1, string size1, int meal2, string size2)
+    {
+        var sizeSelect1 = _wait.Until(d =>
+        {
+            try { return d.FindElements(By.CssSelector($"select[name='MealPreferences[{meal1 - 1}].Size']")).FirstOrDefault(e => e.Displayed); }
+            catch { return null; }
+        });
+        new SelectElement(sizeSelect1!).SelectByValue(size1);
+
+        var nextBtn = _wait.Until(d =>
+            d.FindElements(By.Id("btnNextMeal")).FirstOrDefault(e => e.Displayed));
+        ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].click();", nextBtn!);
+
+        var sizeSelect2 = _wait.Until(d =>
+        {
+            try { return d.FindElements(By.CssSelector($"select[name='MealPreferences[{meal2 - 1}].Size']")).FirstOrDefault(e => e.Displayed); }
+            catch { return null; }
+        });
+        new SelectElement(sizeSelect2!).SelectByValue(size2);
+    }
+
+    [When("{string} sets the regenerate size to {string} and confirms")]
+    public void WhenUserSetsRegenerateSizeAndConfirms(string userName, string size)
+    {
+        var sizeSelect = _wait.Until(d =>
+        {
+            try
+            {
+                var visibleForm = d.FindElements(By.CssSelector("[id^='regenerate-form-']")).FirstOrDefault(f => f.Displayed);
+                return visibleForm?.FindElement(By.CssSelector("select[name='Size']"));
+            }
+            catch { return null; }
+        });
+        new SelectElement(sizeSelect!).SelectByValue(size);
+
+        var submit = _wait.Until(d =>
+        {
+            try
+            {
+                var visibleForm = d.FindElements(By.CssSelector("[id^='regenerate-form-']")).FirstOrDefault(f => f.Displayed);
+                return visibleForm?.FindElement(By.CssSelector("[data-action='submit-regenerate']"));
+            }
+            catch { return null; }
+        });
+        ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].click();", submit!);
+
+        _wait.Until(d =>
+        {
+            try { return d.FindElements(By.CssSelector("[id^='regenerate-form-']")).All(f => !f.Displayed); }
+            catch { return false; }
+        });
+    }
+
+    [Then("the first meal in the day plan summary shows more than {int} total calories")]
+    public void ThenFirstMealShowsMoreThanCalories(int threshold)
+    {
+        var mealCards = _wait.Until(d =>
+        {
+            try
+            {
+                var cards = d.FindElements(By.CssSelector("#day-plan-summary [id^='meal-card-']"));
+                return cards.Count > 0 ? cards : null;
+            }
+            catch { return null; }
+        });
+        var total = GetMealTotalCalories(mealCards![0]);
+        Assert.That(total, Is.GreaterThan(threshold),
+            $"Expected first meal to show more than {threshold} cal but was {total}");
+    }
+
+    [Then("the second meal in the day plan shows more total calories than the first meal")]
+    public void ThenSecondMealShowsMoreCaloriesThanFirst()
+    {
+        var mealCards = _wait.Until(d =>
+        {
+            try
+            {
+                var cards = d.FindElements(By.CssSelector("#day-plan-summary [id^='meal-card-']"));
+                return cards.Count >= 2 ? cards : null;
+            }
+            catch { return null; }
+        });
+        Assert.That(mealCards, Is.Not.Null, "Expected at least 2 meal cards in the summary");
+        var firstTotal = GetMealTotalCalories(mealCards![0]);
+        var secondTotal = GetMealTotalCalories(mealCards[1]);
+        Assert.That(secondTotal, Is.GreaterThan(firstTotal),
+            $"Expected second meal ({secondTotal} cal) to have more calories than first ({firstTotal} cal)");
+    }
+
+    private static int GetMealTotalCalories(IWebElement card)
+    {
+        var spans = card.FindElements(By.CssSelector(".mealRecipeItem span.text-nowrap"));
+        return spans.Sum(s =>
+        {
+            var text = s.Text.Replace(" cal", "").Trim();
+            return int.TryParse(text, out var n) ? n : 0;
+        });
+    }
 }
