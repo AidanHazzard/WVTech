@@ -137,14 +137,14 @@ public class WVT144Tests
         };
 
         _reccServiceMock
-            .Setup(s => s.GetRecommendedDayPlanForUser(
+            .Setup(s => s.GetRecommendedMealsForUser(
                 It.IsAny<User>(), It.IsAny<DateTime>(), It.IsAny<DayPlanConfigViewModel>()))
             .ReturnsAsync([]);
 
         await _controller.GenerateDayPlan(config);
 
         _reccServiceMock.Verify(
-            s => s.GetRecommendedDayPlanForUser(
+            s => s.GetRecommendedMealsForUser(
                 It.IsAny<User>(), It.IsAny<DateTime>(), config),
             Times.Once);
     }
@@ -161,7 +161,7 @@ public class WVT144Tests
         };
 
         _reccServiceMock
-            .Setup(s => s.GetRecommendedDayPlanForUser(
+            .Setup(s => s.GetRecommendedMealsForUser(
                 It.IsAny<User>(), It.IsAny<DateTime>(), It.IsAny<DayPlanConfigViewModel>()))
             .ReturnsAsync([]);
 
@@ -234,7 +234,7 @@ public class WVT144Tests
         };
 
         _reccServiceMock
-            .Setup(s => s.GetRecommendedDayPlanForUser(It.IsAny<User>(), It.IsAny<DateTime>(), It.IsAny<DayPlanConfigViewModel>()))
+            .Setup(s => s.GetRecommendedMealsForUser(It.IsAny<User>(), It.IsAny<DateTime>(), It.IsAny<DayPlanConfigViewModel>()))
             .ReturnsAsync([]);
 
         await _controller.GenerateDayPlan(config);
@@ -256,7 +256,7 @@ public class WVT144Tests
         };
 
         _reccServiceMock
-            .Setup(s => s.GetRecommendedDayPlanForUser(It.IsAny<User>(), It.IsAny<DateTime>(), It.IsAny<DayPlanConfigViewModel>()))
+            .Setup(s => s.GetRecommendedMealsForUser(It.IsAny<User>(), It.IsAny<DateTime>(), It.IsAny<DayPlanConfigViewModel>()))
             .ReturnsAsync([]);
 
         await _controller.GenerateDayPlan(config);
@@ -279,7 +279,7 @@ public class WVT144Tests
         };
 
         _reccServiceMock
-            .Setup(s => s.GetRecommendedDayPlanForUser(It.IsAny<User>(), It.IsAny<DateTime>(), It.IsAny<DayPlanConfigViewModel>()))
+            .Setup(s => s.GetRecommendedMealsForUser(It.IsAny<User>(), It.IsAny<DateTime>(), It.IsAny<DayPlanConfigViewModel>()))
             .ReturnsAsync([]);
 
         await _controller.GenerateDayPlan(config);
@@ -301,7 +301,7 @@ public class WVT144Tests
         };
 
         _reccServiceMock
-            .Setup(s => s.GetRecommendedDayPlanForUser(It.IsAny<User>(), It.IsAny<DateTime>(), It.IsAny<DayPlanConfigViewModel>()))
+            .Setup(s => s.GetRecommendedMealsForUser(It.IsAny<User>(), It.IsAny<DateTime>(), It.IsAny<DayPlanConfigViewModel>()))
             .ReturnsAsync([]);
 
         await _controller.GenerateDayPlan(config);
