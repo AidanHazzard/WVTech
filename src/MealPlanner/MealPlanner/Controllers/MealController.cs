@@ -188,16 +188,24 @@ public class MealController : Controller
         var user = await _registrationService.FindUserByClaimAsync(User);
         if (user == null) return Challenge();
         if (_recommendationService == null) return Problem(statusCode:500);
-    
+
         var selectedDate = new DateTime(DateTime.Today.Year, model.SelectedMonth, model.SelectedDay);
-    
+
+        var preference = new ViewModels.MealPreferenceViewModel
+        {
+            Size = model.Size,
+            TagIds = model.TagIds,
+            CustomTagName = model.CustomTagName
+        };
+        await ResolveCustomTagNamesAsync([preference]);
+
         Meal newMeal = new Meal
         {
             User = user,
             Title = model.Title.Trim(),
             StartTime = selectedDate
         };
-        newMeal.Recipes = await _recommendationService.GetRecommendedRecipesForUser(user, selectedDate);
+        newMeal.Recipes = await _recommendationService.GetRecommendedRecipesForUser(user, selectedDate, preference);
         if (newMeal.Recipes.IsNullOrEmpty()) return NotFound();
 
         newMeal = _mealRepo.CreateOrUpdate(newMeal);

@@ -96,7 +96,7 @@ public class MealRecommendationService : IMealRecommendationService
         return recipes;
     }
 
-    public async Task<List<Recipe>> GetRecommendedRecipesForUser(User user, DateTime mealDate)
+    public async Task<List<Recipe>> GetRecommendedRecipesForUser(User user, DateTime mealDate, MealPreferenceViewModel preference)
     {
         var restrictionNames = await GetRestrictionNamesAsync(user.Id);
         var existingRecipes = (await _mealRepository.GetUserMealsByDateAsync(user, mealDate))
@@ -112,10 +112,18 @@ public class MealRecommendationService : IMealRecommendationService
         await LoadExternalRecipesAsync(candidates);
         candidates = ApplyDietaryFilter(candidates, restrictionNames);
 
-        var calorieTarget = (await _nutrionRepository.GetUsersNutritionPreferenceAsync(user.Id))?.CalorieTarget ?? int.MaxValue;
-        calorieTarget -= existingRecipes.Sum(r => r.Calories);
+        var dailyCalorieTarget = (await _nutrionRepository.GetUsersNutritionPreferenceAsync(user.Id))?.CalorieTarget;
+        int calorieTarget;
+        if (dailyCalorieTarget.HasValue)
+        {
+            calorieTarget = dailyCalorieTarget.Value - existingRecipes.Sum(r => r.Calories);
+        }
+        else
+        {
+            calorieTarget = preference.Size.Calories();
+        }
 
-        return SelectRecipesFromCandidates(candidates, calorieTarget, []);
+        return SelectRecipesFromCandidates(candidates, calorieTarget, preference.TagIds);
     }
 
     private async Task LoadExternalRecipesAsync(List<Recipe> recipes)

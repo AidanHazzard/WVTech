@@ -204,7 +204,7 @@ public class MealControllerTests
             StartTime = new DateTime(DateTime.Today.Year, vm.SelectedMonth, vm.SelectedDay)
         };
 
-        _reccServiceMock.Setup(s => s.GetRecommendedRecipesForUser(It.IsAny<User>(), It.IsAny<DateTime>()))
+        _reccServiceMock.Setup(s => s.GetRecommendedRecipesForUser(It.IsAny<User>(), It.IsAny<DateTime>(), It.IsAny<MealPreferenceViewModel>()))
             .ReturnsAsync([new Recipe()]);
         _mealRepoMock.Setup(r => r.CreateOrUpdate(It.IsAny<Meal>())).Returns(meal);
 
