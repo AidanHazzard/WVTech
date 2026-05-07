@@ -60,12 +60,11 @@ public class WVT144RecommendationTests
             _userRecipeRepoMock.Object,
             _recipeRepoMock.Object,
             _nutritionRepoMock.Object,
-            _mealRepoMock.Object,
             _dietaryRestrictionRepoMock.Object);
     }
 
     [Test]
-    public async Task GetRecommendedDayPlanForUser_ExcludesDownvotedRecipes()
+    public async Task GetRecommendedMealsForUser_ExcludesDownvotedRecipes()
     {
         var downvoted = new Recipe { Id = 1, Name = "Downvoted", Calories = 300, Tags = [] };
         var allowed = new Recipe { Id = 2, Name = "Allowed", Calories = 300, Tags = [] };
@@ -82,14 +81,14 @@ public class WVT144RecommendationTests
             MealPreferences = [new MealPreferenceViewModel { Size = MealSize.Average }]
         };
 
-        var result = await _service.GetRecommendedDayPlanForUser(_user, DateTime.Today, config);
+        var result = await _service.GetRecommendedMealsForUser(_user, DateTime.Today, config);
 
         Assert.That(result[0].Recipes, Does.Not.Contain(downvoted));
         Assert.That(result[0].Recipes, Does.Contain(allowed));
     }
 
     [Test]
-    public async Task GetRecommendedDayPlanForUser_WithNoDietaryRestrictions_IncludesAllCandidates()
+    public async Task GetRecommendedMealsForUser_WithNoDietaryRestrictions_IncludesAllCandidates()
     {
         var recipe = new Recipe { Id = 1, Name = "Any Recipe", Calories = 300, Tags = [] };
         _recipeRepoMock.Setup(r => r.GetAllWithTagsAsync()).ReturnsAsync([recipe]);
@@ -102,13 +101,13 @@ public class WVT144RecommendationTests
             MealPreferences = [new MealPreferenceViewModel { Size = MealSize.Average }]
         };
 
-        var result = await _service.GetRecommendedDayPlanForUser(_user, DateTime.Today, config);
+        var result = await _service.GetRecommendedMealsForUser(_user, DateTime.Today, config);
 
         Assert.That(result[0].Recipes, Does.Contain(recipe));
     }
 
     [Test]
-    public async Task GetRecommendedDayPlanForUser_WithDietaryRestriction_IncludesMatchingRecipe()
+    public async Task GetRecommendedMealsForUser_WithDietaryRestriction_IncludesMatchingRecipe()
     {
         var veganRecipe = new Recipe { Id = 1, Name = "Vegan Dish", Calories = 300, Tags = [VeganTag] };
         var restriction = new UserDietaryRestriction
@@ -127,13 +126,13 @@ public class WVT144RecommendationTests
             MealPreferences = [new MealPreferenceViewModel { Size = MealSize.Average }]
         };
 
-        var result = await _service.GetRecommendedDayPlanForUser(_user, DateTime.Today, config);
+        var result = await _service.GetRecommendedMealsForUser(_user, DateTime.Today, config);
 
         Assert.That(result[0].Recipes, Does.Contain(veganRecipe));
     }
 
     [Test]
-    public async Task GetRecommendedDayPlanForUser_WithDietaryRestriction_ExcludesNonMatchingRecipe()
+    public async Task GetRecommendedMealsForUser_WithDietaryRestriction_ExcludesNonMatchingRecipe()
     {
         var nonVeganRecipe = new Recipe { Id = 2, Name = "Beef Stew", Calories = 300, Tags = [] };
         var restriction = new UserDietaryRestriction
@@ -152,13 +151,13 @@ public class WVT144RecommendationTests
             MealPreferences = [new MealPreferenceViewModel { Size = MealSize.Average }]
         };
 
-        var result = await _service.GetRecommendedDayPlanForUser(_user, DateTime.Today, config);
+        var result = await _service.GetRecommendedMealsForUser(_user, DateTime.Today, config);
 
         Assert.That(result[0].Recipes, Does.Not.Contain(nonVeganRecipe));
     }
 
     [Test]
-    public async Task GetRecommendedDayPlanForUser_WithMultipleMeals_DoesNotRepeatRecipesAcrossMeals()
+    public async Task GetRecommendedMealsForUser_WithMultipleMeals_DoesNotRepeatRecipesAcrossMeals()
     {
         var recipe1 = new Recipe { Id = 1, Name = "Recipe 1", Calories = 100, Tags = [] };
         var recipe2 = new Recipe { Id = 2, Name = "Recipe 2", Calories = 100, Tags = [] };
@@ -177,7 +176,7 @@ public class WVT144RecommendationTests
             ]
         };
 
-        var result = await _service.GetRecommendedDayPlanForUser(_user, DateTime.Today, config);
+        var result = await _service.GetRecommendedMealsForUser(_user, DateTime.Today, config);
 
         var allAssigned = result.SelectMany(m => m.Recipes).ToList();
         var distinctIds = allAssigned.Select(r => r.Id).Distinct().ToList();
@@ -185,7 +184,7 @@ public class WVT144RecommendationTests
     }
 
     [Test]
-    public async Task GetRecommendedDayPlanForUser_WithMultipleRestrictions_RequiresAllTagsToMatch()
+    public async Task GetRecommendedMealsForUser_WithMultipleRestrictions_RequiresAllTagsToMatch()
     {
         var veganOnly = new Recipe { Id = 1, Name = "Vegan Only", Calories = 300, Tags = [VeganTag] };
         var veganGlutenFree = new Recipe { Id = 2, Name = "Vegan GF", Calories = 300, Tags = [VeganTag, GlutenFreeTag] };
@@ -206,7 +205,7 @@ public class WVT144RecommendationTests
             MealPreferences = [new MealPreferenceViewModel { Size = MealSize.Average }]
         };
 
-        var result = await _service.GetRecommendedDayPlanForUser(_user, DateTime.Today, config);
+        var result = await _service.GetRecommendedMealsForUser(_user, DateTime.Today, config);
 
         Assert.That(result[0].Recipes, Does.Contain(veganGlutenFree));
         Assert.That(result[0].Recipes, Does.Not.Contain(veganOnly));

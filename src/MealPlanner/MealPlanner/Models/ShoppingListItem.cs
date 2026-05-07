@@ -6,11 +6,13 @@ public class ShoppingListItem
 
     public string UserId { get; set; } = string.Empty;
 
-    public string Name { get; set; } = string.Empty;
+    public int IngredientBaseId { get; set; }
+    public IngredientBase IngredientBase { get; set; } = null!;
+
+    public int MeasurementId { get; set; }
+    public Measurement Measurement { get; set; } = null!;
 
     public float Amount { get; set; }
-
-    public string Measurement { get; set; } = string.Empty;
 
     public bool IsAutoAdded { get; set; }
 }

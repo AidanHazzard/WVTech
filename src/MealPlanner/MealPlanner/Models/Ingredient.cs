@@ -10,6 +10,10 @@ public class Ingredient
     public int Id { get; set; }
 
     [Required]
+    [MaxLength(128)]
+    public string DisplayName { get; set; } = string.Empty;
+
+    [Required]
     public IngredientBase IngredientBase { get; set; }
 
     [Required]
@@ -18,6 +22,6 @@ public class Ingredient
 
     public override string ToString()
     {
-        return $"{Amount} {Measurement.Name} of {IngredientBase.Name}";
+        return $"{Amount} {Measurement.Name} of {DisplayName}";
     }
 }

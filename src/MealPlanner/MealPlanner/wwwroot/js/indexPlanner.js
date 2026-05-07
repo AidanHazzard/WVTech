@@ -95,6 +95,42 @@ document.addEventListener('DOMContentLoaded', function () {
     rightArrow.addEventListener('mouseleave', stopScroll);
     rightArrow.addEventListener('touchend', stopScroll);
 
+    // Drag to scroll
+    let isDragging = false;
+    let hasDragged = false;
+    let dragStartX = 0;
+    let scrollStartLeft = 0;
+
+    container.addEventListener('mousedown', (e) => {
+        isDragging = true;
+        hasDragged = false;
+        dragStartX = e.clientX;
+        scrollStartLeft = container.scrollLeft;
+        container.classList.add('dragging');
+        e.preventDefault();
+    });
+
+    window.addEventListener('mousemove', (e) => {
+        if (!isDragging) return;
+        const dx = e.clientX - dragStartX;
+        if (Math.abs(dx) > 5) hasDragged = true;
+        container.scrollLeft = scrollStartLeft - dx;
+    });
+
+    window.addEventListener('mouseup', () => {
+        if (!isDragging) return;
+        isDragging = false;
+        container.classList.remove('dragging');
+    });
+
+    container.addEventListener('click', (e) => {
+        if (hasDragged) {
+            e.preventDefault();
+            e.stopPropagation();
+            hasDragged = false;
+        }
+    }, true);
+
     //makes it so when the beckbox is checked it can not be clicked
     document.querySelectorAll('form').forEach(form => {
         form.addEventListener('submit', function (e) {

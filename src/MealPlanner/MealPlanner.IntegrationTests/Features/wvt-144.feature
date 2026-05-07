@@ -66,3 +66,31 @@ Feature: Recommend meals for entire day
     When 'Gary' confirms the configuration and regenerates
     Then the updated meal appears in the summary in place of the previous recommendation
     And all other meals in the summary remain unchanged
+
+  # WVT-176
+
+  Scenario: Average-sized meal targets more calories than the static limit when the daily goal is high
+    Given 'Gary' has a daily calorie target of 3000
+    And 'Gary' has 10 upvoted recipes each with 300 calories
+    And 'Gary' has specified 1 meals for his day plan
+    When 'Gary' is presented with the configuration for each meal
+    When the day plan is generated
+    Then the first meal in the day plan summary shows more than 800 total calories
+
+  Scenario: Large meal in a day plan receives proportionally more calories than a Small meal
+    Given 'Gary' has a daily calorie target of 1600
+    And 'Gary' has 10 upvoted recipes each with 200 calories
+    And 'Gary' has specified 2 meals for his day plan
+    When 'Gary' is presented with the configuration for each meal
+    And 'Gary' sets meal 1 to 'Small' and meal 2 to 'Large'
+    When the day plan is generated
+    Then the second meal in the day plan shows more total calories than the first meal
+
+  Scenario: Regenerating a meal as Large with a high daily target produces more than the static limit
+    Given 'Gary' has a daily calorie target of 3000
+    And 'Gary' has 10 upvoted recipes each with 300 calories
+    And 'Gary' is viewing his generated day plan summary
+    When 'Gary' chooses to regenerate one of the meals
+    Then 'Gary' is shown the meal configuration form inline on the summary page
+    When 'Gary' sets the regenerate size to 'Large' and confirms
+    Then the first meal in the day plan summary shows more than 1200 total calories

@@ -11,7 +11,6 @@ public class MealRecommendationService : IMealRecommendationService
     private IUserRecipeRepository _userRecipeRepository;
     private IRecipeRepository _recipeRepository;
     private IUserNutritionPreferenceRepository _nutrionRepository;
-    private IMealRepository _mealRepository;
     private IUserDietaryRestrictionRepository _dietaryRestrictionRepository;
     private IExternalRecipeService? _externalRecipeService;
 
@@ -19,14 +18,12 @@ public class MealRecommendationService : IMealRecommendationService
         IUserRecipeRepository userRecipeRepository,
         IRecipeRepository recipeRepository,
         IUserNutritionPreferenceRepository nutritionRepository,
-        IMealRepository mealRepository,
         IUserDietaryRestrictionRepository dietaryRestrictionRepository,
         IExternalRecipeService? externalRecipeService = null)
     {
         _userRecipeRepository = userRecipeRepository;
         _recipeRepository = recipeRepository;
         _nutrionRepository = nutritionRepository;
-        _mealRepository = mealRepository;
         _dietaryRestrictionRepository = dietaryRestrictionRepository;
         _externalRecipeService = externalRecipeService;
     }
@@ -40,57 +37,66 @@ public class MealRecommendationService : IMealRecommendationService
             .ToHashSet()!;
     }
 
-    private static List<Recipe> ApplyDietaryFilter(List<Recipe> candidates, HashSet<string> restrictionNames)
+    // Yields candidates in priority order: upvoted first, then non-downvoted sorted by community
+    // vote percentage. Excludes any recipe whose ID is in excludeIds.
+    private static IEnumerable<Recipe> OrderedCandidates(
+        IEnumerable<Recipe> upvoted,
+        IEnumerable<Recipe> allWithTags,
+        Dictionary<int, UserVoteType> userVotes,
+        Dictionary<int, float> votePercentages,
+        HashSet<int> excludeIds)
     {
-        if (restrictionNames.Count == 0) return candidates;
-        return candidates
-            .Where(r => restrictionNames.All(name => r.Tags.Any(t => t.Name == name)))
-            .ToList();
+        var upvotedList = upvoted.Where(r => !excludeIds.Contains(r.Id)).ToList();
+        var upvotedIds = upvotedList.Select(r => r.Id).ToHashSet();
+
+        foreach (var r in upvotedList) yield return r;
+
+        foreach (var r in allWithTags
+            .Where(r => userVotes.GetValueOrDefault(r.Id, UserVoteType.NoVote) != UserVoteType.DownVote
+                     && !upvotedIds.Contains(r.Id)
+                     && !excludeIds.Contains(r.Id))
+            .OrderByDescending(r => votePercentages.GetValueOrDefault(r.Id, 0f)))
+        {
+            yield return r;
+        }
     }
 
-    public async Task<List<Recipe>> GetRecommendedRecipesForUser(User user, DateTime mealDate)
+    // Applies dietary restriction and tag-preference filters lazily, then greedily picks
+    // up to _MAX_RECIPES that fit within the calorie budget.
+    private static List<Recipe> SelectFromCandidates(
+        IEnumerable<Recipe> candidates,
+        int calorieTarget,
+        HashSet<string> restrictionNames,
+        IReadOnlyList<int> preferredTagIds)
     {
-        var restrictionNames = await GetRestrictionNamesAsync(user.Id);
-        var existingRecipes = (await _mealRepository.GetUserMealsByDateAsync(user, mealDate)).SelectMany(m => m.Recipes);
-        var recipes = await _userRecipeRepository.GetUserRecipesByVoteType(user.Id, UserVoteType.UpVote);
-        recipes = recipes.Where(r => !existingRecipes.Contains(r)).ToList();
+        IEnumerable<Recipe> pipeline = candidates;
 
-        var allWithTags = await _recipeRepository.GetAllWithTagsAsync();
-        var userVotes = await _userRecipeRepository.GetUserVotesByUserIdAsync(user.Id);
-        var votePercentages = await _userRecipeRepository.GetAllVotePercentagesAsync();
-        var existingIds = existingRecipes.Select(r => r.Id).ToHashSet();
-        var recipeIds = recipes.Select(r => r.Id).ToHashSet();
-        var rest = allWithTags
-            .Where(r => userVotes.GetValueOrDefault(r.Id, UserVoteType.NoVote) != UserVoteType.DownVote
-                     && !existingIds.Contains(r.Id)
-                     && !recipeIds.Contains(r.Id))
-            .OrderByDescending(r => votePercentages.GetValueOrDefault(r.Id, 0f))
-            .ToList();
+        if (restrictionNames.Count > 0)
+            pipeline = pipeline.Where(r => restrictionNames.All(name => r.Tags.Any(t => t.Name == name)));
 
-        recipes.AddRange(rest);
-        await LoadExternalRecipesAsync(recipes);
-        recipes = ApplyDietaryFilter(recipes, restrictionNames);
+        // Stable sort: tag-matched recipes first, unmatched after (preserves priority order within each group)
+        if (preferredTagIds.Count > 0)
+            pipeline = pipeline.OrderBy(r => r.Tags.Any(t => preferredTagIds.Contains(t.Id)) ? 0 : 1);
 
-        // Target of zero implies no calorie limit
-        var calorieTarget = (await _nutrionRepository.GetUsersNutritionPreferenceAsync(user.Id))?.CalorieTarget ?? int.MaxValue;
-        calorieTarget -= existingRecipes.Sum(r => r.Calories);
-        List<Recipe> toReturn = [];
-        int runningMealCalorieCount = 0;
-        while(!recipes.IsNullOrEmpty() && toReturn.Count < _MAX_RECIPES)
+        var recipes = new List<Recipe>();
+        int running = 0;
+        foreach (var recipe in pipeline)
         {
-            Recipe? toAdd;
-            (toAdd, runningMealCalorieCount) = await GetOneRecipeRecommendation(calorieTarget, recipes, runningMealCalorieCount);
-            if (toAdd == null) continue;
-            toReturn.Add(toAdd);
+            if (recipes.Count >= _MAX_RECIPES) break;
+            if (recipe.Calories + running <= calorieTarget)
+            {
+                recipes.Add(recipe);
+                running += recipe.Calories;
+            }
         }
-        return toReturn;
+        return recipes;
     }
 
     private async Task LoadExternalRecipesAsync(List<Recipe> recipes)
     {
         if (_externalRecipeService == null) return;
 
-        for(int i = 0; i < recipes.Count; i++)
+        for (int i = 0; i < recipes.Count; i++)
         {
             var r = recipes[i];
             if (r.ExternalUri.IsNullOrEmpty()) continue;
@@ -105,19 +111,7 @@ public class MealRecommendationService : IMealRecommendationService
         }
     }
 
-    private async Task<(Recipe? Recommendation, int mealCalories)> GetOneRecipeRecommendation(int calorieTarget, List<Recipe> recipes, int runningMealCalorieCount)
-    {
-        var toReturn = recipes.First();
-        recipes.Remove(toReturn);
-
-        if (toReturn != null && toReturn.Calories + runningMealCalorieCount <= calorieTarget)
-        {
-            return (toReturn, runningMealCalorieCount + toReturn.Calories);
-        }
-        return (null, runningMealCalorieCount);
-    }
-
-    public async Task<List<Meal>> GetRecommendedDayPlanForUser(User user, DateTime mealDate, DayPlanConfigViewModel config)
+    public async Task<List<Meal>> GetRecommendedMealsForUser(User user, DateTime mealDate, DayPlanConfigViewModel config)
     {
         var result = new List<Meal>();
         var restrictionNames = await GetRestrictionNamesAsync(user.Id);
@@ -131,44 +125,22 @@ public class MealRecommendationService : IMealRecommendationService
         var votePercentages = await _userRecipeRepository.GetAllVotePercentagesAsync();
         var upvoted = await _userRecipeRepository.GetUserRecipesByVoteType(user.Id, UserVoteType.UpVote);
         var allWithTags = await _recipeRepository.GetAllWithTagsAsync();
+        await LoadExternalRecipesAsync(upvoted);
+        await LoadExternalRecipesAsync(allWithTags);
+
+        var dailyCalorieTarget = (await _nutrionRepository.GetUsersNutritionPreferenceAsync(user.Id))?.CalorieTarget;
+        var totalWeight = preferences.Sum(p => p.Size.Weight());
 
         var usedRecipeIds = new HashSet<int>();
         int mealIndex = 0;
         foreach (var pref in preferences)
         {
-            var calorieTarget = pref.Size.Calories();
+            var calorieTarget = dailyCalorieTarget.HasValue
+                ? (int)Math.Round(pref.Size.Weight() / totalWeight * dailyCalorieTarget.Value)
+                : pref.Size.Calories();
 
-            var upvotedIds = upvoted.Select(r => r.Id).ToHashSet();
-            var rest = allWithTags
-                .Where(r => userVotes.GetValueOrDefault(r.Id, UserVoteType.NoVote) != UserVoteType.DownVote
-                         && !upvotedIds.Contains(r.Id))
-                .OrderByDescending(r => votePercentages.GetValueOrDefault(r.Id, 0f))
-                .ToList();
-
-            var candidates = upvoted.Concat(rest)
-                .Where(r => !usedRecipeIds.Contains(r.Id))
-                .ToList();
-            candidates = ApplyDietaryFilter(candidates, restrictionNames);
-
-            if (pref.TagIds.Any())
-            {
-                var matched = candidates.Where(r => r.Tags.Any(t => pref.TagIds.Contains(t.Id))).ToList();
-                var unmatched = candidates.Where(r => r.Tags.All(t => !pref.TagIds.Contains(t.Id))).ToList();
-                candidates = matched.Concat(unmatched).ToList();
-            }
-
-            var recipes = new List<Recipe>();
-            int running = 0;
-            foreach (var recipe in candidates)
-            {
-                if (recipes.Count >= _MAX_RECIPES) break;
-                if (recipe.Calories + running <= calorieTarget)
-                {
-                    recipes.Add(recipe);
-                    running += recipe.Calories;
-                }
-            }
-
+            var candidates = OrderedCandidates(upvoted, allWithTags, userVotes, votePercentages, usedRecipeIds);
+            var recipes = SelectFromCandidates(candidates, calorieTarget, restrictionNames, pref.TagIds);
             usedRecipeIds.UnionWith(recipes.Select(r => r.Id));
 
             result.Add(new Meal

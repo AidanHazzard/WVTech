@@ -82,6 +82,14 @@ namespace MealPlanner.Models
             modelBuilder.Entity<Ingredient>()
                 .Navigation(i => i.Measurement)
                 .AutoInclude();
+
+            modelBuilder.Entity<ShoppingListItem>()
+                .Navigation(i => i.IngredientBase)
+                .AutoInclude();
+
+            modelBuilder.Entity<ShoppingListItem>()
+                .Navigation(i => i.Measurement)
+                .AutoInclude();
         }
     }
 }
