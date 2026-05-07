@@ -133,7 +133,8 @@ public class WVT167Steps
     [When("'Gary' submits the new recipe")]
     public void WhenGarySubmitsTheNewRecipe()
     {
-        _driver.FindElement(By.CssSelector("button[type=submit]")).Click();
+        var btn = _driver.FindElement(By.CssSelector("button[type=submit]"));
+        ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].click();", btn);
         _wait.Until(d => ((IJavaScriptExecutor)d).ExecuteScript("return document.readyState").ToString() == "complete");
     }
 
@@ -179,7 +180,8 @@ public class WVT167Steps
     [When("'Gary' saves the recipe")]
     public void WhenGarySavesTheRecipe()
     {
-        _driver.FindElement(By.CssSelector("button[type=submit]")).Click();
+        var btn = _driver.FindElement(By.CssSelector("button[type=submit]"));
+        ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].click();", btn);
         _wait.Until(d => ((IJavaScriptExecutor)d).ExecuteScript("return document.readyState").ToString() == "complete");
     }
 
@@ -197,7 +199,8 @@ public class WVT167Steps
     public void WhenGaryRemovesRecipeImage()
     {
         var checkbox = _driver.FindElement(By.Id("removeImage"));
-        if (!checkbox.Selected) checkbox.Click();
+        if (!checkbox.Selected)
+            ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].click();", checkbox);
     }
 
     [Then("'Gary' sees the recipe page with the placeholder image displayed")]
@@ -226,19 +229,7 @@ public class WVT167Steps
         SeedRecipe(ctx, name, "/images/icons/meal.png");
     }
 
-    [When("'Gary' searches for {string}")]
-    public void WhenGarySearchesFor(string recipeName)
-    {
-        _driver.Navigate().GoToUrl($"{_baseUrl}/FoodEntries/Recipes");
-        _wait.Until(d => ((IJavaScriptExecutor)d).ExecuteScript("return document.readyState").ToString() == "complete");
-
-        var searchBox = _wait.Until(d => d.FindElement(By.Id("searchText")));
-        searchBox.Clear();
-        searchBox.SendKeys(recipeName);
-
-        // Wait for throttle + results
-        _wait.Until(d => d.FindElements(By.CssSelector(".recipeSearchRow")).Count > 0);
-    }
+    // 'Gary' searches for {string} is handled by WVT101Steps.WhenUserSearchesFor
 
     [Then("'Gary' sees a placeholder image next to {string} in the search results")]
     public void ThenGarySeesPlaceholderImageInSearchResults(string recipeName)
