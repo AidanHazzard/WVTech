@@ -9,7 +9,7 @@ public static class RecipeListExtensions
     {
         if (externalRecipeService == null) return;
 
-        for (int i = 0; i < recipes.Count; i++)
+        for (int i = recipes.Count - 1; i >= 0; i--)
         {
             var r = recipes[i];
             if (string.IsNullOrEmpty(r.ExternalUri)) continue;
@@ -21,8 +21,15 @@ public static class RecipeListExtensions
                     loaded.Id = r.Id;
                     recipes[i] = loaded;
                 }
+                else
+                {
+                    recipes.RemoveAt(i);
+                }
             }
-            catch { }
+            catch
+            {
+                recipes.RemoveAt(i);
+            }
         }
     }
 }
