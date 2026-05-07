@@ -23,7 +23,7 @@ public class EdamamService:IExternalRecipeService
     
     public async Task<IEnumerable<RecipeDTO>> SearchExternalRecipesByName(string recipeName)
     {
-        string endpoint = $"recipes/v2?type=any&q={recipeName}&app_id={_appId}&app_key={_apiKey}&field=uri&field=label";
+        string endpoint = $"recipes/v2?type=any&q={recipeName}&app_id={_appId}&app_key={_apiKey}&field=uri&field=label&field=image";
 
         HttpResponseMessage response = await _httpClient.GetAsync(endpoint);
         if (!response.IsSuccessStatusCode)
@@ -37,7 +37,7 @@ public class EdamamService:IExternalRecipeService
             responseBody,
             _responseDeserializerOptions
         );
-        return edamamResponse?.Hits.Select(e => new RecipeDTO { Name = e.Recipe.Label, ExternalUri = e.Recipe.Uri }) ?? [];
+        return edamamResponse?.Hits.Select(e => new RecipeDTO { Name = e.Recipe.Label, ExternalUri = e.Recipe.Uri, ImageUrl = e.Recipe.Image }) ?? [];
     }
 
     public async Task<Recipe?> GetExternalRecipeByURI(string uri)
@@ -59,15 +59,16 @@ public class EdamamService:IExternalRecipeService
             _responseDeserializerOptions
         );
         return edamamResponse?.Hits.Select(
-            e => new Recipe 
-            { 
-                Name = e.Recipe.Label, 
+            e => new Recipe
+            {
+                Name = e.Recipe.Label,
                 ExternalUri = e.Recipe.Uri,
                 Directions = "",
                 Calories = (int?) e.Recipe.TotalNutrients?["ENERC_KCAL"]?.Quantity ?? 0,
                 Protein = (int?) e.Recipe.TotalNutrients?["PROCNT"]?.Quantity ?? 0,
                 Carbs = (int?) e.Recipe.TotalNutrients?["CHOCDF"]?.Quantity ?? 0,
                 Fat = (int?) e.Recipe.TotalNutrients?["FAT"]?.Quantity ?? 0,
+                ImageUrl = e.Recipe.Image,
                 Ingredients = ParseIngredientsFromResponse(e.Recipe.Ingredients ?? [])
             }).FirstOrDefault();
     }

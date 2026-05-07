@@ -73,6 +73,32 @@
                                         <span class="text-muted">No recipes attached</span>
                                     }
                                 </div>
+
+                                @{
+                                    var recipesWithImages = meal.Recipes?
+                                        .OrderByDescending(r => r.Calories)
+                                        .ToList() ?? [];
+                                }
+                                @if (recipesWithImages.Any())
+                                {
+                                    <div class="d-flex mt-2 recipe-collage" style="height:80px; overflow:hidden; border-radius:4px;">
+                                        @{
+                                            double widthPct = 50.0;
+                                        }
+                                        @foreach (var r in recipesWithImages)
+                                        {
+                                            bool rHasImage = !string.IsNullOrEmpty(r.ImageUrl);
+                                            string rSrc = rHasImage ? r.ImageUrl! : "/images/placeholder/no-image.svg";
+                                            <img src="@rSrc"
+                                                 alt="@r.Name"
+                                                 data-calories="@r.Calories"
+                                                 data-recipe-id="@r.Id"
+                                                 class="recipe-collage-img @(rHasImage ? "recipe-has-image" : "recipe-no-image")"
+                                                 style="width:@widthPct.ToString("F1", System.Globalization.CultureInfo.InvariantCulture)%; flex-shrink:0; object-fit:cover;" />
+                                            widthPct /= 2.0;
+                                        }
+                                    </div>
+                                }
                             </div>
 
                             <form asp-action="DeleteMeal" method="post" class="ms-3">

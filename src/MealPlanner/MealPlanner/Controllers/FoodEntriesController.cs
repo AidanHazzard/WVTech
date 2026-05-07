@@ -7,6 +7,7 @@ using MealPlanner.Services;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.AspNetCore.Hosting;
 
 namespace MealPlanner.Controllers;
 
@@ -19,6 +20,7 @@ public class FoodEntriesController : Controller
     private readonly INutritionProgressService? _nutritionProgressService;
     private readonly IRegistrationService _registrationService;
     private readonly IExternalRecipeService? _externalRecipeService;
+    private readonly IWebHostEnvironment _env;
 
     public FoodEntriesController(
         IRecipeRepository recipeRepository,
@@ -26,6 +28,7 @@ public class FoodEntriesController : Controller
         IUserRecipeRepository userRecipeRepository,
         MealPlannerDBContext context,
         IRegistrationService registrationService,
+        IWebHostEnvironment env,
         IExternalRecipeService? externalRecipeService = null,
         INutritionProgressService? nutritionProgressService = null)
     {
@@ -36,6 +39,23 @@ public class FoodEntriesController : Controller
         _nutritionProgressService = nutritionProgressService;
         _userRecipeRepository = userRecipeRepository;
         _externalRecipeService = externalRecipeService;
+        _env = env;
+    }
+
+    private static readonly HashSet<string> AllowedImageExtensions = [".jpg", ".jpeg", ".png", ".gif", ".webp"];
+
+    private async Task<string?> SaveImageFileAsync(IFormFile? imageFile)
+    {
+        if (imageFile == null || imageFile.Length == 0) return null;
+        var ext = Path.GetExtension(imageFile.FileName).ToLowerInvariant();
+        if (!AllowedImageExtensions.Contains(ext)) return null;
+
+        var dir = Path.Combine(_env.WebRootPath, "images", "recipes");
+        Directory.CreateDirectory(dir);
+        var fileName = $"{Guid.NewGuid()}{ext}";
+        using var stream = new FileStream(Path.Combine(dir, fileName), FileMode.Create);
+        await imageFile.CopyToAsync(stream);
+        return $"/images/recipes/{fileName}";
     }
 
     public IActionResult SearchRecipes()
@@ -139,6 +159,8 @@ public class FoodEntriesController : Controller
             return View("AddNewRecipe", newRecipeViewModel);
         }
 
+        newRecipeViewModel.ImageUrl = await SaveImageFileAsync(newRecipeViewModel.ImageFile);
+
         Recipe recipe = ViewModelService.RecipeFromRecipeVM(newRecipeViewModel);
         _recipeRepository.CreateOrUpdate(recipe);
 
@@ -209,6 +231,16 @@ public class FoodEntriesController : Controller
         {
             return RedirectToAction("SearchRecipes");
         }
+
+        if (editedRecipeViewModel.RemoveImage)
+        {
+            editedRecipeViewModel.ImageUrl = null;
+        }
+        else if (editedRecipeViewModel.ImageFile != null)
+        {
+            editedRecipeViewModel.ImageUrl = await SaveImageFileAsync(editedRecipeViewModel.ImageFile);
+        }
+        // else: keep editedRecipeViewModel.ImageUrl from the hidden form field
 
         //updates the databse with the new and improved existing
         _recipeRepository.CreateOrUpdate(ViewModelService.EditRecipeVMToModel(existing, editedRecipeViewModel));
