@@ -6,13 +6,22 @@ namespace MealPlanner.Services;
 public class ShoppingListService
 {
     private readonly IShoppingListRepository _shoppingListRepository;
+    private readonly IMealRepository _mealRepository;
 
-    public ShoppingListService(IShoppingListRepository shoppingListRepository)
+    public ShoppingListService(IShoppingListRepository shoppingListRepository, IMealRepository mealRepository)
     {
         _shoppingListRepository = shoppingListRepository;
+        _mealRepository = mealRepository;
     }
 
-    public void SyncFromMeals(string userId, IEnumerable<Ingredient> ingredients)
+    public async Task SyncFromDateRangeAsync(string userId, User user, DateTime dateFrom, DateTime dateTo)
+    {
+        var meals = await _mealRepository.GetUserMealsByDateRangeWithIngredientsAsync(user, dateFrom, dateTo);
+        var ingredients = meals.SelectMany(m => m.Recipes).SelectMany(r => r.Ingredients).ToList();
+        SyncFromMeals(userId, ingredients);
+    }
+
+    private void SyncFromMeals(string userId, IEnumerable<Ingredient> ingredients)
     {
         _shoppingListRepository.RemoveAutoAddedByUserId(userId);
 
@@ -78,6 +87,11 @@ public class ShoppingListService
             throw new ArgumentException("Amount cannot be negative.");
 
         _shoppingListRepository.UpdateAmountByName(userId, itemName.Trim(), newAmount);
+    }
+
+    public void ClearItems(string userId)
+    {
+        _shoppingListRepository.ClearAllItems(userId);
     }
 
     public IEnumerable<ShoppingListItem> GetItemsForUser(string userId)

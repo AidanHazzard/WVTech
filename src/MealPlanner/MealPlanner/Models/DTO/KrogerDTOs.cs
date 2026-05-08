@@ -97,3 +97,43 @@ public class SaveZipRequest
 {
     public string? ZipCode { get; set; }
 }
+
+public enum KrogerExportOutcome
+{
+    Success,
+    NoItems,
+    SearchTokenFailed,
+    NoMatchesFound,
+    ExportFailed
+}
+
+public class KrogerExportResult
+{
+    public KrogerExportOutcome Outcome { get; init; }
+    public int ItemsAdded { get; init; }
+    public List<string> Skipped { get; init; } = [];
+
+    public static KrogerExportResult Of(KrogerExportOutcome outcome) => new() { Outcome = outcome };
+}
+
+public class KrogerExportSummaryDto
+{
+    public int Id { get; set; }
+    public DateTime ExportedAt { get; set; }
+    public int ItemCount { get; set; }
+}
+
+public class KrogerExportDetailDto
+{
+    public int Id { get; set; }
+    public DateTime ExportedAt { get; set; }
+    public List<KrogerExportItemDto> Items { get; set; } = [];
+}
+
+public class KrogerExportItemDto
+{
+    public string Name { get; set; } = string.Empty;
+    public float Amount { get; set; }
+    public string Measurement { get; set; } = string.Empty;
+}
+

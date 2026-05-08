@@ -79,6 +79,16 @@ public class ShoppingListRepository : IShoppingListRepository
             .ToList();
     }
 
+    public void ClearAllItems(string userId)
+    {
+        var items = _context.ShoppingListItems.Where(i => i.UserId == userId).ToList();
+        if (items.Count > 0)
+        {
+            _context.ShoppingListItems.RemoveRange(items);
+            _context.SaveChanges();
+        }
+    }
+
     public void UpdateAmountByName(string userId, string name, float newAmount)
     {
         var items = _context.ShoppingListItems

@@ -5,7 +5,6 @@ using MealPlanner.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace MealPlanner.Controllers;
 
@@ -14,21 +13,15 @@ public class ShoppingListController : Controller
 {
     private readonly ShoppingListService _shoppingListService;
     private readonly UserManager<User> _userManager;
-    private readonly IMealRepository _mealRepo;
-    private readonly MealPlannerDBContext _context;
     private readonly IUserSettingsRepository _userSettingsRepo;
 
     public ShoppingListController(
         ShoppingListService shoppingListService,
         UserManager<User> userManager,
-        IMealRepository mealRepo,
-        MealPlannerDBContext context,
         IUserSettingsRepository userSettingsRepo)
     {
         _shoppingListService = shoppingListService;
         _userManager = userManager;
-        _mealRepo = mealRepo;
-        _context = context;
         _userSettingsRepo = userSettingsRepo;
     }
 
@@ -53,7 +46,7 @@ public class ShoppingListController : Controller
 
         if (!Request.Cookies.ContainsKey("ShoppingListSynced"))
         {
-            await SyncMealIngredients(user, dateFrom, dateTo);
+            await _shoppingListService.SyncFromDateRangeAsync(user.Id, user, dateFrom, dateTo);
             Response.Cookies.Append("ShoppingListSynced", "1", new CookieOptions { HttpOnly = true });
         }
 
@@ -66,6 +59,7 @@ public class ShoppingListController : Controller
             DateFrom = dateFrom,
             DateTo = dateTo,
             ZipCode = profile?.ZipCode,
+            LastStoreId = HttpContext.Session.GetString(KrogerController.SessionStoreId),
             KrogerConnected = !string.IsNullOrEmpty(HttpContext.Session.GetString("KrogerAccessToken"))
         });
     }
@@ -141,24 +135,5 @@ public class ShoppingListController : Controller
         }
 
         return RedirectToAction(nameof(Index));
-    }
-
-    private async Task SyncMealIngredients(User user, DateTime dateFrom, DateTime dateTo)
-    {
-        var meals = await _mealRepo.GetUserMealsByDateRangeAsync(user, dateFrom, dateTo);
-
-        var recipeIds = meals.SelectMany(m => m.Recipes).Select(r => r.Id).Distinct().ToList();
-        if (recipeIds.Count > 0)
-            await _context.Set<Recipe>()
-                .Where(r => recipeIds.Contains(r.Id))
-                .Include(r => r.Ingredients)
-                .LoadAsync();
-
-        var ingredients = meals
-            .SelectMany(m => m.Recipes)
-            .SelectMany(r => r.Ingredients)
-            .ToList();
-
-        _shoppingListService.SyncFromMeals(user.Id, ingredients);
     }
 }

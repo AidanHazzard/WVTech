@@ -89,6 +89,39 @@ public class MealRepository : Repository<Meal>, IMealRepository
             .ToList();
     }
 
+    public async Task<List<Meal>> GetUserMealsByDateRangeWithIngredientsAsync(User user, DateTime start, DateTime end)
+    {
+        var rangeEnd = end.AddDays(1);
+
+        var exactMeals = await _dbset
+            .Include(m => m.Recipes)
+                .ThenInclude(r => r.Ingredients)
+            .Where(m => m.UserId == user.Id && m.StartTime != null)
+            .Where(m => m.StartTime >= start && m.StartTime < rangeEnd)
+            .ToListAsync();
+
+        var daysInRange = Enumerable.Range(0, (end.Date - start.Date).Days + 1)
+            .Select(d => start.AddDays(d).DayOfWeek)
+            .ToHashSet();
+
+        var weeklyMeals = await _dbset
+            .Include(m => m.Recipes)
+                .ThenInclude(r => r.Ingredients)
+            .Where(m => m.UserId == user.Id && m.RepeatRule == "Weekly" && m.StartTime != null)
+            .ToListAsync();
+
+        weeklyMeals = weeklyMeals
+            .Where(m => daysInRange.Any(day => MealSchedule.RepeatMatchesDay(m, day)))
+            .ToList();
+
+        return exactMeals
+            .Concat(weeklyMeals)
+            .GroupBy(m => m.Id)
+            .Select(g => g.First())
+            .OrderBy(m => m.StartTime)
+            .ToList();
+    }
+
     public async Task<List<Meal>> GetDistinctUserMealsAsync(User user)
     {
         var userMeals = await _dbset

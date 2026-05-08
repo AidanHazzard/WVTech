@@ -147,10 +147,9 @@ public class KrogerServiceTests
     {
         var productsJson = """{"data":[{"upc":"0000000004072","description":"RUSSET POTATO","items":[{"size":"1 ct"}]}]}""";
         var (service, _) = Setup(
-            (HttpStatusCode.OK, TokenJson),
             (HttpStatusCode.OK, productsJson));
 
-        var result = await service.SearchProductUpcAsync("potato", "70400340", 1, "Count");
+        var result = await service.SearchProductUpcAsync("potato", "70400340", 1, "Count", "test-token");
 
         Assert.That(result, Is.Not.Null);
         Assert.That(result!.Upc, Is.EqualTo("0000000004072"));
@@ -161,11 +160,10 @@ public class KrogerServiceTests
     {
         var productsJson = """{"data":[{"upc":"0001111042504","description":"Chicken Broth","items":[{"size":"32 oz"}]}]}""";
         var (service, _) = Setup(
-            (HttpStatusCode.OK, TokenJson),
             (HttpStatusCode.OK, productsJson));
 
         // 5 cups = 40 oz, product is 32 oz → need 2 units
-        var result = await service.SearchProductUpcAsync("chicken broth", "70400340", 5, "Cup(s)");
+        var result = await service.SearchProductUpcAsync("chicken broth", "70400340", 5, "Cup(s)", "test-token");
 
         Assert.That(result, Is.Not.Null);
         Assert.That(result!.Quantity, Is.EqualTo(2));
@@ -176,11 +174,10 @@ public class KrogerServiceTests
     {
         var productsJson = """{"data":[{"upc":"0001111099999","description":"Water","items":[{"size":"1 gallon"}]}]}""";
         var (service, _) = Setup(
-            (HttpStatusCode.OK, TokenJson),
             (HttpStatusCode.OK, productsJson));
 
         // 4.6 L = 155.74 oz, 1 gallon = 128 oz → need 2 units
-        var result = await service.SearchProductUpcAsync("water", "70400340", 4.6f, "L");
+        var result = await service.SearchProductUpcAsync("water", "70400340", 4.6f, "L", "test-token");
 
         Assert.That(result, Is.Not.Null);
         Assert.That(result!.Quantity, Is.EqualTo(2));
@@ -191,11 +188,10 @@ public class KrogerServiceTests
     {
         var productsJson = """{"data":[{"upc":"0001111099001","description":"Kidney Beans","items":[{"size":"15.5 oz"}]}]}""";
         var (service, _) = Setup(
-            (HttpStatusCode.OK, TokenJson),
             (HttpStatusCode.OK, productsJson));
 
         // 8 oz recipe, 15.5 oz can → need 1 unit
-        var result = await service.SearchProductUpcAsync("kidney beans", "70400340", 8, "Ounce(s)");
+        var result = await service.SearchProductUpcAsync("kidney beans", "70400340", 8, "Ounce(s)", "test-token");
 
         Assert.That(result, Is.Not.Null);
         Assert.That(result!.Quantity, Is.EqualTo(1));
@@ -206,10 +202,9 @@ public class KrogerServiceTests
     {
         var emptyJson = """{"data":[]}""";
         var (service, _) = Setup(
-            (HttpStatusCode.OK, TokenJson),
             (HttpStatusCode.OK, emptyJson));
 
-        var result = await service.SearchProductUpcAsync("xyzunknown", "70400340", 1, "Count");
+        var result = await service.SearchProductUpcAsync("xyzunknown", "70400340", 1, "Count", "test-token");
 
         Assert.That(result, Is.Null);
     }
@@ -218,10 +213,82 @@ public class KrogerServiceTests
     public async Task SearchProductUpcAsync_ReturnsNull_WhenApiFails()
     {
         var (service, _) = Setup(
-            (HttpStatusCode.OK, TokenJson),
             (HttpStatusCode.BadRequest, ""));
 
-        var result = await service.SearchProductUpcAsync("potato", "70400340", 1, "Count");
+        var result = await service.SearchProductUpcAsync("potato", "70400340", 1, "Count", "test-token");
+
+        Assert.That(result, Is.Null);
+    }
+
+    [Test]
+    public async Task SearchProductUpcAsync_PrefersWholeProduct_WhenCountWithNoFormQualifier()
+    {
+        // "turkey" with Count — ground turkey should lose to whole turkey
+        var productsJson = """
+            {"data":[
+                {"upc":"111","description":"Ground Turkey 1 lb","items":[{"size":"1 lb"}]},
+                {"upc":"222","description":"Whole Turkey","items":[{"size":"1 ct"}]}
+            ]}
+            """;
+        var (service, _) = Setup((HttpStatusCode.OK, productsJson));
+
+        var result = await service.SearchProductUpcAsync("turkey", "70400340", 1, "Count", "test-token");
+
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result!.Upc, Is.EqualTo("222"));
+    }
+
+    [Test]
+    public async Task SearchProductUpcAsync_DoesNotPreferWhole_WhenFormQualifierPresent()
+    {
+        // "ground turkey" with Count — user explicitly chose a form, so no whole-preference.
+        // "Ground Turkey" is shorter than "Whole Turkey Breast" and is not de-prioritized.
+        var productsJson = """
+            {"data":[
+                {"upc":"111","description":"Ground Turkey","items":[{"size":"1 lb"}]},
+                {"upc":"222","description":"Whole Turkey Breast","items":[{"size":"1 ct"}]}
+            ]}
+            """;
+        var (service, _) = Setup((HttpStatusCode.OK, productsJson));
+
+        var result = await service.SearchProductUpcAsync("ground turkey", "70400340", 1, "Count", "test-token");
+
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result!.Upc, Is.EqualTo("111")); // shorter, no form-bias de-prioritization
+    }
+
+    [Test]
+    public async Task SearchProductUpcAsync_DoesNotPreferWhole_WhenMeasurementIsWeight()
+    {
+        // "turkey" with Pound(s) — weight measurement, no whole-preference.
+        // "Ground Turkey" is shorter than "Whole Turkey Breast" so it wins by length.
+        var productsJson = """
+            {"data":[
+                {"upc":"111","description":"Ground Turkey","items":[{"size":"1 lb"}]},
+                {"upc":"222","description":"Whole Turkey Breast","items":[{"size":"1 ct"}]}
+            ]}
+            """;
+        var (service, _) = Setup((HttpStatusCode.OK, productsJson));
+
+        var result = await service.SearchProductUpcAsync("turkey", "70400340", 1, "Pound(s)", "test-token");
+
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result!.Upc, Is.EqualTo("111")); // shortest match without whole-preference
+    }
+
+    [Test]
+    public async Task SearchProductUpcAsync_ReturnsNull_WhenNoProductMatchesFilterWords()
+    {
+        // "sliced turkey" — API returns only a beef product that doesn't contain "turkey".
+        // The client-side filter should reject it and return null.
+        var productsJson = """
+            {"data":[
+                {"upc":"999","description":"Ground Beef 80/20","items":[{"size":"1 lb"}]}
+            ]}
+            """;
+        var (service, _) = Setup((HttpStatusCode.OK, productsJson));
+
+        var result = await service.SearchProductUpcAsync("sliced turkey", "70400340", 1, "Count", "test-token");
 
         Assert.That(result, Is.Null);
     }

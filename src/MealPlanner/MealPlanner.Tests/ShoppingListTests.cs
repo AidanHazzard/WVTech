@@ -15,7 +15,7 @@ public class ShoppingListServiceTests
     public void AddItem_ShouldAddShoppingListItem_WhenNameIsValid()
     {
         var repo = new Mock<IShoppingListRepository>();
-        var service = new ShoppingListService(repo.Object);
+        var service = new ShoppingListService(repo.Object, Mock.Of<IMealRepository>());
 
         string userId = "user-1";
         string itemName = "Milk";
@@ -32,7 +32,7 @@ public class ShoppingListServiceTests
     public void AddItem_ShouldTrimAndNormalizeName_WhenNameHasExtraSpaces()
     {
         var repo = new Mock<IShoppingListRepository>();
-        var service = new ShoppingListService(repo.Object);
+        var service = new ShoppingListService(repo.Object, Mock.Of<IMealRepository>());
 
         string userId = "user-1";
         string itemName = "  Eggs  ";
@@ -50,7 +50,7 @@ public class ShoppingListServiceTests
     public void AddItem_ShouldThrowArgumentException_WhenNameIsEmpty()
     {
         var repo = new Mock<IShoppingListRepository>();
-        var service = new ShoppingListService(repo.Object);
+        var service = new ShoppingListService(repo.Object, Mock.Of<IMealRepository>());
 
         Assert.Throws<ArgumentException>(() => service.AddItem("user-1", "", 1, ""));
         repo.Verify(r => r.Add(It.IsAny<ShoppingListItem>()), Times.Never);
@@ -60,7 +60,7 @@ public class ShoppingListServiceTests
     public void AddItem_ShouldThrowArgumentException_WhenNameIsWhitespace()
     {
         var repo = new Mock<IShoppingListRepository>();
-        var service = new ShoppingListService(repo.Object);
+        var service = new ShoppingListService(repo.Object, Mock.Of<IMealRepository>());
 
         Assert.Throws<ArgumentException>(() => service.AddItem("user-1", "   ", 1, ""));
         repo.Verify(r => r.Add(It.IsAny<ShoppingListItem>()), Times.Never);
@@ -70,7 +70,7 @@ public class ShoppingListServiceTests
     public void RemoveItem_ShouldCallRepositoryRemove_WhenItemExists()
     {
         var repo = new Mock<IShoppingListRepository>();
-        var service = new ShoppingListService(repo.Object);
+        var service = new ShoppingListService(repo.Object, Mock.Of<IMealRepository>());
 
         int itemId = 5;
         string userId = "user-1";
@@ -84,7 +84,7 @@ public class ShoppingListServiceTests
     public void RemoveItem_ShouldThrowArgumentException_WhenItemIdIsInvalid()
     {
         var repo = new Mock<IShoppingListRepository>();
-        var service = new ShoppingListService(repo.Object);
+        var service = new ShoppingListService(repo.Object, Mock.Of<IMealRepository>());
 
         Assert.Throws<ArgumentException>(() => service.RemoveItem(0, "user-1"));
         repo.Verify(r => r.Remove(It.IsAny<int>(), It.IsAny<string>()), Times.Never);
@@ -94,7 +94,7 @@ public class ShoppingListServiceTests
     public void UpdateItemAmount_ShouldCallRepositoryUpdateAmountByName_WhenValid()
     {
         var repo = new Mock<IShoppingListRepository>();
-        var service = new ShoppingListService(repo.Object);
+        var service = new ShoppingListService(repo.Object, Mock.Of<IMealRepository>());
 
         service.UpdateItemAmount("user-1", "Milk", 3.5f);
 
@@ -105,7 +105,7 @@ public class ShoppingListServiceTests
     public void UpdateItemAmount_ShouldThrowArgumentException_WhenNameIsEmpty()
     {
         var repo = new Mock<IShoppingListRepository>();
-        var service = new ShoppingListService(repo.Object);
+        var service = new ShoppingListService(repo.Object, Mock.Of<IMealRepository>());
 
         Assert.Throws<ArgumentException>(() => service.UpdateItemAmount("user-1", "", 1f));
         repo.Verify(r => r.UpdateAmountByName(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<float>()), Times.Never);
@@ -115,7 +115,7 @@ public class ShoppingListServiceTests
     public void UpdateItemAmount_ShouldThrowArgumentException_WhenAmountIsNegative()
     {
         var repo = new Mock<IShoppingListRepository>();
-        var service = new ShoppingListService(repo.Object);
+        var service = new ShoppingListService(repo.Object, Mock.Of<IMealRepository>());
 
         Assert.Throws<ArgumentException>(() => service.UpdateItemAmount("user-1", "Milk", -1f));
         repo.Verify(r => r.UpdateAmountByName(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<float>()), Times.Never);
@@ -132,11 +132,34 @@ public class ShoppingListServiceTests
         };
 
         repo.Setup(r => r.GetByUserId("user-1")).Returns(expectedItems);
-        var service = new ShoppingListService(repo.Object);
+        var service = new ShoppingListService(repo.Object, Mock.Of<IMealRepository>());
 
         var result = service.GetItemsForUser("user-1");
 
         Assert.That(result.Count(), Is.EqualTo(2));
         Assert.That(result.All(item => item.UserId == "user-1"), Is.True);
+    }
+
+    [Test]
+    public void ClearItems_ShouldCallRepositoryClearAllItems()
+    {
+        var repo = new Mock<IShoppingListRepository>();
+        var service = new ShoppingListService(repo.Object, Mock.Of<IMealRepository>());
+
+        service.ClearItems("user-1");
+
+        repo.Verify(r => r.ClearAllItems("user-1"), Times.Once);
+    }
+
+    [Test]
+    public void ClearItems_ShouldOnlyClearItemsForSpecifiedUser()
+    {
+        var repo = new Mock<IShoppingListRepository>();
+        var service = new ShoppingListService(repo.Object, Mock.Of<IMealRepository>());
+
+        service.ClearItems("user-1");
+
+        repo.Verify(r => r.ClearAllItems("user-1"), Times.Once);
+        repo.Verify(r => r.ClearAllItems("user-2"), Times.Never);
     }
 }

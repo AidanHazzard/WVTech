@@ -11,11 +11,14 @@ namespace MealPlanner.Controllers;
 [Authorize]
 public class KrogerController : Controller
 {
-    private const string SessionToken      = "KrogerAccessToken";
-    private const string SessionPendingId  = "KrogerPendingStoreId";
+    private const string SessionToken = "KrogerAccessToken";
+    private const string SessionTokenExpiry = "KrogerAccessTokenExpiry";
+    private const string SessionPendingId = "KrogerPendingStoreId";
     private const string SessionPendingExp = "KrogerPendingExport";
+    public const string SessionStoreId = "KrogerLastStoreId";
 
     private readonly IKrogerService? _krogerService;
+    private readonly IKrogerExportService _exportService;
     private readonly IUserSettingsRepository _userSettingsRepo;
     private readonly ShoppingListService _shoppingListService;
     private readonly UserManager<User> _userManager;
@@ -24,11 +27,13 @@ public class KrogerController : Controller
         IUserSettingsRepository userSettingsRepo,
         ShoppingListService shoppingListService,
         UserManager<User> userManager,
+        IKrogerExportService exportService,
         IKrogerService? krogerService = null)
     {
         _userSettingsRepo = userSettingsRepo;
         _shoppingListService = shoppingListService;
         _userManager = userManager;
+        _exportService = exportService;
         _krogerService = krogerService;
     }
 
@@ -36,8 +41,7 @@ public class KrogerController : Controller
     public async Task<IActionResult> Stores(string zipCode)
     {
         if (_krogerService == null) return Json(Array.Empty<object>());
-        var stores = await _krogerService.FindNearestStoresAsync(zipCode);
-        return Json(stores);
+        return Json(await _krogerService.FindNearestStoresAsync(zipCode));
     }
 
     [HttpPost]
@@ -50,6 +54,23 @@ public class KrogerController : Controller
         return Ok();
     }
 
+    [HttpGet]
+    public async Task<IActionResult> ExportHistory()
+    {
+        var user = await _userManager.GetUserAsync(User);
+        if (user == null) return Unauthorized();
+        return Json(await _exportService.GetExportHistoryAsync(user.Id));
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> ExportDetail(int id)
+    {
+        var user = await _userManager.GetUserAsync(User);
+        if (user == null) return Unauthorized();
+        var detail = await _exportService.GetExportDetailAsync(id, user.Id);
+        return detail == null ? NotFound() : Json(detail);
+    }
+
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Export(string zipCode, string storeId)
@@ -58,10 +79,15 @@ public class KrogerController : Controller
         if (user == null) return Challenge();
 
         await _userSettingsRepo.SaveZipCodeAsync(user.Id, zipCode);
+        HttpContext.Session.SetString(SessionStoreId, storeId);
 
-        if (KrogerNotConfigured(out var notConfiguredResult)) return notConfiguredResult;
+        if (_krogerService == null)
+        {
+            TempData["KrogerError"] = "Kroger integration is not configured.";
+            return RedirectToAction("Index", "ShoppingList");
+        }
 
-        var krogerToken = HttpContext.Session.GetString(SessionToken);
+        var krogerToken = GetValidSessionToken();
         if (string.IsNullOrEmpty(krogerToken))
         {
             if (_shoppingListService.GetItemsForUser(user.Id).Any())
@@ -78,18 +104,22 @@ public class KrogerController : Controller
     [HttpGet]
     public IActionResult Connect()
     {
-        if (KrogerNotConfigured(out var notConfiguredResult)) return notConfiguredResult;
-        return Redirect(_krogerService!.GetAuthorizationUrl("kroger-connect"));
+        if (_krogerService == null)
+        {
+            TempData["KrogerError"] = "Kroger integration is not configured.";
+            return RedirectToAction("Index", "ShoppingList");
+        }
+        return Redirect(_krogerService.GetAuthorizationUrl("kroger-connect"));
     }
 
     [HttpGet]
     [AllowAnonymous]
     public async Task<IActionResult> Callback(string code, string state)
     {
-        if (KrogerNotConfigured(out _))
+        if (_krogerService == null)
             return JsRedirect("/ShoppingList");
 
-        var tokenResponse = await _krogerService!.ExchangeCodeAsync(code);
+        var tokenResponse = await _krogerService.ExchangeCodeAsync(code);
         if (tokenResponse == null)
         {
             TempData["KrogerError"] = "Failed to connect to Kroger. Please try again.";
@@ -97,6 +127,8 @@ public class KrogerController : Controller
         }
 
         HttpContext.Session.SetString(SessionToken, tokenResponse.AccessToken);
+        var expiry = DateTimeOffset.UtcNow.AddSeconds(tokenResponse.ExpiresIn - 60);
+        HttpContext.Session.SetString(SessionTokenExpiry, expiry.ToUnixTimeSeconds().ToString());
 
         if (HttpContext.Session.GetString(SessionPendingExp) == "true")
         {
@@ -112,51 +144,55 @@ public class KrogerController : Controller
         return JsRedirect("/ShoppingList");
     }
 
-    private bool KrogerNotConfigured(out IActionResult result)
+    private string? GetValidSessionToken()
     {
-        if (_krogerService != null) { result = null!; return false; }
-        TempData["KrogerError"] = "Kroger integration is not configured.";
-        result = RedirectToAction("Index", "ShoppingList");
-        return true;
-    }
+        var token = HttpContext.Session.GetString(SessionToken);
+        if (string.IsNullOrEmpty(token)) return null;
 
-    private ViewResult JsRedirect(string url) => View("Redirect", url);
+        if (long.TryParse(HttpContext.Session.GetString(SessionTokenExpiry), out var expiry) &&
+            DateTimeOffset.UtcNow.ToUnixTimeSeconds() >= expiry)
+        {
+            HttpContext.Session.Remove(SessionToken);
+            HttpContext.Session.Remove(SessionTokenExpiry);
+            return null;
+        }
+
+        return token;
+    }
 
     private async Task<IActionResult> PerformExport(string userId, string storeId, string krogerToken, bool isRetry = false)
     {
-        var items = _shoppingListService.GetItemsForUser(userId).ToList();
-        if (items.Count == 0)
-        {
-            TempData["KrogerInfo"] = "Kroger account connected! Add items to your shopping list and click Export to send them to your cart.";
-            return RedirectToAction("Index", "ShoppingList");
-        }
+        var result = await _exportService.RunExportAsync(userId, storeId, krogerToken);
 
-        var cartItems = new List<KrogerCartItem>();
-        foreach (var item in items)
+        switch (result.Outcome)
         {
-            var match = await _krogerService!.SearchProductUpcAsync(
-                item.Name, storeId, item.Amount, item.Measurement);
-            if (match != null)
-                cartItems.Add(new KrogerCartItem { Upc = match.Upc, Quantity = match.Quantity });
-        }
+            case KrogerExportOutcome.NoItems:
+                TempData["KrogerInfo"] = "Kroger account connected! Add items to your shopping list and click Export to send them to your cart.";
+                return RedirectToAction("Index", "ShoppingList");
 
-        if (cartItems.Count == 0)
-        {
-            TempData["KrogerError"] = "No matching Kroger products found for your shopping list items.";
-            return RedirectToAction("Index", "ShoppingList");
-        }
+            case KrogerExportOutcome.SearchTokenFailed:
+                TempData["KrogerError"] = "Could not connect to Kroger. Please try again.";
+                return RedirectToAction("Index", "ShoppingList");
 
-        var success = await _krogerService!.ExportCartAsync(cartItems, krogerToken);
-        if (success)
-        {
-            TempData["KrogerSuccess"] = $"{cartItems.Count} item(s) added to your Kroger cart!";
-            return RedirectToAction("Index", "ShoppingList");
-        }
+            case KrogerExportOutcome.NoMatchesFound:
+                TempData["KrogerError"] = "No matching Kroger products found for your shopping list items.";
+                return RedirectToAction("Index", "ShoppingList");
 
-        HttpContext.Session.Remove(SessionToken);
-        TempData["KrogerError"] = isRetry
-            ? "Error connecting to your Kroger account. Please try again later."
-            : "Your Kroger session expired. Click Export to Kroger again to reconnect.";
-        return RedirectToAction("Index", "ShoppingList");
+            case KrogerExportOutcome.Success:
+                HttpContext.Response.Cookies.Append("ShoppingListSynced", "1", new CookieOptions { HttpOnly = true });
+                TempData["KrogerSuccess"] = result.Skipped.Count == 0
+                    ? $"{result.ItemsAdded} item(s) added to your Kroger cart!"
+                    : $"{result.ItemsAdded} item(s) added to your Kroger cart. Could not find: {string.Join(", ", result.Skipped)}.";
+                return RedirectToAction("Index", "ShoppingList");
+
+            default: // ExportFailed
+                HttpContext.Session.Remove(SessionToken);
+                TempData["KrogerError"] = isRetry
+                    ? "Error connecting to your Kroger account. Please try again later."
+                    : "Your Kroger session expired. Click Export to Kroger again to reconnect.";
+                return RedirectToAction("Index", "ShoppingList");
+        }
     }
+
+    private ViewResult JsRedirect(string url) => View("Redirect", url);
 }

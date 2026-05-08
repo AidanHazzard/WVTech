@@ -8,5 +8,6 @@ public class ShoppingListViewModel
     public DateTime DateFrom { get; set; } = DateTime.Today;
     public DateTime DateTo { get; set; } = DateTime.Today;
     public string? ZipCode { get; set; }
+    public string? LastStoreId { get; set; }
     public bool KrogerConnected { get; set; }
 }

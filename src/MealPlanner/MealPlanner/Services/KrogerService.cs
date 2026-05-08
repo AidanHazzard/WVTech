@@ -75,15 +75,15 @@ public class KrogerService : IKrogerService
     }
 
     public async Task<KrogerProductMatch?> SearchProductUpcAsync(
-        string ingredientName, string storeId, float amount, string measurement)
+        string ingredientName, string storeId, float amount, string measurement, string token)
     {
-        var token = await GetClientCredentialsTokenAsync();
-        if (token == null) return null;
-
-        var term = NormalizeSearchTerm(ingredientName);
+        // Send the full name to the API so Kroger's search sees "sliced turkey",
+        // not just "turkey". The stripped term is only used client-side to filter results.
+        var apiTerm = ingredientName.Trim();
+        var (filterTerm, preferWhole) = NormalizeSearchTerm(ingredientName, measurement);
 
         var request = new HttpRequestMessage(HttpMethod.Get,
-            $"products?filter.term={Uri.EscapeDataString(term)}&filter.locationId={storeId}&filter.limit=10");
+            $"products?filter.term={Uri.EscapeDataString(apiTerm)}&filter.locationId={storeId}&filter.limit=10");
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
         var response = await _httpClient.SendAsync(request);
@@ -93,13 +93,23 @@ public class KrogerService : IKrogerService
         var result = JsonSerializer.Deserialize<KrogerProductResponse>(json, JsonOptions);
         if (result == null || result.Data.Count == 0) return null;
 
-        var termWords = term.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        // Filter words are the core ingredient words after stripping descriptors.
+        // If stripping removed everything, fall back to the full name so we still filter.
+        var filterWords = filterTerm.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (filterWords.Length == 0)
+            filterWords = apiTerm.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+
+        string[] processedForms = ["ground", "minced", "shredded", "sliced", "chopped", "diced", "grated"];
+
         var best = result.Data
-            .Where(p => termWords.All(w =>
+            .Where(p => filterWords.All(w =>
                 p.Description.Contains(w, StringComparison.OrdinalIgnoreCase)))
-            .OrderBy(p => p.Description.Length)
-            .FirstOrDefault()
-            ?? result.Data[0];
+            .OrderBy(p => preferWhole && processedForms.Any(f =>
+                p.Description.Contains(f, StringComparison.OrdinalIgnoreCase)) ? 1 : 0)
+            .ThenBy(p => p.Description.Length)
+            .FirstOrDefault();
+
+        if (best == null) return null;
 
         var productSize = best.Items.FirstOrDefault()?.Size;
         var quantity = CalculateQuantity(amount, measurement, productSize);
@@ -136,7 +146,7 @@ public class KrogerService : IKrogerService
         if (recipeOz <= 0 || productOz <= 0 || productIsCount)
             return 1;
 
-        return Math.Max(1, Math.Min(10, (int)Math.Ceiling(recipeOz / productOz)));
+        return Math.Max(1, (int)Math.Ceiling(recipeOz / productOz));
     }
 
     private static double ParseSizeToOz(string? size, out bool isCount)
@@ -166,10 +176,11 @@ public class KrogerService : IKrogerService
         }
     }
 
-    private static string NormalizeSearchTerm(string name)
+    private static (string term, bool preferWhole) NormalizeSearchTerm(string name, string measurement)
     {
-        if (string.IsNullOrWhiteSpace(name)) return name ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(name)) return (name ?? string.Empty, false);
 
+        // All words to strip from the search term (same set as before).
         string[] descriptors =
         [
             "single", "small", "medium", "large", "extra", "fresh", "organic", "whole",
@@ -178,10 +189,31 @@ public class KrogerService : IKrogerService
             "peeled", "seedless", "baby", "mini", "jumbo"
         ];
 
-        var words = name.Split(' ', StringSplitOptions.RemoveEmptyEntries)
+        // Subset of descriptors that represent a specific product form.
+        // If the original name contains one of these, the user chose a particular form
+        // (e.g. "ground turkey", "sliced turkey") and we should not bias toward whole items.
+        string[] formDescriptors =
+        [
+            "ground", "sliced", "chopped", "diced", "minced", "shredded", "grated",
+            "boneless", "skinless", "peeled"
+        ];
+
+        var words = name.Split(' ', StringSplitOptions.RemoveEmptyEntries).ToArray();
+        bool hasFormDescriptor = words.Any(w => formDescriptors.Contains(w, StringComparer.OrdinalIgnoreCase));
+
+        var filtered = words
             .Where(w => !descriptors.Contains(w, StringComparer.OrdinalIgnoreCase))
             .ToArray();
-        return words.Length > 0 ? string.Join(' ', words) : name;
+
+        var term = filtered.Length > 0 ? string.Join(' ', filtered) : name.Trim();
+
+        bool isCount = string.IsNullOrWhiteSpace(measurement)
+            || measurement.Equals("Count", StringComparison.OrdinalIgnoreCase);
+
+        // For Count with no form qualifier, de-prioritize processed product forms during selection.
+        bool preferWhole = isCount && !hasFormDescriptor;
+
+        return (term, preferWhole);
     }
 
     public async Task<bool> ExportCartAsync(IEnumerable<KrogerCartItem> items, string userAccessToken)
@@ -201,7 +233,7 @@ public class KrogerService : IKrogerService
         return response.IsSuccessStatusCode;
     }
 
-    private async Task<string?> GetClientCredentialsTokenAsync()
+    public async Task<string?> GetClientCredentialsTokenAsync()
     {
         var request = BuildTokenRequest(new[]
         {
