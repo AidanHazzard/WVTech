@@ -9,21 +9,27 @@ using Microsoft.AspNetCore.Mvc;
 namespace MealPlanner.Controllers;
 
 [Authorize]
-public class ShoppingListController : Controller
+public class ShoppingController : Controller
 {
-    private readonly ShoppingListService _shoppingListService;
+    private readonly IShoppingListService _shoppingListService;
+    private readonly IPantryService _pantryService;
     private readonly UserManager<User> _userManager;
+    private readonly IRegistrationService _registrationService;
     private readonly IMealRepository _mealRepo;
     private readonly MealPlannerDBContext _context;
 
-    public ShoppingListController(
-        ShoppingListService shoppingListService,
+    public ShoppingController(
+        IShoppingListService shoppingListService,
+        IPantryService pantryService,
         UserManager<User> userManager,
+        IRegistrationService registrationService,
         IMealRepository mealRepo,
         MealPlannerDBContext context)
     {
         _shoppingListService = shoppingListService;
+        _pantryService = pantryService;
         _userManager = userManager;
+        _registrationService = registrationService;
         _mealRepo = mealRepo;
         _context = context;
     }
@@ -100,14 +106,14 @@ public class ShoppingListController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> UpdateItemAmount(string itemName, float newAmount)
+    public async Task<IActionResult> UpdateItemAmount(int ingredientBaseId, float newAmount)
     {
         User? user = await _userManager.GetUserAsync(User);
         if (user == null) return Challenge();
 
         try
         {
-            _shoppingListService.UpdateItemAmount(user.Id, itemName, newAmount);
+            _shoppingListService.UpdateItemAmount(user.Id, ingredientBaseId, newAmount);
         }
         catch (ArgumentException ex)
         {
@@ -119,21 +125,80 @@ public class ShoppingListController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> RemoveItem(string itemName)
+    public async Task<IActionResult> RemoveItem(int itemId)
     {
         User? user = await _userManager.GetUserAsync(User);
         if (user == null) return Challenge();
 
-        try
-        {
-            _shoppingListService.RemoveItemsByName(user.Id, itemName);
-        }
-        catch (ArgumentException ex)
-        {
-            TempData["ShoppingListError"] = ex.Message;
-        }
+        _shoppingListService.RemoveItem(itemId, user.Id);
 
         return RedirectToAction(nameof(Index));
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> Pantry()
+    {
+        var user = await _registrationService.FindUserByClaimAsync(User);
+        if (user == null) return Challenge();
+
+        var items = _pantryService.GetPantryItems(user.Id);
+        return View(items);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> UpdatePantryItemAmount(int ingredientId, float? newAmount)
+    {
+        if (newAmount == null || newAmount <= 0)
+        {
+            TempData["ValidationError"] = "Amount must be greater than zero.";
+            return RedirectToAction(nameof(Pantry));
+        }
+
+        var user = await _registrationService.FindUserByClaimAsync(User);
+        if (user == null) return Challenge();
+
+        _pantryService.UpdatePantryItemAmount(ingredientId, user.Id, newAmount.Value);
+        _context.SaveChanges();
+
+        return RedirectToAction(nameof(Pantry));
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> RemovePantryItem(int ingredientId)
+    {
+        var user = await _registrationService.FindUserByClaimAsync(User);
+        if (user == null) return Challenge();
+
+        _pantryService.RemovePantryItem(ingredientId, user.Id);
+        _context.SaveChanges();
+
+        return RedirectToAction(nameof(Pantry));
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> AddPantryItem(PantryItemViewModel model)
+    {
+        if (!ModelState.IsValid)
+        {
+            TempData["ValidationError"] = ModelState.Values
+                .SelectMany(v => v.Errors)
+                .Select(e => e.ErrorMessage)
+                .FirstOrDefault() ?? "Please correct the form errors.";
+            return RedirectToAction(nameof(Pantry));
+        }
+
+        var user = await _registrationService.FindUserByClaimAsync(User);
+        if (user == null) return Challenge();
+
+        var ingredient = _pantryService.BuildPantryItem(model.Name, model.Amount, model.Measurement);
+        user.PantryItems.Add(ingredient);
+        _context.SaveChanges();
+
+        TempData["SuccessMessage"] = $"{model.Name} was added to your pantry.";
+        return RedirectToAction(nameof(Pantry));
     }
 
     private async Task SyncMealIngredients(User user, DateTime dateFrom, DateTime dateTo)

@@ -28,6 +28,13 @@ button {
     overflow-anchor: none;
     align-items: center;
     padding: 5px 0 5px 0;
+    cursor: grab;
+}
+
+#back1DatesInnerContainer.dragging {
+    cursor: grabbing;
+    scroll-behavior: auto;
+    user-select: none;
 }
 
 #scrollAnchor {
