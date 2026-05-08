@@ -31,8 +31,8 @@ public class KrogerExportService : IKrogerExportService
             return KrogerExportResult.Of(KrogerExportOutcome.SearchTokenFailed);
 
         var matches = await Task.WhenAll(items.Select(item =>
-            _krogerService.SearchProductUpcAsync(item.Name, storeId, item.Amount, item.Measurement, searchToken)
-                .ContinueWith(t => (item.Name, item.Amount, item.Measurement, match: t.Result))));
+            _krogerService.SearchProductUpcAsync(item.IngredientBase.Name, storeId, item.Amount, item.Measurement.Name, searchToken)
+                .ContinueWith(t => (Name: item.IngredientBase.Name, item.Amount, Measurement: item.Measurement.Name, match: t.Result))));
 
         var found = matches.Where(r => r.match != null).ToList();
         var skipped = matches.Where(r => r.match == null).Select(r => r.Name).ToList();

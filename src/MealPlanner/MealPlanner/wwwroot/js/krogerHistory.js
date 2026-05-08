@@ -159,7 +159,7 @@ async function toggleEntry(entry, exportId) {
             measurement: item.measurement,
             __RequestVerificationToken: token,
           });
-          await fetch("/ShoppingList/AddItem", {
+          await fetch("/Shopping/AddItem", {
             method: "POST",
             headers: { "Content-Type": "application/x-www-form-urlencoded" },
             body: params.toString(),

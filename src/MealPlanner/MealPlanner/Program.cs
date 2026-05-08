@@ -116,7 +116,8 @@ builder.Services.AddScoped<IRegistrationService, RegistrationService>();
 builder.Services.AddScoped<IUserSettingsService, UserSettingsService>();
 builder.Services.AddScoped<IMealRecommendationService, MealRecommendationService>();
 builder.Services.AddScoped<ThemeFilter>();
-builder.Services.AddScoped<IShoppingListService, ShoppingListService>();
+builder.Services.AddScoped<ShoppingListService>();
+builder.Services.AddScoped<IShoppingListService>(sp => sp.GetRequiredService<ShoppingListService>());
 builder.Services.AddScoped<IPantryService, PantryService>();
 
 builder.Services.AddScoped<IKrogerExportService, KrogerExportService>();

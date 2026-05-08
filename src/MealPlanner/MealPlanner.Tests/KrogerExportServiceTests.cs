@@ -28,12 +28,12 @@ public class KrogerExportServiceTests
         _shoppingListRepoMock = new Mock<IShoppingListRepository>();
 
         _shoppingListRepoMock.Setup(r => r.GetByUserId(UserId))
-            .Returns([new ShoppingListItem { UserId = UserId, Name = "Chicken Broth", Amount = 2, Measurement = "Cup(s)" }]);
+            .Returns([new ShoppingListItem { UserId = UserId, IngredientBase = new IngredientBase { Name = "chicken broth" }, Amount = 2, Measurement = new Measurement { Name = "Cup(s)" } }]);
 
         _exportRepoMock.Setup(r => r.SaveExportAsync(It.IsAny<KrogerExport>()))
             .Returns(Task.CompletedTask);
 
-        _shoppingListService = new ShoppingListService(_shoppingListRepoMock.Object, Mock.Of<IMealRepository>());
+        _shoppingListService = new ShoppingListService(_shoppingListRepoMock.Object, Mock.Of<IMealRepository>(), Mock.Of<IIngredientBaseRepository>(), Mock.Of<IRepository<Measurement>>());
 
         _service = new KrogerExportService(
             _exportRepoMock.Object,

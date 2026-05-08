@@ -23,7 +23,7 @@ public class WVT22Steps
     [Given("'Dave' is on the shopping list page")]
     public void GivenDaveIsOnShoppingListPage()
     {
-        _driver.Navigate().GoToUrl($"{_baseUrl}/ShoppingList");
+        _driver.Navigate().GoToUrl($"{_baseUrl}/Shopping");
         _wait.Until(d => ((IJavaScriptExecutor)d)
             .ExecuteScript("return document.readyState")?.ToString() == "complete");
     }
@@ -70,9 +70,9 @@ public class WVT22Steps
                 .ExecuteScript("return document.readyState")?.ToString() == "complete");
         }
 
-        if (!_driver.Url.Contains("ShoppingList"))
+        if (!_driver.Url.Contains("Shopping"))
         {
-            _driver.Navigate().GoToUrl($"{_baseUrl}/ShoppingList");
+            _driver.Navigate().GoToUrl($"{_baseUrl}/Shopping");
             _wait.Until(d => ((IJavaScriptExecutor)d)
                 .ExecuteScript("return document.readyState")?.ToString() == "complete");
         }
@@ -93,7 +93,7 @@ public class WVT22Steps
         _wait.Until(d => ((IJavaScriptExecutor)d)
             .ExecuteScript("return document.readyState")?.ToString() == "complete");
 
-        _driver.Navigate().GoToUrl($"{_baseUrl}/ShoppingList");
+        _driver.Navigate().GoToUrl($"{_baseUrl}/Shopping");
         _wait.Until(d => ((IJavaScriptExecutor)d)
             .ExecuteScript("return document.readyState")?.ToString() == "complete");
     }
@@ -118,12 +118,17 @@ public class WVT22Steps
         using var ctx = BDDSetup.CreateContext();
         if (!ctx.ShoppingListItems.Any(i => i.UserId == user.Id))
         {
+            var ingredientBase = ctx.Set<IngredientBase>().FirstOrDefault(b => b.Name == "chicken broth")
+                ?? ctx.Set<IngredientBase>().Add(new IngredientBase { Name = "chicken broth" }).Entity;
+            var measurement = ctx.Set<Measurement>().FirstOrDefault(m => m.Name == "Cup(s)")
+                ?? ctx.Set<Measurement>().Add(new Measurement { Name = "Cup(s)" }).Entity;
+            ctx.SaveChanges();
             ctx.ShoppingListItems.Add(new ShoppingListItem
             {
                 UserId = user.Id,
-                Name = "Chicken Broth",
+                IngredientBase = ingredientBase,
                 Amount = 2,
-                Measurement = "Cup(s)"
+                Measurement = measurement
             });
             ctx.SaveChanges();
         }
