@@ -84,7 +84,7 @@ public class KrogerController : Controller
         if (_krogerService == null)
         {
             TempData["KrogerError"] = "Kroger integration is not configured.";
-            return RedirectToAction("Index", "ShoppingList");
+            return RedirectToAction("Index", "Shopping");
         }
 
         var krogerToken = GetValidSessionToken();
@@ -107,7 +107,7 @@ public class KrogerController : Controller
         if (_krogerService == null)
         {
             TempData["KrogerError"] = "Kroger integration is not configured.";
-            return RedirectToAction("Index", "ShoppingList");
+            return RedirectToAction("Index", "Shopping");
         }
         return Redirect(_krogerService.GetAuthorizationUrl("kroger-connect"));
     }
@@ -117,13 +117,13 @@ public class KrogerController : Controller
     public async Task<IActionResult> Callback(string code, string state)
     {
         if (_krogerService == null)
-            return JsRedirect("/ShoppingList");
+            return JsRedirect("/Shopping");
 
         var tokenResponse = await _krogerService.ExchangeCodeAsync(code);
         if (tokenResponse == null)
         {
             TempData["KrogerError"] = "Failed to connect to Kroger. Please try again.";
-            return JsRedirect("/ShoppingList");
+            return JsRedirect("/Shopping");
         }
 
         HttpContext.Session.SetString(SessionToken, tokenResponse.AccessToken);
@@ -168,29 +168,29 @@ public class KrogerController : Controller
         {
             case KrogerExportOutcome.NoItems:
                 TempData["KrogerInfo"] = "Kroger account connected! Add items to your shopping list and click Export to send them to your cart.";
-                return RedirectToAction("Index", "ShoppingList");
+                return RedirectToAction("Index", "Shopping");
 
             case KrogerExportOutcome.SearchTokenFailed:
                 TempData["KrogerError"] = "Could not connect to Kroger. Please try again.";
-                return RedirectToAction("Index", "ShoppingList");
+                return RedirectToAction("Index", "Shopping");
 
             case KrogerExportOutcome.NoMatchesFound:
                 TempData["KrogerError"] = "No matching Kroger products found for your shopping list items.";
-                return RedirectToAction("Index", "ShoppingList");
+                return RedirectToAction("Index", "Shopping");
 
             case KrogerExportOutcome.Success:
                 HttpContext.Response.Cookies.Append("ShoppingListSynced", "1", new CookieOptions { HttpOnly = true });
                 TempData["KrogerSuccess"] = result.Skipped.Count == 0
                     ? $"{result.ItemsAdded} item(s) added to your Kroger cart!"
                     : $"{result.ItemsAdded} item(s) added to your Kroger cart. Could not find: {string.Join(", ", result.Skipped)}.";
-                return RedirectToAction("Index", "ShoppingList");
+                return RedirectToAction("Index", "Shopping");
 
             default: // ExportFailed
                 HttpContext.Session.Remove(SessionToken);
                 TempData["KrogerError"] = isRetry
                     ? "Error connecting to your Kroger account. Please try again later."
                     : "Your Kroger session expired. Click Export to Kroger again to reconnect.";
-                return RedirectToAction("Index", "ShoppingList");
+                return RedirectToAction("Index", "Shopping");
         }
     }
 
