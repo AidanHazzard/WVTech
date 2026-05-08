@@ -8,7 +8,7 @@ public interface IShoppingListRepository
 
     void Remove(int itemId, string userId);
 
-    void RemoveAllByName(string userId, string name);
+    void RemoveAllByIngredientBase(string userId, int ingredientBaseId);
 
     void RemoveAutoAddedByUserId(string userId);
 
@@ -17,4 +17,6 @@ public interface IShoppingListRepository
     void UpdateAmountByName(string userId, string name, float newAmount);
 
     void ClearAllItems(string userId);
+
+    void UpdateAmountByIngredientBase(string userId, int ingredientBaseId, float newAmount);
 }

@@ -184,4 +184,31 @@ public class RepositoryTests
         // Assert
         Assert.That(doesntExist, Is.False, "Id not in table should return false");
     }
+
+    [Test]
+    public void FindOrCreate_ReturnsExistingEntity_WhenMatchFound()
+    {
+        MealPlannerDBContext context = CreateContext();
+        Repository<IngredientBase> repo = new Repository<IngredientBase>(context);
+        var existing = new IngredientBase { Name = "Flour" };
+        context.Set<IngredientBase>().Add(existing);
+        context.SaveChanges();
+
+        var result = repo.FindOrCreate(b => b.Name == "Flour", () => new IngredientBase { Name = "Flour" });
+
+        Assert.That(result.Id, Is.EqualTo(existing.Id));
+    }
+
+    [Test]
+    public void FindOrCreate_CreatesNewEntity_WhenNoMatchFound()
+    {
+        MealPlannerDBContext context = CreateContext();
+        Repository<IngredientBase> repo = new Repository<IngredientBase>(context);
+
+        var result = repo.FindOrCreate(b => b.Name == "Sugar", () => new IngredientBase { Name = "Sugar" });
+        context.SaveChanges();
+
+        Assert.That(result.Id, Is.Not.Zero);
+        Assert.That(context.Set<IngredientBase>().Any(b => b.Name == "Sugar"), Is.True);
+    }
 }

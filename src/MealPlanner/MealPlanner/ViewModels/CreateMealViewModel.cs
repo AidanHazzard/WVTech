@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using MealPlanner.Models;
 
 namespace MealPlanner.ViewModels;
 
@@ -21,4 +22,8 @@ public class CreateMealViewModel
     public bool RepeatWeekly { get; set; }
 
     public List<DayOfWeek> RepeatDays { get; set; } = [];
+
+    public MealSize Size { get; set; } = MealSize.Average;
+    public List<int> TagIds { get; set; } = [];
+    public string? CustomTagName { get; set; }
 }
