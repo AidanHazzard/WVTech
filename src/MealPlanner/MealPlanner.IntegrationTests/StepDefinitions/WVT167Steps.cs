@@ -18,6 +18,7 @@ public class WVT167Steps
     private int _highCalRecipeId;
     private int _lowCalRecipeId;
     private int _testMealId;
+    private string? _imageFilePath;
 
     private const string NewRecipeName = "WVT167NewRecipe";
     private const string ExistingRecipeName = "WVT167ExistingRecipe";
@@ -98,6 +99,30 @@ public class WVT167Steps
         {
             existing.UserOwner = true;
             ctx.SaveChanges();
+        }
+    }
+
+    [AfterScenario]
+    public void CleanupTestImages()
+    {
+        // Scenario 7: file written directly — delete if the test failed before DeleteRecipe ran
+        if (_imageFilePath != null && File.Exists(_imageFilePath))
+            File.Delete(_imageFilePath);
+
+        // Scenarios 1 & 2: files saved by the server — look up the ImageUrl from the DB and delete
+        var webRoot = GetAutWebRootPath();
+        var trackedNames = new[] { NewRecipeName, ExistingRecipeName, "WVT167DeleteImageRecipe" };
+        using var ctx = BDDSetup.CreateContext();
+        var recipes = ctx.Recipes
+            .Where(r => trackedNames.Contains(r.Name) && r.ImageUrl != null && r.ImageUrl.StartsWith("/images/recipes/"))
+            .ToList();
+
+        foreach (var recipe in recipes)
+        {
+            var filePath = Path.Combine(webRoot,
+                recipe.ImageUrl!.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
+            if (File.Exists(filePath))
+                File.Delete(filePath);
         }
     }
 
@@ -329,5 +354,52 @@ public class WVT167Steps
             Assert.That(calories[i], Is.GreaterThanOrEqualTo(calories[i + 1]),
                 $"Image at position {i} ({calories[i]} cal) should come before position {i + 1} ({calories[i + 1]} cal)");
         }
+    }
+
+    // --- Scenario 7: Deleting a recipe removes its image file ---
+
+    private static string GetAutWebRootPath() =>
+        Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "MealPlanner", "wwwroot"));
+
+    [Given("'Gary' has a WVT167 recipe with an uploaded image file on disk")]
+    public void GivenGaryHasAWvt167RecipeWithAnUploadedImageFileOnDisk()
+    {
+        var webRoot = GetAutWebRootPath();
+        var dir = Path.Combine(webRoot, "images", "recipes");
+        Directory.CreateDirectory(dir);
+        var fileName = $"wvt167-delete-test-{Guid.NewGuid()}.png";
+        _imageFilePath = Path.Combine(dir, fileName);
+        File.WriteAllBytes(_imageFilePath, MinimalPng);
+
+        using var ctx = BDDSetup.CreateContext();
+        var userId = GetGaryId(ctx);
+        var recipe = SeedRecipe(ctx, "WVT167DeleteImageRecipe", $"/images/recipes/{fileName}");
+        _testRecipeId = recipe.Id;
+        SeedUserRecipe(ctx, userId, recipe.Id);
+    }
+
+    [When("'Gary' deletes that recipe")]
+    public void WhenGaryDeletesThatRecipe()
+    {
+        _driver.Navigate().GoToUrl($"{_baseUrl}/FoodEntries/Recipes");
+        _wait.Until(d => ((IJavaScriptExecutor)d).ExecuteScript("return document.readyState").ToString() == "complete");
+
+        var btn = _wait.Until(d =>
+            d.FindElement(By.CssSelector($"[data-recipe-id='{_testRecipeId}'] .delete-recipe-btn")));
+        ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].scrollIntoView({block:'center'});", btn);
+        btn.Click();
+
+        var confirmBtn = _wait.Until(d => d.FindElement(By.CssSelector(".inline-confirm-yes")));
+        confirmBtn.Click();
+
+        // Wait until the JS fetch completes and removes the card from the DOM
+        _wait.Until(d => d.FindElements(By.CssSelector($"[data-recipe-id='{_testRecipeId}']")).Count == 0);
+    }
+
+    [Then("the image file no longer exists on the server")]
+    public void ThenTheImageFileNoLongerExistsOnTheServer()
+    {
+        Assert.That(_imageFilePath, Is.Not.Null);
+        Assert.That(File.Exists(_imageFilePath), Is.False, $"Expected image file to be deleted: {_imageFilePath}");
     }
 }

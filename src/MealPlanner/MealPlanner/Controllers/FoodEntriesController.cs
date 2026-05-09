@@ -42,22 +42,6 @@ public class FoodEntriesController : Controller
         _env = env;
     }
 
-    private static readonly HashSet<string> AllowedImageExtensions = [".jpg", ".jpeg", ".png", ".gif", ".webp"];
-
-    private async Task<string?> SaveImageFileAsync(IFormFile? imageFile)
-    {
-        if (imageFile == null || imageFile.Length == 0) return null;
-        var ext = Path.GetExtension(imageFile.FileName).ToLowerInvariant();
-        if (!AllowedImageExtensions.Contains(ext)) return null;
-
-        var dir = Path.Combine(_env.WebRootPath, "images", "recipes");
-        Directory.CreateDirectory(dir);
-        var fileName = $"{Guid.NewGuid()}{ext}";
-        using var stream = new FileStream(Path.Combine(dir, fileName), FileMode.Create);
-        await imageFile.CopyToAsync(stream);
-        return $"/images/recipes/{fileName}";
-    }
-
     public IActionResult SearchRecipes()
     {
         return View();
@@ -159,9 +143,8 @@ public class FoodEntriesController : Controller
             return View("AddNewRecipe", newRecipeViewModel);
         }
 
-        newRecipeViewModel.ImageUrl = await SaveImageFileAsync(newRecipeViewModel.ImageFile);
-
         Recipe recipe = ViewModelService.RecipeFromRecipeVM(newRecipeViewModel);
+        await recipe.SaveImageAsync(newRecipeViewModel.ImageFile, _env.WebRootPath);
         _recipeRepository.CreateOrUpdate(recipe);
 
         User? user = await _registrationService.FindUserByClaimAsync(User);
@@ -236,14 +219,16 @@ public class FoodEntriesController : Controller
         {
             editedRecipeViewModel.ImageUrl = null;
         }
-        else if (editedRecipeViewModel.ImageFile != null)
+
+        Recipe updated = ViewModelService.EditRecipeVMToModel(existing, editedRecipeViewModel);
+
+        if (!editedRecipeViewModel.RemoveImage && editedRecipeViewModel.ImageFile != null)
         {
-            editedRecipeViewModel.ImageUrl = await SaveImageFileAsync(editedRecipeViewModel.ImageFile);
+            await updated.SaveImageAsync(editedRecipeViewModel.ImageFile, _env.WebRootPath);
         }
-        // else: keep editedRecipeViewModel.ImageUrl from the hidden form field
 
         //updates the databse with the new and improved existing
-        _recipeRepository.CreateOrUpdate(ViewModelService.EditRecipeVMToModel(existing, editedRecipeViewModel));
+        _recipeRepository.CreateOrUpdate(updated);
         _context.SaveChanges();
 
         return RedirectToAction("Recipes");
@@ -263,6 +248,14 @@ public async Task<IActionResult> DeleteRecipe(int id)
 
     var recipe = await _recipeRepository.ReadRecipeWithIngredientsAsync(id);
     if (recipe == null) return NotFound();
+
+    // Delete image file if it lives in /images/recipes/
+    if (recipe.ImageUrl != null && recipe.ImageUrl.StartsWith("/images/recipes/"))
+    {
+        var filePath = Path.Combine(_env.WebRootPath, recipe.ImageUrl.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
+        if (System.IO.File.Exists(filePath))
+            System.IO.File.Delete(filePath);
+    }
 
     // Remove ingredients first
     _context.Set<Ingredient>().RemoveRange(recipe.Ingredients);
