@@ -622,6 +622,144 @@ a.buttonRed {
     white-space: nowrap;
 }
 
+/* Export History Modal */
+.export-modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 1050;
+    background: rgba(0, 0, 0, 0.6);
+    align-items: center;
+    justify-content: center;
+}
+
+.export-modal-panel {
+    width: 100%;
+    max-width: 560px;
+    max-height: 80vh;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    color: var(--text-primary);
+}
+
+.export-modal-header {
+    flex-shrink: 0;
+}
+
+.export-modal-body {
+    overflow-y: auto;
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
+.export-history-entry {
+    cursor: pointer;
+}
+
+.export-history-time,
+.export-status-text {
+    font-size: 0.85rem;
+}
+
+.export-history-chevron {
+    font-size: 0.8rem;
+}
+
+.export-item-list {
+    display: none;
+}
+
+.export-grey-btn {
+    background: var(--button-grey-bg);
+    color: var(--text-primary);
+}
+
+.export-ctrl-btn {
+    font-size: 0.78rem;
+}
+
+.export-item-row {
+    font-size: 0.9rem;
+    border-top: 1px solid rgba(0, 0, 0, 0.12);
+}
+
+.export-item-checkbox {
+    width: 1em;
+    height: 1em;
+    cursor: pointer;
+}
+
+/* Export History Modal */
+.export-modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 1050;
+    background: rgba(0, 0, 0, 0.6);
+    align-items: center;
+    justify-content: center;
+}
+
+.export-modal-panel {
+    width: 100%;
+    max-width: 560px;
+    max-height: 80vh;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    color: var(--text-primary);
+}
+
+.export-modal-header {
+    flex-shrink: 0;
+}
+
+.export-modal-body {
+    overflow-y: auto;
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
+.export-history-entry {
+    cursor: pointer;
+}
+
+.export-history-time,
+.export-status-text {
+    font-size: 0.85rem;
+}
+
+.export-history-chevron {
+    font-size: 0.8rem;
+}
+
+.export-item-list {
+    display: none;
+}
+
+.export-grey-btn {
+    background: var(--button-grey-bg);
+    color: var(--text-primary);
+}
+
+.export-ctrl-btn {
+    font-size: 0.78rem;
+}
+
+.export-item-row {
+    font-size: 0.9rem;
+    border-top: 1px solid rgba(0, 0, 0, 0.12);
+}
+
+.export-item-checkbox {
+    width: 1em;
+    height: 1em;
+    cursor: pointer;
+}
+
 /* Styling for the Index page collage */
 .recipe-collage-img {
   width: 100%;

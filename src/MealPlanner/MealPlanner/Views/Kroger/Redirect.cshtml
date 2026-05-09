@@ -1,0 +1,11 @@
+@model string
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html>
+<body data-redirect-url="@Model">
+    <script src="~/js/redirect.js"></script>
+    <noscript><a href="@Model">Continue</a></noscript>
+</body>
+</html>
