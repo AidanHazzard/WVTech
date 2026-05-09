@@ -24,9 +24,19 @@ public class WVT167Steps
     private const string HighCalRecipeName = "WVT167HighCal";
     private const string LowCalRecipeName = "WVT167LowCal";
 
-    private static string TestImagePath(string fileName) =>
-        Path.GetFullPath(Path.Combine(AppContext.BaseDirectory,
-            "..", "..", "..", "..", "MealPlanner", "wwwroot", "images", "placeholder", fileName));
+    // Minimal valid 1×1 PNG bytes
+    private static readonly byte[] MinimalPng =
+    [
+        0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A,
+        0x00, 0x00, 0x00, 0x0D, 0x49, 0x48, 0x44, 0x52,
+        0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01,
+        0x08, 0x02, 0x00, 0x00, 0x00, 0x90, 0x77, 0x53,
+        0xDE, 0x00, 0x00, 0x00, 0x0C, 0x49, 0x44, 0x41,
+        0x54, 0x08, 0xD7, 0x63, 0xF8, 0xCF, 0xC0, 0x00,
+        0x00, 0x00, 0x02, 0x00, 0x01, 0xE2, 0x21, 0xBC,
+        0x33, 0x00, 0x00, 0x00, 0x00, 0x49, 0x45, 0x4E,
+        0x44, 0xAE, 0x42, 0x60, 0x82
+    ];
 
     public WVT167Steps()
     {
@@ -37,6 +47,13 @@ public class WVT167Steps
 
     private string GetGaryId(MealPlannerDBContext ctx) =>
         ctx.Users.First(u => u.Email == "Gary@fakeemail.com").Id;
+
+    private string CreateTempImage()
+    {
+        var path = Path.Combine(Path.GetTempPath(), $"wvt167-{Guid.NewGuid()}.png");
+        File.WriteAllBytes(path, MinimalPng);
+        return path;
+    }
 
     private Recipe SeedRecipe(MealPlannerDBContext ctx, string name, string? imageUrl)
     {
@@ -109,7 +126,8 @@ public class WVT167Steps
         _driver.FindElement(By.Id("Fat")).Clear();
         _driver.FindElement(By.Id("Fat")).SendKeys("10");
 
-        _driver.FindElement(By.Id("imageFile")).SendKeys(TestImagePath("apples.avif"));
+        var tempImage = CreateTempImage();
+        _driver.FindElement(By.Id("imageFile")).SendKeys(tempImage);
     }
 
     [When("'Gary' submits the new recipe")]
@@ -154,7 +172,9 @@ public class WVT167Steps
     [When("'Gary' uploads a different image file")]
     public void WhenGaryUploadsDifferentImageFile()
     {
-        _driver.FindElement(By.Id("imageFile")).SendKeys(TestImagePath("nutrients.png"));
+        var tempImage = CreateTempImage();
+        var fileInput = _driver.FindElement(By.Id("imageFile"));
+        fileInput.SendKeys(tempImage);
     }
 
     [When("'Gary' saves the recipe")]
