@@ -387,7 +387,7 @@ public class WVT167Steps
         var btn = _wait.Until(d =>
             d.FindElement(By.CssSelector($"[data-recipe-id='{_testRecipeId}'] .delete-recipe-btn")));
         ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].scrollIntoView({block:'center'});", btn);
-        btn.Click();
+        ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].click();", btn);
 
         var confirmBtn = _wait.Until(d => d.FindElement(By.CssSelector(".inline-confirm-yes")));
         ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].scrollIntoView({block:'center'});", confirmBtn);
