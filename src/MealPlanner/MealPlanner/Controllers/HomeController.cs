@@ -2,6 +2,7 @@ using System.Diagnostics;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MealPlanner.DAL.Abstract;
+using MealPlanner.Helpers;
 using MealPlanner.Models;
 using MealPlanner.Services;
 using MealPlanner.ViewModels;
@@ -15,19 +16,22 @@ public class HomeController : Controller
     private readonly IRegistrationService _registrationService;
     private readonly IMealRepository _mealRepo;
     private readonly INutritionProgressService _nutritionProgressService;
+    private readonly IExternalRecipeService? _externalRecipeService;
 
     public HomeController(
         MealPlannerDBContext context,
         ILoginService loginService,
         IRegistrationService registrationService,
         IMealRepository mealRepo,
-        INutritionProgressService nutritionProgressService)
+        INutritionProgressService nutritionProgressService,
+        IExternalRecipeService? externalRecipeService = null)
     {
         _context = context;
         _loginService = loginService;
         _registrationService = registrationService;
         _mealRepo = mealRepo;
         _nutritionProgressService = nutritionProgressService;
+        _externalRecipeService = externalRecipeService;
     }
 
     public async Task<IActionResult> Index(string? date)
@@ -46,6 +50,9 @@ public class HomeController : Controller
                 : DateTime.Today;
 
         var meals = await _mealRepo.GetUserMealsByDateAsync(user, selectedDate);
+
+        foreach (var meal in meals)
+            await meal.Recipes.LoadExternalRecipesAsync(_externalRecipeService);
 
         var nutrition = await _nutritionProgressService.GetDailyProgressAsync(
             user.Id,

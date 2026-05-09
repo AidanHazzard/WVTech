@@ -69,9 +69,37 @@
                         <input type="hidden" name="id" value="@meal.Id" />
 
                         <button type="submit" class="imageButton mealButton">
-                            <img src="~/images/placeholder/apples.avif"
-                                 alt="apples"
-                                 class="fullImage">
+                            @{
+                                var sortedRecipes = meal.Recipes
+                                    .OrderByDescending(r => r.Calories)
+                                    .ToList();
+                            }
+                            @if (sortedRecipes.Any())
+                            {
+                                <div class="d-flex fullImage recipe-collage" style="overflow:hidden;">
+                                    @{
+                                        double widthPct = 50.0;
+                                    }
+                                    @foreach (var r in sortedRecipes)
+                                    {
+                                        bool rHasImage = !string.IsNullOrEmpty(r.ImageUrl);
+                                        string rSrc = rHasImage ? r.ImageUrl! : "/images/placeholder/no-image.svg";
+                                        <img src="@rSrc"
+                                             alt="@r.Name"
+                                             data-calories="@r.Calories"
+                                             data-recipe-id="@r.Id"
+                                             class="recipe-collage-img @(rHasImage ? "recipe-has-image" : "recipe-no-image")"
+                                             style="width:@widthPct.ToString("F1", System.Globalization.CultureInfo.InvariantCulture)%; flex-shrink:0; object-fit:cover; height:100%;" />
+                                        widthPct /= 2.0;
+                                    }
+                                </div>
+                            }
+                            else
+                            {
+                                <img src="~/images/placeholder/apples.avif"
+                                     alt="apples"
+                                     class="fullImage">
+                            }
 
                             <div class="buttonGreen noBevelTop">
                                 <h2 class="buttonText">@meal.Title</h2>

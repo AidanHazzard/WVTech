@@ -33,7 +33,8 @@ public class HomeControllerTests
         ClaimsPrincipal user,
         Mock<IRegistrationService>? registrationServiceMock = null,
         Mock<IMealRepository>? mealRepoMock = null,
-        Mock<INutritionProgressService>? nutritionServiceMock = null)
+        Mock<INutritionProgressService>? nutritionServiceMock = null,
+        Mock<IExternalRecipeService>? externalRecipeServiceMock = null)
     {
         registrationServiceMock ??= new Mock<IRegistrationService>();
         mealRepoMock ??= new Mock<IMealRepository>();
@@ -52,7 +53,8 @@ public class HomeControllerTests
             Mock.Of<ILoginService>(),
             registrationServiceMock.Object,
             mealRepoMock.Object,
-            nutritionServiceMock.Object);
+            nutritionServiceMock.Object,
+            externalRecipeServiceMock?.Object);
 
         controller.ControllerContext = new ControllerContext
         {

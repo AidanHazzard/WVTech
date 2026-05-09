@@ -19,6 +19,7 @@ public class Recipe
     public int Carbs { get; set; }
     public int Fat { get; set; } 
     public string? ExternalUri { get; set; }
+    public string? ImageUrl { get; set; }
     public List<Meal> Meals { get; set; } = [];
     public List<Tag> Tags { get; set; } = [];
     public List<User> Users { get; } = [];

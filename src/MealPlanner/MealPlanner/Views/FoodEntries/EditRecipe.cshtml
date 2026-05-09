@@ -6,7 +6,7 @@
 <div class="back1 backHasButton">
     <h1 class="back1Title">Edit Recipe</h1>
 
-<form asp-controller="FoodEntries" asp-action="RecipeEditFinished" asp-route-id="@Model.Id" method="post">
+<form asp-controller="FoodEntries" asp-action="RecipeEditFinished" asp-route-id="@Model.Id" method="post" enctype="multipart/form-data">
 
         <h2 class="back1Title left">
             <span>Name:</span>
@@ -74,6 +74,22 @@
             </div>
 
             @await Html.PartialAsync("_TagSelector")
+
+            <div class="back2">
+                <h2 class="back1Title">Recipe Image</h2>
+                <input type="hidden" asp-for="ImageUrl" />
+                @if (!string.IsNullOrEmpty(Model.ImageUrl))
+                {
+                    <div class="mb-2">
+                        <img src="@Model.ImageUrl" alt="Current recipe image" style="max-width:200px; max-height:150px; object-fit:cover;" class="mb-2" />
+                    </div>
+                    <div class="mb-2">
+                        <input type="checkbox" id="removeImage" name="RemoveImage" value="true" />
+                        <label for="removeImage">Remove current image</label>
+                    </div>
+                }
+                <input type="file" id="imageFile" name="ImageFile" accept="image/*" class="back2-textbox" />
+            </div>
 
             <button class="buttonBlue" type="submit">
                 <h2 class="buttonText">Finish</h2>

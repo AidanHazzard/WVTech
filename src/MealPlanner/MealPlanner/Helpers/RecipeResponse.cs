@@ -14,6 +14,7 @@ public class EdamamRecipe
 {
     public string Uri { get; set; }
     public string Label { get; set; }
+    public string? Image { get; set; }
     public IList<EdamamIngredient>? Ingredients { get; set; }
     public IDictionary<string, EdamamNutrient>? TotalNutrients { get; set; }
 }
