@@ -9,24 +9,34 @@ public static class RecipeListExtensions
     {
         if (externalRecipeService == null) return;
 
+        var external = recipes.Where(r => !string.IsNullOrEmpty(r.ExternalUri)).ToList();
+        if (external.Count == 0) return;
+
+        Dictionary<string, Recipe> loaded;
+        try
+        {
+            var results = await externalRecipeService.GetExternalRecipesByURIs(
+                external.Select(r => r.ExternalUri!));
+            loaded = results.ToDictionary(r => r.ExternalUri!);
+        }
+        catch
+        {
+            foreach (var r in external)
+                recipes.Remove(r);
+            return;
+        }
+
         for (int i = recipes.Count - 1; i >= 0; i--)
         {
             var r = recipes[i];
             if (string.IsNullOrEmpty(r.ExternalUri)) continue;
-            try
+
+            if (loaded.TryGetValue(r.ExternalUri, out var loadedRecipe))
             {
-                var loaded = await externalRecipeService.GetExternalRecipeByURI(r.ExternalUri);
-                if (loaded != null)
-                {
-                    loaded.Id = r.Id;
-                    recipes[i] = loaded;
-                }
-                else
-                {
-                    recipes.RemoveAt(i);
-                }
+                loadedRecipe.Id = r.Id;
+                recipes[i] = loadedRecipe;
             }
-            catch
+            else
             {
                 recipes.RemoveAt(i);
             }
