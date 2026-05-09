@@ -35,4 +35,18 @@ public class UserSettingsRepository : Repository<UserProfile>, IUserSettingsRepo
             await _context.SaveChangesAsync();
         }
     }
+
+    public async Task SaveZipCodeAsync(string userId, string? zipCode)
+    {
+        var profile = await GetByUserIdAsync(userId);
+        if (profile == null)
+        {
+            _context.Add(new UserProfile { UserId = userId, ZipCode = zipCode });
+        }
+        else
+        {
+            profile.ZipCode = zipCode;
+        }
+        await _context.SaveChangesAsync();
+    }
 }

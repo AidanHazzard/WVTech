@@ -14,5 +14,7 @@ public interface IShoppingListRepository
 
     IEnumerable<ShoppingListItem> GetByUserId(string userId);
 
+    void ClearAllItems(string userId);
+
     void UpdateAmountByIngredientBase(string userId, int ingredientBaseId, float newAmount);
 }
