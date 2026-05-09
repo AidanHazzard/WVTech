@@ -390,7 +390,8 @@ public class WVT167Steps
         btn.Click();
 
         var confirmBtn = _wait.Until(d => d.FindElement(By.CssSelector(".inline-confirm-yes")));
-        confirmBtn.Click();
+        ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].scrollIntoView({block:'center'});", confirmBtn);
+        ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].click();", confirmBtn);
 
         // Wait until the JS fetch completes and removes the card from the DOM
         _wait.Until(d => d.FindElements(By.CssSelector($"[data-recipe-id='{_testRecipeId}']")).Count == 0);
