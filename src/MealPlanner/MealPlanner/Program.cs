@@ -26,6 +26,9 @@ if (builder.Environment.IsProduction())
             secretClient.GetSecret("EmailSettings--Password").Value.Value;
         builder.Configuration["Edamam:AppId"] = secretClient.GetSecret("Edamam--AppId").Value.Value;
         builder.Configuration["Edamam:ApiKey"] = secretClient.GetSecret("Edamam--ApiKey").Value.Value;
+        builder.Configuration["Kroger:RedirectUri"] = "https://onebite.azurewebsites.net/Kroger/Callback";
+        builder.Configuration["Kroger:ClientSecret"] = secretClient.GetSecret("Kroger--ClientSecret").Value.Value;
+        builder.Configuration["Kroger:ClientId"] = secretClient.GetSecret("Kroger--ClientId").Value.Value;
     }
 }
 
