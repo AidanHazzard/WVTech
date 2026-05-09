@@ -75,14 +75,15 @@
                                     .ToList();
                             }
                             
+                            <!-- Recipe image collage -->
                             @if (sortedRecipes.Any())
                             {
-                                int hanging = 0;
                                 @for(int i=0; i<sortedRecipes.Count; i++)
                                 {
                                     Recipe r = sortedRecipes[i];
                                     bool rHasImage = !string.IsNullOrEmpty(r.ImageUrl);
                                     string rSrc = rHasImage ? r.ImageUrl! : "/images/placeholder/no-image.svg";
+                                    <!-- Even horizontally splits, odd vertically, last in list fills rest -->
                                     if(i== sortedRecipes.Count-1)
                                     {
                                         <div class="recipe-collage-full">
@@ -103,7 +104,6 @@
                                                 class="recipe-collage-img @(rHasImage ? "recipe-has-image" : "recipe-no-image")" />
                                         </div>
                                         @:<div class="recipe-collage-right-half">
-                                        hanging++;
                                     }
                                     else
                                     {
@@ -115,10 +115,10 @@
                                                 class="recipe-collage-img @(rHasImage ? "recipe-has-image" : "recipe-no-image")" />
                                         </div>
                                         @:<div class="recipe-collage-vert-half">
-                                        hanging++;
                                     }
                                 }
-                                @for(int i=0; i<hanging; i++)
+                                <!-- Clean up hanging tags (needed for nesting DOM elements with loops) -->
+                                @for(int i=0; i<sortedRecipes.Count-1; i++)
                                 {
                                     @:</div>
                                 }
