@@ -4,6 +4,7 @@ using MealPlanner.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace MealPlanner.Migrations
 {
     [DbContext(typeof(MealPlannerDBContext))]
-    partial class MealPlannerDBContextModelSnapshot : ModelSnapshot
+    [Migration("20260507180044_AddKrogerExportHistory")]
+    partial class AddKrogerExportHistory
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -50,11 +53,6 @@ namespace MealPlanner.Migrations
                     b.Property<float>("Amount")
                         .HasColumnType("real");
 
-                    b.Property<string>("DisplayName")
-                        .IsRequired()
-                        .HasMaxLength(128)
-                        .HasColumnType("nvarchar(128)");
-
                     b.Property<int>("IngredientBaseId")
                         .HasColumnType("int");
 
@@ -64,9 +62,6 @@ namespace MealPlanner.Migrations
                     b.Property<int?>("RecipeId")
                         .HasColumnType("int");
 
-                    b.Property<string>("UserId")
-                        .HasColumnType("nvarchar(450)");
-
                     b.HasKey("Id");
 
                     b.HasIndex("IngredientBaseId");
@@ -74,8 +69,6 @@ namespace MealPlanner.Migrations
                     b.HasIndex("MeasurementId");
 
                     b.HasIndex("RecipeId");
-
-                    b.HasIndex("UserId");
 
                     b.ToTable("Ingredient");
                 });
@@ -386,24 +379,22 @@ namespace MealPlanner.Migrations
                     b.Property<float>("Amount")
                         .HasColumnType("real");
 
-                    b.Property<int>("IngredientBaseId")
-                        .HasColumnType("int");
-
                     b.Property<bool>("IsAutoAdded")
                         .HasColumnType("bit");
 
-                    b.Property<int>("MeasurementId")
-                        .HasColumnType("int");
+                    b.Property<string>("Measurement")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("UserId")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("IngredientBaseId");
-
-                    b.HasIndex("MeasurementId");
 
                     b.ToTable("ShoppingListItems");
                 });
@@ -826,10 +817,6 @@ namespace MealPlanner.Migrations
                         .WithMany("Ingredients")
                         .HasForeignKey("RecipeId");
 
-                    b.HasOne("MealPlanner.Models.User", null)
-                        .WithMany("PantryItems")
-                        .HasForeignKey("UserId");
-
                     b.Navigation("IngredientBase");
 
                     b.Navigation("Measurement");
@@ -877,25 +864,6 @@ namespace MealPlanner.Migrations
                         .IsRequired();
 
                     b.Navigation("Meal");
-                });
-
-            modelBuilder.Entity("MealPlanner.Models.ShoppingListItem", b =>
-                {
-                    b.HasOne("MealPlanner.Models.IngredientBase", "IngredientBase")
-                        .WithMany()
-                        .HasForeignKey("IngredientBaseId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("MealPlanner.Models.Measurement", "Measurement")
-                        .WithMany()
-                        .HasForeignKey("MeasurementId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("IngredientBase");
-
-                    b.Navigation("Measurement");
                 });
 
             modelBuilder.Entity("MealPlanner.Models.UserDietaryRestriction", b =>
@@ -1087,8 +1055,6 @@ namespace MealPlanner.Migrations
 
             modelBuilder.Entity("MealPlanner.Models.User", b =>
                 {
-                    b.Navigation("PantryItems");
-
                     b.Navigation("UserRecipes");
                 });
 #pragma warning restore 612, 618

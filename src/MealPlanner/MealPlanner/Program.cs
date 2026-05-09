@@ -26,6 +26,9 @@ if (builder.Environment.IsProduction())
             secretClient.GetSecret("EmailSettings--Password").Value.Value;
         builder.Configuration["Edamam:AppId"] = secretClient.GetSecret("Edamam--AppId").Value.Value;
         builder.Configuration["Edamam:ApiKey"] = secretClient.GetSecret("Edamam--ApiKey").Value.Value;
+        builder.Configuration["Kroger:RedirectUri"] = "https://onebite.azurewebsites.net/Kroger/Callback";
+        builder.Configuration["Kroger:ClientSecret"] = secretClient.GetSecret("Kroger--ClientSecret").Value.Value;
+        builder.Configuration["Kroger:ClientId"] = secretClient.GetSecret("Kroger--ClientId").Value.Value;
     }
 }
 
@@ -63,6 +66,7 @@ builder.Services.AddScoped<IUserSettingsRepository, UserSettingsRepository>();
 builder.Services.AddScoped<IShoppingListRepository, ShoppingListRepository>();
 builder.Services.AddScoped<IIngredientBaseRepository, IngredientBaseRepository>();
 builder.Services.AddScoped<IUserNutritionPreferenceRepository, UserNutritionPreferenceRepository>();
+builder.Services.AddScoped<IKrogerExportRepository, KrogerExportRepository>();
 builder.Services.AddScoped<IPantryRepository, PantryRepository>();
 
 // Add Identity
@@ -81,6 +85,14 @@ builder.Services.AddIdentity<User, IdentityRole>(options =>
 
 builder.Services.AddHttpContextAccessor();
 
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromHours(2);
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
+    options.Cookie.SameSite = SameSiteMode.Lax;
+});
+
 //when an unauthorized user tries to access a protected resource, redirect them to the login page
 builder.Services.ConfigureApplicationCookie(options =>
 {
@@ -93,7 +105,7 @@ builder.Services.ConfigureApplicationCookie(options =>
 
     options.Cookie.HttpOnly = true;
     options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
-    options.Cookie.SameSite = SameSiteMode.Strict;
+    options.Cookie.SameSite = SameSiteMode.Lax;
 
     options.ExpireTimeSpan = TimeSpan.FromDays(30);
 
@@ -107,8 +119,21 @@ builder.Services.AddScoped<IRegistrationService, RegistrationService>();
 builder.Services.AddScoped<IUserSettingsService, UserSettingsService>();
 builder.Services.AddScoped<IMealRecommendationService, MealRecommendationService>();
 builder.Services.AddScoped<ThemeFilter>();
-builder.Services.AddScoped<IShoppingListService, ShoppingListService>();
+builder.Services.AddScoped<ShoppingListService>();
+builder.Services.AddScoped<IShoppingListService>(sp => sp.GetRequiredService<ShoppingListService>());
 builder.Services.AddScoped<IPantryService, PantryService>();
+
+builder.Services.AddScoped<IKrogerExportService, KrogerExportService>();
+
+// Kroger API
+if (!string.IsNullOrEmpty(builder.Configuration["Kroger:ClientId"]))
+{
+    builder.Services.AddHttpClient<IKrogerService, KrogerService>(client =>
+    {
+        client.BaseAddress = new Uri("https://api.kroger.com/v1/");
+        client.DefaultRequestHeaders.Add("Accept", "application/json");
+    });
+}
 
 // External APIs
 if (builder.Configuration["NoApi"] != "true")
@@ -149,6 +174,7 @@ if (app.Environment.IsProduction())
 app.UseHttpsRedirection();
 app.UseRouting();
 
+app.UseSession();
 app.UseAuthentication();
 app.UseAuthorization();
 

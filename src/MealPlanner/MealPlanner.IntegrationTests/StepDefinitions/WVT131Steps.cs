@@ -119,7 +119,7 @@ public class WVT131Steps
         var btn = _driver.FindElement(By.Id("saveMealBtn"));
         ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].scrollIntoView(true);", btn);
         ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].click();", btn);
-        WaitForPageLoad();
+        _wait.Until(d => d.FindElements(By.CssSelector(".alert-success")).Any(e => e.Displayed));
     }
 
     // ── Assertions ───────────────────────────────────────────────────────────
