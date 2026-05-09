@@ -74,25 +74,54 @@
                                     .OrderByDescending(r => r.Calories)
                                     .ToList();
                             }
+                            
+                            <!-- Recipe image collage -->
                             @if (sortedRecipes.Any())
                             {
-                                <div class="d-flex fullImage recipe-collage" style="overflow:hidden;">
-                                    @{
-                                        double widthPct = 50.0;
-                                    }
-                                    @foreach (var r in sortedRecipes)
+                                @for(int i=0; i<sortedRecipes.Count; i++)
+                                {
+                                    Recipe r = sortedRecipes[i];
+                                    bool rHasImage = !string.IsNullOrEmpty(r.ImageUrl);
+                                    string rSrc = rHasImage ? r.ImageUrl! : "/images/placeholder/no-image.svg";
+                                    <!-- Even horizontally splits, odd vertically, last in list fills rest -->
+                                    if(i== sortedRecipes.Count-1)
                                     {
-                                        bool rHasImage = !string.IsNullOrEmpty(r.ImageUrl);
-                                        string rSrc = rHasImage ? r.ImageUrl! : "/images/placeholder/no-image.svg";
-                                        <img src="@rSrc"
-                                             alt="@r.Name"
-                                             data-calories="@r.Calories"
-                                             data-recipe-id="@r.Id"
-                                             class="recipe-collage-img @(rHasImage ? "recipe-has-image" : "recipe-no-image")"
-                                             style="width:@widthPct.ToString("F1", System.Globalization.CultureInfo.InvariantCulture)%; flex-shrink:0; object-fit:cover; height:100%;" />
-                                        widthPct /= 2.0;
+                                        <div class="recipe-collage-full">
+                                            <img src="@rSrc"
+                                                alt="@r.Name"
+                                                data-calories="@r.Calories"
+                                                data-recipe-id="@r.Id"
+                                                class="recipe-collage-img @(rHasImage ? "recipe-has-image" : "recipe-no-image")" />
+                                        </div>
                                     }
-                                </div>
+                                    else if(i%2==0)
+                                    {
+                                        <div class="recipe-collage-left-half">
+                                            <img src="@rSrc"
+                                                alt="@r.Name"
+                                                data-calories="@r.Calories"
+                                                data-recipe-id="@r.Id"
+                                                class="recipe-collage-img @(rHasImage ? "recipe-has-image" : "recipe-no-image")" />
+                                        </div>
+                                        @:<div class="recipe-collage-right-half">
+                                    }
+                                    else
+                                    {
+                                        <div class="recipe-collage-vert-half">
+                                            <img src="@rSrc"
+                                                alt="@r.Name"
+                                                data-calories="@r.Calories"
+                                                data-recipe-id="@r.Id"
+                                                class="recipe-collage-img @(rHasImage ? "recipe-has-image" : "recipe-no-image")" />
+                                        </div>
+                                        @:<div class="recipe-collage-vert-half">
+                                    }
+                                }
+                                <!-- Clean up hanging tags (needed for nesting DOM elements with loops) -->
+                                @for(int i=0; i<sortedRecipes.Count-1; i++)
+                                {
+                                    @:</div>
+                                }
                             }
                             else
                             {
