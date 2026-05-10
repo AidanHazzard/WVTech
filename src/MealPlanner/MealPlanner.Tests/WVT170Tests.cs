@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using System.Text.Json;
 using MealPlanner.Controllers;
 using MealPlanner.DAL.Abstract;
 using MealPlanner.Models;
@@ -107,8 +108,8 @@ public class WVT170ControllerTests
 
         var json = result as JsonResult;
         Assert.That(json, Is.Not.Null);
-        var data = json!.Value as dynamic;
-        Assert.That((bool)data!.noAlternative, Is.True);
+        var doc = JsonDocument.Parse(JsonSerializer.Serialize(json!.Value));
+        Assert.That(doc.RootElement.GetProperty("noAlternative").GetBoolean(), Is.True);
     }
 
     [Test]
@@ -129,10 +130,8 @@ public class WVT170ControllerTests
 
         var json = result as JsonResult;
         Assert.That(json, Is.Not.Null);
-        var data = json!.Value!;
-        var newRecipeProp = data.GetType().GetProperty("newRecipe")!.GetValue(data)!;
-        var id = (int)newRecipeProp.GetType().GetProperty("Id")!.GetValue(newRecipeProp)!;
-        Assert.That(id, Is.EqualTo(20));
+        var doc = JsonDocument.Parse(JsonSerializer.Serialize(json!.Value));
+        Assert.That(doc.RootElement.GetProperty("newRecipe").GetProperty("Id").GetInt32(), Is.EqualTo(20));
     }
 
     [Test]
@@ -152,9 +151,8 @@ public class WVT170ControllerTests
         var result = await _controller.RegenerateRecipe(1, 10);
 
         var json = result as JsonResult;
-        var data = json!.Value!;
-        var replacedId = (int)data.GetType().GetProperty("replacedRecipeId")!.GetValue(data)!;
-        Assert.That(replacedId, Is.EqualTo(10));
+        var doc = JsonDocument.Parse(JsonSerializer.Serialize(json!.Value));
+        Assert.That(doc.RootElement.GetProperty("replacedRecipeId").GetInt32(), Is.EqualTo(10));
     }
 
     [Test]
@@ -198,6 +196,121 @@ public class WVT170ControllerTests
             It.IsAny<DateTime>(),
             It.Is<IEnumerable<int>>(ids => ids.Contains(10) && ids.Contains(11))),
             Times.Once);
+    }
+}
+
+[TestFixture]
+public class WVT170SwapRecipeTests
+{
+    private MealController _controller = null!;
+    private MealPlannerDBContext _context = null!;
+    private ClaimsPrincipal _user = null!;
+    private Mock<IMealRepository> _mealRepoMock = null!;
+    private Mock<IRecipeRepository> _recipeRepoMock = null!;
+    private Mock<IRegistrationService> _registrationServiceMock = null!;
+    private Mock<ITagRepository> _tagRepoMock = null!;
+
+    private readonly User _appUser = new() { Id = "user-1" };
+
+    [SetUp]
+    public void SetUp()
+    {
+        var connection = new SqliteConnection("Filename=:memory:");
+        connection.Open();
+        _context = new MealPlannerDBContext(
+            new DbContextOptionsBuilder<MealPlannerDBContext>().UseSqlite(connection).Options);
+        _context.Database.EnsureCreated();
+
+        _user = new ClaimsPrincipal(new ClaimsIdentity(
+            [new Claim(ClaimTypes.NameIdentifier, "user-1"), new Claim(ClaimTypes.Name, "testuser")],
+            "TestAuth"));
+
+        _registrationServiceMock = new Mock<IRegistrationService>();
+        _registrationServiceMock.Setup(r => r.FindUserByClaimAsync(_user)).ReturnsAsync(_appUser);
+
+        _recipeRepoMock = new Mock<IRecipeRepository>();
+        _mealRepoMock = new Mock<IMealRepository>();
+        _tagRepoMock = new Mock<ITagRepository>();
+        _tagRepoMock.Setup(r => r.GetTagsByPopularityAsync()).ReturnsAsync([]);
+
+        _controller = new MealController(
+            _registrationServiceMock.Object,
+            _recipeRepoMock.Object,
+            _mealRepoMock.Object,
+            _context,
+            _tagRepoMock.Object)
+        {
+            ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext { User = _user }
+            }
+        };
+    }
+
+    [TearDown]
+    public void TearDown()
+    {
+        _controller.Dispose();
+        _context.Dispose();
+    }
+
+    [Test]
+    public async Task SwapRecipe_WhenMealNotFound_ReturnsNotFound()
+    {
+        _mealRepoMock.Setup(r => r.ReadAsync(99)).ReturnsAsync((Meal)null!);
+
+        var result = await _controller.SwapRecipe(99, 1, 2);
+
+        Assert.That(result, Is.TypeOf<NotFoundResult>());
+    }
+
+    [Test]
+    public async Task SwapRecipe_WhenMealBelongsToDifferentUser_ReturnsNotFound()
+    {
+        var meal = new Meal { Id = 1, UserId = "other-user", Recipes = [] };
+        _mealRepoMock.Setup(r => r.ReadAsync(1)).ReturnsAsync(meal);
+
+        var result = await _controller.SwapRecipe(1, 10, 20);
+
+        Assert.That(result, Is.TypeOf<NotFoundResult>());
+    }
+
+    [Test]
+    public async Task SwapRecipe_RemovesOldRecipeAndAddsNewOne()
+    {
+        var oldRecipe = new Recipe { Id = 10, Name = "Old Recipe", Calories = 300 };
+        var newRecipe = new Recipe { Id = 20, Name = "Restored Recipe", Calories = 250 };
+        var meal = new Meal { Id = 1, UserId = "user-1", Recipes = [oldRecipe] };
+
+        _mealRepoMock.Setup(r => r.ReadAsync(1)).ReturnsAsync(meal);
+        _mealRepoMock.Setup(r => r.LoadRecipesAsync(meal)).Returns(Task.CompletedTask);
+        _mealRepoMock.Setup(r => r.CreateOrUpdate(meal)).Returns(meal);
+        _recipeRepoMock.Setup(r => r.Read(20)).Returns(newRecipe);
+
+        await _controller.SwapRecipe(1, 10, 20);
+
+        Assert.That(meal.Recipes.Any(r => r.Id == 10), Is.False);
+        Assert.That(meal.Recipes.Any(r => r.Id == 20), Is.True);
+    }
+
+    [Test]
+    public async Task SwapRecipe_WhenReplacementFound_ReturnsJson()
+    {
+        var oldRecipe = new Recipe { Id = 10, Name = "Old Recipe", Calories = 300 };
+        var newRecipe = new Recipe { Id = 20, Name = "Restored Recipe", Calories = 250 };
+        var meal = new Meal { Id = 1, UserId = "user-1", Recipes = [oldRecipe] };
+
+        _mealRepoMock.Setup(r => r.ReadAsync(1)).ReturnsAsync(meal);
+        _mealRepoMock.Setup(r => r.LoadRecipesAsync(meal)).Returns(Task.CompletedTask);
+        _mealRepoMock.Setup(r => r.CreateOrUpdate(meal)).Returns(meal);
+        _recipeRepoMock.Setup(r => r.Read(20)).Returns(newRecipe);
+
+        var result = await _controller.SwapRecipe(1, 10, 20);
+
+        var json = result as JsonResult;
+        Assert.That(json, Is.Not.Null);
+        var doc = JsonDocument.Parse(JsonSerializer.Serialize(json!.Value));
+        Assert.That(doc.RootElement.GetProperty("restoredRecipe").GetProperty("Id").GetInt32(), Is.EqualTo(20));
     }
 }
 
