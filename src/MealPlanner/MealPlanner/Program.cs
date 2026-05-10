@@ -16,23 +16,20 @@ builder.Services.AddControllersWithViews(options =>
     options.Filters.Add<ThemeFilter>();
 });
 
-// Get Secrets from Azure Key Vault (production only)
-if (builder.Environment.IsProduction())
+// Get Secrets from Azure Key Vault (any environment with a vault URI configured)
+var keyVaultUri = builder.Configuration["AzureKeyVault:VaultUri"];
+if (!string.IsNullOrEmpty(keyVaultUri))
 {
-    var keyVaultUri = builder.Configuration["AzureKeyVault:VaultUri"];
-    if (!string.IsNullOrEmpty(keyVaultUri))
-    {
-        SecretClient secretClient = new SecretClient(new Uri(keyVaultUri), new DefaultAzureCredential());
-        builder.Configuration["EmailSettings:Password"] =
-            secretClient.GetSecret("EmailSettings--Password").Value.Value;
-        builder.Configuration["Edamam:AppId"] = secretClient.GetSecret("Edamam--AppId").Value.Value;
-        builder.Configuration["Edamam:ApiKey"] = secretClient.GetSecret("Edamam--ApiKey").Value.Value;
-        builder.Configuration["Kroger:RedirectUri"] = "https://onebite.azurewebsites.net/Kroger/Callback";
-        builder.Configuration["Kroger:ClientSecret"] = secretClient.GetSecret("Kroger--ClientSecret").Value.Value;
-        builder.Configuration["Kroger:ClientId"] = secretClient.GetSecret("Kroger--ClientId").Value.Value;
-        builder.Configuration["AzureStorage:ConnectionString"] =
-            secretClient.GetSecret("AzureStorage--ConnectionString").Value.Value;
-    }
+    SecretClient secretClient = new SecretClient(new Uri(keyVaultUri), new DefaultAzureCredential());
+    builder.Configuration["EmailSettings:Password"] =
+        secretClient.GetSecret("EmailSettings--Password").Value.Value;
+    builder.Configuration["Edamam:AppId"] = secretClient.GetSecret("Edamam--AppId").Value.Value;
+    builder.Configuration["Edamam:ApiKey"] = secretClient.GetSecret("Edamam--ApiKey").Value.Value;
+    builder.Configuration["Kroger:RedirectUri"] = secretClient.GetSecret("Kroger--RedirectUri").Value.Value;
+    builder.Configuration["Kroger:ClientSecret"] = secretClient.GetSecret("Kroger--ClientSecret").Value.Value;
+    builder.Configuration["Kroger:ClientId"] = secretClient.GetSecret("Kroger--ClientId").Value.Value;
+    builder.Configuration["AzureStorage:ConnectionString"] =
+        secretClient.GetSecret("AzureStorage--ConnectionString").Value.Value;
 }
 
 var blobConnectionString = builder.Configuration["AzureStorage:ConnectionString"];
