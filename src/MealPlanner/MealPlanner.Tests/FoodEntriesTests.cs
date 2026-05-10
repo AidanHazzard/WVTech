@@ -3,6 +3,7 @@ using MealPlanner.DAL.Abstract;
 using MealPlanner.Models;
 using MealPlanner.Services;
 using MealPlanner.ViewModels;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
@@ -70,12 +71,16 @@ public class FoodEntriesTests
         var externalRecipeService = new Mock<IExternalRecipeService>();
         var tagRepo = new Mock<ITagRepository>();
         tagRepo.Setup(r => r.GetTagNamesAsync()).ReturnsAsync([]);
+        var mockEnv = new Mock<IWebHostEnvironment>();
+        mockEnv.Setup(e => e.WebRootPath).Returns(Path.GetTempPath());
         _controller = new FoodEntriesController(
             recipeRepo.Object,
             tagRepo.Object,
             userRecipeRepo.Object,
             controllerContext,
             registrationService.Object,
+            mockEnv.Object,
+            blobContainer: null,
             externalRecipeService.Object,
             nutritionService.Object);
     }

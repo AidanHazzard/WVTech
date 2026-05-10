@@ -30,7 +30,7 @@
 
     <form asp-action="SetDateRange" method="post" class="mb-4" id="dateRangeForm">
         @Html.AntiForgeryToken()
-        <div class="d-flex gap-3 align-items-center">
+        <div class="d-flex gap-3 align-items-center flex-wrap">
             <input type="date" name="dateFrom" value="@Model.DateFrom.ToString("yyyy-MM-dd")" class="back2-textbox date-range-input" />
             <span>to</span>
             <input type="date" name="dateTo" value="@Model.DateTo.ToString("yyyy-MM-dd")" class="back2-textbox date-range-input" />
@@ -39,9 +39,9 @@
 
     <form asp-action="AddItem" method="post" class="mb-4">
         @Html.AntiForgeryToken()
-        <div class="row align-items-center">
-            <input type="number" class="col-1 back2-textbox-partial mx-1" name="amount" placeholder="0" min="0" step="any" />
-            <select class="col-2 back2-textbox-partial mx-1" name="measurement">
+        <div class="d-flex align-items-center flex-wrap gap-1">
+            <input type="number" class="back2-textbox-partial" name="amount" placeholder="0" min="0" step="any" style="min-width: 70px; width: 70px; flex-shrink: 0;" />
+            <select class="back2-textbox-partial" name="measurement" style="min-width: 110px; flex-shrink: 0;">
                 <option value="" selected>Select</option>
                 <option value="Count">Count</option>
                 <option value="Cup(s)">Cup(s)</option>
@@ -50,8 +50,8 @@
                 <option value="L">L</option>
                 <option value="KG">KG</option>
             </select>
-            <input type="text" class="col back2-textbox-partial mx-1" name="itemName" placeholder="Enter Ingredient" required />
-            <button type="submit" class="btn btn-success col-auto mx-1 rounded-4 px-4">Add Item</button>
+            <input type="text" class="back2-textbox-partial" name="itemName" placeholder="Enter Ingredient" required style="min-width: 150px; flex: 1 1 150px;" />
+            <button type="submit" class="btn btn-success rounded-4 px-4" style="flex-shrink: 0;">Add Item</button>
         </div>
     </form>
 
@@ -153,7 +153,7 @@
 </div>
 
 <!-- Export History Modal -->
-<div id="exportHistoryModal" class="export-modal-overlay">
+<div id="exportHistoryModal" class="app-modal-overlay">
     <div class="export-modal-panel back1 p-4 rounded-4">
         <div class="export-modal-header d-flex justify-content-between align-items-center mb-3">
             <h5 class="back1Title mb-0">Previous Exports</h5>

@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Azure.Security.KeyVault.Secrets;
 using Azure.Identity;
+using Azure.Storage.Blobs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -29,7 +30,16 @@ if (builder.Environment.IsProduction())
         builder.Configuration["Kroger:RedirectUri"] = "https://onebite.azurewebsites.net/Kroger/Callback";
         builder.Configuration["Kroger:ClientSecret"] = secretClient.GetSecret("Kroger--ClientSecret").Value.Value;
         builder.Configuration["Kroger:ClientId"] = secretClient.GetSecret("Kroger--ClientId").Value.Value;
+        builder.Configuration["AzureStorage:ConnectionString"] =
+            secretClient.GetSecret("AzureStorage--ConnectionString").Value.Value;
     }
+}
+
+var blobConnectionString = builder.Configuration["AzureStorage:ConnectionString"];
+var blobContainerName = builder.Configuration["AzureStorage:ContainerName"] ?? "recipe-images";
+if (!string.IsNullOrEmpty(blobConnectionString))
+{
+    builder.Services.AddSingleton(new BlobContainerClient(blobConnectionString, blobContainerName));
 }
 
 // Create db context
@@ -67,7 +77,8 @@ builder.Services.AddScoped<IShoppingListRepository, ShoppingListRepository>();
 builder.Services.AddScoped<IIngredientBaseRepository, IngredientBaseRepository>();
 builder.Services.AddScoped<IUserNutritionPreferenceRepository, UserNutritionPreferenceRepository>();
 builder.Services.AddScoped<IKrogerExportRepository, KrogerExportRepository>();
-builder.Services.AddScoped<IPantryRepository, PantryRepository>();
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IMealAutoRemovedIngredientRepository, MealAutoRemovedIngredientRepository>();
 
 // Add Identity
 builder.Services.AddIdentity<User, IdentityRole>(options =>

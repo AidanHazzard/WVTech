@@ -21,7 +21,8 @@ public class ViewModelService
             Protein = vm.Protein,
             Carbs = vm.Carbs,
             Fat = vm.Fat,
-            Meals = []
+            Meals = [],
+            ImageUrl = vm.ImageUrl
         };
 
         // TODO: Change recipe view model to use IngredientViewModel or a dictionary
@@ -69,6 +70,7 @@ public class ViewModelService
         recipeFromDataBase.Ingredients = updated.Ingredients;
         recipeFromDataBase.Tags.Clear();
         recipeFromDataBase.Tags.AddRange(updated.Tags);
+        recipeFromDataBase.ImageUrl = updated.ImageUrl;
         return recipeFromDataBase;
     }
 }

@@ -4,6 +4,7 @@ using MealPlanner.DAL.Concrete;
 using MealPlanner.Models;
 using MealPlanner.Services;
 using MealPlanner.ViewModels;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -34,7 +35,9 @@ namespace MealPlanner.Tests
             tagRepo.Setup(r => r.GetTagNamesAsync()).ReturnsAsync([]);
             _registrationService = new Mock<IRegistrationService>();
             var externalRecipeService = new Mock<IExternalRecipeService>();
-            _controller = new FoodEntriesController(_recipeRepository, tagRepo.Object, _userRecipeRepo.Object, _context, _registrationService.Object, externalRecipeService.Object);
+            var mockEnv = new Mock<IWebHostEnvironment>();
+            mockEnv.Setup(e => e.WebRootPath).Returns(Path.GetTempPath());
+            _controller = new FoodEntriesController(_recipeRepository, tagRepo.Object, _userRecipeRepo.Object, _context, _registrationService.Object, mockEnv.Object, blobContainer: null, externalRecipeService.Object);
 
             var claims = new List<Claim> { new Claim(ClaimTypes.NameIdentifier, "test-user-id") };
             var identity = new ClaimsIdentity(claims, "TestAuth");
