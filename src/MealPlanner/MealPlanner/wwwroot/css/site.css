@@ -492,14 +492,6 @@ label {
   background-color: var(--search-result-hover-bg) !important;
 }
 
-/* Nutrition Bar Styling */
-.nutrition-bar-row {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 8px;
-}
-
 /* Month/Day Dropdown Styles */
 .mealSelect {
   background-color: var(--textbox-bg);
@@ -555,6 +547,28 @@ label {
     color: var(--text-primary);
     font-weight: bold;
     white-space: nowrap;
+}
+
+@media (max-width: 576px) {
+  .back1 {
+    padding: 12px;
+  }
+  .back2 {
+    padding: 12px;
+  }
+  .nutrition-bar-row {
+    gap: 6px;
+  }
+  .nutrition-bar-label {
+    width: 55px;
+    min-width: 55px;
+    font-size: 0.85rem;
+  }
+  .nutrition-bar-fraction {
+    width: 72px;
+    min-width: 72px;
+    font-size: 0.8rem;
+  }
 }
 
 /* Red button — for regenerate/destructive attention actions */
