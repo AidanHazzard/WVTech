@@ -32,10 +32,10 @@
                                         <div class="mealRecipeItem d-flex align-items-center justify-content-between back2 back2-textbox mb-1"
                                              data-recipe-id="@recipe.Id"
                                              data-meal-id="@meal.MealId"
-                                             style="cursor:pointer; margin-top:8px;"
-                                             onclick="location.href='@Url.Action("Recipes", "FoodEntries", new { id = recipe.Id })'">
+                                             data-recipe-url="@Url.Action("Recipes", "FoodEntries", new { id = recipe.Id })"
+                                             style="cursor:pointer; margin-top:8px;">
                                             <h4 class="mb-0 flex-grow-1">@recipe.Name</h4>
-                                            <div class="d-flex gap-2 align-items-center" onclick="event.stopPropagation()">
+                                            <div class="d-flex gap-2 align-items-center">
                                                 <span class="ms-2 text-nowrap">@recipe.Calories cal</span>
                                                 @if (meal.Recipes.Count > 1)
                                                 {

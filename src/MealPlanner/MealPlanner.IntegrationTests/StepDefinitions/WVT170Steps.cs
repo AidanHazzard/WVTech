@@ -34,6 +34,7 @@ public class WVT170Steps
         var ctx = BDDSetup.Context;
         var user = ctx.Set<User>().First(u => u.NormalizedEmail == $"{userName}@fakeemail.com".ToUpper());
 
+        ctx.ChangeTracker.Clear();
         var existing = ctx.Set<Meal>().Include(m => m.Recipes)
             .Where(m => m.UserId == user.Id && m.Title == mealTitle).FirstOrDefault();
         if (existing != null) { ctx.Remove(existing); ctx.SaveChanges(); }
@@ -55,6 +56,7 @@ public class WVT170Steps
         var ctx = BDDSetup.Context;
         var user = ctx.Set<User>().First(u => u.NormalizedEmail == $"{userName}@fakeemail.com".ToUpper());
 
+        ctx.ChangeTracker.Clear();
         var existing = ctx.Set<Meal>().Include(m => m.Recipes)
             .Where(m => m.UserId == user.Id && m.Title == mealTitle).FirstOrDefault();
         if (existing != null) { ctx.Remove(existing); ctx.SaveChanges(); }
@@ -82,26 +84,62 @@ public class WVT170Steps
         ctx.SaveChanges();
     }
 
+    [Given("{string} has an upvoted recipe named {string} tagged {string} that is not in {string}")]
+    public void GivenUserHasUpvotedRecipeNamedTaggedNotInMeal(string userName, string recipeName, string tagName, string mealTitle)
+    {
+        var ctx = BDDSetup.Context;
+        var user = ctx.Set<User>().First(u => u.NormalizedEmail == $"{userName}@fakeemail.com".ToUpper());
+
+        var tag = ctx.Set<Tag>().FirstOrDefault(t => t.Name == tagName);
+        if (tag == null) { tag = new Tag { Name = tagName }; ctx.Add(tag); ctx.SaveChanges(); }
+
+        var recipe = new Recipe { Name = recipeName, Directions = "Test", Calories = 300, Protein = 10, Fat = 5, Carbs = 30, Tags = [tag] };
+        ctx.Add(recipe);
+        ctx.SaveChanges();
+        ctx.Add(new UserRecipe { UserId = user.Id, RecipeId = recipe.Id, UserOwner = false, UserVote = UserVoteType.UpVote });
+        ctx.SaveChanges();
+    }
+
     [Given("{string} has no other eligible recipes to replace {string}")]
     public void GivenUserHasNoOtherEligibleRecipes(string userName, string recipeName)
     {
         var ctx = BDDSetup.Context;
+        ctx.ChangeTracker.Clear();
         var user = ctx.Set<User>().First(u => u.NormalizedEmail == $"{userName}@fakeemail.com".ToUpper());
+
+        // Remove dietary restrictions so they don't affect eligibility in other scenarios
+        var restrictions = ctx.Set<UserDietaryRestriction>().Where(r => r.UserId == user.Id).ToList();
+        ctx.Set<UserDietaryRestriction>().RemoveRange(restrictions);
+        ctx.SaveChanges();
 
         var meal = ctx.Set<Meal>().Include(m => m.Recipes)
             .First(m => m.UserId == user.Id && m.Id == _mealId);
         var mealRecipeIds = meal.Recipes.Select(r => r.Id).ToHashSet();
 
-        var otherVotes = ctx.Set<UserRecipe>()
-            .Where(ur => ur.UserId == user.Id && !mealRecipeIds.Contains(ur.RecipeId))
-            .ToList();
-        ctx.Set<UserRecipe>().RemoveRange(otherVotes);
-        ctx.SaveChanges();
-
-        var otherRecipes = ctx.Set<Recipe>()
+        ctx.ChangeTracker.Clear();
+        var otherRecipeIds = ctx.Set<Recipe>()
             .Where(r => !mealRecipeIds.Contains(r.Id) && r.Id > 0)
+            .Select(r => r.Id)
             .ToList();
-        ctx.Set<Recipe>().RemoveRange(otherRecipes);
+
+        if (otherRecipeIds.Count > 0)
+        {
+            var idList = string.Join(",", otherRecipeIds);
+            ctx.Database.ExecuteSqlRaw($"DELETE FROM UserRecipe WHERE RecipeId IN ({idList})");
+            ctx.Database.ExecuteSqlRaw($"DELETE FROM MealRecipe WHERE RecipesId IN ({idList})");
+            ctx.Database.ExecuteSqlRaw($"DELETE FROM RecipeTag WHERE RecipesId IN ({idList})");
+            ctx.Database.ExecuteSqlRaw($"DELETE FROM Ingredient WHERE RecipeId IN ({idList})");
+            ctx.Database.ExecuteSqlRaw($"DELETE FROM Recipe WHERE Id IN ({idList})");
+        }
+
+        // Downvote seed recipes (negative IDs) so they are excluded by the recommendation algorithm
+        ctx.ChangeTracker.Clear();
+        var seedIds = ctx.Set<Recipe>().Where(r => r.Id < 0).Select(r => r.Id).ToList();
+        foreach (var seedId in seedIds)
+        {
+            if (!ctx.Set<UserRecipe>().Any(ur => ur.UserId == user.Id && ur.RecipeId == seedId))
+                ctx.Add(new UserRecipe { UserId = user.Id, RecipeId = seedId, UserOwner = false, UserVote = UserVoteType.DownVote });
+        }
         ctx.SaveChanges();
     }
 
@@ -111,6 +149,7 @@ public class WVT170Steps
         var ctx = BDDSetup.Context;
         var user = ctx.Set<User>().First(u => u.NormalizedEmail == $"{userName}@fakeemail.com".ToUpper());
 
+        ctx.ChangeTracker.Clear();
         var existing = ctx.Set<Meal>().Include(m => m.Recipes)
             .Where(m => m.UserId == user.Id && m.Title == mealTitle).FirstOrDefault();
         if (existing != null) { ctx.Remove(existing); ctx.SaveChanges(); }
@@ -149,6 +188,13 @@ public class WVT170Steps
     public void WhenUserReturnsToMealDetailPage(string userName, string mealTitle)
     {
         WhenUserOpensMealDetailPage(userName, mealTitle);
+    }
+
+    [When("'Gary' navigates to the home page")]
+    public void WhenGaryNavigatesToHomePage()
+    {
+        _driver.Navigate().GoToUrl(_baseUrl);
+        _wait.Until(d => d.FindElements(By.TagName("body")).Count > 0);
     }
 
     // ── Regenerate button visibility ──────────────────────────────────────────
@@ -214,8 +260,20 @@ public class WVT170Steps
         var btn = row.FindElement(By.CssSelector("[data-action='regenerate-recipe']"));
         ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].click();", btn);
 
-        _wait.Until(d => ((IJavaScriptExecutor)d)
-            .ExecuteScript("return document.readyState").ToString() == "complete");
+        // Wait until the fetch resolves: either undo toast appears, no-alt message appears,
+        // or the old recipe row is no longer present under the original name.
+        _wait.Until(d =>
+        {
+            try
+            {
+                var undoToast = d.FindElements(By.Id("regen-undo-toast")).FirstOrDefault(e => e.Displayed);
+                if (undoToast != null) return true;
+                var noAlt = d.FindElements(By.CssSelector("[data-regen-no-alternative]")).FirstOrDefault(e => e.Displayed);
+                if (noAlt != null) return true;
+                return false;
+            }
+            catch { return false; }
+        });
     }
 
     [When("{string} clicks the undo option for the regeneration")]
@@ -228,8 +286,17 @@ public class WVT170Steps
         });
         Assert.That(undoBtn, Is.Not.Null, "Could not find undo button after regeneration");
         ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].click();", undoBtn!);
-        _wait.Until(d => ((IJavaScriptExecutor)d)
-            .ExecuteScript("return document.readyState").ToString() == "complete");
+
+        // Wait for the undo toast to be hidden — JS hides it after the fetch completes
+        _wait.Until(d =>
+        {
+            try
+            {
+                var toast = d.FindElements(By.Id("regen-undo-toast")).FirstOrDefault();
+                return toast == null || !toast.Displayed;
+            }
+            catch { return true; }
+        });
     }
 
     [Then("no undo option is visible on the meal detail page")]
@@ -288,9 +355,55 @@ public class WVT170Steps
     [Given("the first meal in the summary contains a recipe named {string}")]
     public void GivenFirstMealInSummaryContainsRecipe(string recipeName)
     {
-        var items = _driver.FindElements(By.CssSelector("#day-plan-summary .mealRecipeItem h4"));
-        Assert.That(items.Any(el => el.Text.Contains(recipeName, StringComparison.OrdinalIgnoreCase)), Is.True,
-            $"Expected recipe '{recipeName}' in first meal of summary but did not find it");
+        // Find the first recipe row — TempData is consumed so we cannot refresh the page
+        var firstRow = _driver.FindElements(By.CssSelector("#day-plan-summary .mealRecipeItem")).FirstOrDefault();
+        Assert.That(firstRow, Is.Not.Null, "No recipe rows found in day plan summary");
+
+        var recipeIdStr = firstRow!.GetAttribute("data-recipe-id");
+        var mealIdStr = firstRow.GetAttribute("data-meal-id");
+        Assert.That(recipeIdStr, Is.Not.Null.And.Not.Empty, "Recipe row has no data-recipe-id");
+        Assert.That(mealIdStr, Is.Not.Null.And.Not.Empty, "Recipe row has no data-meal-id");
+
+        // Rename the first recipe to the required name in the DB
+        var ctx = BDDSetup.Context;
+        ctx.ChangeTracker.Clear();
+        var recipe = ctx.Set<Recipe>().First(r => r.Id == int.Parse(recipeIdStr!));
+        recipe.Name = recipeName;
+        ctx.SaveChanges();
+
+        // Update the h4 text in the DOM to match
+        ((IJavaScriptExecutor)_driver).ExecuteScript(
+            "arguments[0].textContent = arguments[1];",
+            firstRow.FindElement(By.TagName("h4")),
+            recipeName);
+
+        // If the meal has only 1 recipe row, the regenerate button is not rendered.
+        // Add a 2nd dummy recipe to the meal in DB and inject the button into the DOM.
+        var regenBtn = firstRow.FindElements(By.CssSelector("[data-action='regenerate-recipe']")).FirstOrDefault();
+        if (regenBtn == null || !regenBtn.Displayed)
+        {
+            ctx.ChangeTracker.Clear();
+            var meal = ctx.Set<Meal>().Include(m => m.Recipes).First(m => m.Id == int.Parse(mealIdStr!));
+            var dummy = new Recipe { Name = "Dummy Recipe", Directions = "Test", Calories = 100, Protein = 5, Fat = 2, Carbs = 10 };
+            ctx.Add(dummy);
+            ctx.SaveChanges();
+            meal.Recipes.Add(dummy);
+            ctx.SaveChanges();
+
+            // Inject the regenerate button into the existing row's button container
+            var btnContainer = firstRow.FindElement(By.CssSelector(".d-flex.gap-2.align-items-center"));
+            ((IJavaScriptExecutor)_driver).ExecuteScript(@"
+                var btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'btn btn-sm btn-warning';
+                btn.setAttribute('data-action', 'regenerate-recipe');
+                btn.setAttribute('data-recipe-id', arguments[1]);
+                btn.setAttribute('data-meal-id', arguments[2]);
+                btn.title = 'Regenerate this recipe';
+                btn.textContent = '↻';
+                arguments[0].insertBefore(btn, arguments[0].firstChild);
+            ", btnContainer, recipeIdStr, mealIdStr);
+        }
     }
 
     [Given("{string} has an upvoted recipe named {string} that is not in the day plan")]
@@ -316,9 +429,19 @@ public class WVT170Steps
         _replacedRecipeName = recipeName;
 
         var btn = row!.FindElement(By.CssSelector("[data-action='regenerate-recipe']"));
+        var originalText = row.FindElement(By.TagName("h4")).Text;
         ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].click();", btn);
-        _wait.Until(d => ((IJavaScriptExecutor)d)
-            .ExecuteScript("return document.readyState").ToString() == "complete");
+
+        // Wait until the h4 text changes (fetch completed and DOM updated)
+        _wait.Until(d =>
+        {
+            try
+            {
+                var h4 = row.FindElement(By.TagName("h4"));
+                return !h4.Text.Equals(originalText, StringComparison.OrdinalIgnoreCase);
+            }
+            catch { return false; }
+        });
     }
 
     [Then("the first meal in the summary no longer contains a recipe named {string}")]

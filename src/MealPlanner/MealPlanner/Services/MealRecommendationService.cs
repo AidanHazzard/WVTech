@@ -120,6 +120,21 @@ public class MealRecommendationService : IMealRecommendationService
         }
     }
 
+    public async Task<Recipe?> GetOneRecipeRecommendation(User user, DateTime date, IEnumerable<int> excludeRecipeIds)
+    {
+        var restrictionNames = await GetRestrictionNamesAsync(user.Id);
+        var userVotes = await _userRecipeRepository.GetUserVotesByUserIdAsync(user.Id);
+        var votePercentages = await _userRecipeRepository.GetAllVotePercentagesAsync();
+        var upvoted = await _userRecipeRepository.GetUserRecipesByVoteType(user.Id, UserVoteType.UpVote);
+        var allWithTags = await _recipeRepository.GetAllWithTagsAsync();
+        await LoadExternalRecipesAsync(upvoted);
+        await LoadExternalRecipesAsync(allWithTags);
+
+        var excludeIds = new HashSet<int>(excludeRecipeIds);
+        var candidates = OrderedCandidates(upvoted, allWithTags, userVotes, votePercentages, excludeIds);
+        return SelectFromCandidates(candidates, int.MaxValue, restrictionNames, []).FirstOrDefault();
+    }
+
     public async Task<List<Meal>> GetRecommendedMealsForUser(User user, DateTime mealDate, DayPlanConfigViewModel config)
     {
         var result = new List<Meal>();
