@@ -28,8 +28,8 @@ document.addEventListener('DOMContentLoaded', function () {
             pendingChecked = nowChecked;
 
             message.textContent = nowChecked
-                ? 'Would you like to remove the matching ingredients from your pantry?'
-                : 'Would you like to add the previously removed ingredients back to your pantry?';
+                ? 'Would you like to remove the matching ingredients in this meal from your pantry?'
+                : 'Would you like to add previously removed ingredients back to your pantry?';
 
             modal.style.display = 'flex';
         });

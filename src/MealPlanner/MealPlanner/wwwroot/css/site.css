@@ -399,6 +399,18 @@ label {
   border-radius: 20px
 }
 
+.buttonRow .buttonGreenInline:first-child {
+  border-radius: 20px 0 0 20px;
+}
+
+.buttonRow .buttonGreenInline:last-child {
+  border-radius: 0 20px 20px 0;
+}
+
+.buttonRow .buttonGreenInline:only-child {
+  border-radius: 20px
+}
+
 .buttonBlueInline {
   flex: 1;
   background-color: var(--button-blue-bg);
