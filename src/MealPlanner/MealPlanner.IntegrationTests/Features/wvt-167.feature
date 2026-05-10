@@ -44,3 +44,17 @@ Feature: WVT-167 — Recipe Images
     Given 'Gary' has a WVT167 recipe with an uploaded image file on disk
     When 'Gary' deletes that recipe
     Then the image file no longer exists on the server
+
+  Scenario: Removing a recipe image via the edit page deletes the file from the server
+    Given 'Gary' has a WVT167 recipe with an uploaded image file on disk
+    And 'Gary' navigates to the edit recipe page for that recipe
+    When 'Gary' removes the recipe image
+    And 'Gary' saves the recipe
+    Then the image file no longer exists on the server
+
+  Scenario: Replacing a recipe image via the edit page deletes the old file from the server
+    Given 'Gary' has a WVT167 recipe with an uploaded image file on disk
+    And 'Gary' navigates to the edit recipe page for that recipe
+    When 'Gary' uploads a different image file
+    And 'Gary' saves the recipe
+    Then the image file no longer exists on the server

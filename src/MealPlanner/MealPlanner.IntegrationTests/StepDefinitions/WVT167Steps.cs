@@ -223,9 +223,8 @@ public class WVT167Steps
     [When("'Gary' removes the recipe image")]
     public void WhenGaryRemovesRecipeImage()
     {
-        var checkbox = _driver.FindElement(By.Id("removeImage"));
-        if (!checkbox.Selected)
-            ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].click();", checkbox);
+        var btn = _wait.Until(d => d.FindElement(By.Id("removeImageBtn")));
+        ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].click();", btn);
     }
 
     [Then("'Gary' sees the recipe page with the placeholder image displayed")]
