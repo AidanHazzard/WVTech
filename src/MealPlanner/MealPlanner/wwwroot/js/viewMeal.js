@@ -60,7 +60,6 @@ $(document).on("click", "[data-action='regenerate-recipe']", async function (e) 
         $row.attr("data-recipe-id", newRecipe.id);
         $row.find("h4").first().text(newRecipe.name);
         $row.find("[data-action='regenerate-recipe']").attr("data-recipe-id", newRecipe.id);
-        $row.attr("onclick", `location.href='/FoodEntries/Recipes/${newRecipe.id}'`);
 
         // Store undo state and show toast
         _undoState = {
@@ -96,7 +95,6 @@ $(document).on("click", "[data-action='undo-regenerate-recipe']", async function
         $row.attr("data-recipe-id", addBackRecipeId);
         $row.find("h4").first().text(addBackName);
         $row.find("[data-action='regenerate-recipe']").attr("data-recipe-id", addBackRecipeId);
-        $row.attr("onclick", `location.href='/FoodEntries/Recipes/${addBackRecipeId}'`);
 
         _undoState = null;
         hideRegenFeedback();
