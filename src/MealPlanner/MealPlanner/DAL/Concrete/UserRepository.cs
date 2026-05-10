@@ -4,11 +4,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace MealPlanner.DAL.Concrete;
 
-public class PantryRepository : Repository<User>, IPantryRepository
+public class UserRepository : Repository<User>, IUserRepository
 {
     private readonly MealPlannerDBContext _context;
 
-    public PantryRepository(MealPlannerDBContext context) : base(context)
+    public UserRepository(MealPlannerDBContext context) : base(context)
     {
         _context = context;
     }
@@ -41,5 +41,31 @@ public class PantryRepository : Repository<User>, IPantryRepository
         var item = user?.PantryItems.FirstOrDefault(i => i.Id == ingredientId);
         if (item != null)
             item.Amount = newAmount;
+    }
+
+    public HashSet<int> GetUserIngredientBaseIds(string userId)
+    {
+        return _dbset
+            .Where(u => u.Id == userId)
+            .SelectMany(u => u.PantryItems)
+            .Select(i => i.IngredientBase.Id)
+            .ToHashSet();
+    }
+
+    public List<Ingredient> GetMatchingPantryItems(string userId, HashSet<int> ingredientBaseIds)
+    {
+        return _dbset
+            .Where(u => u.Id == userId)
+            .SelectMany(u => u.PantryItems)
+            .Where(i => ingredientBaseIds.Contains(i.IngredientBase.Id))
+            .ToList();
+    }
+
+    public void AddItem(string userId, Ingredient item)
+    {
+        var user = _dbset
+            .Include(u => u.PantryItems)
+            .FirstOrDefault(u => u.Id == userId);
+        user?.PantryItems.Add(item);
     }
 }

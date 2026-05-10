@@ -399,6 +399,18 @@ label {
   border-radius: 20px
 }
 
+.buttonRow .buttonGreenInline:first-child {
+  border-radius: 20px 0 0 20px;
+}
+
+.buttonRow .buttonGreenInline:last-child {
+  border-radius: 0 20px 20px 0;
+}
+
+.buttonRow .buttonGreenInline:only-child {
+  border-radius: 20px
+}
+
 .buttonBlueInline {
   flex: 1;
   background-color: var(--button-blue-bg);
@@ -639,17 +651,25 @@ a.buttonRed {
     white-space: nowrap;
 }
 
-/* Export History Modal */
-.export-modal-overlay {
+/* ─── Shared Modal ──────────────────────────────────────────────────────── */
+.app-modal-overlay {
     display: none;
     position: fixed;
     inset: 0;
     z-index: 1050;
-    background: rgba(0, 0, 0, 0.6);
+    background: rgba(0, 0, 0, 0.5);
     align-items: center;
     justify-content: center;
 }
 
+.app-modal-panel {
+    width: 90%;
+    max-width: 420px;
+    padding: 2rem;
+    text-align: center;
+}
+
+/* Export History Modal */
 .export-modal-panel {
     width: 100%;
     max-width: 560px;
@@ -706,38 +726,6 @@ a.buttonRed {
     width: 1em;
     height: 1em;
     cursor: pointer;
-}
-
-/* Export History Modal */
-.export-modal-overlay {
-    display: none;
-    position: fixed;
-    inset: 0;
-    z-index: 1050;
-    background: rgba(0, 0, 0, 0.6);
-    align-items: center;
-    justify-content: center;
-}
-
-.export-modal-panel {
-    width: 100%;
-    max-width: 560px;
-    max-height: 80vh;
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    color: var(--text-primary);
-}
-
-.export-modal-header {
-    flex-shrink: 0;
-}
-
-.export-modal-body {
-    overflow-y: auto;
-    flex: 1 1 auto;
-    min-height: 0;
 }
 
 .export-history-entry {

@@ -48,12 +48,19 @@ public class HomeControllerTests
                 new MacroTargets(0, 0, 0, 0),
                 new MacroTotals(0, 0, 0, 0)));
 
+        var pantryServiceMock = new Mock<IPantryService>();
+        pantryServiceMock.Setup(p => p.GetMealPantryMatchIds(It.IsAny<string>(), It.IsAny<List<Meal>>()))
+            .Returns(new HashSet<int>());
+        pantryServiceMock.Setup(p => p.HasAutoRemovedIngredients(It.IsAny<int>(), It.IsAny<DateTime>()))
+            .Returns(false);
+
         var controller = new HomeController(
             null!,
             Mock.Of<ILoginService>(),
             registrationServiceMock.Object,
             mealRepoMock.Object,
             nutritionServiceMock.Object,
+            pantryServiceMock.Object,
             externalRecipeServiceMock?.Object);
 
         controller.ControllerContext = new ControllerContext
@@ -86,7 +93,7 @@ public class HomeControllerTests
             .ReturnsAsync(user);
 
         var mealRepo = new Mock<IMealRepository>();
-        mealRepo.Setup(m => m.GetUserMealsByDateAsync(It.IsAny<User>(), It.IsAny<DateTime>()))
+        mealRepo.Setup(m => m.GetUserMealsByDateWithIngredientsAsync(It.IsAny<User>(), It.IsAny<DateTime>()))
             .ReturnsAsync(new List<Meal>());
 
         var controller = CreateController(AuthenticatedUser(), reg, mealRepo);
@@ -111,7 +118,7 @@ public class HomeControllerTests
             .ReturnsAsync(user);
 
         var mealRepo = new Mock<IMealRepository>();
-        mealRepo.Setup(m => m.GetUserMealsByDateAsync(It.IsAny<User>(), It.IsAny<DateTime>()))
+        mealRepo.Setup(m => m.GetUserMealsByDateWithIngredientsAsync(It.IsAny<User>(), It.IsAny<DateTime>()))
             .ReturnsAsync(new List<Meal>());
 
         var controller = CreateController(AuthenticatedUser(), reg, mealRepo);
@@ -128,7 +135,7 @@ public class HomeControllerTests
         Assert.That(vm, Is.Not.Null);
         Assert.That(vm!.SelectedDate, Is.EqualTo(expected));
 
-        mealRepo.Verify(m => m.GetUserMealsByDateAsync(
+        mealRepo.Verify(m => m.GetUserMealsByDateWithIngredientsAsync(
             It.Is<User>(u => u.Id == "user-1"),
             It.Is<DateTime>(d => d == expected)), Times.Once);
     }

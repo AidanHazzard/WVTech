@@ -50,18 +50,21 @@
                 <div class="mealCardInner">
 
                     <!-- Checkbox (toggles completion) -->
-                    <form asp-controller="Meal" asp-action="ToggleMealCompleted" method="post" class="mealCompleteForm">
+                    <form asp-controller="Meal" asp-action="ToggleMealCompleted" method="post" class="mealCompleteForm"
+                          data-has-pantry-match="@(Model.MealPantryMatchIds.Contains(meal.Id) ? "true" : "false")"
+                          data-has-auto-removed="@(Model.MealAutoRemovedIds.Contains(meal.Id) ? "true" : "false")">
                         @Html.AntiForgeryToken()
                         <input type="hidden" name="id" value="@meal.Id" />
                         <input type="hidden" name="date" value="@Model.SelectedDate.ToString("yyyy-MM-dd")" />
                         <input type="hidden" name="source" value="home" />
+                        <input type="hidden" name="removePantry" value="false" class="removePantryInput" />
+                        <input type="hidden" name="restorePantry" value="false" class="restorePantryInput" />
 
                         <input type="checkbox"
                                name="isCompleted"
                                value="true"
                                class="MealCheckBox"
-                               @(meal.IsCompleted ? "checked" : null)
-                               onchange="this.form.submit(); event.stopPropagation();" />
+                               @(meal.IsCompleted ? "checked" : null) />
                     </form>
 
                     <!-- Meal card button (opens the meal view) -->
@@ -165,6 +168,21 @@
     </form>
 </div>
 
+<div id="pantryPromptModal" class="app-modal-overlay">
+    <div class="back2 app-modal-panel">
+        <p id="pantryPromptMessage" class="fs-5 mb-4"></p>
+        <div class="buttonRow">
+            <button id="pantryPromptAccept" type="button" class="buttonBlueInline">
+                <h4 class="buttonText">Yes</h4>
+            </button>
+            <button id="pantryPromptDecline" type="button" class="buttonGreyInline">
+                <h4 class="buttonText">No</h4>
+            </button>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
     <script src="~/js/indexPlanner.js"></script>
+    <script src="~/js/mealCompletionPantry.js"></script>
 }
