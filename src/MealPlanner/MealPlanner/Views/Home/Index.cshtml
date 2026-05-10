@@ -50,18 +50,21 @@
                 <div class="mealCardInner">
 
                     <!-- Checkbox (toggles completion) -->
-                    <form asp-controller="Meal" asp-action="ToggleMealCompleted" method="post" class="mealCompleteForm">
+                    <form asp-controller="Meal" asp-action="ToggleMealCompleted" method="post" class="mealCompleteForm"
+                          data-has-pantry-match="@(Model.MealPantryMatchIds.Contains(meal.Id) ? "true" : "false")"
+                          data-has-auto-removed="@(Model.MealAutoRemovedIds.Contains(meal.Id) ? "true" : "false")">
                         @Html.AntiForgeryToken()
                         <input type="hidden" name="id" value="@meal.Id" />
                         <input type="hidden" name="date" value="@Model.SelectedDate.ToString("yyyy-MM-dd")" />
                         <input type="hidden" name="source" value="home" />
+                        <input type="hidden" name="removePantry" value="false" class="removePantryInput" />
+                        <input type="hidden" name="restorePantry" value="false" class="restorePantryInput" />
 
                         <input type="checkbox"
                                name="isCompleted"
                                value="true"
                                class="MealCheckBox"
-                               @(meal.IsCompleted ? "checked" : null)
-                               onchange="this.form.submit(); event.stopPropagation();" />
+                               @(meal.IsCompleted ? "checked" : null) />
                     </form>
 
                     <!-- Meal card button (opens the meal view) -->
@@ -108,6 +111,17 @@
     </form>
 </div>
 
+<div id="pantryPromptModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:9999; align-items:center; justify-content:center;">
+    <div class="back2" style="max-width:420px; width:90%; padding:2rem; text-align:center;">
+        <p id="pantryPromptMessage" class="fs-5 mb-4"></p>
+        <div class="d-flex gap-3 justify-content-center">
+            <button id="pantryPromptAccept" class="btn btn-success px-4">Yes</button>
+            <button id="pantryPromptDecline" class="btn btn-secondary px-4">No</button>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
     <script src="~/js/indexPlanner.js"></script>
+    <script src="~/js/mealCompletionPantry.js"></script>
 }
