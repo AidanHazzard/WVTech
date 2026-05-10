@@ -12,7 +12,7 @@
     right: 0px;
     transform: translateY(-50%);
 
-    width: 120px;
+    width: 65px;
     height: 86.5%;
     background-color: #ff4d4d;
     border: none;
@@ -56,6 +56,16 @@
     padding-right: 130px;
 }
 
+/* Keep the amount number input wide enough to read on small screens */
+.input-wrapper input[type="number"] {
+    min-width: 60px;
+}
+
+/* Keep the measurement dropdown wide enough to show its selected value */
+.input-wrapper select {
+    min-width: 110px;
+}
+
 .instructionsBox{
     height: 400px;
 }
@@ -77,4 +87,3 @@
   align-items: center;
   margin: 5px 0;
 }
-
