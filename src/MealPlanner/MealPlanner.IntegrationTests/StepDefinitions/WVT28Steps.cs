@@ -68,6 +68,54 @@ public class WVT28Steps
         ctx.SaveChanges();
     }
 
+    [Given("{string} has a meal named {string} today with a recipe containing {string} {string} of {string}")]
+    public void GivenUserHasMealTodayWithRecipeContainingAmountAndMeasurementOfIngredient(
+        string userName, string mealTitle, string amount, string measurement, string ingredientName)
+    {
+        var email = $"{userName}@fakeemail.com";
+        using var ctx = BDDSetup.CreateContext();
+
+        var user = ctx.Set<User>().FirstOrDefault(u => u.Email == email);
+        Assert.That(user, Is.Not.Null, $"User '{userName}' not found");
+
+        var normalizedName = IngredientNameNormalizer.NormalizeKey(ingredientName);
+        var ingredientBase = ctx.Set<IngredientBase>().FirstOrDefault(b => b.Name == normalizedName)
+            ?? ctx.Set<IngredientBase>().Add(new IngredientBase { Name = normalizedName }).Entity;
+
+        var measurementEntity = ctx.Set<Measurement>().FirstOrDefault(m => m.Name == measurement)
+            ?? ctx.Set<Measurement>().Add(new Measurement { Name = measurement }).Entity;
+
+        ctx.SaveChanges();
+
+        var ingredient = new Ingredient
+        {
+            DisplayName = ingredientName,
+            Amount = float.Parse(amount),
+            IngredientBase = ingredientBase,
+            Measurement = measurementEntity
+        };
+
+        var recipe = new Recipe
+        {
+            Name = $"{mealTitle} Recipe",
+            Directions = "Test",
+            Calories = 0
+        };
+        recipe.Ingredients.Add(ingredient);
+
+        var meal = new Meal
+        {
+            UserId = user!.Id,
+            Title = mealTitle,
+            StartTime = DateTime.Today.AddHours(12)
+        };
+        meal.Recipes.Add(recipe);
+
+        ctx.Recipes.Add(recipe);
+        ctx.Meals.Add(meal);
+        ctx.SaveChanges();
+    }
+
     [Given("{string} has completed meal {string} with auto-removed pantry ingredient {string}")]
     public void GivenUserHasCompletedMealWithAutoRemovedIngredient(string userName, string mealTitle, string ingredientName)
     {

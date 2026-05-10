@@ -91,7 +91,7 @@ public class PantryAutoRemoveTests
     // ── AutoRemovePantryItemsAsync ────────────────────────────────────────────
 
     [Test]
-    public async Task AutoRemovePantryItemsAsync_RemovesMatchingItemsAndTracksRecords()
+    public async Task AutoRemovePantryItemsAsync_DeductsRecipeAmount_WhenPantryExceedsRecipeAmount()
     {
         var chicken = MakeBase(10, "chicken");
         var measure = MakeMeasure(5, "Pound(s)");
@@ -111,8 +111,34 @@ public class PantryAutoRemoveTests
         Assert.That(capturedRecords, Is.Not.Null);
         Assert.That(capturedRecords!.Count, Is.EqualTo(1));
         Assert.That(capturedRecords[0].IngredientBaseId, Is.EqualTo(10));
-        Assert.That(capturedRecords[0].Amount, Is.EqualTo(2));
+        Assert.That(capturedRecords[0].Amount, Is.EqualTo(1), "Should record only the recipe amount consumed");
+        _pantryRepo.Verify(r => r.UpdateItemAmount(1, "u1", 1), Times.Once);
+        _pantryRepo.Verify(r => r.RemoveItem(It.IsAny<int>(), It.IsAny<string>()), Times.Never);
+    }
+
+    [Test]
+    public async Task AutoRemovePantryItemsAsync_RemovesWholeRow_WhenPantryAmountLessOrEqualRecipeAmount()
+    {
+        var chicken = MakeBase(10, "chicken");
+        var measure = MakeMeasure(5, "Pound(s)");
+        var pantryItem = new Ingredient { Id = 1, DisplayName = "Chicken", IngredientBase = chicken, Measurement = measure, Amount = 1 };
+
+        var meal = MakeMeal(42, [new Ingredient { IngredientBase = chicken, Measurement = measure, Amount = 2 }]);
+
+        _pantryRepo.Setup(r => r.GetMatchingPantryItems("u1", It.IsAny<HashSet<int>>()))
+            .Returns([pantryItem]);
+
+        List<MealAutoRemovedIngredient>? capturedRecords = null;
+        _pantryRepo.Setup(r => r.AddAutoRemovedIngredients(It.IsAny<List<MealAutoRemovedIngredient>>()))
+            .Callback<List<MealAutoRemovedIngredient>>(r => capturedRecords = r);
+
+        await _service.AutoRemovePantryItemsAsync("u1", 42, DateTime.Today, [meal]);
+
+        Assert.That(capturedRecords, Is.Not.Null);
+        Assert.That(capturedRecords!.Count, Is.EqualTo(1));
+        Assert.That(capturedRecords[0].Amount, Is.EqualTo(1), "Should record full pantry amount");
         _pantryRepo.Verify(r => r.RemoveItem(1, "u1"), Times.Once);
+        _pantryRepo.Verify(r => r.UpdateItemAmount(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<float>()), Times.Never);
     }
 
     [Test]

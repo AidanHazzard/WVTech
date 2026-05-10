@@ -51,6 +51,16 @@ Feature: Auto remove pantry items when a meal is completed
     And 'Gary' is on the pantry page
     Then 'Chicken' appears in the pantry list
 
+  Scenario: Accepting the removal prompt only deducts the recipe amount when pantry has surplus
+    Given 'Gary' has no pantry items
+    And 'Gary' has a pantry item named 'Chicken' with amount '5' and measurement 'Pound(s)'
+    And 'Gary' has a meal named 'Dinner' today with a recipe containing '1' 'Pound(s)' of 'Chicken'
+    And 'Gary' is on the home page
+    When 'Gary' marks the meal 'Dinner' as completed
+    And 'Gary' accepts the pantry removal prompt
+    And 'Gary' is on the pantry page
+    Then 'Chicken' appears in the pantry list
+
   Scenario: Declining the restore prompt leaves the pantry unchanged
     Given 'Gary' has no pantry items
     And 'Gary' has a meal named 'Dinner' today with a recipe containing ingredient 'Chicken'
