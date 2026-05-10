@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
+
 namespace MealPlanner.Controllers;
 
 [Authorize]
@@ -14,23 +15,23 @@ public class ShoppingController : Controller
     private readonly IShoppingListService _shoppingListService;
     private readonly IPantryService _pantryService;
     private readonly UserManager<User> _userManager;
+    private readonly IUserSettingsRepository _userSettingsRepo;
     private readonly IRegistrationService _registrationService;
-    private readonly IMealRepository _mealRepo;
     private readonly MealPlannerDBContext _context;
 
     public ShoppingController(
         IShoppingListService shoppingListService,
         IPantryService pantryService,
         UserManager<User> userManager,
+        IUserSettingsRepository userSettingsRepo,
         IRegistrationService registrationService,
-        IMealRepository mealRepo,
         MealPlannerDBContext context)
     {
         _shoppingListService = shoppingListService;
         _pantryService = pantryService;
         _userManager = userManager;
+        _userSettingsRepo = userSettingsRepo;
         _registrationService = registrationService;
-        _mealRepo = mealRepo;
         _context = context;
     }
 
@@ -55,17 +56,21 @@ public class ShoppingController : Controller
 
         if (!Request.Cookies.ContainsKey("ShoppingListSynced"))
         {
-            await SyncMealIngredients(user, dateFrom, dateTo);
+            await _shoppingListService.SyncFromDateRangeAsync(user.Id, user, dateFrom, dateTo);
             Response.Cookies.Append("ShoppingListSynced", "1", new CookieOptions { HttpOnly = true });
         }
 
         var items = _shoppingListService.GetItemsForUser(user.Id);
+        var profile = await _userSettingsRepo.GetByUserIdAsync(user.Id);
 
         return View(new ShoppingListViewModel
         {
             Items = items,
             DateFrom = dateFrom,
-            DateTo = dateTo
+            DateTo = dateTo,
+            ZipCode = profile?.ZipCode,
+            LastStoreId = HttpContext.Session.GetString(KrogerController.SessionStoreId),
+            KrogerConnected = !string.IsNullOrEmpty(HttpContext.Session.GetString("KrogerAccessToken"))
         });
     }
 
@@ -201,19 +206,4 @@ public class ShoppingController : Controller
         return RedirectToAction(nameof(Pantry));
     }
 
-    private async Task SyncMealIngredients(User user, DateTime dateFrom, DateTime dateTo)
-    {
-        var meals = await _mealRepo.GetUserMealsByDateRangeAsync(user, dateFrom, dateTo);
-
-        foreach (var meal in meals)
-            foreach (var recipe in meal.Recipes)
-                await _context.Entry(recipe).Collection(r => r.Ingredients).LoadAsync();
-
-        var ingredients = meals
-            .SelectMany(m => m.Recipes)
-            .SelectMany(r => r.Ingredients)
-            .ToList();
-
-        _shoppingListService.SyncFromMeals(user.Id, ingredients);
-    }
 }

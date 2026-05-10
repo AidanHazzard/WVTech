@@ -6,20 +6,26 @@ namespace MealPlanner.Services;
 public class ShoppingListService : IShoppingListService
 {
     private readonly IShoppingListRepository _shoppingListRepository;
+    private readonly IMealRepository _mealRepository;  
     private readonly IIngredientBaseRepository _ingredientBaseRepo;
     private readonly IRepository<Measurement> _measurementRepo;
 
-    public ShoppingListService(
-        IShoppingListRepository shoppingListRepository,
-        IIngredientBaseRepository ingredientBaseRepo,
-        IRepository<Measurement> measurementRepo)
+    public ShoppingListService(IShoppingListRepository shoppingListRepository, IMealRepository mealRepository, IIngredientBaseRepository ingredientBaseRepo, IRepository<Measurement> measurementRepo)
     {
         _shoppingListRepository = shoppingListRepository;
+        _mealRepository = mealRepository;
         _ingredientBaseRepo = ingredientBaseRepo;
-        _measurementRepo = measurementRepo;
+        _measurementRepo = measurementRepo;   
     }
 
-    public void SyncFromMeals(string userId, IEnumerable<Ingredient> ingredients)
+    public async Task SyncFromDateRangeAsync(string userId, User user, DateTime dateFrom, DateTime dateTo)
+    {
+        var meals = await _mealRepository.GetUserMealsByDateRangeWithIngredientsAsync(user, dateFrom, dateTo);
+        var ingredients = meals.SelectMany(m => m.Recipes).SelectMany(r => r.Ingredients).ToList();
+        SyncFromMeals(userId, ingredients);
+    }
+
+    private void SyncFromMeals(string userId, IEnumerable<Ingredient> ingredients)
     {
         _shoppingListRepository.RemoveAutoAddedByUserId(userId);
 
@@ -88,6 +94,11 @@ public class ShoppingListService : IShoppingListService
             throw new ArgumentException("Amount cannot be negative.");
 
         _shoppingListRepository.UpdateAmountByIngredientBase(userId, ingredientBaseId, newAmount);
+    }
+
+    public void ClearItems(string userId)
+    {
+        _shoppingListRepository.ClearAllItems(userId);
     }
 
     public IEnumerable<ShoppingListItem> GetItemsForUser(string userId)

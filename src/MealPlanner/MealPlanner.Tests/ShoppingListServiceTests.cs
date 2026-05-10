@@ -32,7 +32,7 @@ public class ShoppingListServiceTests
             .Setup(r => r.FindOrCreate(It.IsAny<Expression<Func<Measurement, bool>>>(), It.IsAny<Func<Measurement>>()))
             .Returns((Expression<Func<Measurement, bool>> _, Func<Measurement> factory) => factory());
 
-        _service = new ShoppingListService(_repo.Object, _ingredientBaseRepo.Object, _measurementRepo.Object);
+        _service = new ShoppingListService(_repo.Object, Mock.Of<IMealRepository>(), _ingredientBaseRepo.Object, _measurementRepo.Object);
     }
 
     [Test]

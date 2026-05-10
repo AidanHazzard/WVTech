@@ -59,6 +59,55 @@ function createInput() {
     container.appendChild(inputWrapper);
 }
 
+// --- Image preview ---
+document.addEventListener('DOMContentLoaded', function () {
+    const fileInput = document.getElementById('imageFile');
+    const preview = document.getElementById('imagePreview');
+    const currentImage = document.querySelector('img[alt="Current recipe image"]');
+    const removeHidden = document.getElementById('removeImageHidden');
+    const removeBtn = document.getElementById('removeImageBtn');
+    const fileNameDisplay = document.querySelector('.file-name-display');
+
+    if (fileInput && preview) {
+        fileInput.addEventListener('change', function () {
+            if (fileInput.files && fileInput.files[0]) {
+                if (fileNameDisplay) fileNameDisplay.textContent = fileInput.files[0].name;
+                preview.src = URL.createObjectURL(fileInput.files[0]);
+                preview.style.display = 'block';
+                if (currentImage) currentImage.style.display = 'none';
+                if (removeHidden) removeHidden.value = 'false';
+                if (removeBtn) removeBtn.style.display = '';
+            } else {
+                if (fileNameDisplay) fileNameDisplay.textContent = 'No file chosen';
+                preview.style.display = 'none';
+                preview.src = '';
+                if (currentImage) {
+                    if (!removeHidden || removeHidden.value !== 'true') {
+                        currentImage.style.display = 'block';
+                        if (removeBtn) removeBtn.style.display = '';
+                    }
+                } else {
+                    if (removeBtn) removeBtn.style.display = 'none';
+                }
+            }
+        });
+    }
+
+    if (removeBtn) {
+        removeBtn.addEventListener('click', function () {
+            if (fileInput) fileInput.value = '';
+            if (fileNameDisplay) fileNameDisplay.textContent = 'No file chosen';
+            if (preview) { preview.style.display = 'none'; preview.src = ''; }
+
+            if (currentImage) {
+                currentImage.style.display = 'none';
+                if (removeHidden) removeHidden.value = 'true';
+            }
+            removeBtn.style.display = 'none';
+        });
+    }
+});
+
 // --- Tag management ---
 function addTag(tagName, fromSelect) {
     const container = document.getElementById('tags-container');

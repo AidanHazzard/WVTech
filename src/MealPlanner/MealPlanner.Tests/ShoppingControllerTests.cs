@@ -61,8 +61,8 @@ public class ShoppingControllerTests
             _shoppingListServiceMock.Object,
             _pantryServiceMock.Object,
             null!,
+            null!,
             _registrationServiceMock.Object,
-            new Mock<IMealRepository>().Object,
             _context);
         _controller.ControllerContext = new ControllerContext
         {
