@@ -4,6 +4,7 @@ using MealPlanner.DAL.Concrete;
 using MealPlanner.Models;
 using MealPlanner.Services;
 using MealPlanner.ViewModels;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
 using Moq;
 
@@ -30,7 +31,9 @@ namespace MealPlanner.Tests
             tagRepo.Setup(r => r.GetTagNamesAsync()).ReturnsAsync([]);
             var registrationService = new Mock<IRegistrationService>();
             var externalRecipeService = new Mock<IExternalRecipeService>();
-            _controller = new FoodEntriesController(_recipeRepository, tagRepo.Object, userRecipeRepo.Object, _context, registrationService.Object, externalRecipeService.Object);
+            var mockEnv = new Mock<IWebHostEnvironment>();
+            mockEnv.Setup(e => e.WebRootPath).Returns(Path.GetTempPath());
+            _controller = new FoodEntriesController(_recipeRepository, tagRepo.Object, userRecipeRepo.Object, _context, registrationService.Object, mockEnv.Object, blobContainer: null, externalRecipeService.Object);
         }
 
         //handels the cleaning up after every test

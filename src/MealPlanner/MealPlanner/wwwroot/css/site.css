@@ -399,6 +399,18 @@ label {
   border-radius: 20px
 }
 
+.buttonRow .buttonGreenInline:first-child {
+  border-radius: 20px 0 0 20px;
+}
+
+.buttonRow .buttonGreenInline:last-child {
+  border-radius: 0 20px 20px 0;
+}
+
+.buttonRow .buttonGreenInline:only-child {
+  border-radius: 20px
+}
+
 .buttonBlueInline {
   flex: 1;
   background-color: var(--button-blue-bg);
@@ -492,14 +504,6 @@ label {
   background-color: var(--search-result-hover-bg) !important;
 }
 
-/* Nutrition Bar Styling */
-.nutrition-bar-row {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 8px;
-}
-
 /* Month/Day Dropdown Styles */
 .mealSelect {
   background-color: var(--textbox-bg);
@@ -555,6 +559,31 @@ label {
     color: var(--text-primary);
     font-weight: bold;
     white-space: nowrap;
+}
+
+@media (max-width: 576px) {
+  .back1 {
+    padding: 12px;
+  }
+  .back2 {
+    padding: 12px;
+  }
+  .backHasButton {
+    padding-bottom: 70px;
+  }
+  .nutrition-bar-row {
+    gap: 6px;
+  }
+  .nutrition-bar-label {
+    width: 55px;
+    min-width: 55px;
+    font-size: 0.85rem;
+  }
+  .nutrition-bar-fraction {
+    width: 72px;
+    min-width: 72px;
+    font-size: 0.8rem;
+  }
 }
 
 /* Red button — for regenerate/destructive attention actions */
@@ -622,17 +651,25 @@ a.buttonRed {
     white-space: nowrap;
 }
 
-/* Export History Modal */
-.export-modal-overlay {
+/* ─── Shared Modal ──────────────────────────────────────────────────────── */
+.app-modal-overlay {
     display: none;
     position: fixed;
     inset: 0;
     z-index: 1050;
-    background: rgba(0, 0, 0, 0.6);
+    background: rgba(0, 0, 0, 0.5);
     align-items: center;
     justify-content: center;
 }
 
+.app-modal-panel {
+    width: 90%;
+    max-width: 420px;
+    padding: 2rem;
+    text-align: center;
+}
+
+/* Export History Modal */
 .export-modal-panel {
     width: 100%;
     max-width: 560px;
@@ -689,4 +726,70 @@ a.buttonRed {
     width: 1em;
     height: 1em;
     cursor: pointer;
+}
+
+.export-history-entry {
+    cursor: pointer;
+}
+
+.export-history-time,
+.export-status-text {
+    font-size: 0.85rem;
+}
+
+.export-history-chevron {
+    font-size: 0.8rem;
+}
+
+.export-item-list {
+    display: none;
+}
+
+.export-grey-btn {
+    background: var(--button-grey-bg);
+    color: var(--text-primary);
+}
+
+.export-ctrl-btn {
+    font-size: 0.78rem;
+}
+
+.export-item-row {
+    font-size: 0.9rem;
+    border-top: 1px solid rgba(0, 0, 0, 0.12);
+}
+
+.export-item-checkbox {
+    width: 1em;
+    height: 1em;
+    cursor: pointer;
+}
+
+/* Styling for the Index page collage */
+.recipe-collage-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.recipe-collage-left-half {
+  width: 50%;
+  height: 100%;
+  overflow: hidden;
+}
+.recipe-collage-vert-half {
+  width: 100%;
+  height: 50%;
+  overflow: hidden;
+}
+.recipe-collage-right-half {
+  width: 50%;
+  height: 100%;
+  position: relative;
+  float: right;
+  bottom: 100%;
+}
+.recipe-collage-full {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
 }

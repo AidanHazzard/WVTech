@@ -1,4 +1,5 @@
 using MealPlanner.DAL.Abstract;
+using MealPlanner.Helpers;
 using MealPlanner.Models;
 using MealPlanner.ViewModels;
 using Microsoft.IdentityModel.Tokens;
@@ -101,25 +102,6 @@ public class MealRecommendationService : IMealRecommendationService
         return recipes;
     }
 
-    private async Task LoadExternalRecipesAsync(List<Recipe> recipes)
-    {
-        if (_externalRecipeService == null) return;
-
-        for (int i = 0; i < recipes.Count; i++)
-        {
-            var r = recipes[i];
-            if (r.ExternalUri.IsNullOrEmpty()) continue;
-            try
-            {
-                r = await _externalRecipeService.GetExternalRecipeByURI(r.ExternalUri!);
-            }
-            catch
-            {
-                if (r != null) recipes.Remove(r);
-            }
-        }
-    }
-
     public async Task<Recipe?> GetOneRecipeRecommendation(User user, DateTime date, IEnumerable<int> excludeRecipeIds)
     {
         var restrictionNames = await GetRestrictionNamesAsync(user.Id);
@@ -127,8 +109,8 @@ public class MealRecommendationService : IMealRecommendationService
         var votePercentages = await _userRecipeRepository.GetAllVotePercentagesAsync();
         var upvoted = await _userRecipeRepository.GetUserRecipesByVoteType(user.Id, UserVoteType.UpVote);
         var allWithTags = await _recipeRepository.GetAllWithTagsAsync();
-        await LoadExternalRecipesAsync(upvoted);
-        await LoadExternalRecipesAsync(allWithTags);
+        await upvoted.LoadExternalRecipesAsync(_externalRecipeService);
+        await allWithTags.LoadExternalRecipesAsync(_externalRecipeService);
 
         var excludeIds = new HashSet<int>(excludeRecipeIds);
         var candidates = OrderedCandidates(upvoted, allWithTags, userVotes, votePercentages, excludeIds);
@@ -149,8 +131,8 @@ public class MealRecommendationService : IMealRecommendationService
         var votePercentages = await _userRecipeRepository.GetAllVotePercentagesAsync();
         var upvoted = await _userRecipeRepository.GetUserRecipesByVoteType(user.Id, UserVoteType.UpVote);
         var allWithTags = await _recipeRepository.GetAllWithTagsAsync();
-        await LoadExternalRecipesAsync(upvoted);
-        await LoadExternalRecipesAsync(allWithTags);
+        await upvoted.LoadExternalRecipesAsync(_externalRecipeService);
+        await allWithTags.LoadExternalRecipesAsync(_externalRecipeService);
 
         var nutritionPrefs = await _nutrionRepository.GetUsersNutritionPreferenceAsync(user.Id);
         var totalWeight = preferences.Sum(p => p.Size.Weight());

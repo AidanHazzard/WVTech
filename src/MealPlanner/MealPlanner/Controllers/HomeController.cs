@@ -2,9 +2,11 @@ using System.Diagnostics;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MealPlanner.DAL.Abstract;
+using MealPlanner.Helpers;
 using MealPlanner.Models;
 using MealPlanner.Services;
 using MealPlanner.ViewModels;
+using System.Collections.Generic;
 
 namespace MealPlanner.Controllers;
 
@@ -15,19 +17,25 @@ public class HomeController : Controller
     private readonly IRegistrationService _registrationService;
     private readonly IMealRepository _mealRepo;
     private readonly INutritionProgressService _nutritionProgressService;
+    private readonly IPantryService _pantryService;
+    private readonly IExternalRecipeService? _externalRecipeService;
 
     public HomeController(
         MealPlannerDBContext context,
         ILoginService loginService,
         IRegistrationService registrationService,
         IMealRepository mealRepo,
-        INutritionProgressService nutritionProgressService)
+        INutritionProgressService nutritionProgressService,
+        IPantryService pantryService,
+        IExternalRecipeService? externalRecipeService = null)
     {
         _context = context;
         _loginService = loginService;
         _registrationService = registrationService;
         _mealRepo = mealRepo;
         _nutritionProgressService = nutritionProgressService;
+        _pantryService = pantryService;
+        _externalRecipeService = externalRecipeService;
     }
 
     public async Task<IActionResult> Index(string? date)
@@ -45,7 +53,19 @@ public class HomeController : Controller
                 ? parsed.Date
                 : DateTime.Today;
 
-        var meals = await _mealRepo.GetUserMealsByDateAsync(user, selectedDate);
+        var meals = await _mealRepo.GetUserMealsByDateWithIngredientsAsync(user, selectedDate);
+
+        var pantryMatchIds = _pantryService.GetMealPantryMatchIds(user.Id, meals);
+
+        var autoRemovedIds = new HashSet<int>();
+        foreach (var meal in meals.Where(m => m.IsCompleted))
+        {
+            if (_pantryService.HasAutoRemovedIngredients(meal.Id, selectedDate))
+                autoRemovedIds.Add(meal.Id);
+        }
+
+        foreach (var meal in meals)
+            await meal.Recipes.LoadExternalRecipesAsync(_externalRecipeService);
 
         var nutrition = await _nutritionProgressService.GetDailyProgressAsync(
             user.Id,
@@ -63,7 +83,9 @@ public class HomeController : Controller
         {
             SelectedDate = selectedDate,
             Meals = meals,
-            NutritionBar = bar
+            NutritionBar = bar,
+            MealPantryMatchIds = pantryMatchIds,
+            MealAutoRemovedIds = autoRemovedIds
         };
 
         return View(vm);
