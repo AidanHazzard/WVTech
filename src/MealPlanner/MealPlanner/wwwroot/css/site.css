@@ -556,6 +556,9 @@ label {
   .back2 {
     padding: 12px;
   }
+  .backHasButton {
+    padding-bottom: 70px;
+  }
   .nutrition-bar-row {
     gap: 6px;
   }
