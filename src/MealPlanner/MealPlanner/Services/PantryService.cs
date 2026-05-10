@@ -40,6 +40,18 @@ public class PantryService : IPantryService
         };
     }
 
+    public void AddPantryItem(string userId, Ingredient item)
+    {
+        var existing = _userRepo.GetByUserId(userId)
+            .FirstOrDefault(i => i.IngredientBase.Id == item.IngredientBase.Id
+                              && i.Measurement.Id == item.Measurement.Id);
+
+        if (existing != null)
+            _userRepo.UpdateItemAmount(existing.Id, userId, existing.Amount + item.Amount);
+        else
+            _userRepo.AddItem(userId, item);
+    }
+
     public void RemovePantryItem(int ingredientId, string userId)
     {
         _userRepo.RemoveItem(ingredientId, userId);
@@ -147,7 +159,7 @@ public class PantryService : IPantryService
                 IngredientBase = record.IngredientBase,
                 Measurement = record.Measurement
             };
-            _userRepo.AddItem(userId, item);
+            AddPantryItem(userId, item);
         }
 
         _autoRemovedRepo.RemoveByMealAndDate(mealId, completionDate);

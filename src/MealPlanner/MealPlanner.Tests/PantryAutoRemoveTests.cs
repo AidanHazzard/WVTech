@@ -45,6 +45,54 @@ public class PantryAutoRemoveTests
         return new Meal { Id = id, Recipes = [recipe] };
     }
 
+    // ── AddPantryItem ─────────────────────────────────────────────────────────
+
+    [Test]
+    public void AddPantryItem_MergesAmount_WhenSameIngredientAndMeasurementExists()
+    {
+        var chicken = MakeBase(10, "chicken");
+        var measure = MakeMeasure(5, "Pound(s)");
+        var existing = new Ingredient { Id = 1, IngredientBase = chicken, Measurement = measure, Amount = 3 };
+
+        _userRepo.Setup(r => r.GetByUserId("u1")).Returns([existing]);
+
+        var newItem = new Ingredient { IngredientBase = chicken, Measurement = measure, Amount = 2 };
+        _service.AddPantryItem("u1", newItem);
+
+        _userRepo.Verify(r => r.UpdateItemAmount(1, "u1", 5), Times.Once);
+        _userRepo.Verify(r => r.AddItem(It.IsAny<string>(), It.IsAny<Ingredient>()), Times.Never);
+    }
+
+    [Test]
+    public void AddPantryItem_AddsNewRow_WhenNoMatchingItemExists()
+    {
+        var chicken = MakeBase(10, "chicken");
+        var measure = MakeMeasure(5, "Pound(s)");
+
+        _userRepo.Setup(r => r.GetByUserId("u1")).Returns([]);
+
+        var newItem = new Ingredient { IngredientBase = chicken, Measurement = measure, Amount = 2 };
+        _service.AddPantryItem("u1", newItem);
+
+        _userRepo.Verify(r => r.AddItem("u1", newItem), Times.Once);
+        _userRepo.Verify(r => r.UpdateItemAmount(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<float>()), Times.Never);
+    }
+
+    [Test]
+    public void AddPantryItem_AddsNewRow_WhenSameIngredientDifferentMeasurementExists()
+    {
+        var chicken = MakeBase(10, "chicken");
+        var existing = new Ingredient { Id = 1, IngredientBase = chicken, Measurement = MakeMeasure(5, "Pound(s)"), Amount = 3 };
+
+        _userRepo.Setup(r => r.GetByUserId("u1")).Returns([existing]);
+
+        var newItem = new Ingredient { IngredientBase = chicken, Measurement = MakeMeasure(6, "Ounce(s)"), Amount = 8 };
+        _service.AddPantryItem("u1", newItem);
+
+        _userRepo.Verify(r => r.AddItem("u1", newItem), Times.Once);
+        _userRepo.Verify(r => r.UpdateItemAmount(It.IsAny<int>(), It.IsAny<string>(), It.IsAny<float>()), Times.Never);
+    }
+
     // ── GetMealPantryMatchIds ─────────────────────────────────────────────────
 
     [Test]
@@ -192,6 +240,7 @@ public class PantryAutoRemoveTests
         };
         _autoRemovedRepo.Setup(r => r.GetByMealAndDate(42, DateTime.Today))
             .Returns([record]);
+        _userRepo.Setup(r => r.GetByUserId("u1")).Returns([]);
 
         _service.RestorePantryItems("u1", 42, DateTime.Today);
 

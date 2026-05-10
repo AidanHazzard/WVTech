@@ -6,6 +6,7 @@ public interface IPantryService
 {
     List<Ingredient> GetPantryItems(string userId);
     Ingredient BuildPantryItem(string name, float amount, string measurement);
+    void AddPantryItem(string userId, Ingredient item);
     void RemovePantryItem(int ingredientId, string userId);
     void UpdatePantryItemAmount(int ingredientId, string userId, float newAmount);
 

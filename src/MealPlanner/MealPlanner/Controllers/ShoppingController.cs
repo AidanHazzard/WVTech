@@ -199,7 +199,7 @@ public class ShoppingController : Controller
         if (user == null) return Challenge();
 
         var ingredient = _pantryService.BuildPantryItem(model.Name, model.Amount, model.Measurement);
-        user.PantryItems.Add(ingredient);
+        _pantryService.AddPantryItem(user.Id, ingredient);
         _context.SaveChanges();
 
         TempData["SuccessMessage"] = $"{model.Name} was added to your pantry.";
