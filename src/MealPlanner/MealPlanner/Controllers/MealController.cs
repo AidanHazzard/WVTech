@@ -288,9 +288,14 @@ public class MealController : Controller
         if (meal == null || meal.UserId != user.Id) return NotFound();
 
         await _mealRepo.LoadRecipesAsync(meal);
-        var excludeIds = meal.Recipes.Select(r => r.Id).ToList();
+        var mealDate = meal.StartTime?.Date ?? DateTime.Today;
+        var dayMeals = await _mealRepo.GetUserMealsByDateAsync(user, mealDate);
+        var excludeIds = dayMeals.SelectMany(m => m.Recipes.Select(r => r.Id))
+            .Union(meal.Recipes.Select(r => r.Id))
+            .Where(id => id != recipeId)
+            .ToHashSet();
 
-        var replacement = await _recommendationService.GetOneRecipeRecommendation(user, meal.StartTime?.Date ?? DateTime.Today, excludeIds);
+        var replacement = await _recommendationService.GetOneRecipeRecommendation(user, mealDate, excludeIds);
         if (replacement == null)
             return Json(new { noAlternative = true });
 
