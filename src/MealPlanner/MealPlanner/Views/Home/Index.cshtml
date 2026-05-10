@@ -171,9 +171,13 @@
 <div id="pantryPromptModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:9999; align-items:center; justify-content:center;">
     <div class="back2" style="max-width:420px; width:90%; padding:2rem; text-align:center;">
         <p id="pantryPromptMessage" class="fs-5 mb-4"></p>
-        <div class="d-flex gap-3 justify-content-center">
-            <button id="pantryPromptAccept" class="btn btn-success px-4">Yes</button>
-            <button id="pantryPromptDecline" class="btn btn-secondary px-4">No</button>
+        <div class="buttonRow">
+            <button id="pantryPromptDecline" type="button" class="buttonGreyInline">
+                <h4 class="buttonText">No</h4>
+            </button>
+            <button id="pantryPromptAccept" type="button" class="buttonGreenInline">
+                <h4 class="buttonText">Yes</h4>
+            </button>
         </div>
     </div>
 </div>
