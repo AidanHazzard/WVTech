@@ -52,7 +52,17 @@
 
             <div class="back2">
                 <h2 class="back1Title">Recipe Image</h2>
-                <input type="file" id="imageFile" name="ImageFile" accept="image/*" class="back2-textbox" />
+                <div class="file-input-wrapper back2-textbox">
+                    <label for="imageFile" class="file-browse-btn buttonGreenInline">
+                        <h4 class="buttonText">Browse</h4>
+                    </label>
+                    <span class="file-name-display">No file chosen</span>
+                    <input type="file" id="imageFile" name="ImageFile" accept="image/*" style="display:none;" />
+                    <button type="button" class="deleteButton file-remove-btn" id="removeImageBtn" style="display:none;">
+                        <img src="/images/icons/delete.png" alt="remove" class="deleteImage">
+                    </button>
+                </div>
+                <img id="imagePreview" src="" alt="Image preview" class="image-preview" />
             </div>
 
             <button class="buttonBlue" type="submit">

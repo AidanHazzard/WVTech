@@ -7,6 +7,7 @@ using MealPlanner.Services;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
 using Microsoft.IdentityModel.Tokens;
+using Azure.Storage.Blobs;
 using Microsoft.AspNetCore.Hosting;
 
 namespace MealPlanner.Controllers;
@@ -20,7 +21,8 @@ public class FoodEntriesController : Controller
     private readonly INutritionProgressService? _nutritionProgressService;
     private readonly IRegistrationService _registrationService;
     private readonly IExternalRecipeService? _externalRecipeService;
-    private readonly IWebHostEnvironment _env;
+    private readonly BlobContainerClient? _blobContainer;
+    private readonly IWebHostEnvironment? _env;
 
     public FoodEntriesController(
         IRecipeRepository recipeRepository,
@@ -29,6 +31,7 @@ public class FoodEntriesController : Controller
         MealPlannerDBContext context,
         IRegistrationService registrationService,
         IWebHostEnvironment env,
+        BlobContainerClient? blobContainer = null,
         IExternalRecipeService? externalRecipeService = null,
         INutritionProgressService? nutritionProgressService = null)
     {
@@ -39,6 +42,7 @@ public class FoodEntriesController : Controller
         _nutritionProgressService = nutritionProgressService;
         _userRecipeRepository = userRecipeRepository;
         _externalRecipeService = externalRecipeService;
+        _blobContainer = blobContainer;
         _env = env;
     }
 
@@ -144,7 +148,10 @@ public class FoodEntriesController : Controller
         }
 
         Recipe recipe = ViewModelService.RecipeFromRecipeVM(newRecipeViewModel);
-        await recipe.SaveImageAsync(newRecipeViewModel.ImageFile, _env.WebRootPath);
+        if (_blobContainer != null)
+            await recipe.SaveImageAsync(newRecipeViewModel.ImageFile, _blobContainer);
+        else if (_env != null)
+            await recipe.SaveImageAsync(newRecipeViewModel.ImageFile, _env.WebRootPath);
         _recipeRepository.CreateOrUpdate(recipe);
 
         User? user = await _registrationService.FindUserByClaimAsync(User);
@@ -215,16 +222,20 @@ public class FoodEntriesController : Controller
             return RedirectToAction("SearchRecipes");
         }
 
+        if (editedRecipeViewModel.RemoveImage || editedRecipeViewModel.ImageFile != null)
+            await Recipe.DeleteImageAsync(existing.ImageUrl, _blobContainer, _env?.WebRootPath);
+
         if (editedRecipeViewModel.RemoveImage)
-        {
             editedRecipeViewModel.ImageUrl = null;
-        }
 
         Recipe updated = ViewModelService.EditRecipeVMToModel(existing, editedRecipeViewModel);
 
         if (!editedRecipeViewModel.RemoveImage && editedRecipeViewModel.ImageFile != null)
         {
-            await updated.SaveImageAsync(editedRecipeViewModel.ImageFile, _env.WebRootPath);
+            if (_blobContainer != null)
+                await updated.SaveImageAsync(editedRecipeViewModel.ImageFile, _blobContainer);
+            else if (_env != null)
+                await updated.SaveImageAsync(editedRecipeViewModel.ImageFile, _env.WebRootPath);
         }
 
         //updates the databse with the new and improved existing
@@ -249,13 +260,7 @@ public async Task<IActionResult> DeleteRecipe(int id)
     var recipe = await _recipeRepository.ReadRecipeWithIngredientsAsync(id);
     if (recipe == null) return NotFound();
 
-    // Delete image file if it lives in /images/recipes/
-    if (recipe.ImageUrl != null && recipe.ImageUrl.StartsWith("/images/recipes/"))
-    {
-        var filePath = Path.Combine(_env.WebRootPath, recipe.ImageUrl.TrimStart('/').Replace('/', Path.DirectorySeparatorChar));
-        if (System.IO.File.Exists(filePath))
-            System.IO.File.Delete(filePath);
-    }
+    await Recipe.DeleteImageAsync(recipe.ImageUrl, _blobContainer, _env?.WebRootPath);
 
     // Remove ingredients first
     _context.Set<Ingredient>().RemoveRange(recipe.Ingredients);

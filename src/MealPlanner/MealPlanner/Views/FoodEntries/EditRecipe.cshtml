@@ -78,17 +78,22 @@
             <div class="back2">
                 <h2 class="back1Title">Recipe Image</h2>
                 <input type="hidden" asp-for="ImageUrl" />
+                <div class="file-input-wrapper back2-textbox">
+                    <label for="imageFile" class="file-browse-btn buttonGreenInline">
+                        <h4 class="buttonText">Browse</h4>
+                    </label>
+                    <span class="file-name-display">No file chosen</span>
+                    <input type="file" id="imageFile" name="ImageFile" accept="image/*" style="display:none;" />
+                    <button type="button" class="deleteButton file-remove-btn" id="removeImageBtn" style="@(string.IsNullOrEmpty(Model.ImageUrl) ? "display:none;" : "")">
+                        <img src="/images/icons/delete.png" alt="remove" class="deleteImage">
+                    </button>
+                </div>
+                <input type="hidden" id="removeImageHidden" name="RemoveImage" value="false" />
                 @if (!string.IsNullOrEmpty(Model.ImageUrl))
                 {
-                    <div class="mb-2">
-                        <img src="@Model.ImageUrl" alt="Current recipe image" style="max-width:200px; max-height:150px; object-fit:cover;" class="mb-2" />
-                    </div>
-                    <div class="mb-2">
-                        <input type="checkbox" id="removeImage" name="RemoveImage" value="true" />
-                        <label for="removeImage">Remove current image</label>
-                    </div>
+                    <img src="@Model.ImageUrl" alt="Current recipe image" class="image-preview" style="display:block;" />
                 }
-                <input type="file" id="imageFile" name="ImageFile" accept="image/*" class="back2-textbox" />
+                <img id="imagePreview" src="" alt="Image preview" class="image-preview" />
             </div>
 
             <button class="buttonBlue" type="submit">
