@@ -512,10 +512,7 @@ public class MealController : Controller
             return Challenge();
         }
 
-        var meal = await _context.Meals
-            .Include(m => m.Recipes)
-                .ThenInclude(r => r.Ingredients)
-            .FirstOrDefaultAsync(m => m.Id == id);
+        var meal = await _mealRepo.ReadWithIngredientsAsync(id);
         if (meal == null)
         {
             return NotFound();

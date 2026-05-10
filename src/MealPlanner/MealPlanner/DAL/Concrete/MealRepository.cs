@@ -214,9 +214,17 @@ public class MealRepository : Repository<Meal>, IMealRepository
     await _context.SaveChangesAsync();
 }
 
-    public async Task<Meal> ReadAsync(int id)
+    public async Task<Meal?> ReadAsync(int id)
     {
         return await _dbset.FindAsync(id);
+    }
+
+    public async Task<Meal?> ReadWithIngredientsAsync(int id)
+    {
+        return await _dbset
+            .Include(m => m.Recipes)
+                .ThenInclude(r => r.Ingredients)
+            .FirstOrDefaultAsync(m => m.Id == id);
     }
 
     public async Task<List<Meal>> GetMealsByIdsAsync(IEnumerable<int> ids)
