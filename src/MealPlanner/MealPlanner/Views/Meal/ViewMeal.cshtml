@@ -44,7 +44,18 @@
                  data-meal-id="@Model.Id"
                  style="cursor:pointer;">
                 <h4 class="buttonText mb-0">@recipe.Name</h4>
-                <button type="button" class="btn btn-danger delete-recipe-btn">X</button>
+                <div class="d-flex gap-2 align-items-center">
+                    @if (Model.Recipes.Count > 1)
+                    {
+                        <button type="button"
+                                class="btn btn-sm btn-warning"
+                                data-action="regenerate-recipe"
+                                data-recipe-id="@recipe.Id"
+                                data-meal-id="@Model.Id"
+                                title="Regenerate this recipe">↻</button>
+                    }
+                    <button type="button" class="btn btn-danger delete-recipe-btn">X</button>
+                </div>
             </div>
         }
     </div>
