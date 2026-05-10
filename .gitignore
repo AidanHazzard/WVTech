@@ -298,3 +298,6 @@ CLAUDE.local.md
 .claude/settings.local.json
 .claude/worktrees/
 **/.claude/worktrees/
+
+# Recipe image folder
+**/images/recipes/

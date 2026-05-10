@@ -2,6 +2,7 @@ using System.Diagnostics;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MealPlanner.DAL.Abstract;
+using MealPlanner.Helpers;
 using MealPlanner.Models;
 using MealPlanner.Services;
 using MealPlanner.ViewModels;
@@ -17,6 +18,7 @@ public class HomeController : Controller
     private readonly IMealRepository _mealRepo;
     private readonly INutritionProgressService _nutritionProgressService;
     private readonly IPantryService _pantryService;
+    private readonly IExternalRecipeService? _externalRecipeService;
 
     public HomeController(
         MealPlannerDBContext context,
@@ -24,7 +26,8 @@ public class HomeController : Controller
         IRegistrationService registrationService,
         IMealRepository mealRepo,
         INutritionProgressService nutritionProgressService,
-        IPantryService pantryService)
+        IPantryService pantryService,
+        IExternalRecipeService? externalRecipeService = null)
     {
         _context = context;
         _loginService = loginService;
@@ -32,6 +35,7 @@ public class HomeController : Controller
         _mealRepo = mealRepo;
         _nutritionProgressService = nutritionProgressService;
         _pantryService = pantryService;
+        _externalRecipeService = externalRecipeService;
     }
 
     public async Task<IActionResult> Index(string? date)
@@ -59,6 +63,9 @@ public class HomeController : Controller
             if (_pantryService.HasAutoRemovedIngredients(meal.Id, selectedDate))
                 autoRemovedIds.Add(meal.Id);
         }
+
+        foreach (var meal in meals)
+            await meal.Recipes.LoadExternalRecipesAsync(_externalRecipeService);
 
         var nutrition = await _nutritionProgressService.GetDailyProgressAsync(
             user.Id,

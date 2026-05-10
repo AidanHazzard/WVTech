@@ -5,7 +5,7 @@
 <div class="back1 backHasButton">
     <h1 class="back1Title">Create a Recipe</h1>
 
-    <form asp-controller="FoodEntries" asp-action="RecipeAdded" method="post">
+    <form asp-controller="FoodEntries" asp-action="RecipeAdded" method="post" enctype="multipart/form-data">
         <h2 class="back1Title left">
             <span>Name:</span>
             <input class="back2-textbox" type="text" placeholder="Enter Recipe Name" asp-for="Name" required>
@@ -49,6 +49,21 @@
             </div>
 
             @await Html.PartialAsync("_TagSelector")
+
+            <div class="back2">
+                <h2 class="back1Title">Recipe Image</h2>
+                <div class="file-input-wrapper back2-textbox">
+                    <label for="imageFile" class="file-browse-btn buttonGreenInline">
+                        <h4 class="buttonText">Browse</h4>
+                    </label>
+                    <span class="file-name-display">No file chosen</span>
+                    <input type="file" id="imageFile" name="ImageFile" accept="image/*" style="display:none;" />
+                    <button type="button" class="deleteButton file-remove-btn" id="removeImageBtn" style="display:none;">
+                        <img src="/images/icons/delete.png" alt="remove" class="deleteImage">
+                    </button>
+                </div>
+                <img id="imagePreview" src="" alt="Image preview" class="image-preview" />
+            </div>
 
             <button class="buttonBlue" type="submit">
                 <h2 class="buttonText">Add Recipe</h2>
