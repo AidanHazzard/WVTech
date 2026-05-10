@@ -26,7 +26,7 @@ function createInput() {
     //so we can delete things later
     const inputWrapper = document.createElement('div');
     inputWrapper.className = 'row input-wrapper';
-    inputWrapper.innerHTML = `                
+    inputWrapper.innerHTML = `
             <div class="row">
                 <input type="number" class="col-1 back2-textbox-partial mx-1" name="IngredientAmounts" placeholder="0">
                 <select class="col-2 back2-textbox-partial mx-1" name="IngredientMeasurements">
