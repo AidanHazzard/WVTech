@@ -86,6 +86,9 @@ public class PantryService : IPantryService
         var meal = meals.FirstOrDefault(m => m.Id == mealId);
         if (meal == null) return;
 
+        // Clear stale records left from a prior removal the user declined to restore
+        _autoRemovedRepo.RemoveByMealAndDate(mealId, completionDate);
+
         // Sum recipe amounts per ingredient base (handles multiple recipes using the same ingredient)
         var recipeInfoByBaseId = meal.Recipes
             .SelectMany(r => r.Ingredients)

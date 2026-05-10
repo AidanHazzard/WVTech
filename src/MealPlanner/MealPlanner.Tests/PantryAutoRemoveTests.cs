@@ -192,6 +192,28 @@ public class PantryAutoRemoveTests
     }
 
     [Test]
+    public void AutoRemovePantryItems_ClearsStaleRecords_BeforeAddingNew()
+    {
+        var chicken = MakeBase(10, "chicken");
+        var measure = MakeMeasure(5, "Pound(s)");
+        var pantryItem = new Ingredient { Id = 1, DisplayName = "Chicken", IngredientBase = chicken, Measurement = measure, Amount = 2 };
+        var meal = MakeMeal(42, [new Ingredient { IngredientBase = chicken, Measurement = measure, Amount = 1 }]);
+
+        _userRepo.Setup(r => r.GetMatchingPantryItems("u1", It.IsAny<HashSet<int>>()))
+            .Returns([pantryItem]);
+
+        var callOrder = new List<string>();
+        _autoRemovedRepo.Setup(r => r.RemoveByMealAndDate(42, DateTime.Today))
+            .Callback(() => callOrder.Add("remove"));
+        _autoRemovedRepo.Setup(r => r.AddRange(It.IsAny<List<MealAutoRemovedIngredient>>()))
+            .Callback(() => callOrder.Add("add"));
+
+        _service.AutoRemovePantryItems("u1", 42, DateTime.Today, [meal]);
+
+        Assert.That(callOrder, Is.EqualTo(new[] { "remove", "add" }));
+    }
+
+    [Test]
     public void AutoRemovePantryItems_DoesNothing_WhenMealNotInList()
     {
         var meal = MakeMeal(99, []);
