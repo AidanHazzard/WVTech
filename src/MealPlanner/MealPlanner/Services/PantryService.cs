@@ -71,30 +71,59 @@ public class PantryService : IPantryService
         var meal = meals.FirstOrDefault(m => m.Id == mealId);
         if (meal == null) return;
 
-        var mealBaseIds = meal.Recipes
+        // Sum recipe amounts per ingredient base (handles multiple recipes using the same ingredient)
+        var recipeInfoByBaseId = meal.Recipes
             .SelectMany(r => r.Ingredients)
-            .Select(i => i.IngredientBase.Id)
-            .ToHashSet();
+            .GroupBy(i => i.IngredientBase.Id)
+            .ToDictionary(
+                g => g.Key,
+                g => (Amount: g.Sum(i => i.Amount), MeasurementId: g.First().Measurement.Id));
 
-        var matching = _pantryRepo.GetMatchingPantryItems(userId, mealBaseIds);
+        var matching = _pantryRepo.GetMatchingPantryItems(userId, recipeInfoByBaseId.Keys.ToHashSet());
         if (matching.Count == 0) return;
 
-        var records = matching.Select(item => new MealAutoRemovedIngredient
-        {
-            MealId = mealId,
-            CompletionDate = completionDate.Date,
-            IngredientBaseId = item.IngredientBase.Id,
-            DisplayName = item.DisplayName,
-            Amount = item.Amount,
-            MeasurementId = item.Measurement.Id,
-            CreatedAt = DateTime.UtcNow
-        }).ToList();
-
-        _pantryRepo.AddAutoRemovedIngredients(records);
+        var records = new List<MealAutoRemovedIngredient>();
 
         foreach (var item in matching)
-            _pantryRepo.RemoveItem(item.Id, userId);
+        {
+            if (!recipeInfoByBaseId.TryGetValue(item.IngredientBase.Id, out var recipeInfo))
+                continue;
 
+            bool sameUnit = item.Measurement.Id == recipeInfo.MeasurementId;
+
+            if (sameUnit && item.Amount > recipeInfo.Amount)
+            {
+                // Pantry has more than the recipe needs — deduct only what was used
+                records.Add(new MealAutoRemovedIngredient
+                {
+                    MealId = mealId,
+                    CompletionDate = completionDate.Date,
+                    IngredientBaseId = item.IngredientBase.Id,
+                    DisplayName = item.DisplayName,
+                    Amount = recipeInfo.Amount,
+                    MeasurementId = item.Measurement.Id,
+                    CreatedAt = DateTime.UtcNow
+                });
+                _pantryRepo.UpdateItemAmount(item.Id, userId, item.Amount - recipeInfo.Amount);
+            }
+            else
+            {
+                // Pantry has <= recipe amount, or different units — remove the whole row
+                records.Add(new MealAutoRemovedIngredient
+                {
+                    MealId = mealId,
+                    CompletionDate = completionDate.Date,
+                    IngredientBaseId = item.IngredientBase.Id,
+                    DisplayName = item.DisplayName,
+                    Amount = item.Amount,
+                    MeasurementId = item.Measurement.Id,
+                    CreatedAt = DateTime.UtcNow
+                });
+                _pantryRepo.RemoveItem(item.Id, userId);
+            }
+        }
+
+        _pantryRepo.AddAutoRemovedIngredients(records);
         await Task.CompletedTask;
     }
 
