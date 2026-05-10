@@ -4,11 +4,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace MealPlanner.DAL.Concrete;
 
-public class PantryRepository : Repository<User>, IPantryRepository
+public class UserRepository : Repository<User>, IUserRepository
 {
     private readonly MealPlannerDBContext _context;
 
-    public PantryRepository(MealPlannerDBContext context) : base(context)
+    public UserRepository(MealPlannerDBContext context) : base(context)
     {
         _context = context;
     }
@@ -67,35 +67,5 @@ public class PantryRepository : Repository<User>, IPantryRepository
             .Include(u => u.PantryItems)
             .FirstOrDefault(u => u.Id == userId);
         user?.PantryItems.Add(item);
-    }
-
-    public void AddAutoRemovedIngredients(List<MealAutoRemovedIngredient> records)
-    {
-        _context.MealAutoRemovedIngredients.AddRange(records);
-    }
-
-    public List<MealAutoRemovedIngredient> GetAutoRemovedIngredients(int mealId, DateTime completionDate)
-    {
-        return _context.MealAutoRemovedIngredients
-            .Include(r => r.IngredientBase)
-            .Include(r => r.Measurement)
-            .Where(r => r.MealId == mealId && r.CompletionDate == completionDate.Date)
-            .ToList();
-    }
-
-    public void RemoveAutoRemovedIngredients(int mealId, DateTime completionDate)
-    {
-        var records = _context.MealAutoRemovedIngredients
-            .Where(r => r.MealId == mealId && r.CompletionDate == completionDate.Date)
-            .ToList();
-        _context.MealAutoRemovedIngredients.RemoveRange(records);
-    }
-
-    public void PurgeExpiredAutoRemovedIngredients(DateTime cutoff)
-    {
-        var expired = _context.MealAutoRemovedIngredients
-            .Where(r => r.CreatedAt < cutoff)
-            .ToList();
-        _context.MealAutoRemovedIngredients.RemoveRange(expired);
     }
 }

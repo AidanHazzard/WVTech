@@ -5,23 +5,26 @@ namespace MealPlanner.Services;
 
 public class PantryService : IPantryService
 {
-    private readonly IPantryRepository _pantryRepo;
+    private readonly IUserRepository _userRepo;
+    private readonly IMealAutoRemovedIngredientRepository _autoRemovedRepo;
     private readonly IIngredientBaseRepository _ingredientBaseRepo;
     private readonly IRepository<Measurement> _measurementRepo;
 
     public PantryService(
-        IPantryRepository pantryRepo,
+        IUserRepository userRepo,
+        IMealAutoRemovedIngredientRepository autoRemovedRepo,
         IIngredientBaseRepository ingredientBaseRepo,
         IRepository<Measurement> measurementRepo)
     {
-        _pantryRepo = pantryRepo;
+        _userRepo = userRepo;
+        _autoRemovedRepo = autoRemovedRepo;
         _ingredientBaseRepo = ingredientBaseRepo;
         _measurementRepo = measurementRepo;
     }
 
     public List<Ingredient> GetPantryItems(string userId)
     {
-        return _pantryRepo.GetByUserId(userId);
+        return _userRepo.GetByUserId(userId);
     }
 
     public Ingredient BuildPantryItem(string name, float amount, string measurement)
@@ -39,17 +42,17 @@ public class PantryService : IPantryService
 
     public void RemovePantryItem(int ingredientId, string userId)
     {
-        _pantryRepo.RemoveItem(ingredientId, userId);
+        _userRepo.RemoveItem(ingredientId, userId);
     }
 
     public void UpdatePantryItemAmount(int ingredientId, string userId, float newAmount)
     {
-        _pantryRepo.UpdateItemAmount(ingredientId, userId, newAmount);
+        _userRepo.UpdateItemAmount(ingredientId, userId, newAmount);
     }
 
     public HashSet<int> GetMealPantryMatchIds(string userId, List<Meal> meals)
     {
-        var pantryBaseIds = _pantryRepo.GetUserIngredientBaseIds(userId);
+        var pantryBaseIds = _userRepo.GetUserIngredientBaseIds(userId);
         if (pantryBaseIds.Count == 0) return [];
 
         var result = new HashSet<int>();
@@ -79,7 +82,7 @@ public class PantryService : IPantryService
                 g => g.Key,
                 g => (Amount: g.Sum(i => i.Amount), MeasurementId: g.First().Measurement.Id));
 
-        var matching = _pantryRepo.GetMatchingPantryItems(userId, recipeInfoByBaseId.Keys.ToHashSet());
+        var matching = _userRepo.GetMatchingPantryItems(userId, recipeInfoByBaseId.Keys.ToHashSet());
         if (matching.Count == 0) return;
 
         var records = new List<MealAutoRemovedIngredient>();
@@ -104,7 +107,7 @@ public class PantryService : IPantryService
                     MeasurementId = item.Measurement.Id,
                     CreatedAt = DateTime.UtcNow
                 });
-                _pantryRepo.UpdateItemAmount(item.Id, userId, item.Amount - recipeInfo.Amount);
+                _userRepo.UpdateItemAmount(item.Id, userId, item.Amount - recipeInfo.Amount);
             }
             else
             {
@@ -119,22 +122,22 @@ public class PantryService : IPantryService
                     MeasurementId = item.Measurement.Id,
                     CreatedAt = DateTime.UtcNow
                 });
-                _pantryRepo.RemoveItem(item.Id, userId);
+                _userRepo.RemoveItem(item.Id, userId);
             }
         }
 
-        _pantryRepo.AddAutoRemovedIngredients(records);
+        _autoRemovedRepo.AddRange(records);
         await Task.CompletedTask;
     }
 
     public bool HasAutoRemovedIngredients(int mealId, DateTime completionDate)
     {
-        return _pantryRepo.GetAutoRemovedIngredients(mealId, completionDate).Count > 0;
+        return _autoRemovedRepo.GetByMealAndDate(mealId, completionDate).Count > 0;
     }
 
     public async Task RestorePantryItemsAsync(string userId, int mealId, DateTime completionDate)
     {
-        var records = _pantryRepo.GetAutoRemovedIngredients(mealId, completionDate);
+        var records = _autoRemovedRepo.GetByMealAndDate(mealId, completionDate);
 
         foreach (var record in records)
         {
@@ -145,10 +148,10 @@ public class PantryService : IPantryService
                 IngredientBase = record.IngredientBase,
                 Measurement = record.Measurement
             };
-            _pantryRepo.AddItem(userId, item);
+            _userRepo.AddItem(userId, item);
         }
 
-        _pantryRepo.RemoveAutoRemovedIngredients(mealId, completionDate);
+        _autoRemovedRepo.RemoveByMealAndDate(mealId, completionDate);
 
         await Task.CompletedTask;
     }

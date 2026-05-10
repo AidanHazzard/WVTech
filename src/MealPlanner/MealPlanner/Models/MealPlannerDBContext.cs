@@ -63,27 +63,6 @@ namespace MealPlanner.Models
                 .HasForeignKey(me => me.MealId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            modelBuilder.Entity<MealAutoRemovedIngredient>()
-                .HasKey(m => new { m.MealId, m.CompletionDate, m.IngredientBaseId });
-
-            modelBuilder.Entity<MealAutoRemovedIngredient>()
-                .HasOne(m => m.Meal)
-                .WithMany()
-                .HasForeignKey(m => m.MealId)
-                .OnDelete(DeleteBehavior.Cascade);
-
-            modelBuilder.Entity<MealAutoRemovedIngredient>()
-                .HasOne(m => m.IngredientBase)
-                .WithMany()
-                .HasForeignKey(m => m.IngredientBaseId)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            modelBuilder.Entity<MealAutoRemovedIngredient>()
-                .HasOne(m => m.Measurement)
-                .WithMany()
-                .HasForeignKey(m => m.MeasurementId)
-                .OnDelete(DeleteBehavior.Restrict);
-
             modelBuilder.Entity<UserDietaryRestriction>()
                 .HasKey(udr => new { udr.UserId, udr.DietaryRestrictionId });
 
