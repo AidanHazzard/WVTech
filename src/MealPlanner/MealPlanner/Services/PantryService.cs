@@ -69,7 +69,7 @@ public class PantryService : IPantryService
         return result;
     }
 
-    public async Task AutoRemovePantryItemsAsync(string userId, int mealId, DateTime completionDate, List<Meal> meals)
+    public void AutoRemovePantryItems(string userId, int mealId, DateTime completionDate, List<Meal> meals)
     {
         var meal = meals.FirstOrDefault(m => m.Id == mealId);
         if (meal == null) return;
@@ -127,7 +127,6 @@ public class PantryService : IPantryService
         }
 
         _autoRemovedRepo.AddRange(records);
-        await Task.CompletedTask;
     }
 
     public bool HasAutoRemovedIngredients(int mealId, DateTime completionDate)
@@ -135,7 +134,7 @@ public class PantryService : IPantryService
         return _autoRemovedRepo.GetByMealAndDate(mealId, completionDate).Count > 0;
     }
 
-    public async Task RestorePantryItemsAsync(string userId, int mealId, DateTime completionDate)
+    public void RestorePantryItems(string userId, int mealId, DateTime completionDate)
     {
         var records = _autoRemovedRepo.GetByMealAndDate(mealId, completionDate);
 
@@ -152,7 +151,5 @@ public class PantryService : IPantryService
         }
 
         _autoRemovedRepo.RemoveByMealAndDate(mealId, completionDate);
-
-        await Task.CompletedTask;
     }
 }

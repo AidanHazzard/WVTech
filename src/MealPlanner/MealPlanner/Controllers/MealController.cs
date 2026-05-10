@@ -532,14 +532,14 @@ public class MealController : Controller
             _context.MealCompletions.Add(new MealCompletion { MealId = meal.Id, CompletionDate = completionDate });
 
             if (removePantry == true && _pantryService != null)
-                await _pantryService.AutoRemovePantryItemsAsync(user.Id, meal.Id, completionDate, [meal]);
+                _pantryService.AutoRemovePantryItems(user.Id, meal.Id, completionDate, [meal]);
         }
         else if (isCompleted != true && existing != null)
         {
             _context.MealCompletions.Remove(existing);
 
             if (restorePantry == true && _pantryService != null)
-                await _pantryService.RestorePantryItemsAsync(user.Id, meal.Id, completionDate);
+                _pantryService.RestorePantryItems(user.Id, meal.Id, completionDate);
         }
 
         await _context.SaveChangesAsync();

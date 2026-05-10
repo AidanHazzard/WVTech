@@ -90,10 +90,10 @@ public class PantryAutoRemoveTests
         Assert.That(result, Is.Empty);
     }
 
-    // ── AutoRemovePantryItemsAsync ────────────────────────────────────────────
+    // ── AutoRemovePantryItems ────────────────────────────────────────────
 
     [Test]
-    public async Task AutoRemovePantryItemsAsync_DeductsRecipeAmount_WhenPantryExceedsRecipeAmount()
+    public void AutoRemovePantryItems_DeductsRecipeAmount_WhenPantryExceedsRecipeAmount()
     {
         var chicken = MakeBase(10, "chicken");
         var measure = MakeMeasure(5, "Pound(s)");
@@ -108,7 +108,7 @@ public class PantryAutoRemoveTests
         _autoRemovedRepo.Setup(r => r.AddRange(It.IsAny<List<MealAutoRemovedIngredient>>()))
             .Callback<List<MealAutoRemovedIngredient>>(r => capturedRecords = r);
 
-        await _service.AutoRemovePantryItemsAsync("u1", 42, DateTime.Today, [meal]);
+        _service.AutoRemovePantryItems("u1", 42, DateTime.Today, [meal]);
 
         Assert.That(capturedRecords, Is.Not.Null);
         Assert.That(capturedRecords!.Count, Is.EqualTo(1));
@@ -119,7 +119,7 @@ public class PantryAutoRemoveTests
     }
 
     [Test]
-    public async Task AutoRemovePantryItemsAsync_RemovesWholeRow_WhenPantryAmountLessOrEqualRecipeAmount()
+    public void AutoRemovePantryItems_RemovesWholeRow_WhenPantryAmountLessOrEqualRecipeAmount()
     {
         var chicken = MakeBase(10, "chicken");
         var measure = MakeMeasure(5, "Pound(s)");
@@ -134,7 +134,7 @@ public class PantryAutoRemoveTests
         _autoRemovedRepo.Setup(r => r.AddRange(It.IsAny<List<MealAutoRemovedIngredient>>()))
             .Callback<List<MealAutoRemovedIngredient>>(r => capturedRecords = r);
 
-        await _service.AutoRemovePantryItemsAsync("u1", 42, DateTime.Today, [meal]);
+        _service.AutoRemovePantryItems("u1", 42, DateTime.Today, [meal]);
 
         Assert.That(capturedRecords, Is.Not.Null);
         Assert.That(capturedRecords!.Count, Is.EqualTo(1));
@@ -144,11 +144,11 @@ public class PantryAutoRemoveTests
     }
 
     [Test]
-    public async Task AutoRemovePantryItemsAsync_DoesNothing_WhenMealNotInList()
+    public void AutoRemovePantryItems_DoesNothing_WhenMealNotInList()
     {
         var meal = MakeMeal(99, []);
 
-        await _service.AutoRemovePantryItemsAsync("u1", 42, DateTime.Today, [meal]);
+        _service.AutoRemovePantryItems("u1", 42, DateTime.Today, [meal]);
 
         _userRepo.Verify(r => r.GetMatchingPantryItems(It.IsAny<string>(), It.IsAny<HashSet<int>>()), Times.Never);
     }
@@ -178,10 +178,10 @@ public class PantryAutoRemoveTests
         Assert.That(_service.HasAutoRemovedIngredients(42, DateTime.Today), Is.False);
     }
 
-    // ── RestorePantryItemsAsync ───────────────────────────────────────────────
+    // ── RestorePantryItems ───────────────────────────────────────────────
 
     [Test]
-    public async Task RestorePantryItemsAsync_AddsIngredientBackAndDeletesRecord()
+    public void RestorePantryItems_AddsIngredientBackAndDeletesRecord()
     {
         var record = new MealAutoRemovedIngredient
         {
@@ -193,7 +193,7 @@ public class PantryAutoRemoveTests
         _autoRemovedRepo.Setup(r => r.GetByMealAndDate(42, DateTime.Today))
             .Returns([record]);
 
-        await _service.RestorePantryItemsAsync("u1", 42, DateTime.Today);
+        _service.RestorePantryItems("u1", 42, DateTime.Today);
 
         _userRepo.Verify(r => r.AddItem("u1", It.Is<Ingredient>(i =>
             i.IngredientBase.Id == 10 && i.Amount == 2)), Times.Once);
