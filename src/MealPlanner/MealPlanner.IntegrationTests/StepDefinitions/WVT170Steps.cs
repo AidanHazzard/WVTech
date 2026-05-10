@@ -173,6 +173,21 @@ public class WVT170Steps
             $"Expected no visible regenerate button for '{recipeName}' but found one");
     }
 
+    [When("{string} looks at the recipes within a meal in the summary")]
+    public void WhenUserLooksAtRecipesInSummaryMeal(string userName)
+    {
+        var rows = _wait.Until(d =>
+        {
+            try
+            {
+                var r = d.FindElements(By.CssSelector("#day-plan-summary .mealRecipeItem"));
+                return r.Count > 0 ? r : null;
+            }
+            catch { return null; }
+        });
+        Assert.That(rows, Is.Not.Null, "No recipe rows found in day plan summary");
+    }
+
     [Then("a regenerate button is visible next to each recipe in that meal")]
     public void ThenRegenerateButtonIsVisibleNextToEachRecipe()
     {
