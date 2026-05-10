@@ -19,10 +19,10 @@
 
     <form asp-action="AddPantryItem" method="post" class="mb-4">
         @Html.AntiForgeryToken()
-        <div class="row align-items-center">
-            <input id="Amount" name="Amount" type="number" step="any" min="0" class="col-1 back2-textbox-partial mx-1" placeholder="0" />
-        
-            <select id="Measurement" name="Measurement" class="back2-textbox-partial col-2 mx-1">
+        <div class="row align-items-center flex-wrap">
+            <input id="Amount" name="Amount" type="number" step="any" min="0" class="col-1 back2-textbox-partial mx-1" placeholder="0" style="min-width: 70px;" />
+
+            <select id="Measurement" name="Measurement" class="back2-textbox-partial col-2 mx-1" style="min-width: 110px;">
                 <option value="" selected>Select</option>
                 <option value="Count">Count</option>
                 <option value="Cup(s)">Cup(s)</option>
@@ -31,7 +31,7 @@
                 <option value="L">L</option>
                 <option value="KG">KG</option>
             </select>
-            <div class="col">
+            <div class="col" style="min-width: 150px;">
                 <input id="Name" name="Name" class="back2-textbox-partial w-100" placeholder="Ingredient name" />
                 <span class="field-validation-error text-danger" data-valmsg-for="Name"></span>
             </div>
@@ -46,7 +46,7 @@
                 @foreach (var item in Model)
                 {
                     <div class="pantry-item d-flex align-items-center gap-2">
-                        <span class="pantry-item-name fs-5 flex-grow-1">
+                        <span class="pantry-item-name fs-5 flex-grow-1" style="min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
                             @($"{item.Amount:G} {item.Measurement?.Name} of {item.IngredientBase.Display()}")
                         </span>
                         <form asp-action="UpdatePantryItemAmount" method="post" class="d-flex align-items-center gap-2 m-0">
