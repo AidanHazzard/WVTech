@@ -69,9 +69,66 @@
                         <input type="hidden" name="id" value="@meal.Id" />
 
                         <button type="submit" class="imageButton mealButton">
-                            <img src="~/images/placeholder/apples.avif"
-                                 alt="apples"
-                                 class="fullImage">
+                            @{
+                                var sortedRecipes = meal.Recipes
+                                    .OrderByDescending(r => r.Calories)
+                                    .ToList();
+                            }
+                            
+                            <!-- Recipe image collage -->
+                            @if (sortedRecipes.Any())
+                            {
+                                @for(int i=0; i<sortedRecipes.Count; i++)
+                                {
+                                    Recipe r = sortedRecipes[i];
+                                    bool rHasImage = !string.IsNullOrEmpty(r.ImageUrl);
+                                    string rSrc = rHasImage ? r.ImageUrl! : "/images/placeholder/no-image.svg";
+                                    <!-- Even horizontally splits, odd vertically, last in list fills rest -->
+                                    if(i== sortedRecipes.Count-1)
+                                    {
+                                        <div class="recipe-collage-full">
+                                            <img src="@rSrc"
+                                                alt="@r.Name"
+                                                data-calories="@r.Calories"
+                                                data-recipe-id="@r.Id"
+                                                class="recipe-collage-img @(rHasImage ? "recipe-has-image" : "recipe-no-image")" />
+                                        </div>
+                                    }
+                                    else if(i%2==0)
+                                    {
+                                        <div class="recipe-collage-left-half">
+                                            <img src="@rSrc"
+                                                alt="@r.Name"
+                                                data-calories="@r.Calories"
+                                                data-recipe-id="@r.Id"
+                                                class="recipe-collage-img @(rHasImage ? "recipe-has-image" : "recipe-no-image")" />
+                                        </div>
+                                        @:<div class="recipe-collage-right-half">
+                                    }
+                                    else
+                                    {
+                                        <div class="recipe-collage-vert-half">
+                                            <img src="@rSrc"
+                                                alt="@r.Name"
+                                                data-calories="@r.Calories"
+                                                data-recipe-id="@r.Id"
+                                                class="recipe-collage-img @(rHasImage ? "recipe-has-image" : "recipe-no-image")" />
+                                        </div>
+                                        @:<div class="recipe-collage-vert-half">
+                                    }
+                                }
+                                <!-- Clean up hanging tags (needed for nesting DOM elements with loops) -->
+                                @for(int i=0; i<sortedRecipes.Count-1; i++)
+                                {
+                                    @:</div>
+                                }
+                            }
+                            else
+                            {
+                                <img src="~/images/placeholder/apples.avif"
+                                     alt="apples"
+                                     class="fullImage">
+                            }
 
                             <div class="buttonGreen noBevelTop">
                                 <h2 class="buttonText">@meal.Title</h2>

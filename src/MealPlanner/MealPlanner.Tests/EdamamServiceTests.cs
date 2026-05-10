@@ -10,6 +10,10 @@ namespace MealPlanner.Tests;
 public class EdamamServiceTests
 {
     private EdamamService SetupMocks(string jsonResponse, HttpStatusCode statusCode = HttpStatusCode.OK)
+        => SetupMocksWithHandler(jsonResponse, statusCode).service;
+
+    private (EdamamService service, Mock<HttpMessageHandler> handler) SetupMocksWithHandler(
+        string jsonResponse, HttpStatusCode statusCode = HttpStatusCode.OK)
     {
         var messageHandler = new Mock<HttpMessageHandler>(MockBehavior.Strict);
         messageHandler.Protected()
@@ -30,7 +34,7 @@ public class EdamamServiceTests
             BaseAddress = new Uri("https://api.test.com/api/")
         };
 
-        return new EdamamService(client, "testid", "testkey");
+        return (new EdamamService(client, "testid", "testkey"), messageHandler);
     }
 
     [Test]
@@ -307,8 +311,184 @@ public class EdamamServiceTests
         // Act
         var exception = Assert.CatchAsync(
             async () => await service.GetExternalRecipeByURI("http://TestUri.com/Test123"));
-        
+
         // Assert
         Assert.That(exception, Is.TypeOf<Exception>());
+    }
+
+    [Test]
+    public async Task GetExternalRecipesByURIs_ReturnsEmptyList_WhenGivenEmptyList()
+    {
+        // Arrange — strict mock: any HTTP call would throw, proving we skip the request
+        var messageHandler = new Mock<HttpMessageHandler>(MockBehavior.Strict);
+        var client = new HttpClient(messageHandler.Object)
+        {
+            BaseAddress = new Uri("https://api.test.com/api/")
+        };
+        EdamamService service = new EdamamService(client, "testid", "testkey");
+
+        // Act
+        var result = await service.GetExternalRecipesByURIs([]);
+
+        // Assert
+        Assert.That(result, Is.Empty);
+    }
+
+    [Test]
+    public async Task GetExternalRecipesByURIs_ReturnsManyRecipes_WhenResponseOK()
+    {
+        // Arrange
+        string json =
+            """
+            {
+                "from": 1,
+                "to": 2,
+                "count": 2,
+                "_links": {},
+                "hits": [
+                    {
+                        "recipe": {
+                            "uri": "http://TestUri.com/Test1",
+                            "label": "Spaghetti Bolognese",
+                            "ingredients": [],
+                            "totalNutrients": {
+                                "ENERC_KCAL": { "label": "Energy", "quantity": 500, "unit": "kcal" },
+                                "FAT":        { "label": "Fat",    "quantity": 10,  "unit": "g" },
+                                "CHOCDF":     { "label": "Carbs",  "quantity": 60,  "unit": "g" },
+                                "PROCNT":     { "label": "Protein","quantity": 25,  "unit": "g" }
+                            }
+                        },
+                        "_links": { "self": { "href": "https://api.test.com/api/test1", "title": "Self" } }
+                    },
+                    {
+                        "recipe": {
+                            "uri": "http://TestUri.com/Test2",
+                            "label": "Chicken Salad",
+                            "ingredients": [],
+                            "totalNutrients": {
+                                "ENERC_KCAL": { "label": "Energy", "quantity": 300, "unit": "kcal" },
+                                "FAT":        { "label": "Fat",    "quantity": 8,   "unit": "g" },
+                                "CHOCDF":     { "label": "Carbs",  "quantity": 15,  "unit": "g" },
+                                "PROCNT":     { "label": "Protein","quantity": 35,  "unit": "g" }
+                            }
+                        },
+                        "_links": { "self": { "href": "https://api.test.com/api/test2", "title": "Self" } }
+                    }
+                ]
+            }
+            """;
+
+        EdamamService service = SetupMocks(json);
+
+        // Act
+        var result = await service.GetExternalRecipesByURIs(
+            ["http://TestUri.com/Test1", "http://TestUri.com/Test2"]);
+
+        // Assert
+        Assert.That(result, Is.Not.Empty);
+        using (Assert.EnterMultipleScope())
+        {
+            Assert.That(result.Count(), Is.EqualTo(2));
+            Assert.That(result.First().Name, Is.EqualTo("Spaghetti Bolognese"));
+            Assert.That(result.First().ExternalUri, Is.EqualTo("http://TestUri.com/Test1"));
+            Assert.That(result.First().Calories, Is.EqualTo(500));
+            Assert.That(result.Last().Name, Is.EqualTo("Chicken Salad"));
+        }
+    }
+
+    [TestCase(HttpStatusCode.Forbidden)]
+    [TestCase(HttpStatusCode.BadRequest)]
+    [TestCase(HttpStatusCode.NotFound)]
+    public async Task GetExternalRecipesByURIs_ThrowsError_IfResponseNotOk(HttpStatusCode statusCode)
+    {
+        // Arrange
+        EdamamService service = SetupMocks("", statusCode);
+
+        // Act
+        var exception = Assert.CatchAsync(
+            async () => await service.GetExternalRecipesByURIs(["http://TestUri.com/Test1"]));
+
+        // Assert
+        Assert.That(exception, Is.TypeOf<Exception>());
+    }
+
+    [Test]
+    public async Task GetExternalRecipesByURIs_MakesTwoCalls_When21URIsGiven()
+    {
+        // Arrange — mock returns 1 recipe per call; 21 URIs → 2 batches (20 + 1)
+        string json =
+            """
+            {
+                "from": 1, "to": 1, "count": 1, "_links": {},
+                "hits": [{
+                    "recipe": {
+                        "uri": "http://TestUri.com/A",
+                        "label": "Recipe A",
+                        "ingredients": [],
+                        "totalNutrients": {
+                            "ENERC_KCAL": { "label": "Energy", "quantity": 100, "unit": "kcal" },
+                            "FAT":        { "label": "Fat",    "quantity": 1,   "unit": "g" },
+                            "CHOCDF":     { "label": "Carbs",  "quantity": 1,   "unit": "g" },
+                            "PROCNT":     { "label": "Protein","quantity": 1,   "unit": "g" }
+                        }
+                    },
+                    "_links": { "self": { "href": "https://api.test.com/api/a", "title": "Self" } }
+                }]
+            }
+            """;
+
+        var (service, handler) = SetupMocksWithHandler(json);
+        var uris = Enumerable.Range(1, 21).Select(i => $"http://TestUri.com/{i}");
+
+        // Act
+        var result = await service.GetExternalRecipesByURIs(uris);
+
+        // Assert — 2 HTTP calls made, results from both batches combined
+        handler.Protected().Verify(
+            "SendAsync",
+            Times.Exactly(2),
+            ItExpr.IsAny<HttpRequestMessage>(),
+            ItExpr.IsAny<CancellationToken>());
+        Assert.That(result.Count(), Is.EqualTo(2));
+    }
+
+    [Test]
+    public async Task GetExternalRecipesByURIs_MakesOneCall_When20URIsGiven()
+    {
+        // Arrange — exactly 20 URIs fits in one batch
+        string json =
+            """
+            {
+                "from": 1, "to": 1, "count": 1, "_links": {},
+                "hits": [{
+                    "recipe": {
+                        "uri": "http://TestUri.com/A",
+                        "label": "Recipe A",
+                        "ingredients": [],
+                        "totalNutrients": {
+                            "ENERC_KCAL": { "label": "Energy", "quantity": 100, "unit": "kcal" },
+                            "FAT":        { "label": "Fat",    "quantity": 1,   "unit": "g" },
+                            "CHOCDF":     { "label": "Carbs",  "quantity": 1,   "unit": "g" },
+                            "PROCNT":     { "label": "Protein","quantity": 1,   "unit": "g" }
+                        }
+                    },
+                    "_links": { "self": { "href": "https://api.test.com/api/a", "title": "Self" } }
+                }]
+            }
+            """;
+
+        var (service, handler) = SetupMocksWithHandler(json);
+        var uris = Enumerable.Range(1, 20).Select(i => $"http://TestUri.com/{i}");
+
+        // Act
+        var result = await service.GetExternalRecipesByURIs(uris);
+
+        // Assert — exactly 1 HTTP call
+        handler.Protected().Verify(
+            "SendAsync",
+            Times.Exactly(1),
+            ItExpr.IsAny<HttpRequestMessage>(),
+            ItExpr.IsAny<CancellationToken>());
+        Assert.That(result.Count(), Is.EqualTo(1));
     }
 }
