@@ -80,6 +80,7 @@ public class FoodEntriesTests
             controllerContext,
             registrationService.Object,
             mockEnv.Object,
+            blobContainer: null,
             externalRecipeService.Object,
             nutritionService.Object);
     }
