@@ -30,10 +30,23 @@
                                     @foreach (var recipe in meal.Recipes)
                                     {
                                         <div class="mealRecipeItem d-flex align-items-center justify-content-between back2 back2-textbox mb-1"
-                                             style="cursor:pointer; margin-top:8px;"
-                                             onclick="location.href='@Url.Action("Recipes", "FoodEntries", new { id = recipe.Id })'">
+                                             data-recipe-id="@recipe.Id"
+                                             data-meal-id="@meal.MealId"
+                                             data-recipe-url="@Url.Action("Recipes", "FoodEntries", new { id = recipe.Id })"
+                                             style="cursor:pointer; margin-top:8px;">
                                             <h4 class="mb-0 flex-grow-1">@recipe.Name</h4>
-                                            <span class="ms-2 text-nowrap">@recipe.Calories cal</span>
+                                            <div class="d-flex gap-2 align-items-center">
+                                                <span class="ms-2 text-nowrap">@recipe.Calories cal</span>
+                                                @if (meal.Recipes.Count > 1)
+                                                {
+                                                    <button type="button"
+                                                            class="btn btn-sm btn-warning"
+                                                            data-action="regenerate-recipe"
+                                                            data-recipe-id="@recipe.Id"
+                                                            data-meal-id="@meal.MealId"
+                                                            title="Regenerate this recipe">↻</button>
+                                                }
+                                            </div>
                                         </div>
                                     }
                                 }
