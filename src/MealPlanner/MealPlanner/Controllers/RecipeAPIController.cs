@@ -74,7 +74,7 @@ public class RecipeAPIController : ControllerBase
         if (!string.IsNullOrEmpty(tag))
         {
             // Existing tag-filter path — unchanged
-            results = _recipeRepository.GetRecipesByNameAndTag(name ?? "", tag).Select(r => new RecipeDTO(r));
+            results = _recipeRepository.GetRecipesByNameAndTag(name ?? "", tag).Select(r => new RecipeDTO(r)).ToList();
         }
         else if (activeRestrictionNames.Count > 0)
         {
@@ -96,7 +96,7 @@ public class RecipeAPIController : ControllerBase
         else
         {
             // Existing name-only path with Edamam fallback — unchanged
-            results = _recipeRepository.GetRecipesByName(name).Select(r => new RecipeDTO(r));
+            results = _recipeRepository.GetRecipesByName(name).Select(r => new RecipeDTO(r)).ToList();
             if (results.Count() < count && _recipeService != null)
             {
                 try
