@@ -57,22 +57,38 @@ public class FoodEntriesController : Controller
     }
 
     [Authorize]
-    public async Task<IActionResult> Nutrition()
+    public async Task<IActionResult> NutritionSummary(string tab = "weekly")
     {
         if (_nutritionProgressService is null)
             return StatusCode(500, "NutritionProgressService not configured.");
 
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-
         if (string.IsNullOrWhiteSpace(userId))
             return Unauthorized();
 
         var today = DateOnly.FromDateTime(DateTime.Today);
+        var startDay = today.AddDays(-29);
+        var progress = await _nutritionProgressService.GetRangeProgressAsync(userId, startDay, today);
+        var allDays   = await _nutritionProgressService.GetDailyBreakdownAsync(userId, startDay, today);
 
-        var progress = await _nutritionProgressService.GetDailyProgressAsync(userId, today);
+        var todayData = allDays.FirstOrDefault(d => d.Day == today);
+        var todayBar = new NutritionBarInfoViewModel(
+            todayData?.Calories ?? 0, progress.Targets.Calories,
+            todayData?.Protein  ?? 0, progress.Targets.Protein,
+            todayData?.Fat      ?? 0, progress.Targets.Fat,
+            todayData?.Carbs    ?? 0, progress.Targets.Carbs);
 
-        return View(progress);
+        return View(new NutritionSummaryViewModel
+        {
+            ActiveTab    = tab,
+            DailyTargets = progress.Targets,
+            AllDays      = allDays,
+            TodayBar     = todayBar
+        });
     }
+
+
+
 
     [Route("/FoodEntries/Recipes")]
     public async Task<IActionResult> Recipes()

@@ -21,3 +21,5 @@ public record MacroTotals(
     int Carbs,
     int Fat
 );
+
+public record DailyNutritionDto(DateOnly Day, int Calories, int Protein, int Carbs, int Fat);

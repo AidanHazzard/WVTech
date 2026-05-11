@@ -60,4 +60,36 @@ public class NutritionProgressService : INutritionProgressService
             totals
         );
     }
+
+    public async Task<List<DailyNutritionDto>> GetDailyBreakdownAsync(string userId, DateOnly startDay, DateOnly endDay)
+    {
+        var start = startDay.ToDateTime(TimeOnly.MinValue);
+        var endExclusive = endDay.AddDays(1).ToDateTime(TimeOnly.MinValue);
+
+        var completions = await _db.MealCompletions
+            .AsNoTracking()
+            .Where(mc =>
+                mc.CompletionDate >= start &&
+                mc.CompletionDate < endExclusive &&
+                mc.Meal.UserId == userId)
+            .Include(mc => mc.Meal)
+                .ThenInclude(m => m.Recipes)
+            .ToListAsync();
+
+        var byDay = completions
+            .GroupBy(mc => DateOnly.FromDateTime(mc.CompletionDate))
+            .ToDictionary(g => g.Key, g => new DailyNutritionDto(
+                g.Key,
+                g.Sum(mc => mc.Meal.Recipes.Sum(r => r.Calories)),
+                g.Sum(mc => mc.Meal.Recipes.Sum(r => r.Protein)),
+                g.Sum(mc => mc.Meal.Recipes.Sum(r => r.Carbs)),
+                g.Sum(mc => mc.Meal.Recipes.Sum(r => r.Fat))
+            ));
+
+        var result = new List<DailyNutritionDto>();
+        for (var day = startDay; day <= endDay; day = day.AddDays(1))
+            result.Add(byDay.GetValueOrDefault(day, new DailyNutritionDto(day, 0, 0, 0, 0)));
+
+        return result;
+    }
 }

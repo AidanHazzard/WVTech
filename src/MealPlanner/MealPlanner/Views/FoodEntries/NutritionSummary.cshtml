@@ -1,0 +1,99 @@
+@model MealPlanner.ViewModels.NutritionSummaryViewModel
+@using System.Text.Json
+
+@{
+    ViewData["Title"] = "Nutrition Summary";
+    var jsonOptions = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
+    var allDaysJson     = JsonSerializer.Serialize(Model.AllDays, jsonOptions);
+    var targetsJson     = JsonSerializer.Serialize(Model.DailyTargets, jsonOptions);
+}
+
+<div class="back1">
+    <h1 class="back1Title">Nutrition Summary</h1>
+
+    @* ── Toggle ── *@
+    <div class="d-flex justify-content-center mb-4">
+        <div class="btn-group" role="group" aria-label="Report period">
+            <button type="button"
+                    class="btn @(Model.ActiveTab == "weekly" ? "btn-primary active" : "btn-outline-primary")"
+                    id="tab-weekly">
+                Weekly
+            </button>
+            <button type="button"
+                    class="btn @(Model.ActiveTab == "monthly" ? "btn-primary active" : "btn-outline-primary")"
+                    id="tab-monthly">
+                Monthly
+            </button>
+        </div>
+    </div>
+
+    @* ── Metric cards ── *@
+    <div class="row mb-4 g-3">
+        @foreach (var macro in new[] {
+            ("calories", "Calories", "kcal"),
+            ("protein",  "Protein",  "g"),
+            ("carbs",    "Carbs",    "g"),
+            ("fat",      "Fat",      "g")
+        })
+        {
+            <div class="col-6 col-md-3">
+                <div class="back2 text-center p-3">
+                    <h5 class="back1Title">@macro.Item2</h5>
+                    <p class="back1Title mb-1" style="font-size:1.4rem; font-weight:700;">
+                        <span id="card-@macro.Item1-actual">–</span>
+                    </p>
+                    <p class="back1Title mb-2" style="font-size:0.85rem; opacity:0.7;">
+                        <span id="card-@macro.Item1-goal">–</span>
+                    </p>
+                    <div class="progress" style="height:8px; background:rgba(255,255,255,0.15);">
+                        <div id="card-@macro.Item1-bar"
+                             class="progress-bar"
+                             role="progressbar"
+                             style="width:0%; transition:width 0.4s ease;">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    @* ── Charts ── *@
+    <div class="row mb-2 g-3">
+        <div class="col-md-8">
+            <div class="back2 p-3">
+                <canvas id="barChart"></canvas>
+                <div id="pills-container" class="d-flex flex-wrap mt-3"></div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="back2 p-3 h-100">
+                <h5 class="back1Title mb-4">Today's Macros</h5>
+                <partial name="_NutritionBarDisplayPartial" model="Model.TodayBar" />
+            </div>
+        </div>
+    </div>
+
+    @* ── Insights ── *@
+    <div class="row g-3 mt-1">
+        @foreach (var n in new[] { 1, 2 })
+        {
+            <div class="col-6">
+                <div class="back2 p-3">
+                    <p class="back1Title mb-0" id="insight-@n">–</p>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        window.nutritionData = {
+            allDays:      @Html.Raw(allDaysJson),
+            dailyTargets: @Html.Raw(targetsJson),
+            initialTab:   '@Model.ActiveTab'
+        };
+    </script>
+    <script src="~/js/nutritionSummary.js" asp-append-version="true"></script>
+}
