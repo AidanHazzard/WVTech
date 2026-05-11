@@ -46,6 +46,7 @@ public class WVT170ControllerTests
 
         _recipeRepoMock = new Mock<IRecipeRepository>();
         _mealRepoMock = new Mock<IMealRepository>();
+        _mealRepoMock.Setup(r => r.GetUserMealsByDateAsync(It.IsAny<User>(), It.IsAny<DateTime>())).ReturnsAsync([]);
         _reccServiceMock = new Mock<IMealRecommendationService>();
         _tagRepoMock = new Mock<ITagRepository>();
         _tagRepoMock.Setup(r => r.GetTagsByPopularityAsync()).ReturnsAsync([]);

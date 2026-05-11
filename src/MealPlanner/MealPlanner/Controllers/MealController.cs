@@ -292,7 +292,6 @@ public class MealController : Controller
         var dayMeals = await _mealRepo.GetUserMealsByDateAsync(user, mealDate);
         var excludeIds = dayMeals.SelectMany(m => m.Recipes.Select(r => r.Id))
             .Union(meal.Recipes.Select(r => r.Id))
-            .Where(id => id != recipeId)
             .ToHashSet();
 
         var replacement = await _recommendationService.GetOneRecipeRecommendation(user, mealDate, excludeIds);
