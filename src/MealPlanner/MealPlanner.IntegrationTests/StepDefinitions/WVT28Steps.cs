@@ -165,69 +165,6 @@ public class WVT28Steps
         }
     }
 
-    [Given("{string} has no pantry items")]
-    public void GivenUserHasNoPantryItems(string userName)
-    {
-        var email = $"{userName}@fakeemail.com";
-        using var ctx = BDDSetup.CreateContext();
-        var user = ctx.Set<User>().Include(u => u.PantryItems).FirstOrDefault(u => u.Email == email);
-        Assert.That(user, Is.Not.Null, $"User '{userName}' not found");
-        user!.PantryItems.Clear();
-        ctx.SaveChanges();
-    }
-
-    [Given("{string} has a pantry item named {string} with amount {string} and measurement {string}")]
-    public void GivenUserHasPantryItem(string userName, string ingredientName, string amount, string measurement)
-    {
-        var email = $"{userName}@fakeemail.com";
-        using var ctx = BDDSetup.CreateContext();
-
-        var user = ctx.Set<User>().Include(u => u.PantryItems).FirstOrDefault(u => u.Email == email);
-        Assert.That(user, Is.Not.Null, $"User '{userName}' not found");
-
-        var normalizedName = IngredientNameNormalizer.NormalizeKey(ingredientName);
-        var ingredientBase = ctx.Set<IngredientBase>().FirstOrDefault(b => b.Name == normalizedName)
-            ?? ctx.Set<IngredientBase>().Add(new IngredientBase { Name = normalizedName }).Entity;
-
-        var measurementEntity = ctx.Set<Measurement>().FirstOrDefault(m => m.Name == measurement)
-            ?? ctx.Set<Measurement>().Add(new Measurement { Name = measurement }).Entity;
-
-        ctx.SaveChanges();
-
-        user!.PantryItems.Add(new Ingredient
-        {
-            DisplayName = ingredientName,
-            Amount = float.Parse(amount),
-            IngredientBase = ingredientBase,
-            Measurement = measurementEntity
-        });
-        ctx.SaveChanges();
-    }
-
-    [Given("{string} is on the pantry page")]
-    [When("{string} is on the pantry page")]
-    public void GivenUserIsOnPantryPage(string userName)
-    {
-        _driver.Navigate().GoToUrl($"{_baseUrl}/Shopping/Pantry");
-        WaitForPageLoad();
-    }
-
-    [Then("{string} appears in the pantry list")]
-    public void ThenIngredientAppearsInPantryList(string ingredientName)
-    {
-        var items = _driver.FindElements(By.CssSelector(".pantry-item-name"));
-        Assert.That(items.Any(i => i.Text.Contains(ingredientName, StringComparison.OrdinalIgnoreCase)),
-            Is.True, $"Expected '{ingredientName}' to appear in the pantry list but it did not.");
-    }
-
-    [Then("{string} does not appear in the pantry list")]
-    public void ThenIngredientDoesNotAppearInPantryList(string ingredientName)
-    {
-        var items = _driver.FindElements(By.CssSelector(".pantry-item-name"));
-        Assert.That(items.Any(i => i.Text.Contains(ingredientName, StringComparison.OrdinalIgnoreCase)),
-            Is.False, $"Expected '{ingredientName}' to not appear in the pantry list but it did.");
-    }
-
     [When("{string} marks the meal {string} as completed")]
     public void WhenUserMarksNamedMealAsCompleted(string userName, string mealTitle)
     {
