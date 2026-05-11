@@ -276,6 +276,67 @@ public class MealController : Controller
         });
     }
 
+    [HttpPost]
+    [IgnoreAntiforgeryToken]
+    public async Task<IActionResult> RegenerateRecipe(int mealId, int recipeId)
+    {
+        var user = await _registrationService.FindUserByClaimAsync(User);
+        if (user == null) return Challenge();
+        if (_recommendationService == null) return Problem(statusCode: 500);
+
+        var meal = await _mealRepo.ReadAsync(mealId);
+        if (meal == null || meal.UserId != user.Id) return NotFound();
+
+        await _mealRepo.LoadRecipesAsync(meal);
+        var mealDate = meal.StartTime?.Date ?? DateTime.Today;
+        var dayMeals = await _mealRepo.GetUserMealsByDateAsync(user, mealDate);
+        var excludeIds = dayMeals.SelectMany(m => m.Recipes.Select(r => r.Id))
+            .Union(meal.Recipes.Select(r => r.Id))
+            .ToHashSet();
+
+        var replacement = await _recommendationService.GetOneRecipeRecommendation(user, mealDate, excludeIds);
+        if (replacement == null)
+            return Json(new { noAlternative = true });
+
+        var replaced = meal.Recipes.FirstOrDefault(r => r.Id == recipeId);
+        if (replaced == null) return NotFound();
+
+        meal.Recipes.Remove(replaced);
+        meal.Recipes.Add(replacement);
+        _mealRepo.CreateOrUpdate(meal);
+        _context.SaveChanges();
+
+        return Json(new
+        {
+            newRecipe = new { replacement.Id, replacement.Name, replacement.Calories },
+            replacedRecipeId = recipeId
+        });
+    }
+
+    [HttpPost]
+    [IgnoreAntiforgeryToken]
+    public async Task<IActionResult> SwapRecipe(int mealId, int removeRecipeId, int addRecipeId)
+    {
+        var user = await _registrationService.FindUserByClaimAsync(User);
+        if (user == null) return Challenge();
+
+        var meal = await _mealRepo.ReadAsync(mealId);
+        if (meal == null || meal.UserId != user.Id) return NotFound();
+
+        await _mealRepo.LoadRecipesAsync(meal);
+
+        var toRemove = meal.Recipes.FirstOrDefault(r => r.Id == removeRecipeId);
+        if (toRemove != null) meal.Recipes.Remove(toRemove);
+
+        var toAdd = _recipeRepo.Read(addRecipeId);
+        if (toAdd != null) meal.Recipes.Add(toAdd);
+
+        _mealRepo.CreateOrUpdate(meal);
+        _context.SaveChanges();
+
+        return Json(new { restoredRecipe = toAdd != null ? new { toAdd.Id, toAdd.Name, toAdd.Calories } : null });
+    }
+
     [HttpGet]
     public async Task<IActionResult> DayPlanSummary(string? date)
     {
