@@ -45,50 +45,27 @@ public class WVT178Steps
     [Given("{string} is on the recipe search page")]
     public void GivenUserIsOnRecipeSearchPage(string username)
     {
-        _driver.Navigate().GoToUrl($"{_baseUrl}/FoodEntries/Recipes");
+        _driver.Navigate().GoToUrl($"{_baseUrl}/FoodEntries/SearchRecipes");
         _wait.Until(d => ((IJavaScriptExecutor)d).ExecuteScript("return document.readyState").ToString() == "complete");
-        if (!_driver.Url.Contains("/FoodEntries/Recipes", StringComparison.OrdinalIgnoreCase))
-        {
-            _driver.Navigate().GoToUrl($"{_baseUrl}/FoodEntries/Recipes");
-            _wait.Until(d => ((IJavaScriptExecutor)d).ExecuteScript("return document.readyState").ToString() == "complete");
-        }
-    }
-
-    [When("{string} searches for {string}")]
-    public void WhenUserSearchesFor(string username, string searchTerm)
-    {
-        var el = _wait.Until(d =>
-        {
-            try { var e = d.FindElement(By.Id("searchText")); return e.Displayed ? e : null; }
-            catch (NoSuchElementException) { return null; }
-        })!;
-        el.Clear();
-        el.SendKeys(searchTerm);
-        Thread.Sleep(1100);
-        ((IJavaScriptExecutor)_driver).ExecuteScript(
-            "arguments[0].dispatchEvent(new Event('input', { bubbles: true }));", el);
-        Thread.Sleep(1100);
     }
 
     [Then("the recipe {string} appears in the search results with a rating above 0%")]
     public void ThenRecipeAppearsWithRatingAbove0(string recipeName)
     {
-        var ratingEl = _wait.Until(driver =>
-        {
-            try
-            {
-                var rows = driver.FindElements(By.CssSelector(".recipeSearchRow"));
-                var matchingRow = rows.FirstOrDefault(r =>
-                    r.FindElements(By.CssSelector(".recipeName"))
-                     .Any(el => el.Text.Contains(recipeName, StringComparison.OrdinalIgnoreCase)));
-                if (matchingRow == null) return null;
-                return matchingRow.FindElements(By.CssSelector(".recipeRating")).FirstOrDefault();
-            }
-            catch { return null; }
-        });
+        _wait.Until(d =>
+            d.FindElements(By.CssSelector(".recipeSearchRow")).Count > 0 ||
+            (d.FindElement(By.Id("error")).Displayed &&
+             !string.IsNullOrWhiteSpace(d.FindElement(By.Id("error")).Text)));
 
-        Assert.That(ratingEl, Is.Not.Null, $"Recipe '{recipeName}' not found in search results.");
-        var ratingText = ratingEl!.Text.Replace("%", "").Trim();
+        var rows = _driver.FindElements(By.CssSelector(".recipeSearchRow"));
+        var matchingRow = rows.FirstOrDefault(r =>
+            r.FindElements(By.CssSelector(".recipeName"))
+             .Any(el => el.Text.Contains(recipeName, StringComparison.OrdinalIgnoreCase)));
+
+        Assert.That(matchingRow, Is.Not.Null, $"Recipe '{recipeName}' not found in search results.");
+
+        var ratingEl = matchingRow!.FindElement(By.CssSelector(".recipeRating"));
+        var ratingText = ratingEl.Text.Replace("%", "").Trim();
         Assert.That(int.TryParse(ratingText, out int ratingValue), Is.True,
             $"Could not parse rating value from '{ratingEl.Text}'.");
         Assert.That(ratingValue, Is.GreaterThan(0),
