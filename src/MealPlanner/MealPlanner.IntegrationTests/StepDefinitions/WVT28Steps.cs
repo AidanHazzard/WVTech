@@ -30,6 +30,10 @@ public class WVT28Steps
         var user = ctx.Set<User>().FirstOrDefault(u => u.Email == email);
         Assert.That(user, Is.Not.Null, $"User '{userName}' not found");
 
+        var staleMeals = ctx.Meals.Where(m => m.UserId == user!.Id && m.Title == mealTitle).ToList();
+        ctx.Meals.RemoveRange(staleMeals);
+        ctx.SaveChanges();
+
         var normalizedName = IngredientNameNormalizer.NormalizeKey(ingredientName);
         var ingredientBase = ctx.Set<IngredientBase>().FirstOrDefault(b => b.Name == normalizedName)
             ?? ctx.Set<IngredientBase>().Add(new IngredientBase { Name = normalizedName }).Entity;
@@ -77,6 +81,10 @@ public class WVT28Steps
 
         var user = ctx.Set<User>().FirstOrDefault(u => u.Email == email);
         Assert.That(user, Is.Not.Null, $"User '{userName}' not found");
+
+        var staleMeals = ctx.Meals.Where(m => m.UserId == user!.Id && m.Title == mealTitle).ToList();
+        ctx.Meals.RemoveRange(staleMeals);
+        ctx.SaveChanges();
 
         var normalizedName = IngredientNameNormalizer.NormalizeKey(ingredientName);
         var ingredientBase = ctx.Set<IngredientBase>().FirstOrDefault(b => b.Name == normalizedName)
