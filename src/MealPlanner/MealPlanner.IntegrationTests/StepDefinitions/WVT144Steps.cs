@@ -118,6 +118,7 @@ public class WVT144Steps
     private void ClearTodaysMealsForUser(string userName)
     {
         var ctx = BDDSetup.Context;
+        ctx.ChangeTracker.Clear();
         var user = ctx.Set<User>().First(u => u.NormalizedEmail == $"{userName}@fakeemail.com".ToUpper());
         var today = DateTime.Today;
         var existing = ctx.Set<Meal>()
