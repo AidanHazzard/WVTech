@@ -202,29 +202,25 @@ public class WVT28Steps
     [When("{string} accepts the pantry removal prompt")]
     public void WhenUserAcceptsPantryRemovalPrompt(string userName)
     {
-        ClickModalButton("pantryPromptAccept");
-        WaitForPageLoad();
+        ClickModalButtonAndWaitForNavigation("pantryPromptAccept");
     }
 
     [When("{string} declines the pantry removal prompt")]
     public void WhenUserDeclinesPantryRemovalPrompt(string userName)
     {
-        ClickModalButton("pantryPromptDecline");
-        WaitForPageLoad();
+        ClickModalButtonAndWaitForNavigation("pantryPromptDecline");
     }
 
     [When("{string} accepts the pantry restore prompt")]
     public void WhenUserAcceptsPantryRestorePrompt(string userName)
     {
-        ClickModalButton("pantryPromptAccept");
-        WaitForPageLoad();
+        ClickModalButtonAndWaitForNavigation("pantryPromptAccept");
     }
 
     [When("{string} declines the pantry restore prompt")]
     public void WhenUserDeclinesPantryRestorePrompt(string userName)
     {
-        ClickModalButton("pantryPromptDecline");
-        WaitForPageLoad();
+        ClickModalButtonAndWaitForNavigation("pantryPromptDecline");
     }
 
     private void NavigateToHomeForToday()
@@ -293,6 +289,20 @@ public class WVT28Steps
         });
         Assert.That(btn, Is.Not.Null, $"Modal button '{buttonId}' not found");
         btn!.Click();
+    }
+
+    // Clicks a modal button and waits for the resulting form-submit navigation to complete.
+    // Using the stale-element pattern to detect when the DOM is replaced by the redirect.
+    private void ClickModalButtonAndWaitForNavigation(string buttonId)
+    {
+        var body = _driver.FindElement(By.TagName("body"));
+        ClickModalButton(buttonId);
+        _wait.Until(d =>
+        {
+            try { _ = body.TagName; return false; }
+            catch (StaleElementReferenceException) { return true; }
+        });
+        WaitForPageLoad();
     }
 
     private void WaitForPageLoad()
