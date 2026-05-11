@@ -3,6 +3,7 @@ using MealPlanner.DAL.Abstract;
 using MealPlanner.Models;
 using MealPlanner.Services;
 using MealPlanner.ViewModels;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.Sqlite;
@@ -13,26 +14,28 @@ using System.Security.Claims;
 namespace MealPlanner.Tests;
 
 [TestFixture]
-public class WVT51NutritionReportTests
+public class WVT51NutritionSummaryTests
 {
     private FoodEntriesController _controller;
     private Mock<INutritionProgressService> _nutritionServiceMock;
 
-    private static readonly NutritionProgressDto _weeklyDto = new(
-        UserId: "user-1",
-        StartDay: DateOnly.FromDateTime(DateTime.Today.AddDays(-6)),
-        EndDay: DateOnly.FromDateTime(DateTime.Today),
-        Targets: new MacroTargets(2000, 50, 250, 70),
-        Totals: new MacroTotals(1400, 35, 180, 50)
-    );
+    private static readonly MacroTargets _dailyTargets = new(2000, 50, 250, 70);
 
-    private static readonly NutritionProgressDto _monthlyDto = new(
+    private static readonly NutritionProgressDto _rangeDto = new(
         UserId: "user-1",
         StartDay: DateOnly.FromDateTime(DateTime.Today.AddDays(-29)),
         EndDay: DateOnly.FromDateTime(DateTime.Today),
-        Targets: new MacroTargets(2000, 50, 250, 70),
+        Targets: _dailyTargets,
         Totals: new MacroTotals(42000, 1050, 5400, 1500)
     );
+
+    private static readonly List<DailyNutritionDto> _thirtyDays =
+        Enumerable.Range(0, 30)
+            .Select(i => new DailyNutritionDto(
+                DateOnly.FromDateTime(DateTime.Today.AddDays(-29 + i)),
+                i % 2 == 0 ? 1800 : 500,
+                20, 60, 15))
+            .ToList();
 
     [SetUp]
     public void SetUp()
@@ -51,27 +54,30 @@ public class WVT51NutritionReportTests
 
         _nutritionServiceMock
             .Setup(s => s.GetRangeProgressAsync(It.IsAny<string>(), It.IsAny<DateOnly>(), It.IsAny<DateOnly>()))
-            .ReturnsAsync(_weeklyDto);
+            .ReturnsAsync(_rangeDto);
 
-        var recipeRepo = new Mock<IRecipeRepository>();
-        var tagRepo = new Mock<ITagRepository>();
-        var userRecipeRepo = new Mock<IUserRecipeRepository>();
-        var registrationService = new Mock<IRegistrationService>();
+        _nutritionServiceMock
+            .Setup(s => s.GetDailyBreakdownAsync(It.IsAny<string>(), It.IsAny<DateOnly>(), It.IsAny<DateOnly>()))
+            .ReturnsAsync(_thirtyDays);
+
         var controllerContext = new MealPlannerDBContext(contextOptions);
 
         _controller = new FoodEntriesController(
-            recipeRepo.Object,
-            tagRepo.Object,
-            userRecipeRepo.Object,
+            new Mock<IRecipeRepository>().Object,
+            new Mock<ITagRepository>().Object,
+            new Mock<IUserRecipeRepository>().Object,
             controllerContext,
-            registrationService.Object,
+            new Mock<IRegistrationService>().Object,
+            new Mock<IWebHostEnvironment>().Object,
             nutritionProgressService: _nutritionServiceMock.Object);
 
-        var claims = new[] { new Claim(ClaimTypes.NameIdentifier, "user-1") };
-        var identity = new ClaimsIdentity(claims, "TestAuth");
         _controller.ControllerContext = new ControllerContext
         {
-            HttpContext = new DefaultHttpContext { User = new ClaimsPrincipal(identity) }
+            HttpContext = new DefaultHttpContext
+            {
+                User = new ClaimsPrincipal(new ClaimsIdentity(
+                    new[] { new Claim(ClaimTypes.NameIdentifier, "user-1") }, "TestAuth"))
+            }
         };
     }
 
@@ -79,59 +85,38 @@ public class WVT51NutritionReportTests
     public void TearDown() => _controller.Dispose();
 
     [Test]
-    public async Task NutritionReport_ReturnsView_WhenServiceIsPresent()
+    public async Task NutritionSummary_ReturnsView_WhenServiceIsPresent()
     {
-        var result = await _controller.NutritionReport();
+        var result = await _controller.NutritionSummary();
 
         Assert.That(result, Is.TypeOf<ViewResult>());
     }
 
     [Test]
-    public async Task NutritionReport_ActiveTab_IsWeekly_ByDefault()
+    public async Task NutritionSummary_ActiveTab_IsWeekly_ByDefault()
     {
-        var result = (ViewResult)await _controller.NutritionReport();
-        var model = (NutritionReportViewModel)result.Model!;
+        var result = (ViewResult)await _controller.NutritionSummary();
+        var model  = (NutritionSummaryViewModel)result.Model!;
 
         Assert.That(model.ActiveTab, Is.EqualTo("weekly"));
     }
 
     [Test]
-    public async Task NutritionReport_ActiveTab_IsMonthly_WhenTabParamIsMonthly()
+    public async Task NutritionSummary_ActiveTab_IsMonthly_WhenTabParamIsMonthly()
     {
-        _nutritionServiceMock
-            .Setup(s => s.GetRangeProgressAsync(It.IsAny<string>(), It.IsAny<DateOnly>(), It.IsAny<DateOnly>()))
-            .ReturnsAsync(_monthlyDto);
-
-        var result = (ViewResult)await _controller.NutritionReport(tab: "monthly");
-        var model = (NutritionReportViewModel)result.Model!;
+        var result = (ViewResult)await _controller.NutritionSummary(tab: "monthly");
+        var model  = (NutritionSummaryViewModel)result.Model!;
 
         Assert.That(model.ActiveTab, Is.EqualTo("monthly"));
     }
 
     [Test]
-    public async Task NutritionReport_CallsServiceWithWeeklyRange_WhenTabIsWeekly()
+    public async Task NutritionSummary_AlwaysFetches30Days()
     {
-        await _controller.NutritionReport(tab: "weekly");
+        await _controller.NutritionSummary();
 
         _nutritionServiceMock.Verify(
-            s => s.GetRangeProgressAsync(
-                "user-1",
-                It.Is<DateOnly>(d => d == DateOnly.FromDateTime(DateTime.Today.AddDays(-6))),
-                It.Is<DateOnly>(d => d == DateOnly.FromDateTime(DateTime.Today))),
-            Times.Once);
-    }
-
-    [Test]
-    public async Task NutritionReport_CallsServiceWithMonthlyRange_WhenTabIsMonthly()
-    {
-        _nutritionServiceMock
-            .Setup(s => s.GetRangeProgressAsync(It.IsAny<string>(), It.IsAny<DateOnly>(), It.IsAny<DateOnly>()))
-            .ReturnsAsync(_monthlyDto);
-
-        await _controller.NutritionReport(tab: "monthly");
-
-        _nutritionServiceMock.Verify(
-            s => s.GetRangeProgressAsync(
+            s => s.GetDailyBreakdownAsync(
                 "user-1",
                 It.Is<DateOnly>(d => d == DateOnly.FromDateTime(DateTime.Today.AddDays(-29))),
                 It.Is<DateOnly>(d => d == DateOnly.FromDateTime(DateTime.Today))),
@@ -139,7 +124,26 @@ public class WVT51NutritionReportTests
     }
 
     [Test]
-    public async Task NutritionReport_Returns500_WhenServiceIsNull()
+    public async Task NutritionSummary_AllDays_Has30Entries()
+    {
+        var result = (ViewResult)await _controller.NutritionSummary();
+        var model  = (NutritionSummaryViewModel)result.Model!;
+
+        Assert.That(model.AllDays, Has.Count.EqualTo(30));
+    }
+
+    [Test]
+    public async Task NutritionSummary_DailyTargets_MatchServiceResponse()
+    {
+        var result = (ViewResult)await _controller.NutritionSummary();
+        var model  = (NutritionSummaryViewModel)result.Model!;
+
+        Assert.That(model.DailyTargets.Calories, Is.EqualTo(_dailyTargets.Calories));
+        Assert.That(model.DailyTargets.Protein,  Is.EqualTo(_dailyTargets.Protein));
+    }
+
+    [Test]
+    public async Task NutritionSummary_Returns500_WhenServiceIsNull()
     {
         var connection = new SqliteConnection("Filename=:memory:");
         connection.Open();
@@ -153,7 +157,8 @@ public class WVT51NutritionReportTests
             new Mock<ITagRepository>().Object,
             new Mock<IUserRecipeRepository>().Object,
             ctx,
-            new Mock<IRegistrationService>().Object);
+            new Mock<IRegistrationService>().Object,
+            new Mock<IWebHostEnvironment>().Object);
 
         controller.ControllerContext = new ControllerContext
         {
@@ -164,7 +169,7 @@ public class WVT51NutritionReportTests
             }
         };
 
-        var result = await controller.NutritionReport();
+        var result = await controller.NutritionSummary();
 
         Assert.That(result, Is.TypeOf<ObjectResult>());
         Assert.That(((ObjectResult)result).StatusCode, Is.EqualTo(500));

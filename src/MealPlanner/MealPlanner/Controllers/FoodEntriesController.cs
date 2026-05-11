@@ -57,7 +57,7 @@ public class FoodEntriesController : Controller
     }
 
     [Authorize]
-    public async Task<IActionResult> NutritionReport(string tab = "weekly")
+    public async Task<IActionResult> NutritionSummary(string tab = "weekly")
     {
         if (_nutritionProgressService is null)
             return StatusCode(500, "NutritionProgressService not configured.");
@@ -67,30 +67,28 @@ public class FoodEntriesController : Controller
             return Unauthorized();
 
         var today = DateOnly.FromDateTime(DateTime.Today);
-        var startDay = tab == "monthly" ? today.AddDays(-29) : today.AddDays(-6);
-
+        var startDay = today.AddDays(-29);
         var progress = await _nutritionProgressService.GetRangeProgressAsync(userId, startDay, today);
+        var allDays   = await _nutritionProgressService.GetDailyBreakdownAsync(userId, startDay, today);
 
-        return View(new NutritionReportViewModel { ActiveTab = tab, Progress = progress });
+        var todayData = allDays.FirstOrDefault(d => d.Day == today);
+        var todayBar = new NutritionBarInfoViewModel(
+            todayData?.Calories ?? 0, progress.Targets.Calories,
+            todayData?.Protein  ?? 0, progress.Targets.Protein,
+            todayData?.Fat      ?? 0, progress.Targets.Fat,
+            todayData?.Carbs    ?? 0, progress.Targets.Carbs);
+
+        return View(new NutritionSummaryViewModel
+        {
+            ActiveTab    = tab,
+            DailyTargets = progress.Targets,
+            AllDays      = allDays,
+            TodayBar     = todayBar
+        });
     }
 
-    [Authorize]
-    public async Task<IActionResult> Nutrition()
-    {
-        if (_nutritionProgressService is null)
-            return StatusCode(500, "NutritionProgressService not configured.");
 
-        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-        if (string.IsNullOrWhiteSpace(userId))
-            return Unauthorized();
-
-        var today = DateOnly.FromDateTime(DateTime.Today);
-
-        var progress = await _nutritionProgressService.GetDailyProgressAsync(userId, today);
-
-        return View(progress);
-    }
 
     [Route("/FoodEntries/Recipes")]
     public async Task<IActionResult> Recipes()

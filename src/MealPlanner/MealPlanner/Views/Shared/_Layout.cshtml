@@ -53,11 +53,19 @@
                 </button>
             </li>
 
-            <li class="nav-item">
+            @* <li class="nav-item">
                 <button
                     class="nav-button @(currentController == "FoodEntries" && currentAction == "Nutrition" ? "active" : "")"
                     onclick="location.href='@Url.Action("Nutrition", "FoodEntries")'">
                     <span class="nav-text">Nutrients</span>
+                </button>
+            </li> *@
+
+            <li class="nav-item">
+                <button
+                    class="nav-button @(currentController == "FoodEntries" && currentAction == "NutritionSummary" ? "active" : "")"
+                    onclick="location.href='@Url.Action("NutritionSummary", "FoodEntries")'">
+                    <span class="nav-text">Report</span>
                 </button>
             </li>
 <!--

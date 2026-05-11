@@ -19,7 +19,7 @@ public class WVT118Steps
     [When("'Jack' navigates to the nutrition page")]
     public void WhenJackNavigatesToTheNutritionPage()
     {
-        _driver.Navigate().GoToUrl($"{_baseUrl}/FoodEntries/Nutrition");
+        _driver.Navigate().GoToUrl($"{_baseUrl}/FoodEntries/NutritionSummary");
     }
 
     [Then("the calories nutrition bar is shown")]

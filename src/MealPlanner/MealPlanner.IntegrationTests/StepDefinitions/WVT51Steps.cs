@@ -61,7 +61,7 @@ public class WVT51Steps
             ctx.SaveChanges();
         }
 
-        for (int i = 0; i < 7; i++)
+        for (int i = 0; i < 30; i++)
         {
             var mealDate = DateTime.Today.AddDays(-i);
             var meal = new Meal
@@ -117,7 +117,7 @@ public class WVT51Steps
     }
 
     [Given("'Gary' is viewing the monthly nutrition report")]
-    public void GivenGaryIsViewingTheMonthlyNutritionReport()
+    public void GivenGaryIsViewingTheMonthlyNutritionSummary()
     {
         WhenGaryClicksTheTab("Monthly");
     }

@@ -107,9 +107,12 @@ public class WVT131Steps
     [When("'Gary' creates the meal")]
     public void WhenGaryCreatesTheMeal()
     {
+        var currentUrl = _driver.Url;
         var btn = _driver.FindElement(By.Id("createMeal"));
         ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].scrollIntoView(true);", btn);
         ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].click();", btn);
+        // Wait for the redirect away from the create-meal page before proceeding
+        _wait.Until(d => d.Url != currentUrl);
         WaitForPageLoad();
     }
 
@@ -140,8 +143,11 @@ public class WVT131Steps
     public void ThenMealAppearsOnPlannerOn(string mealTitle, string dayName)
     {
         NavigateToPlanner(GetNextOccurrence(Enum.Parse<DayOfWeek>(dayName)));
-        _wait.Until(d => d.FindElements(By.CssSelector(".list-group-item"))
-            .Any(el => el.Text.Contains(mealTitle)));
+        WaitForPageLoad();
+        var found = _driver.FindElements(By.CssSelector(".list-group-item"))
+            .Any(el => el.Text.Contains(mealTitle));
+        Assert.That(found, Is.True,
+            $"Expected meal '{mealTitle}' to appear on planner for {dayName}");
     }
 
     [Then("the meal {string} does not appear on the planner on {word}")]
