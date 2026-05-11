@@ -96,7 +96,7 @@ public class RecipeAPIController : ControllerBase
         else
         {
             // Existing name-only path with Edamam fallback — unchanged
-            results = _recipeRepository.GetRecipesByName(name).Select(r => new RecipeDTO(r));
+            results = _recipeRepository.GetRecipesByName(name).Select(r => new RecipeDTO(r)).ToList();
             if (results.Count() < count && _recipeService != null)
             {
                 try
