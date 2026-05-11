@@ -54,4 +54,14 @@ document.addEventListener('DOMContentLoaded', function () {
             customInput.value = '';
         });
     }
+
+    if (customInput) {
+        customInput.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                addPendingTag(customInput.value, form, pendingContainer);
+                customInput.value = '';
+            }
+        });
+    }
 });
