@@ -204,13 +204,6 @@ public class WVT28Steps
         ctx.SaveChanges();
     }
 
-    [Given("{string} is on the home page")]
-    public void GivenUserIsOnHomePage(string userName)
-    {
-        _driver.Navigate().GoToUrl($"{_baseUrl}/Home/Index?date={DateTime.Today:yyyy-MM-dd}");
-        WaitForPageLoad();
-    }
-
     [Given("{string} is on the pantry page")]
     [When("{string} is on the pantry page")]
     public void GivenUserIsOnPantryPage(string userName)
