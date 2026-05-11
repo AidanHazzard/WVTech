@@ -9,10 +9,13 @@ public class RecipeDTO
     {
         Name = recipe.Name;
         Id = recipe.Id;
+        ImageUrl = recipe.ImageUrl;
     }
     
     public string? Name { get; set; }
     public int Id { get; set; }
     public float VotePercentage { get; set; }
     public string? ExternalUri { get; set; }
+    public string? ImageUrl { get; set; }
+    public List<string> MatchedRestrictionTags { get; set; } = [];
 }

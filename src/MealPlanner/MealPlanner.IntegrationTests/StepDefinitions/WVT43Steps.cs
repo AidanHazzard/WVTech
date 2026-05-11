@@ -11,7 +11,7 @@ public class WVT43Steps
     IWebDriver _driver;
     string _baseUrl;
     string _noRecipeFoundMessage = "No recipes found, sorry!";
-    ReadOnlyCollection<IWebElement> _oldResults;
+    List<string> _oldResultTexts = [];
     
     // Runs before each scenerio
     [BeforeScenario]
@@ -48,7 +48,13 @@ public class WVT43Steps
         })!;
         el.Clear();
         el.SendKeys(searchString);
-        Thread.Sleep(1100); // wait for search debounce to fire
+        // The throttle fires at 3 chars, not the full term. Sleep past the 1-second
+        // throttle window, then dispatch a fresh input event so the search re-fires
+        // with the complete value in the field.
+        Thread.Sleep(1100);
+        ((IJavaScriptExecutor)_driver).ExecuteScript(
+            "arguments[0].dispatchEvent(new Event('input', { bubbles: true }));", el);
+        Thread.Sleep(1100); // wait for the full-term search to complete
     }
 
     // This step definition uses Cucumber Expressions. See https://github.com/gasparnagy/CucumberExpressions.SpecFlow
@@ -68,13 +74,13 @@ public class WVT43Steps
     [Then("The search results are the same")]
     public void ThenTheSearchResultsAreTheSame()
     {
-        var searchResults = _driver.FindElements(By.ClassName("recipeSearchRow"));
-        Assert.That(searchResults, Has.Count.EqualTo(_oldResults.Count()));
-        for(int i = 0; i < searchResults.Count(); i++)
+        var newResultTexts = _driver.FindElements(By.ClassName("recipeSearchRow"))
+            .Select(e => e.Text.ToLower())
+            .ToList();
+        Assert.That(newResultTexts, Has.Count.EqualTo(_oldResultTexts.Count));
+        for (int i = 0; i < newResultTexts.Count; i++)
         {
-            string newResult = searchResults[i].Text.ToLower();
-            string oldResult = _oldResults[i].Text.ToLower();
-            Assert.That(newResult, Is.EqualTo(oldResult));
+            Assert.That(newResultTexts[i], Is.EqualTo(_oldResultTexts[i]));
         }
     }
 
@@ -82,8 +88,17 @@ public class WVT43Steps
     [Given("User had searched for {string}")]
     public void GivenUserHadSearchedFor(string searchString)
     {
-        _driver.FindElement(By.Id("searchText")).SendKeys(searchString);
-        _oldResults = _driver.FindElements(By.ClassName("recipeSearchRow"));
+        var el = _driver.FindElement(By.Id("searchText"));
+        el.SendKeys(searchString);
+        // Same full-term fix as WhenUserTypesInTheSearch: let the throttle reset,
+        // then re-dispatch so results reflect the complete search string.
+        Thread.Sleep(1100);
+        ((IJavaScriptExecutor)_driver).ExecuteScript(
+            "arguments[0].dispatchEvent(new Event('input', { bubbles: true }));", el);
+        Thread.Sleep(1100);
+        _oldResultTexts = _driver.FindElements(By.ClassName("recipeSearchRow"))
+            .Select(e => e.Text.ToLower())
+            .ToList();
     }
 
     // This step definition uses Cucumber Expressions. See https://github.com/gasparnagy/CucumberExpressions.SpecFlow

@@ -17,19 +17,57 @@ namespace MealPlanner.Controllers
     {
         private readonly MealPlannerDBContext _db;
         private readonly IUserSettingsRepository _userSettings;
-         private readonly IUserSettingsService _userSettingsService;
+        private readonly IUserSettingsService _userSettingsService;
+        private readonly ITagRepository _tagRepository;
+        private readonly IUserFoodPreferenceRepository _foodPrefRepository;
 
-        public UserSettingsController(MealPlannerDBContext db, IUserSettingsRepository userSettings, IUserSettingsService userSettingsService)
+        public UserSettingsController(MealPlannerDBContext db, IUserSettingsRepository userSettings, IUserSettingsService userSettingsService, ITagRepository tagRepository, IUserFoodPreferenceRepository foodPrefRepository)
         {
             _db = db;
             _userSettings = userSettings;
             _userSettingsService = userSettingsService;
+            _tagRepository = tagRepository;
+            _foodPrefRepository = foodPrefRepository;
         }
 
         [HttpGet]
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
-            return View();
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId)) return Challenge();
+
+            var vm = new FoodPreferenceViewModel
+            {
+                CurrentPreferences = await _foodPrefRepository.GetFoodPreferenceNamesAsync(userId),
+                AvailableTags = await _tagRepository.GetTagNamesAsync()
+            };
+            return View(vm);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> SaveFoodPreferences(FoodPreferenceViewModel vm)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId)) return Challenge();
+
+            if (vm.NewPreferences.Count > 0)
+                await _foodPrefRepository.AddFoodPreferencesAsync(userId, vm.NewPreferences);
+
+            _db.SaveChanges();
+            return RedirectToAction(nameof(Index));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> RemoveFoodPreference(string tagName)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId)) return Challenge();
+
+            await _foodPrefRepository.RemoveFoodPreferenceAsync(userId, tagName);
+            _db.SaveChanges();
+            return RedirectToAction(nameof(Index));
         }
 
         [HttpGet]

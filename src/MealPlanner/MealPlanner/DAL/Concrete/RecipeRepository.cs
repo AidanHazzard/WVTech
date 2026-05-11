@@ -1,5 +1,6 @@
 using MealPlanner.DAL.Abstract;
 using MealPlanner.Models;
+using MealPlanner.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 
@@ -66,6 +67,8 @@ public class RecipeRepository : Repository<Recipe>, IRecipeRepository
         {
             if (i.IngredientBase.Id == 0)
             {
+                i.IngredientBase.Name = IngredientNameNormalizer.NormalizeKey(i.IngredientBase.Name);
+
                 // Use existing db entry for IngredientBase if it exits, ensuring Unique constraint
                 try
                 {
@@ -136,6 +139,24 @@ public class RecipeRepository : Repository<Recipe>, IRecipeRepository
     public Recipe? ReadRecipeByExternalUri(string uri)
     {
         return _dbset.FirstOrDefault(r => r.ExternalUri == uri);
+    }
+
+    public List<Recipe> GetRecipesByNameAndRestrictions(string name, IEnumerable<string> restrictionTagNames)
+    {
+        var required = restrictionTagNames.Select(n => n.ToLower()).ToList();
+
+        var query = _dbset.Include(r => r.Tags)
+            .Where(r => r.ExternalUri == null &&
+                        required.All(tag => r.Tags.Any(t => t.Name.ToLower() == tag)));
+
+        if (!string.IsNullOrEmpty(name))
+        {
+            query = query.Where(r =>
+                r.Name.ToLower().Contains($" {name.ToLower()}") ||
+                r.Name.ToLower().StartsWith(name.ToLower()));
+        }
+
+        return query.ToList();
     }
 
     public async Task<List<Recipe>> GetAllWithTagsAsync()

@@ -4,6 +4,7 @@ using MealPlanner.DAL.Concrete;
 using MealPlanner.Models;
 using MealPlanner.Services;
 using MealPlanner.ViewModels;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
 using Moq;
 
@@ -30,7 +31,9 @@ namespace MealPlanner.Tests
             tagRepo.Setup(r => r.GetTagNamesAsync()).ReturnsAsync([]);
             var registrationService = new Mock<IRegistrationService>();
             var externalRecipeService = new Mock<IExternalRecipeService>();
-            _controller = new FoodEntriesController(_recipeRepository, tagRepo.Object, userRecipeRepo.Object, _context, registrationService.Object, externalRecipeService.Object);
+            var mockEnv = new Mock<IWebHostEnvironment>();
+            mockEnv.Setup(e => e.WebRootPath).Returns(Path.GetTempPath());
+            _controller = new FoodEntriesController(_recipeRepository, tagRepo.Object, userRecipeRepo.Object, _context, registrationService.Object, mockEnv.Object, blobContainer: null, externalRecipeService.Object);
         }
 
         //handels the cleaning up after every test
@@ -130,8 +133,8 @@ namespace MealPlanner.Tests
             var recipe = recipes.First();
             Assert.That(recipe.Name, Is.EqualTo("1Name"));
             Assert.That(recipe.Directions, Is.EqualTo("1Directions"));
-            Assert.That(recipe.Ingredients[0].IngredientBase.Name, Is.EqualTo("1Entry1"));
-            Assert.That(recipe.Ingredients[1].IngredientBase.Name, Is.EqualTo("1Entry2"));
+            Assert.That(recipe.Ingredients[0].DisplayName, Is.EqualTo("1Entry1"));
+            Assert.That(recipe.Ingredients[1].DisplayName, Is.EqualTo("1Entry2"));
             Assert.That(recipe.Calories, Is.EqualTo(0));
             Assert.That(recipe.Protein, Is.EqualTo(1));
             Assert.That(recipe.Carbs, Is.EqualTo(2));
@@ -140,8 +143,8 @@ namespace MealPlanner.Tests
             var recipe2 = recipes.Last();
             Assert.That(recipe2.Name, Is.EqualTo("2Name"));
             Assert.That(recipe2.Directions, Is.EqualTo("2Directions"));
-            Assert.That(recipe2.Ingredients[0].IngredientBase.Name, Is.EqualTo("2Entry1"));
-            Assert.That(recipe2.Ingredients[1].IngredientBase.Name, Is.EqualTo("2Entry2"));
+            Assert.That(recipe2.Ingredients[0].DisplayName, Is.EqualTo("2Entry1"));
+            Assert.That(recipe2.Ingredients[1].DisplayName, Is.EqualTo("2Entry2"));
             Assert.That(recipe2.Calories, Is.EqualTo(20));
             Assert.That(recipe2.Protein, Is.EqualTo(21));
             Assert.That(recipe2.Carbs, Is.EqualTo(22));

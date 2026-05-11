@@ -5,8 +5,9 @@
   min-height: 60px;
   box-sizing: border-box;
   padding: 0 0 0 1rem;
-  overflow: hidden;
+  overflow: visible;
   position: relative;
+  z-index: 100;
 }
 
 .custom-navbar .navbar-brand {
@@ -101,23 +102,80 @@
   transition: background-color 0.3s ease-in-out;
 }
 
+/* Hamburger button — hidden on desktop */
+.hamburger-btn {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+  width: 44px;
+  height: 44px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  border-radius: 8px;
+  transition: background-color 0.2s ease-in-out;
+}
+
+.hamburger-btn:hover {
+  background-color: var(--nav-button-hover-bg);
+}
+
+.hamburger-line {
+  display: block;
+  width: 24px;
+  height: 2px;
+  background-color: var(--text-primary);
+  border-radius: 2px;
+  transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
+}
+
+/* Mobile header row — hidden on desktop */
+.nav-mobile-header {
+  display: none;
+  align-items: center;
+  height: 60px;
+  padding: 0 8px;
+  flex-shrink: 0;
+}
+
 /*When the page is below this width then put it into verticle mode*/
 @media (max-width: 900px) {
   .custom-navbar {
     flex-direction: column;
     position: relative;
-    padding: 0 0 0 0rem;
-    padding-top: 80px;
-    padding-bottom: 8px;
+    padding: 0;
+  }
+
+  .nav-mobile-header {
+    display: flex;
+  }
+
+  .hamburger-btn {
+    display: flex;
   }
 
   .nav-list {
     flex-direction: column;
     width: 100%;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.35s ease-in-out;
+  }
+
+  .custom-navbar.nav-open .nav-list {
+    max-height: 600px;
+    padding-bottom: 8px;
   }
 
   .nav-item {
     width: 100%;
+  }
+
+  .nav-item:first-child {
+    margin-top: 0;
   }
 
   .nav-button {
@@ -133,14 +191,123 @@
   .profile-button {
     position: absolute;
     background-color: #00000000;
-    top: 0px;
-    right: 0px;
-    width: 80px;
-    height: 80px;
+    top: 0;
+    right: 0;
+    width: 60px;
+    height: 60px;
     z-index: 5;
   }
 
-  .nav-item:first-child {
-    margin-top: -90px;
+  /* Hamburger → X when menu is open */
+  .custom-navbar.nav-open .hamburger-line:nth-child(1) {
+    transform: translateY(7px) rotate(45deg);
+  }
+
+  .custom-navbar.nav-open .hamburger-line:nth-child(2) {
+    opacity: 0;
+    transform: scaleX(0);
+  }
+
+  .custom-navbar.nav-open .hamburger-line:nth-child(3) {
+    transform: translateY(-7px) rotate(-45deg);
+  }
+
+}
+
+/* Nav dropdown */
+.nav-dropdown {
+  position: relative;
+}
+
+.nav-dropdown-menu {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  min-width: 100%;
+  background-color: var(--layer1-bg);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.35);
+  border-radius: 0 0 10px 10px;
+  z-index: 200;
+  overflow: hidden;
+}
+
+.nav-dropdown:hover .nav-dropdown-menu,
+.nav-dropdown:focus-within .nav-dropdown-menu {
+  display: block;
+}
+
+.nav-dropdown-menu a {
+  display: block;
+  padding: 0.85rem 1.25rem;
+  color: var(--text-primary);
+  text-decoration: none;
+  white-space: nowrap;
+  font-size: 1.1rem;
+  transition: background-color 0.2s ease-in-out;
+}
+
+.nav-dropdown-menu a:hover {
+  background-color: var(--nav-button-hover-bg);
+}
+
+.nav-dropdown:hover .nav-button,
+.nav-dropdown:focus-within .nav-button {
+  background-color: var(--nav-button-hover-bg);
+}
+
+.nav-dropdown:hover .nav-button .nav-text,
+.nav-dropdown:focus-within .nav-button .nav-text {
+  transform: scale(1.08);
+}
+
+.nav-caret {
+  font-size: 0.65em;
+  margin-left: 0.3em;
+  vertical-align: middle;
+  display: inline-block;
+  transition: transform 0.2s ease-in-out;
+  line-height: 1;
+}
+
+.nav-dropdown:hover .nav-caret,
+.nav-dropdown:focus-within .nav-caret {
+  transform: rotate(180deg);
+}
+
+/* Mobile dropdown overrides — must be AFTER the base dropdown rules to win the cascade */
+@media (max-width: 900px) {
+  /* nav-item is display:flex row by default; column makes the menu appear below the button */
+  .nav-item.nav-dropdown {
+    flex-direction: column;
+  }
+
+  /* Pull out of absolute so nav-list overflow:hidden doesn't clip it.
+     Use max-height transition instead of display:none/block so it animates. */
+  .nav-dropdown-menu {
+    position: static;
+    display: block;
+    width: 100%;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.25s ease-in-out;
+    box-shadow: none;
+    border-radius: 0;
+    background-color: var(--layer2-bg);
+  }
+
+  /* Prevent hover/focus-within from expanding the menu on touch */
+  .nav-dropdown:hover .nav-dropdown-menu,
+  .nav-dropdown:focus-within .nav-dropdown-menu {
+    max-height: 0;
+  }
+
+  /* JS adds this class on tap */
+  .nav-dropdown.dropdown-open .nav-dropdown-menu {
+    max-height: 300px;
+  }
+
+  .nav-dropdown.dropdown-open .nav-caret {
+    transform: rotate(180deg);
   }
 }

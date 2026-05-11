@@ -11,9 +11,10 @@ public class IngredientTests
         // Arrange
         Ingredient i = new Ingredient
         {
-          Amount = 0,
-          IngredientBase = new IngredientBase { Name = "base" },
-          Measurement = new Measurement { Name = "measure" }  
+            DisplayName = "base",
+            Amount = 0,
+            IngredientBase = new IngredientBase { Name = "base" },
+            Measurement = new Measurement { Name = "measure" }
         };
 
         // Act

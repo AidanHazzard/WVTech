@@ -18,9 +18,13 @@ namespace MealPlanner.Models
         public DbSet<UserDietaryRestriction> UserDietaryRestrictions { get; set; }
 
         public DbSet<Tag> Tags { get; set; }
+        public DbSet<UserFoodPreference> UserFoodPreferences { get; set; }
         public DbSet<ShoppingListItem> ShoppingListItems { get; set; }
         public DbSet<MealCompletion> MealCompletions { get; set; }
         public DbSet<MealExclusion> MealExclusions { get; set; }
+        public DbSet<KrogerExport> KrogerExports { get; set; }
+        public DbSet<KrogerExportItem> KrogerExportItems { get; set; }
+        public DbSet<MealAutoRemovedIngredient> MealAutoRemovedIngredients { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -79,6 +83,14 @@ namespace MealPlanner.Models
                 .AutoInclude();
 
             modelBuilder.Entity<Ingredient>()
+                .Navigation(i => i.Measurement)
+                .AutoInclude();
+
+            modelBuilder.Entity<ShoppingListItem>()
+                .Navigation(i => i.IngredientBase)
+                .AutoInclude();
+
+            modelBuilder.Entity<ShoppingListItem>()
                 .Navigation(i => i.Measurement)
                 .AutoInclude();
         }

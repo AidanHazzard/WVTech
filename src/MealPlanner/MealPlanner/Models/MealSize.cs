@@ -20,11 +20,21 @@ public static class MealSizeExtensions
 {
     public static int Calories(this MealSize size) => size switch
     {
-        MealSize.SmallSnack => 150,
+        MealSize.SmallSnack => 200,
         MealSize.Small      => 400,
-        MealSize.Average    => 600,
-        MealSize.Large      => 800,
-        MealSize.LargeSnack => 350,
+        MealSize.Average    => 800,
+        MealSize.Large      => 1200,
+        MealSize.LargeSnack => 600,
+        _ => throw new ArgumentOutOfRangeException(nameof(size))
+    };
+
+    public static double Weight(this MealSize size) => size switch
+    {
+        MealSize.SmallSnack => 0.25,
+        MealSize.Small      => 0.5,
+        MealSize.Average    => 1.0,
+        MealSize.Large      => 1.5,
+        MealSize.LargeSnack => 0.75,
         _ => throw new ArgumentOutOfRangeException(nameof(size))
     };
 

@@ -59,9 +59,10 @@ public class SharedSteps
         };
 
         newUser.PasswordHash = new PasswordHasher<User>().HashPassword(newUser, _userPassword);
-        Users.Add(userName, newUser);
-        _context.Add(newUser);
-        _context.SaveChanges();
+        Users[userName] = newUser;
+        using var ctx = BDDSetup.CreateContext();
+        ctx.Add(newUser);
+        ctx.SaveChanges();
     }    
     
     // This step definition uses Cucumber Expressions. See https://github.com/gasparnagy/CucumberExpressions.SpecFlow

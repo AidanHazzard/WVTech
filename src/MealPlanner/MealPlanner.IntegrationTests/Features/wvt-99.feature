@@ -12,9 +12,9 @@ Feature: Add tags to recipes
     And 'Gary' fills in the recipe protein as '10'
     And 'Gary' fills in the recipe fat as '5'
     And 'Gary' fills in the recipe carbs as '30'
-    And 'Gary' selects the predefined tag 'Breakfast'
+    And 'Gary' selects a predefined tag from the tag dropdown
     And 'Gary' submits the recipe form
-    Then the recipe 'TaggedRecipe' has the tag 'Breakfast' in the database
+    Then the recipe 'TaggedRecipe' has the selected tag in the database
 
   Scenario: Creator adds a custom tag when creating a recipe
     Given he is on the "FoodEntries/AddNewRecipe" page

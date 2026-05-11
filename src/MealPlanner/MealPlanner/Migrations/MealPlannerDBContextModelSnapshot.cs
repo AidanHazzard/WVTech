@@ -50,6 +50,11 @@ namespace MealPlanner.Migrations
                     b.Property<float>("Amount")
                         .HasColumnType("real");
 
+                    b.Property<string>("DisplayName")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
                     b.Property<int>("IngredientBaseId")
                         .HasColumnType("int");
 
@@ -59,6 +64,9 @@ namespace MealPlanner.Migrations
                     b.Property<int?>("RecipeId")
                         .HasColumnType("int");
 
+                    b.Property<string>("UserId")
+                        .HasColumnType("nvarchar(450)");
+
                     b.HasKey("Id");
 
                     b.HasIndex("IngredientBaseId");
@@ -66,6 +74,8 @@ namespace MealPlanner.Migrations
                     b.HasIndex("MeasurementId");
 
                     b.HasIndex("RecipeId");
+
+                    b.HasIndex("UserId");
 
                     b.ToTable("Ingredient");
                 });
@@ -89,6 +99,62 @@ namespace MealPlanner.Migrations
                         .IsUnique();
 
                     b.ToTable("IngredientBase");
+                });
+
+            modelBuilder.Entity("MealPlanner.Models.KrogerExport", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("ExportedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("KrogerExports");
+                });
+
+            modelBuilder.Entity("MealPlanner.Models.KrogerExportItem", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<float>("Amount")
+                        .HasColumnType("real");
+
+                    b.Property<int>("ExportId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Measurement")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Upc")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ExportId");
+
+                    b.ToTable("KrogerExportItems");
                 });
 
             modelBuilder.Entity("MealPlanner.Models.Meal", b =>
@@ -128,6 +194,40 @@ namespace MealPlanner.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("Meal");
+                });
+
+            modelBuilder.Entity("MealPlanner.Models.MealAutoRemovedIngredient", b =>
+                {
+                    b.Property<int>("MealId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CompletionDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("IngredientBaseId")
+                        .HasColumnType("int");
+
+                    b.Property<float>("Amount")
+                        .HasColumnType("real");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("DisplayName")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<int>("MeasurementId")
+                        .HasColumnType("int");
+
+                    b.HasKey("MealId", "CompletionDate", "IngredientBaseId");
+
+                    b.HasIndex("IngredientBaseId");
+
+                    b.HasIndex("MeasurementId");
+
+                    b.ToTable("MealAutoRemovedIngredient");
                 });
 
             modelBuilder.Entity("MealPlanner.Models.MealCompletion", b =>
@@ -200,6 +300,9 @@ namespace MealPlanner.Migrations
 
                     b.Property<int>("Fat")
                         .HasColumnType("int");
+
+                    b.Property<string>("ImageUrl")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -320,22 +423,24 @@ namespace MealPlanner.Migrations
                     b.Property<float>("Amount")
                         .HasColumnType("real");
 
+                    b.Property<int>("IngredientBaseId")
+                        .HasColumnType("int");
+
                     b.Property<bool>("IsAutoAdded")
                         .HasColumnType("bit");
 
-                    b.Property<string>("Measurement")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int>("MeasurementId")
+                        .HasColumnType("int");
 
                     b.Property<string>("UserId")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("IngredientBaseId");
+
+                    b.HasIndex("MeasurementId");
 
                     b.ToTable("ShoppingListItems");
                 });
@@ -445,6 +550,21 @@ namespace MealPlanner.Migrations
                     b.ToTable("UserDietaryRestriction");
                 });
 
+            modelBuilder.Entity("MealPlanner.Models.UserFoodPreference", b =>
+                {
+                    b.Property<string>("UserId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<int>("TagId")
+                        .HasColumnType("int");
+
+                    b.HasKey("UserId", "TagId");
+
+                    b.HasIndex("TagId");
+
+                    b.ToTable("UserFoodPreference");
+                });
+
             modelBuilder.Entity("MealPlanner.Models.UserNutritionPreference", b =>
                 {
                     b.Property<int>("Id")
@@ -508,6 +628,10 @@ namespace MealPlanner.Migrations
 
                     b.Property<decimal?>("Weight")
                         .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("ZipCode")
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
 
                     b.Property<string>("age")
                         .HasColumnType("nvarchar(max)");
@@ -739,9 +863,24 @@ namespace MealPlanner.Migrations
                         .WithMany("Ingredients")
                         .HasForeignKey("RecipeId");
 
+                    b.HasOne("MealPlanner.Models.User", null)
+                        .WithMany("PantryItems")
+                        .HasForeignKey("UserId");
+
                     b.Navigation("IngredientBase");
 
                     b.Navigation("Measurement");
+                });
+
+            modelBuilder.Entity("MealPlanner.Models.KrogerExportItem", b =>
+                {
+                    b.HasOne("MealPlanner.Models.KrogerExport", "Export")
+                        .WithMany("Items")
+                        .HasForeignKey("ExportId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Export");
                 });
 
             modelBuilder.Entity("MealPlanner.Models.Meal", b =>
@@ -753,6 +892,33 @@ namespace MealPlanner.Migrations
                         .IsRequired();
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("MealPlanner.Models.MealAutoRemovedIngredient", b =>
+                {
+                    b.HasOne("MealPlanner.Models.IngredientBase", "IngredientBase")
+                        .WithMany()
+                        .HasForeignKey("IngredientBaseId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("MealPlanner.Models.Meal", "Meal")
+                        .WithMany()
+                        .HasForeignKey("MealId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("MealPlanner.Models.Measurement", "Measurement")
+                        .WithMany()
+                        .HasForeignKey("MeasurementId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("IngredientBase");
+
+                    b.Navigation("Meal");
+
+                    b.Navigation("Measurement");
                 });
 
             modelBuilder.Entity("MealPlanner.Models.MealCompletion", b =>
@@ -777,6 +943,25 @@ namespace MealPlanner.Migrations
                     b.Navigation("Meal");
                 });
 
+            modelBuilder.Entity("MealPlanner.Models.ShoppingListItem", b =>
+                {
+                    b.HasOne("MealPlanner.Models.IngredientBase", "IngredientBase")
+                        .WithMany()
+                        .HasForeignKey("IngredientBaseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("MealPlanner.Models.Measurement", "Measurement")
+                        .WithMany()
+                        .HasForeignKey("MeasurementId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("IngredientBase");
+
+                    b.Navigation("Measurement");
+                });
+
             modelBuilder.Entity("MealPlanner.Models.UserDietaryRestriction", b =>
                 {
                     b.HasOne("MealPlanner.Models.DietaryRestriction", "DietaryRestriction")
@@ -792,6 +977,25 @@ namespace MealPlanner.Migrations
                         .IsRequired();
 
                     b.Navigation("DietaryRestriction");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("MealPlanner.Models.UserFoodPreference", b =>
+                {
+                    b.HasOne("MealPlanner.Models.Tag", "Tag")
+                        .WithMany()
+                        .HasForeignKey("TagId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("MealPlanner.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Tag");
 
                     b.Navigation("User");
                 });
@@ -933,6 +1137,11 @@ namespace MealPlanner.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("MealPlanner.Models.KrogerExport", b =>
+                {
+                    b.Navigation("Items");
+                });
+
             modelBuilder.Entity("MealPlanner.Models.Recipe", b =>
                 {
                     b.Navigation("Ingredients");
@@ -942,6 +1151,8 @@ namespace MealPlanner.Migrations
 
             modelBuilder.Entity("MealPlanner.Models.User", b =>
                 {
+                    b.Navigation("PantryItems");
+
                     b.Navigation("UserRecipes");
                 });
 #pragma warning restore 612, 618

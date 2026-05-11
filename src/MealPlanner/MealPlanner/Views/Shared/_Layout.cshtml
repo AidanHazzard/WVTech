@@ -19,7 +19,14 @@
 
 <body>
 <header>
-    <nav class="custom-navbar">
+    <nav class="custom-navbar" id="mainNavbar">
+        <div class="nav-mobile-header">
+            <button class="hamburger-btn" id="hamburgerBtn" aria-label="Toggle navigation" aria-expanded="false">
+                <span class="hamburger-line"></span>
+                <span class="hamburger-line"></span>
+                <span class="hamburger-line"></span>
+            </button>
+        </div>
         <ul class="nav-list">
 
             <li class="nav-item">
@@ -64,12 +71,14 @@
             </li>
 -->
 
-            <li class="nav-item">
-                <button
-                    class="nav-button @(currentController == "ShoppingList" && currentAction == "Index" ? "active" : "")"
-                    onclick="location.href='@Url.Action("Index", "ShoppingList")'">
-                    <span class="nav-text">MyCart</span>
+            <li class="nav-item nav-dropdown">
+                <button class="nav-button @(currentController == "Shopping" ? "active" : "")">
+                    <span class="nav-text">MyCart<span class="nav-caret">&#9660;</span></span>
                 </button>
+                <div class="nav-dropdown-menu">
+                    <a href="@Url.Action("Index", "Shopping")">Shopping List</a>
+                    <a href="@Url.Action("Pantry", "Shopping")">Pantry</a>
+                </div>
             </li>
 <!--
             @if (User?.IsInRole("Admin") == true)
@@ -119,6 +128,7 @@
 <script src="~/lib/jquery/dist/jquery.min.js"></script>
 <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
 <script src="~/js/site.js" type="module" asp-append-version="true"></script>
+<script src="~/js/inlineConfirm.js" asp-append-version="true"></script>
 @await RenderSectionAsync("Scripts", required: false)
 
 </body>

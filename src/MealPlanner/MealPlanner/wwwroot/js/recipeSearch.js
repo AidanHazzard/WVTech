@@ -38,28 +38,11 @@ $(document).ready(() => {
 
         $(document).on("click", ".delete-recipe-btn", function (e) {
             e.stopPropagation();
-            if (!confirm("Are you sure you want to remove this recipe?")) return;
 
             const $row = $(this).closest(".mealRecipeItem");
-            const recipeId = $row.data("id");
-            const mealId = $("#editMealForm input[name='Id']").val();
 
-            if (!mealId || mealId === "0") {
+            showInlineConfirm(this, "Remove this recipe?", function () {
                 $row.remove();
-                return;
-            }
-
-            fetch("/Meal/DeleteRecipeFromMeal", {
-                method: "POST",
-                keepalive: true,
-                headers: { "Content-Type": "application/x-www-form-urlencoded" },
-                body: `mealId=${mealId}&recipeId=${recipeId}`
-            }).then(response => {
-                if (response.ok) {
-                    $row.remove();
-                } else {
-                    alert("Failed to remove recipe.");
-                }
             });
         });
     }
@@ -141,6 +124,15 @@ async function recipeSearchHandler(event)
     const response = await fetch(url);
 
     $("#recipeResults").text("");
+    if (response.status === 204)
+    {
+        $("#error").show();
+        $("#error").html(
+            "No recipes match your active dietary filters. " +
+            "<a href='/UserSettings/Dietary'>Adjust your dietary restrictions</a>."
+        );
+        return;
+    }
     if (!response.ok)
     {
         $("#error").show();
@@ -162,7 +154,24 @@ async function recipeSearchHandler(event)
         $(".recipeId", row).text(recipe.id);
         $(".recipeIdInput", row).val(recipe.id);
         $(".recipeRating", row).text(rating);
-        $(".recipeRating", row).attr("style", `color: color-mix(in oklch, ${LOW_RATING_COLOR}, ${HIGH_RATING_COLOR} ${rating});`)
+        $(".recipeRating", row).attr("style", `color: color-mix(in oklch, ${LOW_RATING_COLOR}, ${HIGH_RATING_COLOR} ${rating});`);
+
+        const hasImage = recipe.imageUrl && recipe.imageUrl.length > 0;
+        const thumbnailSrc = hasImage ? recipe.imageUrl : "/images/placeholder/no-image.svg";
+        $(".recipe-thumbnail", row)
+            .attr("src", thumbnailSrc)
+            .attr("alt", recipe.name)
+            .addClass(hasImage ? "recipe-has-image" : "recipe-no-image");
+
+        if (recipe.matchedRestrictionTags && recipe.matchedRestrictionTags.length > 0)
+        {
+            recipe.matchedRestrictionTags.forEach(tag => {
+                $(".recipeTags", row).append(
+                    `<span class="badge bg-success restriction-tag">${tag}</span>`
+                );
+            });
+        }
+
         $("#recipeResults").append(row);
     }
 

@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using System.Threading.Tasks;
 using MealPlanner.Controllers;
+using MealPlanner.DAL.Abstract;
 using MealPlanner.Services;
 using MealPlanner.ViewModels;
 using Microsoft.AspNetCore.Http;
@@ -22,7 +23,7 @@ namespace MealPlanner.Tests
         {
             // Arrange: create mock service and controller
             _mockUserSettingsService = new Mock<IUserSettingsService>();
-            _controller = new UserSettingsController(null, null, _mockUserSettingsService.Object);
+            _controller = new UserSettingsController(null!, null!, _mockUserSettingsService.Object, new Mock<ITagRepository>().Object, new Mock<IUserFoodPreferenceRepository>().Object);
 
             // Add a fake authenticated user for the controller
             var user = new ClaimsPrincipal(new ClaimsIdentity(

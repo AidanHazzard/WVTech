@@ -25,27 +25,32 @@ public class WVT108Steps
     [When("'Jack' clicks the delete meal button")]
     public void WhenJackClicksTheDeleteMealButton()
     {
-        ((IJavaScriptExecutor)_driver).ExecuteScript("window.confirm = function() { return true; };");
         var deleteButton = new WebDriverWait(_driver, TimeSpan.FromSeconds(5))
-            .Until(d => d.FindElement(By.CssSelector(".mealDeleteButton, button[data-testid='delete-meal'], button[type='submit']")));
+            .Until(d => d.FindElement(By.CssSelector(".btn-delete-meal")));
         ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].scrollIntoView(true);", deleteButton);
-        ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].click();", deleteButton);
+        deleteButton.Click();
     }
 
     [When("'Jack' confirms meal deletion")]
     public void WhenJackConfirmsMealDeletion()
     {
-        // In headless Chrome, confirm() auto-accepts — deletion happens on button click.
-        // Nothing to do here; the form was already submitted by WhenJackClicksTheDeleteMealButton.
+        var confirmBtn = new WebDriverWait(_driver, TimeSpan.FromSeconds(5))
+            .Until(d => d.FindElement(By.CssSelector(".inline-confirm-yes")));
+        confirmBtn.Click();
+        new WebDriverWait(_driver, TimeSpan.FromSeconds(10))
+            .Until(d => ((IJavaScriptExecutor)d).ExecuteScript("return document.readyState").ToString() == "complete");
     }
 
     [Then("a delete confirmation alert is shown")]
     public void ThenADeleteConfirmationAlertIsShown()
     {
-        // The confirm() dialog fires inline in JS and is auto-accepted in headless Chrome.
-        // We verify the intent was fulfilled: the page reloaded after the delete action.
-        new WebDriverWait(_driver, TimeSpan.FromSeconds(5))
-            .Until(d => d.Url.Contains("PlannerHome"));
+        var confirm = new WebDriverWait(_driver, TimeSpan.FromSeconds(5))
+            .Until(d =>
+            {
+                var el = d.FindElements(By.CssSelector(".inline-confirm")).FirstOrDefault();
+                return el != null && el.Displayed ? el : null;
+            });
+        Assert.That(confirm, Is.Not.Null, "Expected inline confirmation dialog to be visible");
         Assert.That(_driver.Url, Does.Contain("PlannerHome"));
     }
 

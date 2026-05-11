@@ -7,4 +7,7 @@ public class PlannerHomeViewModel
     public DateTime SelectedDate { get; set; }
     public List<Meal> Meals { get; set; } = [];
     public NutritionBarInfoViewModel? NutritionBar { get; set; }
+
+    public HashSet<int> MealPantryMatchIds { get; set; } = [];
+    public HashSet<int> MealAutoRemovedIds { get; set; } = [];
 }

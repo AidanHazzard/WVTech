@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Http;
 using MealPlanner.Models;
 
 namespace MealPlanner.ViewModels;
@@ -24,7 +25,7 @@ public class RecipeViewModel
 
         Name = recipe.Name;
         Id = recipe.Id;
-        Ingredients = recipe.Ingredients.Select(i => i.IngredientBase.Name).ToList();
+        Ingredients = recipe.Ingredients.Select(i => i.DisplayName).ToList();
         IngredientAmounts = recipe.Ingredients.Select(i => i.Amount).ToList();
         IngredientMeasurements = recipe.Ingredients.Select(i => i.Measurement.Name).ToList();
         Directions = recipe.Directions;
@@ -33,6 +34,7 @@ public class RecipeViewModel
         Carbs = recipe.Carbs;
         Fat = recipe.Fat;
         Tags = recipe.Tags.Select(t => t.Name).ToList();
+        ImageUrl = recipe.ImageUrl;
     }
 
     [Required(ErrorMessage = "A recipe needs a name")]
@@ -61,4 +63,7 @@ public class RecipeViewModel
     public bool IsOwned { get; set;} = false;
     public UserVoteType UserVote { get; set; } = UserVoteType.NoVote;
     public float? VotePercentage { get; set; }
+    public string? ImageUrl { get; set; }
+    public IFormFile? ImageFile { get; set; }
+    public bool RemoveImage { get; set; } = false;
 }
