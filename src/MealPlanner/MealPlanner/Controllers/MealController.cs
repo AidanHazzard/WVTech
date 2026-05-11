@@ -20,6 +20,7 @@ public class MealController : Controller
     private readonly MealPlannerDBContext _context;
     private readonly ITagRepository _tagRepo;
     private readonly IMealRecommendationService? _recommendationService;
+    private readonly IPantryService? _pantryService;
 
     public MealController(
         IRegistrationService registrationService,
@@ -27,7 +28,8 @@ public class MealController : Controller
         IMealRepository mealRepo,
         MealPlannerDBContext context,
         ITagRepository tagRepo,
-        IMealRecommendationService? mealRecommendationService = null)
+        IMealRecommendationService? mealRecommendationService = null,
+        IPantryService? pantryService = null)
     {
         _registrationService = registrationService;
         _recipeRepo = recipeRepo;
@@ -35,6 +37,7 @@ public class MealController : Controller
         _context = context;
         _tagRepo = tagRepo;
         _recommendationService = mealRecommendationService;
+        _pantryService = pantryService;
     }
 
     [HttpGet]
@@ -273,6 +276,67 @@ public class MealController : Controller
         });
     }
 
+    [HttpPost]
+    [IgnoreAntiforgeryToken]
+    public async Task<IActionResult> RegenerateRecipe(int mealId, int recipeId)
+    {
+        var user = await _registrationService.FindUserByClaimAsync(User);
+        if (user == null) return Challenge();
+        if (_recommendationService == null) return Problem(statusCode: 500);
+
+        var meal = await _mealRepo.ReadAsync(mealId);
+        if (meal == null || meal.UserId != user.Id) return NotFound();
+
+        await _mealRepo.LoadRecipesAsync(meal);
+        var mealDate = meal.StartTime?.Date ?? DateTime.Today;
+        var dayMeals = await _mealRepo.GetUserMealsByDateAsync(user, mealDate);
+        var excludeIds = dayMeals.SelectMany(m => m.Recipes.Select(r => r.Id))
+            .Union(meal.Recipes.Select(r => r.Id))
+            .ToHashSet();
+
+        var replacement = await _recommendationService.GetOneRecipeRecommendation(user, mealDate, excludeIds);
+        if (replacement == null)
+            return Json(new { noAlternative = true });
+
+        var replaced = meal.Recipes.FirstOrDefault(r => r.Id == recipeId);
+        if (replaced == null) return NotFound();
+
+        meal.Recipes.Remove(replaced);
+        meal.Recipes.Add(replacement);
+        _mealRepo.CreateOrUpdate(meal);
+        _context.SaveChanges();
+
+        return Json(new
+        {
+            newRecipe = new { replacement.Id, replacement.Name, replacement.Calories },
+            replacedRecipeId = recipeId
+        });
+    }
+
+    [HttpPost]
+    [IgnoreAntiforgeryToken]
+    public async Task<IActionResult> SwapRecipe(int mealId, int removeRecipeId, int addRecipeId)
+    {
+        var user = await _registrationService.FindUserByClaimAsync(User);
+        if (user == null) return Challenge();
+
+        var meal = await _mealRepo.ReadAsync(mealId);
+        if (meal == null || meal.UserId != user.Id) return NotFound();
+
+        await _mealRepo.LoadRecipesAsync(meal);
+
+        var toRemove = meal.Recipes.FirstOrDefault(r => r.Id == removeRecipeId);
+        if (toRemove != null) meal.Recipes.Remove(toRemove);
+
+        var toAdd = _recipeRepo.Read(addRecipeId);
+        if (toAdd != null) meal.Recipes.Add(toAdd);
+
+        _mealRepo.CreateOrUpdate(meal);
+        _context.SaveChanges();
+
+        return Json(new { restoredRecipe = toAdd != null ? new { toAdd.Id, toAdd.Name, toAdd.Calories } : null });
+    }
+
     [HttpGet]
     public async Task<IActionResult> DayPlanSummary(string? date)
     {
@@ -501,7 +565,7 @@ public class MealController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> ToggleMealCompleted(int id, string? date, bool? isCompleted, string? source)
+    public async Task<IActionResult> ToggleMealCompleted(int id, string? date, bool? isCompleted, string? source, bool? removePantry, bool? restorePantry)
     {
         var user = await _registrationService.FindUserByClaimAsync(User);
         if (user == null)
@@ -509,7 +573,7 @@ public class MealController : Controller
             return Challenge();
         }
 
-        var meal = await _context.Meals.FindAsync(id);
+        var meal = await _mealRepo.ReadWithIngredientsAsync(id);
         if (meal == null)
         {
             return NotFound();
@@ -527,10 +591,16 @@ public class MealController : Controller
         if (isCompleted == true && existing == null)
         {
             _context.MealCompletions.Add(new MealCompletion { MealId = meal.Id, CompletionDate = completionDate });
+
+            if (removePantry == true && _pantryService != null)
+                _pantryService.AutoRemovePantryItems(user.Id, meal.Id, completionDate, [meal]);
         }
         else if (isCompleted != true && existing != null)
         {
             _context.MealCompletions.Remove(existing);
+
+            if (restorePantry == true && _pantryService != null)
+                _pantryService.RestorePantryItems(user.Id, meal.Id, completionDate);
         }
 
         await _context.SaveChangesAsync();

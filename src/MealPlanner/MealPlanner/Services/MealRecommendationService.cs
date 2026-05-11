@@ -1,4 +1,5 @@
 using MealPlanner.DAL.Abstract;
+using MealPlanner.Helpers;
 using MealPlanner.Models;
 using MealPlanner.ViewModels;
 using Microsoft.IdentityModel.Tokens;
@@ -77,9 +78,9 @@ public class MealRecommendationService : IMealRecommendationService
         if (restrictionNames.Count > 0)
             pipeline = pipeline.Where(r => restrictionNames.All(name => r.Tags.Any(t => t.Name == name)));
 
-        // Stable sort: tag-matched recipes first, unmatched after (preserves priority order within each group)
+        // Sort by number of matching tags descending; within same count, upvote/vote order is preserved
         if (preferredTagIds.Count > 0)
-            pipeline = pipeline.OrderBy(r => r.Tags.Any(t => preferredTagIds.Contains(t.Id)) ? 0 : 1);
+            pipeline = pipeline.OrderByDescending(r => r.Tags.Count(t => preferredTagIds.Contains(t.Id)));
 
         var recipes = new List<Recipe>();
         int runningCalories = 0, runningProtein = 0, runningCarbs = 0, runningFat = 0;
@@ -101,23 +102,19 @@ public class MealRecommendationService : IMealRecommendationService
         return recipes;
     }
 
-    private async Task LoadExternalRecipesAsync(List<Recipe> recipes)
+    public async Task<Recipe?> GetOneRecipeRecommendation(User user, DateTime date, IEnumerable<int> excludeRecipeIds)
     {
-        if (_externalRecipeService == null) return;
+        var restrictionNames = await GetRestrictionNamesAsync(user.Id);
+        var userVotes = await _userRecipeRepository.GetUserVotesByUserIdAsync(user.Id);
+        var votePercentages = await _userRecipeRepository.GetAllVotePercentagesAsync();
+        var upvoted = await _userRecipeRepository.GetUserRecipesByVoteType(user.Id, UserVoteType.UpVote);
+        var allWithTags = await _recipeRepository.GetAllWithTagsAsync();
+        await upvoted.LoadExternalRecipesAsync(_externalRecipeService);
+        await allWithTags.LoadExternalRecipesAsync(_externalRecipeService);
 
-        for (int i = 0; i < recipes.Count; i++)
-        {
-            var r = recipes[i];
-            if (r.ExternalUri.IsNullOrEmpty()) continue;
-            try
-            {
-                r = await _externalRecipeService.GetExternalRecipeByURI(r.ExternalUri!);
-            }
-            catch
-            {
-                if (r != null) recipes.Remove(r);
-            }
-        }
+        var excludeIds = new HashSet<int>(excludeRecipeIds);
+        var candidates = OrderedCandidates(upvoted, allWithTags, userVotes, votePercentages, excludeIds);
+        return SelectFromCandidates(candidates, int.MaxValue, restrictionNames, []).FirstOrDefault();
     }
 
     public async Task<List<Meal>> GetRecommendedMealsForUser(User user, DateTime mealDate, DayPlanConfigViewModel config)
@@ -134,8 +131,8 @@ public class MealRecommendationService : IMealRecommendationService
         var votePercentages = await _userRecipeRepository.GetAllVotePercentagesAsync();
         var upvoted = await _userRecipeRepository.GetUserRecipesByVoteType(user.Id, UserVoteType.UpVote);
         var allWithTags = await _recipeRepository.GetAllWithTagsAsync();
-        await LoadExternalRecipesAsync(upvoted);
-        await LoadExternalRecipesAsync(allWithTags);
+        await upvoted.LoadExternalRecipesAsync(_externalRecipeService);
+        await allWithTags.LoadExternalRecipesAsync(_externalRecipeService);
 
         var nutritionPrefs = await _nutrionRepository.GetUsersNutritionPreferenceAsync(user.Id);
         var totalWeight = preferences.Sum(p => p.Size.Weight());

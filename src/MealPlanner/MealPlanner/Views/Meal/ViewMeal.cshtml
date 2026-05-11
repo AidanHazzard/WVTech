@@ -44,7 +44,18 @@
                  data-meal-id="@Model.Id"
                  style="cursor:pointer;">
                 <h4 class="buttonText mb-0">@recipe.Name</h4>
-                <button type="button" class="btn btn-danger delete-recipe-btn">X</button>
+                <div class="d-flex gap-2 align-items-center">
+                    @if (Model.Recipes.Count > 1)
+                    {
+                        <button type="button"
+                                class="btn btn-sm btn-warning"
+                                data-action="regenerate-recipe"
+                                data-recipe-id="@recipe.Id"
+                                data-meal-id="@Model.Id"
+                                title="Regenerate this recipe">↻</button>
+                    }
+                    <button type="button" class="btn btn-danger delete-recipe-btn">X</button>
+                </div>
             </div>
         }
     </div>
@@ -53,6 +64,17 @@
     {
         <p class="text-muted mb-0">There are no recipes in this meal.</p>
     }
+
+    <div id="regen-no-alt-msg" data-regen-no-alternative class="alert alert-warning mt-2" style="display:none">
+        No alternative recipe is available right now.
+    </div>
+
+    <div id="regen-undo-toast" class="alert alert-success mt-2" style="display:none">
+        <span>Recipe replaced.</span>
+        <button type="button"
+                class="btn btn-sm btn-outline-success ms-3"
+                data-action="undo-regenerate-recipe">Undo</button>
+    </div>
 
     <form asp-controller="Meal" asp-action="EditMeal" method="get">
         <input type="hidden" name="id" value="@Model.Id" />

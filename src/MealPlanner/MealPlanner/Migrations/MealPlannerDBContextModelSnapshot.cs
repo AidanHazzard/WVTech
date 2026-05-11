@@ -196,6 +196,40 @@ namespace MealPlanner.Migrations
                     b.ToTable("Meal");
                 });
 
+            modelBuilder.Entity("MealPlanner.Models.MealAutoRemovedIngredient", b =>
+                {
+                    b.Property<int>("MealId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CompletionDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("IngredientBaseId")
+                        .HasColumnType("int");
+
+                    b.Property<float>("Amount")
+                        .HasColumnType("real");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("DisplayName")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<int>("MeasurementId")
+                        .HasColumnType("int");
+
+                    b.HasKey("MealId", "CompletionDate", "IngredientBaseId");
+
+                    b.HasIndex("IngredientBaseId");
+
+                    b.HasIndex("MeasurementId");
+
+                    b.ToTable("MealAutoRemovedIngredient");
+                });
+
             modelBuilder.Entity("MealPlanner.Models.MealCompletion", b =>
                 {
                     b.Property<int>("MealId")
@@ -266,6 +300,9 @@ namespace MealPlanner.Migrations
 
                     b.Property<int>("Fat")
                         .HasColumnType("int");
+
+                    b.Property<string>("ImageUrl")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -855,6 +892,33 @@ namespace MealPlanner.Migrations
                         .IsRequired();
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("MealPlanner.Models.MealAutoRemovedIngredient", b =>
+                {
+                    b.HasOne("MealPlanner.Models.IngredientBase", "IngredientBase")
+                        .WithMany()
+                        .HasForeignKey("IngredientBaseId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("MealPlanner.Models.Meal", "Meal")
+                        .WithMany()
+                        .HasForeignKey("MealId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("MealPlanner.Models.Measurement", "Measurement")
+                        .WithMany()
+                        .HasForeignKey("MeasurementId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("IngredientBase");
+
+                    b.Navigation("Meal");
+
+                    b.Navigation("Measurement");
                 });
 
             modelBuilder.Entity("MealPlanner.Models.MealCompletion", b =>

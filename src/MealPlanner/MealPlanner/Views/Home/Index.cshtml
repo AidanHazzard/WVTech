@@ -50,18 +50,21 @@
                 <div class="mealCardInner">
 
                     <!-- Checkbox (toggles completion) -->
-                    <form asp-controller="Meal" asp-action="ToggleMealCompleted" method="post" class="mealCompleteForm">
+                    <form asp-controller="Meal" asp-action="ToggleMealCompleted" method="post" class="mealCompleteForm"
+                          data-has-pantry-match="@(Model.MealPantryMatchIds.Contains(meal.Id) ? "true" : "false")"
+                          data-has-auto-removed="@(Model.MealAutoRemovedIds.Contains(meal.Id) ? "true" : "false")">
                         @Html.AntiForgeryToken()
                         <input type="hidden" name="id" value="@meal.Id" />
                         <input type="hidden" name="date" value="@Model.SelectedDate.ToString("yyyy-MM-dd")" />
                         <input type="hidden" name="source" value="home" />
+                        <input type="hidden" name="removePantry" value="false" class="removePantryInput" />
+                        <input type="hidden" name="restorePantry" value="false" class="restorePantryInput" />
 
                         <input type="checkbox"
                                name="isCompleted"
                                value="true"
                                class="MealCheckBox"
-                               @(meal.IsCompleted ? "checked" : null)
-                               onchange="this.form.submit(); event.stopPropagation();" />
+                               @(meal.IsCompleted ? "checked" : null) />
                     </form>
 
                     <!-- Meal card button (opens the meal view) -->
@@ -69,9 +72,66 @@
                         <input type="hidden" name="id" value="@meal.Id" />
 
                         <button type="submit" class="imageButton mealButton">
-                            <img src="~/images/placeholder/apples.avif"
-                                 alt="apples"
-                                 class="fullImage">
+                            @{
+                                var sortedRecipes = meal.Recipes
+                                    .OrderByDescending(r => r.Calories)
+                                    .ToList();
+                            }
+                            
+                            <!-- Recipe image collage -->
+                            @if (sortedRecipes.Any())
+                            {
+                                @for(int i=0; i<sortedRecipes.Count; i++)
+                                {
+                                    Recipe r = sortedRecipes[i];
+                                    bool rHasImage = !string.IsNullOrEmpty(r.ImageUrl);
+                                    string rSrc = rHasImage ? r.ImageUrl! : "/images/placeholder/no-image.svg";
+                                    <!-- Even horizontally splits, odd vertically, last in list fills rest -->
+                                    if(i== sortedRecipes.Count-1)
+                                    {
+                                        <div class="recipe-collage-full">
+                                            <img src="@rSrc"
+                                                alt="@r.Name"
+                                                data-calories="@r.Calories"
+                                                data-recipe-id="@r.Id"
+                                                class="recipe-collage-img @(rHasImage ? "recipe-has-image" : "recipe-no-image")" />
+                                        </div>
+                                    }
+                                    else if(i%2==0)
+                                    {
+                                        <div class="recipe-collage-left-half">
+                                            <img src="@rSrc"
+                                                alt="@r.Name"
+                                                data-calories="@r.Calories"
+                                                data-recipe-id="@r.Id"
+                                                class="recipe-collage-img @(rHasImage ? "recipe-has-image" : "recipe-no-image")" />
+                                        </div>
+                                        @:<div class="recipe-collage-right-half">
+                                    }
+                                    else
+                                    {
+                                        <div class="recipe-collage-vert-half">
+                                            <img src="@rSrc"
+                                                alt="@r.Name"
+                                                data-calories="@r.Calories"
+                                                data-recipe-id="@r.Id"
+                                                class="recipe-collage-img @(rHasImage ? "recipe-has-image" : "recipe-no-image")" />
+                                        </div>
+                                        @:<div class="recipe-collage-vert-half">
+                                    }
+                                }
+                                <!-- Clean up hanging tags (needed for nesting DOM elements with loops) -->
+                                @for(int i=0; i<sortedRecipes.Count-1; i++)
+                                {
+                                    @:</div>
+                                }
+                            }
+                            else
+                            {
+                                <img src="~/images/placeholder/apples.avif"
+                                     alt="apples"
+                                     class="fullImage">
+                            }
 
                             <div class="buttonGreen noBevelTop">
                                 <h2 class="buttonText">@meal.Title</h2>
@@ -108,6 +168,21 @@
     </form>
 </div>
 
+<div id="pantryPromptModal" class="app-modal-overlay">
+    <div class="back2 app-modal-panel">
+        <p id="pantryPromptMessage" class="fs-5 mb-4"></p>
+        <div class="buttonRow">
+            <button id="pantryPromptAccept" type="button" class="buttonBlueInline">
+                <h4 class="buttonText">Yes</h4>
+            </button>
+            <button id="pantryPromptDecline" type="button" class="buttonGreyInline">
+                <h4 class="buttonText">No</h4>
+            </button>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
     <script src="~/js/indexPlanner.js"></script>
+    <script src="~/js/mealCompletionPantry.js"></script>
 }
