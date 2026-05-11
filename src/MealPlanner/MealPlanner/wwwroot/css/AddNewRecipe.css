@@ -8,12 +8,12 @@
 /* Delete button styling */
 .deleteButton {
     position: absolute;
-    bottom: 5px;
+    top: 50%;
     right: 0px;
+    transform: translateY(-50%);
 
     width: 65px;
     height: 86.5%;
-    max-height: 2.5rem;
     background-color: #ff4d4d;
     border: none;
     border-radius: 19px;
