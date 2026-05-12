@@ -25,7 +25,6 @@ namespace MealPlanner.Models
         public DbSet<KrogerExport> KrogerExports { get; set; }
         public DbSet<KrogerExportItem> KrogerExportItems { get; set; }
         public DbSet<MealAutoRemovedIngredient> MealAutoRemovedIngredients { get; set; }
-
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
