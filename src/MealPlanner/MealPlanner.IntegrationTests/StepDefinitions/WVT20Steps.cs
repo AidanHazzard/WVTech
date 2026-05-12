@@ -394,18 +394,42 @@ public class WVT20Steps
     {
         _wait.Until(d => d.FindElements(By.CssSelector("input[name='newAmount']")).Count > 0);
 
-        var rows = _driver.FindElements(By.CssSelector(".back2 .d-flex.gap-2"));
-        foreach (var row in rows)
+        var amountStr = newAmount.ToString(System.Globalization.CultureInfo.InvariantCulture);
+
+        // Find the item span by data-name, then navigate to its parent row
+        var span = _wait.Until(d =>
         {
-            if (row.Text.Contains(itemName))
+            try
             {
-                var input = row.FindElement(By.CssSelector("input[name='newAmount']"));
-                input.Clear();
-                input.SendKeys(newAmount.ToString(System.Globalization.CultureInfo.InvariantCulture));
-                row.FindElement(By.CssSelector("button[type='submit']")).Click();
-                break;
+                return d.FindElements(By.CssSelector(".item-display[data-name]"))
+                    .FirstOrDefault(s => s.GetAttribute("data-name")
+                        .Contains(itemName, StringComparison.OrdinalIgnoreCase));
             }
-        }
+            catch (StaleElementReferenceException) { return null; }
+        });
+        Assert.That(span, Is.Not.Null, $"Shopping list item '{itemName}' not found");
+
+        var row = span!.FindElement(By.XPath(".."));
+        var input = row.FindElement(By.CssSelector("input[name='newAmount']"));
+
+        // Use JS to set the value to avoid Clear()+SendKeys() issues with number inputs
+        ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].value = arguments[1]", input, amountStr);
+        ((IJavaScriptExecutor)_driver).ExecuteScript(
+            "arguments[0].dispatchEvent(new Event('input', {bubbles:true}))", input);
+
+        var saveBtn = _wait.Until(d =>
+        {
+            try
+            {
+                var btn = row.FindElement(By.CssSelector("button.qty-save"));
+                return btn.Displayed ? btn : null;
+            }
+            catch (StaleElementReferenceException) { return null; }
+        });
+        saveBtn!.Click();
+
+        _wait.Until(d => ((IJavaScriptExecutor)d)
+            .ExecuteScript("return document.readyState").ToString() == "complete");
     }
 
     [Then("the shopping list shows quantity (.*) for '(.*)'")]

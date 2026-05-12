@@ -23,6 +23,9 @@ public class SeedService
             await context.Database.MigrateAsync();
 
             // ✅ Seed Dietary Restrictions (only if none exist)
+            logger.LogInformation("Purging expired auto-removed pantry records.");
+            await PurgeExpiredAutoRemovedIngredientsAsync(context, logger);
+
             logger.LogInformation("Seeding dietary restrictions.");
             await SeedDietaryRestrictionsAsync(context, logger);
 
@@ -74,6 +77,20 @@ public class SeedService
             logger.LogError(ex, "An error occurred while seeding data.");
             throw;
         }
+    }
+
+    private static async Task PurgeExpiredAutoRemovedIngredientsAsync(MealPlannerDBContext context, ILogger logger)
+    {
+        var cutoff = DateTime.UtcNow.AddDays(-3);
+        var expired = context.MealAutoRemovedIngredients
+            .Where(r => r.CreatedAt < cutoff)
+            .ToList();
+
+        if (expired.Count == 0) return;
+
+        context.MealAutoRemovedIngredients.RemoveRange(expired);
+        await context.SaveChangesAsync();
+        logger.LogInformation("Purged {Count} expired auto-removed pantry records.", expired.Count);
     }
 
     private static async Task SeedDietaryRestrictionsAsync(MealPlannerDBContext context, ILogger logger)
