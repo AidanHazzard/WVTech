@@ -160,11 +160,11 @@ public class LocalRecipeStreamTests
     }
 
     [Test]
-    public async Task GetRankedCandidatesAsync_NullExternalService_DoesNotThrow()
+    public async Task GetRankedCandidatesAsync_EmptyScorersAndFilters_DoesNotThrow()
     {
         var repoMock = new Mock<IRecipeRepository>();
         repoMock.Setup(r => r.GetAllWithTagsAsync()).ReturnsAsync([]);
-        var stream = new LocalRecipeStream(repoMock.Object, [], [], externalRecipeService: null);
+        var stream = new LocalRecipeStream(repoMock.Object, [], []);
 
         Assert.DoesNotThrowAsync(() => stream.GetRankedCandidatesAsync(EmptyContext()));
     }

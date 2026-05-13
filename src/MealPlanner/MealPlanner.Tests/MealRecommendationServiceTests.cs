@@ -65,7 +65,7 @@ public class MealRecommendationServiceTests
             _nutritionRepoMock.Object,
             _dietaryRestrictionRepoMock.Object,
             _foodPrefRepoMock.Object,
-            _streamMock.Object);
+            [_streamMock.Object]);
     }
 
     [Test]

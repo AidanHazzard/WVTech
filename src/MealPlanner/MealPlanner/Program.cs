@@ -127,6 +127,7 @@ builder.Services.AddScoped<ILoginService, LoginService>();
 builder.Services.AddScoped<IRegistrationService, RegistrationService>();
 builder.Services.AddScoped<IUserSettingsService, UserSettingsService>();
 builder.Services.AddScoped<IRecommendationStream, LocalRecipeStream>();
+builder.Services.AddScoped<IRecommendationStream, ExternalRecipeStream>();
 builder.Services.AddScoped<IMealRecommendationService, MealRecommendationService>();
 builder.Services.AddScoped<IRecipeScorer, UpvotePriorityScorer>();
 builder.Services.AddScoped<IRecipeScorer, VotePercentageScorer>();
