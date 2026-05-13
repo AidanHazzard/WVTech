@@ -349,4 +349,68 @@ public class MealRecommendationServiceTests
         Assert.That(result[0].Recipes, Does.Not.Contain(recipe), "Small meal (15g budget) should exclude 20g protein recipe");
         Assert.That(result[1].Recipes, Does.Contain(recipe),     "Large meal (45g budget) should include 20g protein recipe");
     }
+
+    // --- GetOneRecipeRecommendation ---
+
+    [Test]
+    public async Task GetOneRecipeRecommendation_WhenNoRecipesExist_ReturnsNull()
+    {
+        _recipeRepoMock.Setup(r => r.GetAllWithTagsAsync()).ReturnsAsync([]);
+
+        var result = await _service.GetOneRecipeRecommendation(_user, DateTime.Today, []);
+
+        Assert.That(result, Is.Null);
+    }
+
+    [Test]
+    public async Task GetOneRecipeRecommendation_WhenRecipesAvailable_ReturnsOneRecipe()
+    {
+        var recipe = new Recipe { Id = 1, Name = "Pasta", Calories = 400, Tags = [] };
+        _recipeRepoMock.Setup(r => r.GetAllWithTagsAsync()).ReturnsAsync([recipe]);
+
+        var result = await _service.GetOneRecipeRecommendation(_user, DateTime.Today, []);
+
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result!.Id, Is.EqualTo(1));
+    }
+
+    [Test]
+    public async Task GetOneRecipeRecommendation_ExcludesRecipesInExcludeList()
+    {
+        var recipe1 = new Recipe { Id = 1, Name = "Pasta", Calories = 400, Tags = [] };
+        var recipe2 = new Recipe { Id = 2, Name = "Salad", Calories = 200, Tags = [] };
+        _recipeRepoMock.Setup(r => r.GetAllWithTagsAsync()).ReturnsAsync([recipe1, recipe2]);
+
+        var result = await _service.GetOneRecipeRecommendation(_user, DateTime.Today, [1]);
+
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result!.Id, Is.EqualTo(2));
+    }
+
+    [Test]
+    public async Task GetOneRecipeRecommendation_WhenAllRecipesExcluded_ReturnsNull()
+    {
+        var recipe = new Recipe { Id = 1, Name = "Pasta", Calories = 400, Tags = [] };
+        _recipeRepoMock.Setup(r => r.GetAllWithTagsAsync()).ReturnsAsync([recipe]);
+
+        var result = await _service.GetOneRecipeRecommendation(_user, DateTime.Today, [1]);
+
+        Assert.That(result, Is.Null);
+    }
+
+    [Test]
+    public async Task GetOneRecipeRecommendation_PrefersUpvotedRecipes()
+    {
+        var upvotedRecipe = new Recipe { Id = 2, Name = "Upvoted Pasta", Calories = 400, Tags = [] };
+        var normalRecipe = new Recipe { Id = 1, Name = "Normal Salad", Calories = 200, Tags = [] };
+
+        _userRecipeRepoMock
+            .Setup(r => r.GetUserRecipesByVoteType(_user.Id, UserVoteType.UpVote))
+            .ReturnsAsync([upvotedRecipe]);
+        _recipeRepoMock.Setup(r => r.GetAllWithTagsAsync()).ReturnsAsync([normalRecipe, upvotedRecipe]);
+
+        var result = await _service.GetOneRecipeRecommendation(_user, DateTime.Today, []);
+
+        Assert.That(result!.Id, Is.EqualTo(2));
+    }
 }

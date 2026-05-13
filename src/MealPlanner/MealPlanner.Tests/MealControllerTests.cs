@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
+using System.Text.Json;
 using System.Threading.Tasks;
 using MealPlanner.Controllers;
 using MealPlanner.DAL.Abstract;
@@ -529,5 +530,194 @@ public class MealControllerTests
         await _controller.GenerateDayPlan(config);
 
         Assert.That(config.MealPreferences[0].TagIds, Is.Empty);
+    }
+
+    // RegenerateRecipe
+
+    [Test]
+    public async Task RegenerateRecipe_WhenMealNotFound_ReturnsNotFound()
+    {
+        _mealRepoMock.Setup(r => r.ReadAsync(99)).ReturnsAsync((Meal)null!);
+
+        var result = await _controller.RegenerateRecipe(99, 1);
+
+        Assert.That(result, Is.TypeOf<NotFoundResult>());
+    }
+
+    [Test]
+    public async Task RegenerateRecipe_WhenMealBelongsToDifferentUser_ReturnsNotFound()
+    {
+        var meal = new Meal { Id = 1, UserId = "other-user", Recipes = [] };
+        _mealRepoMock.Setup(r => r.ReadAsync(1)).ReturnsAsync(meal);
+
+        var result = await _controller.RegenerateRecipe(1, 10);
+
+        Assert.That(result, Is.TypeOf<NotFoundResult>());
+    }
+
+    [Test]
+    public async Task RegenerateRecipe_WhenNoAlternativeAvailable_ReturnsNoAlternativeJson()
+    {
+        var recipe = new Recipe { Id = 10, Name = "Old Recipe", Calories = 300 };
+        var meal = new Meal { Id = 1, UserId = "user-1", Recipes = [recipe] };
+        _mealRepoMock.Setup(r => r.ReadAsync(1)).ReturnsAsync(meal);
+        _mealRepoMock.Setup(r => r.LoadRecipesAsync(meal)).Returns(Task.CompletedTask);
+        _reccServiceMock
+            .Setup(s => s.GetOneRecipeRecommendation(It.IsAny<User>(), It.IsAny<DateTime>(), It.IsAny<IEnumerable<int>>()))
+            .ReturnsAsync((Recipe?)null);
+
+        var result = await _controller.RegenerateRecipe(1, 10);
+
+        var json = result as JsonResult;
+        Assert.That(json, Is.Not.Null);
+        var doc = JsonDocument.Parse(JsonSerializer.Serialize(json!.Value));
+        Assert.That(doc.RootElement.GetProperty("noAlternative").GetBoolean(), Is.True);
+    }
+
+    [Test]
+    public async Task RegenerateRecipe_WhenReplacementFound_ReturnsNewRecipeJson()
+    {
+        var oldRecipe = new Recipe { Id = 10, Name = "Old Recipe", Calories = 300 };
+        var meal = new Meal { Id = 1, UserId = "user-1", Recipes = [oldRecipe] };
+        var newRecipe = new Recipe { Id = 20, Name = "New Recipe", Calories = 400 };
+
+        _mealRepoMock.Setup(r => r.ReadAsync(1)).ReturnsAsync(meal);
+        _mealRepoMock.Setup(r => r.LoadRecipesAsync(meal)).Returns(Task.CompletedTask);
+        _mealRepoMock.Setup(r => r.CreateOrUpdate(meal)).Returns(meal);
+        _reccServiceMock
+            .Setup(s => s.GetOneRecipeRecommendation(It.IsAny<User>(), It.IsAny<DateTime>(), It.IsAny<IEnumerable<int>>()))
+            .ReturnsAsync(newRecipe);
+
+        var result = await _controller.RegenerateRecipe(1, 10);
+
+        var json = result as JsonResult;
+        Assert.That(json, Is.Not.Null);
+        var doc = JsonDocument.Parse(JsonSerializer.Serialize(json!.Value));
+        Assert.That(doc.RootElement.GetProperty("newRecipe").GetProperty("Id").GetInt32(), Is.EqualTo(20));
+    }
+
+    [Test]
+    public async Task RegenerateRecipe_WhenReplacementFound_ReplacedRecipeIdReturnedInJson()
+    {
+        var oldRecipe = new Recipe { Id = 10, Name = "Old Recipe", Calories = 300 };
+        var meal = new Meal { Id = 1, UserId = "user-1", Recipes = [oldRecipe] };
+        var newRecipe = new Recipe { Id = 20, Name = "New Recipe", Calories = 400 };
+
+        _mealRepoMock.Setup(r => r.ReadAsync(1)).ReturnsAsync(meal);
+        _mealRepoMock.Setup(r => r.LoadRecipesAsync(meal)).Returns(Task.CompletedTask);
+        _mealRepoMock.Setup(r => r.CreateOrUpdate(meal)).Returns(meal);
+        _reccServiceMock
+            .Setup(s => s.GetOneRecipeRecommendation(It.IsAny<User>(), It.IsAny<DateTime>(), It.IsAny<IEnumerable<int>>()))
+            .ReturnsAsync(newRecipe);
+
+        var result = await _controller.RegenerateRecipe(1, 10);
+
+        var json = result as JsonResult;
+        var doc = JsonDocument.Parse(JsonSerializer.Serialize(json!.Value));
+        Assert.That(doc.RootElement.GetProperty("replacedRecipeId").GetInt32(), Is.EqualTo(10));
+    }
+
+    [Test]
+    public async Task RegenerateRecipe_WhenReplacementFound_CallsSaveChanges()
+    {
+        var oldRecipe = new Recipe { Id = 10, Name = "Old Recipe", Calories = 300 };
+        var meal = new Meal { Id = 1, UserId = "user-1", Recipes = [oldRecipe] };
+        var newRecipe = new Recipe { Id = 20, Name = "New Recipe", Calories = 400 };
+
+        _mealRepoMock.Setup(r => r.ReadAsync(1)).ReturnsAsync(meal);
+        _mealRepoMock.Setup(r => r.LoadRecipesAsync(meal)).Returns(Task.CompletedTask);
+        _mealRepoMock.Setup(r => r.CreateOrUpdate(meal)).Returns(meal);
+        _reccServiceMock
+            .Setup(s => s.GetOneRecipeRecommendation(It.IsAny<User>(), It.IsAny<DateTime>(), It.IsAny<IEnumerable<int>>()))
+            .ReturnsAsync(newRecipe);
+
+        await _controller.RegenerateRecipe(1, 10);
+
+        _mealRepoMock.Verify(r => r.CreateOrUpdate(meal), Times.Once);
+    }
+
+    [Test]
+    public async Task RegenerateRecipe_ExcludesAllCurrentRecipesFromRecommendation()
+    {
+        var recipe1 = new Recipe { Id = 10, Name = "Recipe 1", Calories = 200 };
+        var recipe2 = new Recipe { Id = 11, Name = "Recipe 2", Calories = 200 };
+        var meal = new Meal { Id = 1, UserId = "user-1", Recipes = [recipe1, recipe2] };
+        var newRecipe = new Recipe { Id = 20, Name = "New Recipe", Calories = 300 };
+
+        _mealRepoMock.Setup(r => r.ReadAsync(1)).ReturnsAsync(meal);
+        _mealRepoMock.Setup(r => r.LoadRecipesAsync(meal)).Returns(Task.CompletedTask);
+        _mealRepoMock.Setup(r => r.CreateOrUpdate(meal)).Returns(meal);
+        _reccServiceMock
+            .Setup(s => s.GetOneRecipeRecommendation(It.IsAny<User>(), It.IsAny<DateTime>(), It.IsAny<IEnumerable<int>>()))
+            .ReturnsAsync(newRecipe);
+
+        await _controller.RegenerateRecipe(1, 10);
+
+        _reccServiceMock.Verify(s => s.GetOneRecipeRecommendation(
+            It.IsAny<User>(),
+            It.IsAny<DateTime>(),
+            It.Is<IEnumerable<int>>(ids => ids.Contains(10) && ids.Contains(11))),
+            Times.Once);
+    }
+
+    // SwapRecipe
+
+    [Test]
+    public async Task SwapRecipe_WhenMealNotFound_ReturnsNotFound()
+    {
+        _mealRepoMock.Setup(r => r.ReadAsync(99)).ReturnsAsync((Meal)null!);
+
+        var result = await _controller.SwapRecipe(99, 1, 2);
+
+        Assert.That(result, Is.TypeOf<NotFoundResult>());
+    }
+
+    [Test]
+    public async Task SwapRecipe_WhenMealBelongsToDifferentUser_ReturnsNotFound()
+    {
+        var meal = new Meal { Id = 1, UserId = "other-user", Recipes = [] };
+        _mealRepoMock.Setup(r => r.ReadAsync(1)).ReturnsAsync(meal);
+
+        var result = await _controller.SwapRecipe(1, 10, 20);
+
+        Assert.That(result, Is.TypeOf<NotFoundResult>());
+    }
+
+    [Test]
+    public async Task SwapRecipe_RemovesOldRecipeAndAddsNewOne()
+    {
+        var oldRecipe = new Recipe { Id = 10, Name = "Old Recipe", Calories = 300 };
+        var newRecipe = new Recipe { Id = 20, Name = "Restored Recipe", Calories = 250 };
+        var meal = new Meal { Id = 1, UserId = "user-1", Recipes = [oldRecipe] };
+
+        _mealRepoMock.Setup(r => r.ReadAsync(1)).ReturnsAsync(meal);
+        _mealRepoMock.Setup(r => r.LoadRecipesAsync(meal)).Returns(Task.CompletedTask);
+        _mealRepoMock.Setup(r => r.CreateOrUpdate(meal)).Returns(meal);
+        _recipeRepoMock.Setup(r => r.Read(20)).Returns(newRecipe);
+
+        await _controller.SwapRecipe(1, 10, 20);
+
+        Assert.That(meal.Recipes.Any(r => r.Id == 10), Is.False);
+        Assert.That(meal.Recipes.Any(r => r.Id == 20), Is.True);
+    }
+
+    [Test]
+    public async Task SwapRecipe_WhenReplacementFound_ReturnsJson()
+    {
+        var oldRecipe = new Recipe { Id = 10, Name = "Old Recipe", Calories = 300 };
+        var newRecipe = new Recipe { Id = 20, Name = "Restored Recipe", Calories = 250 };
+        var meal = new Meal { Id = 1, UserId = "user-1", Recipes = [oldRecipe] };
+
+        _mealRepoMock.Setup(r => r.ReadAsync(1)).ReturnsAsync(meal);
+        _mealRepoMock.Setup(r => r.LoadRecipesAsync(meal)).Returns(Task.CompletedTask);
+        _mealRepoMock.Setup(r => r.CreateOrUpdate(meal)).Returns(meal);
+        _recipeRepoMock.Setup(r => r.Read(20)).Returns(newRecipe);
+
+        var result = await _controller.SwapRecipe(1, 10, 20);
+
+        var json = result as JsonResult;
+        Assert.That(json, Is.Not.Null);
+        var doc = JsonDocument.Parse(JsonSerializer.Serialize(json!.Value));
+        Assert.That(doc.RootElement.GetProperty("restoredRecipe").GetProperty("Id").GetInt32(), Is.EqualTo(20));
     }
 }
