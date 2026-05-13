@@ -413,4 +413,116 @@ public class MealRecommendationServiceTests
 
         Assert.That(result!.Id, Is.EqualTo(2));
     }
+
+    [Test]
+    public async Task GetOneRecipeRecommendation_HonorsDietaryRestrictions()
+    {
+        var veganRecipe   = new Recipe { Id = 1, Name = "Vegan Bowl", Calories = 400, Tags = [VeganTag] };
+        var regularRecipe = new Recipe { Id = 2, Name = "Beef Stew",  Calories = 400, Tags = [] };
+        var restriction = new UserDietaryRestriction
+        {
+            UserId = _user.Id,
+            DietaryRestriction = new DietaryRestriction { Id = 1, Name = "Vegan" }
+        };
+        _dietaryRestrictionRepoMock.Setup(r => r.GetByUserIdAsync(_user.Id)).ReturnsAsync([restriction]);
+        _recipeRepoMock.Setup(r => r.GetAllWithTagsAsync()).ReturnsAsync([regularRecipe, veganRecipe]);
+
+        var result = await _service.GetOneRecipeRecommendation(_user, DateTime.Today, []);
+
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result!.Id, Is.EqualTo(1), "Should return only the recipe matching the dietary restriction");
+    }
+
+    // --- Tag preference and ordering tests ---
+
+    private static Tag ItalianTag => new() { Id = 3, Name = "Italian" };
+
+    [Test]
+    public async Task TagPreference_RecipeWithMatchingTagSelectedOverRecipeWithout()
+    {
+        // Budget allows only 1 of the two 100-cal recipes; the one matching the preferred tag should win.
+        SetNutritionPrefs(calories: 150);
+        var withTag    = new Recipe { Id = 1, Name = "Pasta",  Calories = 100, Tags = [ItalianTag] };
+        var withoutTag = new Recipe { Id = 2, Name = "Salad",  Calories = 100, Tags = [] };
+        _recipeRepoMock.Setup(r => r.GetAllWithTagsAsync()).ReturnsAsync([withoutTag, withTag]); // withoutTag listed first
+
+        var config = new DayPlanConfigViewModel
+        {
+            MealCount = 1,
+            SelectedMonth = DateTime.Today.Month,
+            SelectedDay = DateTime.Today.Day,
+            MealPreferences = [new MealPreferenceViewModel { Size = MealSize.Average, TagIds = [3] }]
+        };
+
+        var result = await _service.GetRecommendedMealsForUser(_user, DateTime.Today, config);
+
+        Assert.That(result[0].Recipes, Does.Contain(withTag),        "Recipe matching preferred tag should be selected");
+        Assert.That(result[0].Recipes, Does.Not.Contain(withoutTag), "Recipe without preferred tag should be displaced");
+    }
+
+    [Test]
+    public async Task UpvotedRecipe_OutranksHighCommunityVotePercentageNonUpvotedRecipe()
+    {
+        // Budget allows only 1 recipe; upvoted should win even against a 90% community-vote recipe.
+        SetNutritionPrefs(calories: 150);
+        var upvoted = new Recipe { Id = 1, Name = "Upvoted",  Calories = 100, Tags = [] };
+        var popular = new Recipe { Id = 2, Name = "Popular",  Calories = 100, Tags = [] };
+
+        _userRecipeRepoMock
+            .Setup(r => r.GetUserRecipesByVoteType(_user.Id, UserVoteType.UpVote))
+            .ReturnsAsync([upvoted]);
+        _userRecipeRepoMock
+            .Setup(r => r.GetAllVotePercentagesAsync())
+            .ReturnsAsync(new Dictionary<int, float> { [2] = 0.9f });
+        _recipeRepoMock.Setup(r => r.GetAllWithTagsAsync()).ReturnsAsync([popular, upvoted]); // popular listed first
+
+        var result = await _service.GetRecommendedMealsForUser(_user, DateTime.Today, SingleMealConfig());
+
+        Assert.That(result[0].Recipes, Does.Contain(upvoted),    "Upvoted recipe should be preferred over high vote% recipe");
+        Assert.That(result[0].Recipes, Does.Not.Contain(popular), "High vote% recipe should be displaced by upvoted recipe");
+    }
+
+    [Test]
+    public async Task VotePercentage_HigherVotePercentageNonUpvotedRecipeSelectedFirst()
+    {
+        // Budget allows only 1 recipe; among non-upvoted candidates, the one with the higher vote% wins.
+        SetNutritionPrefs(calories: 150);
+        var highVote = new Recipe { Id = 1, Name = "Popular",   Calories = 100, Tags = [] };
+        var lowVote  = new Recipe { Id = 2, Name = "Unpopular", Calories = 100, Tags = [] };
+
+        _userRecipeRepoMock
+            .Setup(r => r.GetAllVotePercentagesAsync())
+            .ReturnsAsync(new Dictionary<int, float> { [1] = 0.7f, [2] = 0.3f });
+        _recipeRepoMock.Setup(r => r.GetAllWithTagsAsync()).ReturnsAsync([lowVote, highVote]); // lowVote listed first
+
+        var result = await _service.GetRecommendedMealsForUser(_user, DateTime.Today, SingleMealConfig());
+
+        Assert.That(result[0].Recipes, Does.Contain(highVote),  "Recipe with higher vote% should be selected");
+        Assert.That(result[0].Recipes, Does.Not.Contain(lowVote), "Recipe with lower vote% should be displaced");
+    }
+
+    // --- Known bug: greedy macro underfill ---
+
+    [Ignore("Known bug: greedy macro-fill commits to the high-protein upvoted recipe first, exhausting the protein budget and blocking lower-protein recipes that would otherwise fit")]
+    [Test]
+    public async Task GreedyMacroFill_HighProteinUpvotedRecipeExhaustsProteinBudget_SmallerRecipesStillAdded()
+    {
+        // bigProtein (upvoted, 30g) is selected first and fills the entire 30g protein budget.
+        // smallProA and smallProB (5g each) are then excluded: 30+5=35 > 30.
+        // A smarter algorithm would skip bigProtein in favour of fitting more recipes under the budget.
+        SetNutritionPrefs(calories: 9999, protein: 30);
+        var bigProtein = new Recipe { Id = 1, Name = "Protein Shake", Calories = 100, Protein = 30, Tags = [] };
+        var smallProA  = new Recipe { Id = 2, Name = "Light Snack A", Calories = 100, Protein = 5,  Tags = [] };
+        var smallProB  = new Recipe { Id = 3, Name = "Light Snack B", Calories = 100, Protein = 5,  Tags = [] };
+
+        _userRecipeRepoMock
+            .Setup(r => r.GetUserRecipesByVoteType(_user.Id, UserVoteType.UpVote))
+            .ReturnsAsync([bigProtein]);
+        _recipeRepoMock.Setup(r => r.GetAllWithTagsAsync()).ReturnsAsync([bigProtein, smallProA, smallProB]);
+
+        var result = await _service.GetRecommendedMealsForUser(_user, DateTime.Today, SingleMealConfig());
+
+        Assert.That(result[0].Recipes.Count, Is.GreaterThanOrEqualTo(2),
+            "Should not let one high-macro recipe block all remaining candidates from the meal");
+    }
 }
