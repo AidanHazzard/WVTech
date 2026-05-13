@@ -223,6 +223,64 @@ public class UserNutritionPreferenceTests
         Assert.That(pref.GetMealSize(new Meal { Recipes = [] }), Is.EqualTo(MealSize.SmallSnack));
     }
 
+    // --- GetMealSize (multi-macro) ---
+
+    [Test]
+    public void GetMealSize_AllMacrosAtSameRatio_ReturnsThatSize()
+    {
+        // CalorieTarget=2000, ProteinTarget=100. Meal has 800 cal (ratio=0.40) and 40g protein (ratio=0.40).
+        // Average ratio = 0.40 = Average.Ratio() → Average.
+        var pref = new UserNutritionPreference { CalorieTarget = 2000, ProteinTarget = 100 };
+        var meal = new Meal { Recipes = [new Recipe { Calories = 800, Protein = 40, Tags = [] }] };
+
+        Assert.That(pref.GetMealSize(meal), Is.EqualTo(MealSize.Average));
+    }
+
+    [Test]
+    public void GetMealSize_MacrosDisagree_ReturnsNearestToAverage()
+    {
+        // CalorieTarget=2000, ProteinTarget=100.
+        // Meal: 400 cal → ratio 0.20 (Small), 60g protein → ratio 0.60 (Large).
+        // Average = (0.20 + 0.60) / 2 = 0.40 = Average.Ratio() → Average.
+        var pref = new UserNutritionPreference { CalorieTarget = 2000, ProteinTarget = 100 };
+        var meal = new Meal { Recipes = [new Recipe { Calories = 400, Protein = 60, Tags = [] }] };
+
+        Assert.That(pref.GetMealSize(meal), Is.EqualTo(MealSize.Average));
+    }
+
+    [Test]
+    public void GetMealSize_OnlyProteinTargetSet_UsesProteinRatioOnly()
+    {
+        // No CalorieTarget. ProteinTarget=100. Meal has 20g protein → ratio 0.20 = Small.Ratio().
+        var pref = new UserNutritionPreference { ProteinTarget = 100 };
+        var meal = new Meal { Recipes = [new Recipe { Calories = 9999, Protein = 20, Tags = [] }] };
+
+        Assert.That(pref.GetMealSize(meal), Is.EqualTo(MealSize.Small));
+    }
+
+    [Test]
+    public void GetMealSize_AllFourMacrosSet_AveragesAllFourRatios()
+    {
+        // Calorie ratio: 800/2000 = 0.40 (Average)
+        // Protein ratio: 40/100  = 0.40 (Average)
+        // Carb ratio:    120/300 = 0.40 (Average)
+        // Fat ratio:     26/65   = 0.40 (Average)
+        // All agree → Average.
+        var pref = new UserNutritionPreference
+        {
+            CalorieTarget  = 2000,
+            ProteinTarget  = 100,
+            CarbTarget     = 300,
+            FatTarget      = 65
+        };
+        var meal = new Meal
+        {
+            Recipes = [new Recipe { Calories = 800, Protein = 40, Carbs = 120, Fat = 26, Tags = [] }]
+        };
+
+        Assert.That(pref.GetMealSize(meal), Is.EqualTo(MealSize.Average));
+    }
+
     private static Meal MealWithCalories(int calories) => new()
     {
         Recipes = calories == 0 ? [] : [new Recipe { Calories = calories, Tags = [] }]
