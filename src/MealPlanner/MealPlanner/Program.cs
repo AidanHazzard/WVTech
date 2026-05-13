@@ -127,9 +127,9 @@ builder.Services.AddScoped<ILoginService, LoginService>();
 builder.Services.AddScoped<IRegistrationService, RegistrationService>();
 builder.Services.AddScoped<IUserSettingsService, UserSettingsService>();
 builder.Services.AddScoped<IMealRecommendationService, MealRecommendationService>();
-// Scorer and filter collections — implementations registered in Phase 3; empty for now.
-builder.Services.AddScoped<IEnumerable<IRecipeScorer>>(_ => []);
-builder.Services.AddScoped<IEnumerable<IRecipeFilter>>(_ => []);
+builder.Services.AddScoped<IRecipeScorer, UpvotePriorityScorer>();
+builder.Services.AddScoped<IRecipeScorer, VotePercentageScorer>();
+builder.Services.AddScoped<IRecipeFilter, DownVoteFilter>();
 builder.Services.AddScoped<ThemeFilter>();
 builder.Services.AddScoped<ShoppingListService>();
 builder.Services.AddScoped<IShoppingListService>(sp => sp.GetRequiredService<ShoppingListService>());

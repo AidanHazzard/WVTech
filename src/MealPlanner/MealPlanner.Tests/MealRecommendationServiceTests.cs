@@ -1,6 +1,7 @@
 using MealPlanner.DAL.Abstract;
 using MealPlanner.Models;
 using MealPlanner.Services;
+using MealPlanner.Services.Recommendation;
 using MealPlanner.ViewModels;
 using Moq;
 using NUnit.Framework;
@@ -55,7 +56,9 @@ public class MealRecommendationServiceTests
             _userRecipeRepoMock.Object,
             _recipeRepoMock.Object,
             _nutritionRepoMock.Object,
-            _dietaryRestrictionRepoMock.Object);
+            _dietaryRestrictionRepoMock.Object,
+            scorers: [new UpvotePriorityScorer(), new VotePercentageScorer()],
+            filters: [new DownVoteFilter()]);
     }
 
     [Test]

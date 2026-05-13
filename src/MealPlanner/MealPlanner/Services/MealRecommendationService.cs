@@ -14,6 +14,8 @@ public class MealRecommendationService : IMealRecommendationService
     private IRecipeRepository _recipeRepository;
     private IUserNutritionPreferenceRepository _nutrionRepository;
     private IUserDietaryRestrictionRepository _dietaryRestrictionRepository;
+    private IReadOnlyList<IRecipeScorer> _scorers;
+    private IReadOnlyList<IRecipeFilter> _filters;
     private IExternalRecipeService? _externalRecipeService;
 
     public MealRecommendationService(
@@ -21,12 +23,16 @@ public class MealRecommendationService : IMealRecommendationService
         IRecipeRepository recipeRepository,
         IUserNutritionPreferenceRepository nutritionRepository,
         IUserDietaryRestrictionRepository dietaryRestrictionRepository,
+        IEnumerable<IRecipeScorer> scorers,
+        IEnumerable<IRecipeFilter> filters,
         IExternalRecipeService? externalRecipeService = null)
     {
         _userRecipeRepository = userRecipeRepository;
         _recipeRepository = recipeRepository;
         _nutrionRepository = nutritionRepository;
         _dietaryRestrictionRepository = dietaryRestrictionRepository;
+        _scorers = scorers.ToList();
+        _filters = filters.ToList();
         _externalRecipeService = externalRecipeService;
     }
 
@@ -49,6 +55,19 @@ public class MealRecommendationService : IMealRecommendationService
         await upvoted.LoadExternalRecipesAsync(_externalRecipeService);
         await allWithTags.LoadExternalRecipesAsync(_externalRecipeService);
         return new RecommendationContext(restrictionNames, userVotes, votePercentages, upvoted, allWithTags);
+    }
+
+    // Applies all registered filters, then orders by sum of scorer outputs descending.
+    // Excludes any recipe whose ID is in excludeIds.
+    private IEnumerable<Recipe> ScoreAndRank(
+        IEnumerable<Recipe> pool,
+        RecommendationContext ctx,
+        HashSet<int> excludeIds)
+    {
+        return pool
+            .Where(r => !excludeIds.Contains(r.Id))
+            .Where(r => _filters.All(f => f.Allow(r, ctx)))
+            .OrderByDescending(r => _scorers.Sum(s => s.Score(r, ctx)));
     }
 
     // Yields candidates in priority order: upvoted first, then non-downvoted sorted by community
@@ -119,8 +138,10 @@ public class MealRecommendationService : IMealRecommendationService
     {
         var ctx = await BuildContextAsync(user.Id);
         var excludeIds = new HashSet<int>(excludeRecipeIds);
-        var candidates = OrderedCandidates(ctx.Upvoted, ctx.AllWithTags, ctx.UserVotes, ctx.VotePercentages, excludeIds);
-        return SelectFromCandidates(candidates, int.MaxValue, ctx.RestrictionNames, []).FirstOrDefault();
+        return ScoreAndRank(ctx.AllWithTags, ctx, excludeIds)
+            .Where(r => ctx.RestrictionNames.Count == 0
+                     || ctx.RestrictionNames.All(name => r.Tags.Any(t => t.Name == name)))
+            .FirstOrDefault();
     }
 
     public async Task<List<Meal>> GetRecommendedMealsForUser(User user, DateTime mealDate, DayPlanConfigViewModel config)
