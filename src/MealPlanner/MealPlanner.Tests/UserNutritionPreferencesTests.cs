@@ -158,4 +158,73 @@ public class UserNutritionPreferenceTests
         Assert.That(updated.CalorieTarget, Is.EqualTo(2100));
         Assert.That(updated.ProteinTarget, Is.EqualTo(155));
     }
+
+    // --- GetMealSize ---
+    // MealSize.Calories() calibrated against a ~2000 cal/day reference:
+    //   SmallSnack=200, Small=400, LargeSnack=600, Average=800, Large=1200
+
+    [Test]
+    public void GetMealSize_NoTarget_ExactSmallSnackCalories_ReturnsSmallSnack()
+    {
+        var pref = new UserNutritionPreference();
+        Assert.That(pref.GetMealSize(MealWithCalories(200)), Is.EqualTo(MealSize.SmallSnack));
+    }
+
+    [Test]
+    public void GetMealSize_NoTarget_ExactSmallCalories_ReturnsSmall()
+    {
+        var pref = new UserNutritionPreference();
+        Assert.That(pref.GetMealSize(MealWithCalories(400)), Is.EqualTo(MealSize.Small));
+    }
+
+    [Test]
+    public void GetMealSize_NoTarget_ExactAverageCalories_ReturnsAverage()
+    {
+        var pref = new UserNutritionPreference();
+        Assert.That(pref.GetMealSize(MealWithCalories(800)), Is.EqualTo(MealSize.Average));
+    }
+
+    [Test]
+    public void GetMealSize_NoTarget_ExactLargeCalories_ReturnsLarge()
+    {
+        var pref = new UserNutritionPreference();
+        Assert.That(pref.GetMealSize(MealWithCalories(1200)), Is.EqualTo(MealSize.Large));
+    }
+
+    [Test]
+    public void GetMealSize_NoTarget_ZeroCalories_ReturnsSmallSnack()
+    {
+        var pref = new UserNutritionPreference();
+        Assert.That(pref.GetMealSize(MealWithCalories(0)), Is.EqualTo(MealSize.SmallSnack));
+    }
+
+    [Test]
+    public void GetMealSize_HighTarget_SameMealCaloriesClassifiesSmaller()
+    {
+        // 4000 cal/day target = 2× reference. Scaled SmallSnack threshold = 400.
+        // A 400-cal meal is an exact match → SmallSnack.
+        var pref = new UserNutritionPreference { CalorieTarget = 4000 };
+        Assert.That(pref.GetMealSize(MealWithCalories(400)), Is.EqualTo(MealSize.SmallSnack));
+    }
+
+    [Test]
+    public void GetMealSize_LowTarget_SameMealCaloriesClassifiesLarger()
+    {
+        // 1000 cal/day target = 0.5× reference. Scaled Average threshold = 400.
+        // A 400-cal meal is an exact match → Average.
+        var pref = new UserNutritionPreference { CalorieTarget = 1000 };
+        Assert.That(pref.GetMealSize(MealWithCalories(400)), Is.EqualTo(MealSize.Average));
+    }
+
+    [Test]
+    public void GetMealSize_EmptyMeal_ReturnsSmallSnack()
+    {
+        var pref = new UserNutritionPreference { CalorieTarget = 2000 };
+        Assert.That(pref.GetMealSize(new Meal { Recipes = [] }), Is.EqualTo(MealSize.SmallSnack));
+    }
+
+    private static Meal MealWithCalories(int calories) => new()
+    {
+        Recipes = calories == 0 ? [] : [new Recipe { Calories = calories, Tags = [] }]
+    };
 }
