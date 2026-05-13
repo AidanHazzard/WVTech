@@ -13,8 +13,6 @@ public class MealRecommendationService : IMealRecommendationService
     private IUserNutritionPreferenceRepository _nutrionRepository;
     private IUserDietaryRestrictionRepository _dietaryRestrictionRepository;
     private IRecommendationStream _stream;
-    private IReadOnlyList<IRecipeScorer> _scorers;
-    private IReadOnlyList<IRecipeFilter> _filters;
     private IExternalRecipeService? _externalRecipeService;
 
     public MealRecommendationService(
@@ -22,16 +20,12 @@ public class MealRecommendationService : IMealRecommendationService
         IUserNutritionPreferenceRepository nutritionRepository,
         IUserDietaryRestrictionRepository dietaryRestrictionRepository,
         IRecommendationStream stream,
-        IEnumerable<IRecipeScorer> scorers,
-        IEnumerable<IRecipeFilter> filters,
         IExternalRecipeService? externalRecipeService = null)
     {
         _userRecipeRepository = userRecipeRepository;
         _nutrionRepository = nutritionRepository;
         _dietaryRestrictionRepository = dietaryRestrictionRepository;
         _stream = stream;
-        _scorers = scorers.ToList();
-        _filters = filters.ToList();
         _externalRecipeService = externalRecipeService;
     }
 
@@ -50,30 +44,16 @@ public class MealRecommendationService : IMealRecommendationService
         var userVotes        = await _userRecipeRepository.GetUserVotesByUserIdAsync(userId);
         var votePercentages  = await _userRecipeRepository.GetAllVotePercentagesAsync();
         var upvoted          = await _userRecipeRepository.GetUserRecipesByVoteType(userId, UserVoteType.UpVote);
-        var allWithTags      = await _stream.GetCandidatesAsync();
         await upvoted.LoadExternalRecipesAsync(_externalRecipeService);
-        return new RecommendationContext(restrictionNames, userVotes, votePercentages, upvoted, allWithTags);
+        return new RecommendationContext(restrictionNames, userVotes, votePercentages, upvoted);
     }
-
-    // Applies all registered filters, then orders by sum of scorer outputs descending.
-    // Excludes any recipe whose ID is in excludeIds.
-    private IEnumerable<Recipe> ScoreAndRank(
-        IEnumerable<Recipe> pool,
-        RecommendationContext ctx,
-        HashSet<int> excludeIds)
-    {
-        return pool
-            .Where(r => !excludeIds.Contains(r.Id))
-            .Where(r => _filters.All(f => f.Allow(r, ctx)))
-            .OrderByDescending(r => _scorers.Sum(s => s.Score(r, ctx)));
-    }
-
 
     public async Task<Recipe?> GetOneRecipeRecommendation(User user, DateTime date, IEnumerable<int> excludeRecipeIds)
     {
         var ctx = await BuildContextAsync(user.Id);
         var excludeIds = new HashSet<int>(excludeRecipeIds);
-        return ScoreAndRank(ctx.AllWithTags, ctx, excludeIds).FirstOrDefault();
+        return (await _stream.GetRankedCandidatesAsync(ctx))
+            .FirstOrDefault(r => !excludeIds.Contains(r.Id));
     }
 
     public async Task<List<Meal>> GetRecommendedMealsForUser(User user, DateTime mealDate, DayPlanConfigViewModel config)
@@ -88,6 +68,8 @@ public class MealRecommendationService : IMealRecommendationService
         var ctx = await BuildContextAsync(user.Id);
         var nutritionPrefs = await _nutrionRepository.GetUsersNutritionPreferenceAsync(user.Id);
         var totalWeight = preferences.Sum(p => p.Size.Weight());
+
+        var allRanked = (await _stream.GetRankedCandidatesAsync(ctx)).ToList();
 
         var usedRecipeIds = new HashSet<int>();
         int mealIndex = 0;
@@ -107,7 +89,7 @@ public class MealRecommendationService : IMealRecommendationService
                 ? (int)Math.Round(weight * nutritionPrefs.FatTarget.Value)
                 : (int?)null;
 
-            IEnumerable<Recipe> pipeline = ScoreAndRank(ctx.AllWithTags, ctx, usedRecipeIds);
+            IEnumerable<Recipe> pipeline = allRanked.Where(r => !usedRecipeIds.Contains(r.Id));
 
             if (pref.TagIds.Count > 0)
                 pipeline = pipeline.OrderByDescending(r => r.Tags.Count(t => pref.TagIds.Contains(t.Id)));

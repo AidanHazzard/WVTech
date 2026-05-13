@@ -11,14 +11,12 @@ public class RecipeScorerTests
         HashSet<string>? restrictions = null,
         Dictionary<int, UserVoteType>? votes = null,
         Dictionary<int, float>? percentages = null,
-        List<Recipe>? upvoted = null,
-        List<Recipe>? allWithTags = null) =>
+        List<Recipe>? upvoted = null) =>
         new(
-            restrictions  ?? [],
-            votes         ?? [],
-            percentages   ?? [],
-            upvoted       ?? [],
-            allWithTags   ?? []);
+            restrictions ?? [],
+            votes        ?? [],
+            percentages  ?? [],
+            upvoted      ?? []);
 
     // --- UpvotePriorityScorer ---
 

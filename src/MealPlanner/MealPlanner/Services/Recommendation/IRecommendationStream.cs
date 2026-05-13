@@ -4,5 +4,5 @@ namespace MealPlanner.Services.Recommendation;
 
 public interface IRecommendationStream
 {
-    Task<List<Recipe>> GetCandidatesAsync();
+    Task<IEnumerable<Recipe>> GetRankedCandidatesAsync(RecommendationContext ctx);
 }
