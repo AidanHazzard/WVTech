@@ -12,7 +12,7 @@ namespace MealPlanner.Tests;
 public class MealRecommendationServiceTests
 {
     private Mock<IUserRecipeRepository> _userRecipeRepoMock;
-    private Mock<IRecipeRepository> _recipeRepoMock;
+    private Mock<IRecommendationStream> _streamMock;
     private Mock<IUserNutritionPreferenceRepository> _nutritionRepoMock;
     private Mock<IUserDietaryRestrictionRepository> _dietaryRestrictionRepoMock;
     private MealRecommendationService _service;
@@ -26,9 +26,11 @@ public class MealRecommendationServiceTests
     public void SetUp()
     {
         _userRecipeRepoMock = new Mock<IUserRecipeRepository>();
-        _recipeRepoMock = new Mock<IRecipeRepository>();
+        _streamMock = new Mock<IRecommendationStream>();
         _nutritionRepoMock = new Mock<IUserNutritionPreferenceRepository>();
         _dietaryRestrictionRepoMock = new Mock<IUserDietaryRestrictionRepository>();
+
+        _streamMock.Setup(s => s.GetCandidatesAsync()).ReturnsAsync([]);
 
         _userRecipeRepoMock
             .Setup(r => r.GetUserRecipesByVoteType(_user.Id, UserVoteType.UpVote))
@@ -54,9 +56,9 @@ public class MealRecommendationServiceTests
 
         _service = new MealRecommendationService(
             _userRecipeRepoMock.Object,
-            _recipeRepoMock.Object,
             _nutritionRepoMock.Object,
             _dietaryRestrictionRepoMock.Object,
+            _streamMock.Object,
             scorers: [new UpvotePriorityScorer(), new VotePercentageScorer()],
             filters: [new DownVoteFilter(), new DietaryRestrictionFilter()]);
     }
@@ -66,7 +68,7 @@ public class MealRecommendationServiceTests
     {
         var downvoted = new Recipe { Id = 1, Name = "Downvoted", Calories = 300, Tags = [] };
         var allowed = new Recipe { Id = 2, Name = "Allowed", Calories = 300, Tags = [] };
-        _recipeRepoMock.Setup(r => r.GetAllWithTagsAsync()).ReturnsAsync([downvoted, allowed]);
+        _streamMock.Setup(s => s.GetCandidatesAsync()).ReturnsAsync([downvoted, allowed]);
         _userRecipeRepoMock
             .Setup(r => r.GetUserVotesByUserIdAsync(_user.Id))
             .ReturnsAsync(new Dictionary<int, UserVoteType> { [1] = UserVoteType.DownVote });
@@ -89,7 +91,7 @@ public class MealRecommendationServiceTests
     public async Task GetRecommendedMealsForUser_WithNoDietaryRestrictions_IncludesAllCandidates()
     {
         var recipe = new Recipe { Id = 1, Name = "Any Recipe", Calories = 300, Tags = [] };
-        _recipeRepoMock.Setup(r => r.GetAllWithTagsAsync()).ReturnsAsync([recipe]);
+        _streamMock.Setup(s => s.GetCandidatesAsync()).ReturnsAsync([recipe]);
 
         var config = new DayPlanConfigViewModel
         {
@@ -114,7 +116,7 @@ public class MealRecommendationServiceTests
             DietaryRestriction = new DietaryRestriction { Id = 1, Name = "Vegan" }
         };
         _dietaryRestrictionRepoMock.Setup(r => r.GetByUserIdAsync(_user.Id)).ReturnsAsync([restriction]);
-        _recipeRepoMock.Setup(r => r.GetAllWithTagsAsync()).ReturnsAsync([veganRecipe]);
+        _streamMock.Setup(s => s.GetCandidatesAsync()).ReturnsAsync([veganRecipe]);
 
         var config = new DayPlanConfigViewModel
         {
@@ -139,7 +141,7 @@ public class MealRecommendationServiceTests
             DietaryRestriction = new DietaryRestriction { Id = 1, Name = "Vegan" }
         };
         _dietaryRestrictionRepoMock.Setup(r => r.GetByUserIdAsync(_user.Id)).ReturnsAsync([restriction]);
-        _recipeRepoMock.Setup(r => r.GetAllWithTagsAsync()).ReturnsAsync([nonVeganRecipe]);
+        _streamMock.Setup(s => s.GetCandidatesAsync()).ReturnsAsync([nonVeganRecipe]);
 
         var config = new DayPlanConfigViewModel
         {
@@ -160,7 +162,7 @@ public class MealRecommendationServiceTests
         var recipe1 = new Recipe { Id = 1, Name = "Recipe 1", Calories = 100, Tags = [] };
         var recipe2 = new Recipe { Id = 2, Name = "Recipe 2", Calories = 100, Tags = [] };
         var recipe3 = new Recipe { Id = 3, Name = "Recipe 3", Calories = 100, Tags = [] };
-        _recipeRepoMock.Setup(r => r.GetAllWithTagsAsync()).ReturnsAsync([recipe1, recipe2, recipe3]);
+        _streamMock.Setup(s => s.GetCandidatesAsync()).ReturnsAsync([recipe1, recipe2, recipe3]);
 
         var config = new DayPlanConfigViewModel
         {
@@ -193,7 +195,7 @@ public class MealRecommendationServiceTests
             new() { UserId = _user.Id, DietaryRestriction = new DietaryRestriction { Id = 2, Name = "Gluten-Free" } }
         };
         _dietaryRestrictionRepoMock.Setup(r => r.GetByUserIdAsync(_user.Id)).ReturnsAsync(restrictions);
-        _recipeRepoMock.Setup(r => r.GetAllWithTagsAsync()).ReturnsAsync([veganOnly, veganGlutenFree]);
+        _streamMock.Setup(s => s.GetCandidatesAsync()).ReturnsAsync([veganOnly, veganGlutenFree]);
 
         var config = new DayPlanConfigViewModel
         {
@@ -236,7 +238,7 @@ public class MealRecommendationServiceTests
     {
         SetNutritionPrefs(protein: 20);
         var tooMuchProtein = new Recipe { Id = 1, Name = "High Protein", Calories = 100, Protein = 50, Tags = [] };
-        _recipeRepoMock.Setup(r => r.GetAllWithTagsAsync()).ReturnsAsync([tooMuchProtein]);
+        _streamMock.Setup(s => s.GetCandidatesAsync()).ReturnsAsync([tooMuchProtein]);
 
         var result = await _service.GetRecommendedMealsForUser(_user, DateTime.Today, SingleMealConfig());
 
@@ -248,7 +250,7 @@ public class MealRecommendationServiceTests
     {
         SetNutritionPrefs(carbs: 10);
         var tooManyCarbs = new Recipe { Id = 1, Name = "High Carb", Calories = 100, Carbs = 30, Tags = [] };
-        _recipeRepoMock.Setup(r => r.GetAllWithTagsAsync()).ReturnsAsync([tooManyCarbs]);
+        _streamMock.Setup(s => s.GetCandidatesAsync()).ReturnsAsync([tooManyCarbs]);
 
         var result = await _service.GetRecommendedMealsForUser(_user, DateTime.Today, SingleMealConfig());
 
@@ -260,7 +262,7 @@ public class MealRecommendationServiceTests
     {
         SetNutritionPrefs(fat: 5);
         var tooMuchFat = new Recipe { Id = 1, Name = "High Fat", Calories = 100, Fat = 20, Tags = [] };
-        _recipeRepoMock.Setup(r => r.GetAllWithTagsAsync()).ReturnsAsync([tooMuchFat]);
+        _streamMock.Setup(s => s.GetCandidatesAsync()).ReturnsAsync([tooMuchFat]);
 
         var result = await _service.GetRecommendedMealsForUser(_user, DateTime.Today, SingleMealConfig());
 
@@ -272,7 +274,7 @@ public class MealRecommendationServiceTests
     {
         SetNutritionPrefs(calories: 500, protein: 50, carbs: 60, fat: 20);
         var balanced = new Recipe { Id = 1, Name = "Balanced", Calories = 200, Protein = 30, Carbs = 40, Fat = 10, Tags = [] };
-        _recipeRepoMock.Setup(r => r.GetAllWithTagsAsync()).ReturnsAsync([balanced]);
+        _streamMock.Setup(s => s.GetCandidatesAsync()).ReturnsAsync([balanced]);
 
         var result = await _service.GetRecommendedMealsForUser(_user, DateTime.Today, SingleMealConfig());
 
@@ -289,7 +291,7 @@ public class MealRecommendationServiceTests
         var failsCal  = new Recipe { Id = 2, Name = "Fails Calorie", Calories = 100, Protein = 10,  Carbs = 5, Fat = 5, Tags = [] };
         var failsCarb = new Recipe { Id = 3, Name = "Fails Carbs",   Calories = 0,   Protein = 5,   Carbs = 5, Fat = 0, Tags = [] };
         var failsFat  = new Recipe { Id = 4, Name = "Fails Fat",     Calories = 0,   Protein = 5,   Carbs = 0, Fat = 5, Tags = [] };
-        _recipeRepoMock.Setup(r => r.GetAllWithTagsAsync()).ReturnsAsync([fitsAll, failsCal, failsCarb, failsFat]);
+        _streamMock.Setup(s => s.GetCandidatesAsync()).ReturnsAsync([fitsAll, failsCal, failsCarb, failsFat]);
 
         var result = await _service.GetRecommendedMealsForUser(_user, DateTime.Today, SingleMealConfig());
 
@@ -304,7 +306,7 @@ public class MealRecommendationServiceTests
     {
         SetNutritionPrefs(protein: 50); // no carb/fat targets
         var highCarbFat = new Recipe { Id = 1, Name = "High Carb Fat", Calories = 100, Protein = 30, Carbs = 999, Fat = 999, Tags = [] };
-        _recipeRepoMock.Setup(r => r.GetAllWithTagsAsync()).ReturnsAsync([highCarbFat]);
+        _streamMock.Setup(s => s.GetCandidatesAsync()).ReturnsAsync([highCarbFat]);
 
         var result = await _service.GetRecommendedMealsForUser(_user, DateTime.Today, SingleMealConfig());
 
@@ -317,7 +319,7 @@ public class MealRecommendationServiceTests
         SetNutritionPrefs(protein: 50);
         var recipeA = new Recipe { Id = 1, Name = "Recipe A", Calories = 100, Protein = 30, Tags = [] };
         var recipeB = new Recipe { Id = 2, Name = "Recipe B", Calories = 100, Protein = 30, Tags = [] };
-        _recipeRepoMock.Setup(r => r.GetAllWithTagsAsync()).ReturnsAsync([recipeA, recipeB]);
+        _streamMock.Setup(s => s.GetCandidatesAsync()).ReturnsAsync([recipeA, recipeB]);
 
         var result = await _service.GetRecommendedMealsForUser(_user, DateTime.Today, SingleMealConfig());
 
@@ -333,7 +335,7 @@ public class MealRecommendationServiceTests
         // Large budget: round(1.5/2.0 * 60) = 45g  →  20g protein recipe is included
         SetNutritionPrefs(protein: 60);
         var recipe = new Recipe { Id = 1, Name = "Moderate Protein", Calories = 100, Protein = 20, Tags = [] };
-        _recipeRepoMock.Setup(r => r.GetAllWithTagsAsync()).ReturnsAsync([recipe]);
+        _streamMock.Setup(s => s.GetCandidatesAsync()).ReturnsAsync([recipe]);
 
         var config = new DayPlanConfigViewModel
         {
@@ -358,7 +360,7 @@ public class MealRecommendationServiceTests
     [Test]
     public async Task GetOneRecipeRecommendation_WhenNoRecipesExist_ReturnsNull()
     {
-        _recipeRepoMock.Setup(r => r.GetAllWithTagsAsync()).ReturnsAsync([]);
+        _streamMock.Setup(s => s.GetCandidatesAsync()).ReturnsAsync([]);
 
         var result = await _service.GetOneRecipeRecommendation(_user, DateTime.Today, []);
 
@@ -369,7 +371,7 @@ public class MealRecommendationServiceTests
     public async Task GetOneRecipeRecommendation_WhenRecipesAvailable_ReturnsOneRecipe()
     {
         var recipe = new Recipe { Id = 1, Name = "Pasta", Calories = 400, Tags = [] };
-        _recipeRepoMock.Setup(r => r.GetAllWithTagsAsync()).ReturnsAsync([recipe]);
+        _streamMock.Setup(s => s.GetCandidatesAsync()).ReturnsAsync([recipe]);
 
         var result = await _service.GetOneRecipeRecommendation(_user, DateTime.Today, []);
 
@@ -382,7 +384,7 @@ public class MealRecommendationServiceTests
     {
         var recipe1 = new Recipe { Id = 1, Name = "Pasta", Calories = 400, Tags = [] };
         var recipe2 = new Recipe { Id = 2, Name = "Salad", Calories = 200, Tags = [] };
-        _recipeRepoMock.Setup(r => r.GetAllWithTagsAsync()).ReturnsAsync([recipe1, recipe2]);
+        _streamMock.Setup(s => s.GetCandidatesAsync()).ReturnsAsync([recipe1, recipe2]);
 
         var result = await _service.GetOneRecipeRecommendation(_user, DateTime.Today, [1]);
 
@@ -394,7 +396,7 @@ public class MealRecommendationServiceTests
     public async Task GetOneRecipeRecommendation_WhenAllRecipesExcluded_ReturnsNull()
     {
         var recipe = new Recipe { Id = 1, Name = "Pasta", Calories = 400, Tags = [] };
-        _recipeRepoMock.Setup(r => r.GetAllWithTagsAsync()).ReturnsAsync([recipe]);
+        _streamMock.Setup(s => s.GetCandidatesAsync()).ReturnsAsync([recipe]);
 
         var result = await _service.GetOneRecipeRecommendation(_user, DateTime.Today, [1]);
 
@@ -410,7 +412,7 @@ public class MealRecommendationServiceTests
         _userRecipeRepoMock
             .Setup(r => r.GetUserRecipesByVoteType(_user.Id, UserVoteType.UpVote))
             .ReturnsAsync([upvotedRecipe]);
-        _recipeRepoMock.Setup(r => r.GetAllWithTagsAsync()).ReturnsAsync([normalRecipe, upvotedRecipe]);
+        _streamMock.Setup(s => s.GetCandidatesAsync()).ReturnsAsync([normalRecipe, upvotedRecipe]);
 
         var result = await _service.GetOneRecipeRecommendation(_user, DateTime.Today, []);
 
@@ -428,7 +430,7 @@ public class MealRecommendationServiceTests
             DietaryRestriction = new DietaryRestriction { Id = 1, Name = "Vegan" }
         };
         _dietaryRestrictionRepoMock.Setup(r => r.GetByUserIdAsync(_user.Id)).ReturnsAsync([restriction]);
-        _recipeRepoMock.Setup(r => r.GetAllWithTagsAsync()).ReturnsAsync([regularRecipe, veganRecipe]);
+        _streamMock.Setup(s => s.GetCandidatesAsync()).ReturnsAsync([regularRecipe, veganRecipe]);
 
         var result = await _service.GetOneRecipeRecommendation(_user, DateTime.Today, []);
 
@@ -447,7 +449,7 @@ public class MealRecommendationServiceTests
         SetNutritionPrefs(calories: 150);
         var withTag    = new Recipe { Id = 1, Name = "Pasta",  Calories = 100, Tags = [ItalianTag] };
         var withoutTag = new Recipe { Id = 2, Name = "Salad",  Calories = 100, Tags = [] };
-        _recipeRepoMock.Setup(r => r.GetAllWithTagsAsync()).ReturnsAsync([withoutTag, withTag]); // withoutTag listed first
+        _streamMock.Setup(s => s.GetCandidatesAsync()).ReturnsAsync([withoutTag, withTag]); // withoutTag listed first
 
         var config = new DayPlanConfigViewModel
         {
@@ -477,7 +479,7 @@ public class MealRecommendationServiceTests
         _userRecipeRepoMock
             .Setup(r => r.GetAllVotePercentagesAsync())
             .ReturnsAsync(new Dictionary<int, float> { [2] = 0.9f });
-        _recipeRepoMock.Setup(r => r.GetAllWithTagsAsync()).ReturnsAsync([popular, upvoted]); // popular listed first
+        _streamMock.Setup(s => s.GetCandidatesAsync()).ReturnsAsync([popular, upvoted]); // popular listed first
 
         var result = await _service.GetRecommendedMealsForUser(_user, DateTime.Today, SingleMealConfig());
 
@@ -496,7 +498,7 @@ public class MealRecommendationServiceTests
         _userRecipeRepoMock
             .Setup(r => r.GetAllVotePercentagesAsync())
             .ReturnsAsync(new Dictionary<int, float> { [1] = 0.7f, [2] = 0.3f });
-        _recipeRepoMock.Setup(r => r.GetAllWithTagsAsync()).ReturnsAsync([lowVote, highVote]); // lowVote listed first
+        _streamMock.Setup(s => s.GetCandidatesAsync()).ReturnsAsync([lowVote, highVote]); // lowVote listed first
 
         var result = await _service.GetRecommendedMealsForUser(_user, DateTime.Today, SingleMealConfig());
 
@@ -521,7 +523,7 @@ public class MealRecommendationServiceTests
         _userRecipeRepoMock
             .Setup(r => r.GetUserRecipesByVoteType(_user.Id, UserVoteType.UpVote))
             .ReturnsAsync([bigProtein]);
-        _recipeRepoMock.Setup(r => r.GetAllWithTagsAsync()).ReturnsAsync([bigProtein, smallProA, smallProB]);
+        _streamMock.Setup(s => s.GetCandidatesAsync()).ReturnsAsync([bigProtein, smallProA, smallProB]);
 
         var result = await _service.GetRecommendedMealsForUser(_user, DateTime.Today, SingleMealConfig());
 

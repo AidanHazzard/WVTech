@@ -10,26 +10,26 @@ public class MealRecommendationService : IMealRecommendationService
 {
     private const int _MAX_RECIPES = 5;
     private IUserRecipeRepository _userRecipeRepository;
-    private IRecipeRepository _recipeRepository;
     private IUserNutritionPreferenceRepository _nutrionRepository;
     private IUserDietaryRestrictionRepository _dietaryRestrictionRepository;
+    private IRecommendationStream _stream;
     private IReadOnlyList<IRecipeScorer> _scorers;
     private IReadOnlyList<IRecipeFilter> _filters;
     private IExternalRecipeService? _externalRecipeService;
 
     public MealRecommendationService(
         IUserRecipeRepository userRecipeRepository,
-        IRecipeRepository recipeRepository,
         IUserNutritionPreferenceRepository nutritionRepository,
         IUserDietaryRestrictionRepository dietaryRestrictionRepository,
+        IRecommendationStream stream,
         IEnumerable<IRecipeScorer> scorers,
         IEnumerable<IRecipeFilter> filters,
         IExternalRecipeService? externalRecipeService = null)
     {
         _userRecipeRepository = userRecipeRepository;
-        _recipeRepository = recipeRepository;
         _nutrionRepository = nutritionRepository;
         _dietaryRestrictionRepository = dietaryRestrictionRepository;
+        _stream = stream;
         _scorers = scorers.ToList();
         _filters = filters.ToList();
         _externalRecipeService = externalRecipeService;
@@ -50,9 +50,8 @@ public class MealRecommendationService : IMealRecommendationService
         var userVotes        = await _userRecipeRepository.GetUserVotesByUserIdAsync(userId);
         var votePercentages  = await _userRecipeRepository.GetAllVotePercentagesAsync();
         var upvoted          = await _userRecipeRepository.GetUserRecipesByVoteType(userId, UserVoteType.UpVote);
-        var allWithTags      = await _recipeRepository.GetAllWithTagsAsync();
+        var allWithTags      = await _stream.GetCandidatesAsync();
         await upvoted.LoadExternalRecipesAsync(_externalRecipeService);
-        await allWithTags.LoadExternalRecipesAsync(_externalRecipeService);
         return new RecommendationContext(restrictionNames, userVotes, votePercentages, upvoted, allWithTags);
     }
 
