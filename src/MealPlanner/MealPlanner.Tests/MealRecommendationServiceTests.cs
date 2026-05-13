@@ -8,12 +8,11 @@ using NUnit.Framework;
 namespace MealPlanner.Tests;
 
 [TestFixture]
-public class WVT144RecommendationTests
+public class MealRecommendationServiceTests
 {
     private Mock<IUserRecipeRepository> _userRecipeRepoMock;
     private Mock<IRecipeRepository> _recipeRepoMock;
     private Mock<IUserNutritionPreferenceRepository> _nutritionRepoMock;
-    private Mock<IMealRepository> _mealRepoMock;
     private Mock<IUserDietaryRestrictionRepository> _dietaryRestrictionRepoMock;
     private MealRecommendationService _service;
 
@@ -28,7 +27,6 @@ public class WVT144RecommendationTests
         _userRecipeRepoMock = new Mock<IUserRecipeRepository>();
         _recipeRepoMock = new Mock<IRecipeRepository>();
         _nutritionRepoMock = new Mock<IUserNutritionPreferenceRepository>();
-        _mealRepoMock = new Mock<IMealRepository>();
         _dietaryRestrictionRepoMock = new Mock<IUserDietaryRestrictionRepository>();
 
         _userRecipeRepoMock
@@ -49,9 +47,6 @@ public class WVT144RecommendationTests
         _nutritionRepoMock
             .Setup(r => r.GetUsersNutritionPreferenceAsync(_user.Id))
             .ReturnsAsync(new UserNutritionPreference { UserId = _user.Id, CalorieTarget = 9999 });
-        _mealRepoMock
-            .Setup(r => r.GetUserMealsByDateAsync(_user, It.IsAny<DateTime>()))
-            .ReturnsAsync([]);
         _dietaryRestrictionRepoMock
             .Setup(r => r.GetByUserIdAsync(_user.Id))
             .ReturnsAsync([]);
