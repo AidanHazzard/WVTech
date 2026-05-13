@@ -11,12 +11,26 @@ public class RecipeScorerTests
         HashSet<string>? restrictions = null,
         Dictionary<int, UserVoteType>? votes = null,
         Dictionary<int, float>? percentages = null,
-        List<Recipe>? upvoted = null) =>
+        List<Recipe>? upvoted = null,
+        HashSet<int>? userPreferredTagIds = null,
+        int? calorieTarget = null,
+        int? proteinTarget = null,
+        int? carbTarget = null,
+        int? fatTarget = null,
+        HashSet<int>? mealPreferredTagIds = null) =>
         new(
-            restrictions ?? [],
-            votes        ?? [],
-            percentages  ?? [],
-            upvoted      ?? []);
+            new UserRecommendationContext(
+                restrictions ?? [],
+                votes ?? [],
+                percentages ?? [],
+                upvoted ?? [],
+                userPreferredTagIds ?? []),
+            new MealRecommendationContext(
+                calorieTarget,
+                proteinTarget,
+                carbTarget,
+                fatTarget,
+                mealPreferredTagIds ?? []));
 
     // --- UpvotePriorityScorer ---
 
@@ -115,59 +129,165 @@ public class RecipeScorerTests
         Assert.That(filter.Allow(recipe, ctx), Is.True);
     }
 
-    // --- PreferredTagScorer ---
+    // --- MealPreferredTagScorer ---
 
     [Test]
-    public void PreferredTagScorer_NoPreferredTags_ReturnsZero()
+    public void MealPreferredTagScorer_NoPreferredTags_ReturnsZero()
     {
         var recipe = new Recipe { Id = 1, Tags = [new Tag { Id = 1, Name = "Italian" }] };
-        var ctx = EmptyContext();
-        var scorer = new PreferredTagScorer([]);
+        var ctx = EmptyContext(mealPreferredTagIds: []);
+        var scorer = new MealPreferredTagScorer();
 
         Assert.That(scorer.Score(recipe, ctx), Is.EqualTo(0f));
     }
 
     [Test]
-    public void PreferredTagScorer_AllTagsMatch_ReturnsOne()
+    public void MealPreferredTagScorer_AllTagsMatch_ReturnsOne()
     {
         var tag = new Tag { Id = 1, Name = "Italian" };
         var recipe = new Recipe { Id = 1, Tags = [tag] };
-        var ctx = EmptyContext();
-        var scorer = new PreferredTagScorer([1]);
+        var ctx = EmptyContext(mealPreferredTagIds: [1]);
+        var scorer = new MealPreferredTagScorer();
 
         Assert.That(scorer.Score(recipe, ctx), Is.EqualTo(1f).Within(0.001f));
     }
 
     [Test]
-    public void PreferredTagScorer_HalfTagsMatch_ReturnsHalf()
+    public void MealPreferredTagScorer_HalfTagsMatch_ReturnsHalf()
     {
         var italian = new Tag { Id = 1, Name = "Italian" };
-        var vegan   = new Tag { Id = 2, Name = "Vegan" };
         var recipe = new Recipe { Id = 1, Tags = [italian] }; // only 1 of 2 preferred tags
-        var ctx = EmptyContext();
-        var scorer = new PreferredTagScorer([1, 2]);
+        var ctx = EmptyContext(mealPreferredTagIds: [1, 2]);
+        var scorer = new MealPreferredTagScorer();
 
         Assert.That(scorer.Score(recipe, ctx), Is.EqualTo(0.5f).Within(0.001f));
     }
 
     [Test]
-    public void PreferredTagScorer_NoTagsMatch_ReturnsZero()
+    public void MealPreferredTagScorer_NoTagsMatch_ReturnsZero()
     {
         var recipe = new Recipe { Id = 1, Tags = [new Tag { Id = 3, Name = "Mexican" }] };
-        var ctx = EmptyContext();
-        var scorer = new PreferredTagScorer([1, 2]);
+        var ctx = EmptyContext(mealPreferredTagIds: [1, 2]);
+        var scorer = new MealPreferredTagScorer();
 
         Assert.That(scorer.Score(recipe, ctx), Is.EqualTo(0f));
     }
 
     [Test]
-    public void PreferredTagScorer_RecipeWithNoTags_ReturnsZero()
+    public void MealPreferredTagScorer_RecipeWithNoTags_ReturnsZero()
     {
         var recipe = new Recipe { Id = 1, Tags = [] };
-        var ctx = EmptyContext();
-        var scorer = new PreferredTagScorer([1, 2]);
+        var ctx = EmptyContext(mealPreferredTagIds: [1, 2]);
+        var scorer = new MealPreferredTagScorer();
 
         Assert.That(scorer.Score(recipe, ctx), Is.EqualTo(0f));
+    }
+
+    [Test]
+    public void MealPreferredTagScorer_IgnoresUserLevelPreferredTags()
+    {
+        // Recipe matches a user-level pref, but the meal slot has no preference for it.
+        var recipe = new Recipe { Id = 1, Tags = [new Tag { Id = 1, Name = "Italian" }] };
+        var ctx = EmptyContext(userPreferredTagIds: [1], mealPreferredTagIds: []);
+        var scorer = new MealPreferredTagScorer();
+
+        Assert.That(scorer.Score(recipe, ctx), Is.EqualTo(0f));
+    }
+
+    // --- UserPreferredTagScorer ---
+
+    [Test]
+    public void UserPreferredTagScorer_NoPreferredTags_ReturnsZero()
+    {
+        var recipe = new Recipe { Id = 1, Tags = [new Tag { Id = 1, Name = "Italian" }] };
+        var ctx = EmptyContext(userPreferredTagIds: []);
+        var scorer = new UserPreferredTagScorer();
+
+        Assert.That(scorer.Score(recipe, ctx), Is.EqualTo(0f));
+    }
+
+    [Test]
+    public void UserPreferredTagScorer_AllTagsMatch_ReturnsOne()
+    {
+        var recipe = new Recipe { Id = 1, Tags = [new Tag { Id = 1, Name = "Italian" }] };
+        var ctx = EmptyContext(userPreferredTagIds: [1]);
+        var scorer = new UserPreferredTagScorer();
+
+        Assert.That(scorer.Score(recipe, ctx), Is.EqualTo(1f).Within(0.001f));
+    }
+
+    [Test]
+    public void UserPreferredTagScorer_HalfTagsMatch_ReturnsHalf()
+    {
+        var recipe = new Recipe { Id = 1, Tags = [new Tag { Id = 1, Name = "Italian" }] };
+        var ctx = EmptyContext(userPreferredTagIds: [1, 2]);
+        var scorer = new UserPreferredTagScorer();
+
+        Assert.That(scorer.Score(recipe, ctx), Is.EqualTo(0.5f).Within(0.001f));
+    }
+
+    [Test]
+    public void UserPreferredTagScorer_IgnoresMealLevelPreferredTags()
+    {
+        // Recipe matches a slot-level pref, but the user has no standing prefs.
+        var recipe = new Recipe { Id = 1, Tags = [new Tag { Id = 1, Name = "Italian" }] };
+        var ctx = EmptyContext(userPreferredTagIds: [], mealPreferredTagIds: [1]);
+        var scorer = new UserPreferredTagScorer();
+
+        Assert.That(scorer.Score(recipe, ctx), Is.EqualTo(0f));
+    }
+
+    // --- PreferredTagFilter ---
+
+    [Test]
+    public void PreferredTagFilter_NoMealPreferredTags_AllowsAnyRecipe()
+    {
+        var recipe = new Recipe { Id = 1, Tags = [] };
+        var ctx = EmptyContext(mealPreferredTagIds: []);
+        var filter = new PreferredTagFilter();
+
+        Assert.That(filter.Allow(recipe, ctx), Is.True);
+    }
+
+    [Test]
+    public void PreferredTagFilter_RecipeMatchesAtLeastOneTag_Allows()
+    {
+        var recipe = new Recipe { Id = 1, Tags = [new Tag { Id = 1, Name = "Italian" }] };
+        var ctx = EmptyContext(mealPreferredTagIds: [1, 2]);
+        var filter = new PreferredTagFilter();
+
+        Assert.That(filter.Allow(recipe, ctx), Is.True);
+    }
+
+    [Test]
+    public void PreferredTagFilter_RecipeMatchesNoTags_Rejects()
+    {
+        var recipe = new Recipe { Id = 1, Tags = [new Tag { Id = 3, Name = "Mexican" }] };
+        var ctx = EmptyContext(mealPreferredTagIds: [1, 2]);
+        var filter = new PreferredTagFilter();
+
+        Assert.That(filter.Allow(recipe, ctx), Is.False);
+    }
+
+    [Test]
+    public void PreferredTagFilter_RecipeWithNoTagsAndSlotHasPreference_Rejects()
+    {
+        var recipe = new Recipe { Id = 1, Tags = [] };
+        var ctx = EmptyContext(mealPreferredTagIds: [1]);
+        var filter = new PreferredTagFilter();
+
+        Assert.That(filter.Allow(recipe, ctx), Is.False);
+    }
+
+    [Test]
+    public void PreferredTagFilter_IgnoresUserLevelPreferredTags()
+    {
+        // Recipe doesn't match the slot pref but does match a user pref: still rejected.
+        var recipe = new Recipe { Id = 1, Tags = [new Tag { Id = 1, Name = "Italian" }] };
+        var ctx = EmptyContext(userPreferredTagIds: [1], mealPreferredTagIds: [2]);
+        var filter = new PreferredTagFilter();
+
+        Assert.That(filter.Allow(recipe, ctx), Is.False);
     }
 
     // --- DietaryRestrictionFilter ---

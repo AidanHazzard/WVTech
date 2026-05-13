@@ -12,6 +12,7 @@ public class MealRecommendationService : IMealRecommendationService
     private IUserRecipeRepository _userRecipeRepository;
     private IUserNutritionPreferenceRepository _nutrionRepository;
     private IUserDietaryRestrictionRepository _dietaryRestrictionRepository;
+    private IUserFoodPreferenceRepository _foodPreferenceRepository;
     private IRecommendationStream _stream;
     private IExternalRecipeService? _externalRecipeService;
 
@@ -19,12 +20,14 @@ public class MealRecommendationService : IMealRecommendationService
         IUserRecipeRepository userRecipeRepository,
         IUserNutritionPreferenceRepository nutritionRepository,
         IUserDietaryRestrictionRepository dietaryRestrictionRepository,
+        IUserFoodPreferenceRepository foodPreferenceRepository,
         IRecommendationStream stream,
         IExternalRecipeService? externalRecipeService = null)
     {
         _userRecipeRepository = userRecipeRepository;
         _nutrionRepository = nutritionRepository;
         _dietaryRestrictionRepository = dietaryRestrictionRepository;
+        _foodPreferenceRepository = foodPreferenceRepository;
         _stream = stream;
         _externalRecipeService = externalRecipeService;
     }
@@ -38,19 +41,22 @@ public class MealRecommendationService : IMealRecommendationService
             .ToHashSet()!;
     }
 
-    private async Task<RecommendationContext> BuildContextAsync(string userId)
+    private async Task<UserRecommendationContext> BuildUserContextAsync(string userId)
     {
         var restrictionNames = await GetRestrictionNamesAsync(userId);
         var userVotes        = await _userRecipeRepository.GetUserVotesByUserIdAsync(userId);
         var votePercentages  = await _userRecipeRepository.GetAllVotePercentagesAsync();
         var upvoted          = await _userRecipeRepository.GetUserRecipesByVoteType(userId, UserVoteType.UpVote);
         await upvoted.LoadExternalRecipesAsync(_externalRecipeService);
-        return new RecommendationContext(restrictionNames, userVotes, votePercentages, upvoted);
+        var preferredTagIds  = await _foodPreferenceRepository.GetFoodPreferenceTagIdsAsync(userId);
+        return new UserRecommendationContext(restrictionNames, userVotes, votePercentages, upvoted, preferredTagIds);
     }
 
     public async Task<Recipe?> GetOneRecipeRecommendation(User user, DateTime date, IEnumerable<int> excludeRecipeIds)
     {
-        var ctx = await BuildContextAsync(user.Id);
+        var userCtx = await BuildUserContextAsync(user.Id);
+        var mealCtx = new MealRecommendationContext(null, null, null, null, []);
+        var ctx = new RecommendationContext(userCtx, mealCtx);
         var excludeIds = new HashSet<int>(excludeRecipeIds);
         return (await _stream.GetRankedCandidatesAsync(ctx))
             .FirstOrDefault(r => !excludeIds.Contains(r.Id));
@@ -65,11 +71,9 @@ public class MealRecommendationService : IMealRecommendationService
                 .Select(_ => new MealPreferenceViewModel { Size = MealSize.Average })
                 .ToList();
 
-        var ctx = await BuildContextAsync(user.Id);
+        var userCtx = await BuildUserContextAsync(user.Id);
         var nutritionPrefs = await _nutrionRepository.GetUsersNutritionPreferenceAsync(user.Id);
         var totalWeight = preferences.Sum(p => p.Size.Weight());
-
-        var allRanked = (await _stream.GetRankedCandidatesAsync(ctx)).ToList();
 
         var usedRecipeIds = new HashSet<int>();
         int mealIndex = 0;
@@ -89,13 +93,19 @@ public class MealRecommendationService : IMealRecommendationService
                 ? (int)Math.Round(weight * nutritionPrefs.FatTarget.Value)
                 : (int?)null;
 
-            IEnumerable<Recipe> pipeline = allRanked.Where(r => !usedRecipeIds.Contains(r.Id));
+            var mealCtx = new MealRecommendationContext(
+                calorieTarget,
+                proteinTarget,
+                carbTarget,
+                fatTarget,
+                pref.TagIds.ToHashSet());
+            var ctx = new RecommendationContext(userCtx, mealCtx);
 
-            if (pref.TagIds.Count > 0)
-                pipeline = pipeline.OrderByDescending(r => r.Tags.Count(t => pref.TagIds.Contains(t.Id)));
+            var candidates = (await _stream.GetRankedCandidatesAsync(ctx))
+                .Where(r => !usedRecipeIds.Contains(r.Id));
 
             var recipes = MealComposer.PackUpToCalorieBudget(
-                pipeline, calorieTarget, _MAX_RECIPES, proteinTarget, carbTarget, fatTarget);
+                candidates, calorieTarget, _MAX_RECIPES, proteinTarget, carbTarget, fatTarget);
             usedRecipeIds.UnionWith(recipes.Select(r => r.Id));
 
             result.Add(new Meal

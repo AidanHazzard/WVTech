@@ -13,8 +13,26 @@ public class LocalRecipeStreamTests
         HashSet<string>? restrictions = null,
         Dictionary<int, UserVoteType>? votes = null,
         Dictionary<int, float>? percentages = null,
-        List<Recipe>? upvoted = null) =>
-        new(restrictions ?? [], votes ?? [], percentages ?? [], upvoted ?? []);
+        List<Recipe>? upvoted = null,
+        HashSet<int>? userPreferredTagIds = null,
+        int? calorieTarget = null,
+        int? proteinTarget = null,
+        int? carbTarget = null,
+        int? fatTarget = null,
+        HashSet<int>? mealPreferredTagIds = null) =>
+        new(
+            new UserRecommendationContext(
+                restrictions ?? [],
+                votes ?? [],
+                percentages ?? [],
+                upvoted ?? [],
+                userPreferredTagIds ?? []),
+            new MealRecommendationContext(
+                calorieTarget,
+                proteinTarget,
+                carbTarget,
+                fatTarget,
+                mealPreferredTagIds ?? []));
 
     private static LocalRecipeStream BuildStream(
         List<Recipe> pool,
@@ -25,8 +43,17 @@ public class LocalRecipeStreamTests
         repoMock.Setup(r => r.GetAllWithTagsAsync()).ReturnsAsync(pool);
         return new LocalRecipeStream(
             repoMock.Object,
-            scorers ?? [new UpvotePriorityScorer(), new VotePercentageScorer()],
-            filters ?? [new DownVoteFilter(), new DietaryRestrictionFilter()]);
+            scorers ?? [
+                new UpvotePriorityScorer(),
+                new VotePercentageScorer(),
+                new UserPreferredTagScorer(),
+                new MealPreferredTagScorer()
+            ],
+            filters ?? [
+                new DownVoteFilter(),
+                new DietaryRestrictionFilter(),
+                new PreferredTagFilter()
+            ]);
     }
 
     [Test]
@@ -103,6 +130,33 @@ public class LocalRecipeStreamTests
         var result = (await stream.GetRankedCandidatesAsync(ctx)).ToList();
 
         Assert.That(result[0].Id, Is.EqualTo(highVote.Id));
+    }
+
+    [Test]
+    public async Task GetRankedCandidatesAsync_PreferredTagFilter_RejectsNonMatchingWhenSlotHasTags()
+    {
+        var matching    = new Recipe { Id = 1, Tags = [new Tag { Id = 10, Name = "Breakfast" }] };
+        var nonMatching = new Recipe { Id = 2, Tags = [new Tag { Id = 20, Name = "Dessert" }] };
+        var ctx = EmptyContext(mealPreferredTagIds: [10]);
+        var stream = BuildStream([matching, nonMatching]);
+
+        var result = await stream.GetRankedCandidatesAsync(ctx);
+
+        Assert.That(result, Does.Contain(matching));
+        Assert.That(result, Does.Not.Contain(nonMatching));
+    }
+
+    [Test]
+    public async Task GetRankedCandidatesAsync_OrdersByMealPreferredTagMatches()
+    {
+        var doubleMatch = new Recipe { Id = 1, Tags = [new Tag { Id = 10 }, new Tag { Id = 11 }] };
+        var singleMatch = new Recipe { Id = 2, Tags = [new Tag { Id = 10 }] };
+        var ctx = EmptyContext(mealPreferredTagIds: [10, 11]);
+        var stream = BuildStream([singleMatch, doubleMatch]); // singleMatch listed first
+
+        var result = (await stream.GetRankedCandidatesAsync(ctx)).ToList();
+
+        Assert.That(result[0].Id, Is.EqualTo(doubleMatch.Id));
     }
 
     [Test]

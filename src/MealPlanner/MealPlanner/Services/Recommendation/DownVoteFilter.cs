@@ -8,5 +8,5 @@ namespace MealPlanner.Services.Recommendation;
 public sealed class DownVoteFilter : IRecipeFilter
 {
     public bool Allow(Recipe recipe, RecommendationContext ctx) =>
-        ctx.UserVotes.GetValueOrDefault(recipe.Id, UserVoteType.NoVote) != UserVoteType.DownVote;
+        ctx.User.UserVotes.GetValueOrDefault(recipe.Id, UserVoteType.NoVote) != UserVoteType.DownVote;
 }

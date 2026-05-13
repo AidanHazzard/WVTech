@@ -15,6 +15,7 @@ public class MealRecommendationServiceTests
     private Mock<IRecommendationStream> _streamMock;
     private Mock<IUserNutritionPreferenceRepository> _nutritionRepoMock;
     private Mock<IUserDietaryRestrictionRepository> _dietaryRestrictionRepoMock;
+    private Mock<IUserFoodPreferenceRepository> _foodPrefRepoMock;
     private MealRecommendationService _service;
 
     private readonly User _user = new() { Id = "user-1" };
@@ -29,6 +30,7 @@ public class MealRecommendationServiceTests
         _streamMock = new Mock<IRecommendationStream>();
         _nutritionRepoMock = new Mock<IUserNutritionPreferenceRepository>();
         _dietaryRestrictionRepoMock = new Mock<IUserDietaryRestrictionRepository>();
+        _foodPrefRepoMock = new Mock<IUserFoodPreferenceRepository>();
 
         _streamMock.Setup(s => s.GetRankedCandidatesAsync(It.IsAny<RecommendationContext>()))
                    .ReturnsAsync(Enumerable.Empty<Recipe>());
@@ -54,11 +56,15 @@ public class MealRecommendationServiceTests
         _dietaryRestrictionRepoMock
             .Setup(r => r.GetByUserIdAsync(_user.Id))
             .ReturnsAsync([]);
+        _foodPrefRepoMock
+            .Setup(r => r.GetFoodPreferenceTagIdsAsync(_user.Id))
+            .ReturnsAsync([]);
 
         _service = new MealRecommendationService(
             _userRecipeRepoMock.Object,
             _nutritionRepoMock.Object,
             _dietaryRestrictionRepoMock.Object,
+            _foodPrefRepoMock.Object,
             _streamMock.Object);
     }
 
@@ -413,32 +419,105 @@ public class MealRecommendationServiceTests
         Assert.That(result!.Id, Is.EqualTo(1));
     }
 
-    // --- Tag preference and ordering tests ---
+    [Test]
+    public async Task GetOneRecipeRecommendation_PassesEmptyMealContext()
+    {
+        // The single-recipe flow has no slot context, so calorie/macro targets are null
+        // and the preferred-tag set is empty.
+        RecommendationContext? captured = null;
+        _streamMock.Setup(s => s.GetRankedCandidatesAsync(It.IsAny<RecommendationContext>()))
+                   .Callback<RecommendationContext>(c => captured = c)
+                   .ReturnsAsync([]);
 
-    private static Tag ItalianTag => new() { Id = 3, Name = "Italian" };
+        await _service.GetOneRecipeRecommendation(_user, DateTime.Today, []);
+
+        Assert.That(captured, Is.Not.Null);
+        Assert.That(captured!.Meal.CalorieTarget, Is.Null);
+        Assert.That(captured.Meal.ProteinTarget, Is.Null);
+        Assert.That(captured.Meal.CarbTarget, Is.Null);
+        Assert.That(captured.Meal.FatTarget, Is.Null);
+        Assert.That(captured.Meal.PreferredTagIds, Is.Empty);
+    }
+
+    // --- Context construction ---
 
     [Test]
-    public async Task TagPreference_RecipeWithMatchingTagSelectedOverRecipeWithout()
+    public async Task BuildContext_PopulatesUserPreferredTagIdsFromRepository()
     {
-        // Budget allows only 1 of the two 100-cal recipes; the one matching the preferred tag should win.
-        SetNutritionPrefs(calories: 150);
-        var withTag    = new Recipe { Id = 1, Name = "Pasta",  Calories = 100, Tags = [ItalianTag] };
-        var withoutTag = new Recipe { Id = 2, Name = "Salad",  Calories = 100, Tags = [] };
-        _streamMock.Setup(s => s.GetRankedCandidatesAsync(It.IsAny<RecommendationContext>())).ReturnsAsync([withoutTag, withTag]); // withoutTag listed first
+        _foodPrefRepoMock
+            .Setup(r => r.GetFoodPreferenceTagIdsAsync(_user.Id))
+            .ReturnsAsync([10, 20, 30]);
+
+        RecommendationContext? captured = null;
+        _streamMock.Setup(s => s.GetRankedCandidatesAsync(It.IsAny<RecommendationContext>()))
+                   .Callback<RecommendationContext>(c => captured = c)
+                   .ReturnsAsync([]);
+
+        await _service.GetRecommendedMealsForUser(_user, DateTime.Today, SingleMealConfig());
+
+        Assert.That(captured!.User.PreferredTagIds, Is.EquivalentTo(new[] { 10, 20, 30 }));
+    }
+
+    [Test]
+    public async Task BuildContext_PassesSlotTagIdsToMealContext()
+    {
+        RecommendationContext? captured = null;
+        _streamMock.Setup(s => s.GetRankedCandidatesAsync(It.IsAny<RecommendationContext>()))
+                   .Callback<RecommendationContext>(c => captured = c)
+                   .ReturnsAsync([]);
 
         var config = new DayPlanConfigViewModel
         {
             MealCount = 1,
             SelectedMonth = DateTime.Today.Month,
             SelectedDay = DateTime.Today.Day,
-            MealPreferences = [new MealPreferenceViewModel { Size = MealSize.Average, TagIds = [3] }]
+            MealPreferences = [new MealPreferenceViewModel { Size = MealSize.Average, TagIds = [3, 7] }]
         };
 
-        var result = await _service.GetRecommendedMealsForUser(_user, DateTime.Today, config);
+        await _service.GetRecommendedMealsForUser(_user, DateTime.Today, config);
 
-        Assert.That(result[0].Recipes, Does.Contain(withTag),        "Recipe matching preferred tag should be selected");
-        Assert.That(result[0].Recipes, Does.Not.Contain(withoutTag), "Recipe without preferred tag should be displaced");
+        Assert.That(captured!.Meal.PreferredTagIds, Is.EquivalentTo(new[] { 3, 7 }));
     }
+
+    [Test]
+    public async Task BuildContext_PassesMacroTargetsToMealContext()
+    {
+        SetNutritionPrefs(calories: 600, protein: 50, carbs: 60, fat: 20);
+        RecommendationContext? captured = null;
+        _streamMock.Setup(s => s.GetRankedCandidatesAsync(It.IsAny<RecommendationContext>()))
+                   .Callback<RecommendationContext>(c => captured = c)
+                   .ReturnsAsync([]);
+
+        await _service.GetRecommendedMealsForUser(_user, DateTime.Today, SingleMealConfig());
+
+        Assert.That(captured!.Meal.CalorieTarget, Is.EqualTo(600));
+        Assert.That(captured.Meal.ProteinTarget, Is.EqualTo(50));
+        Assert.That(captured.Meal.CarbTarget, Is.EqualTo(60));
+        Assert.That(captured.Meal.FatTarget, Is.EqualTo(20));
+    }
+
+    [Test]
+    public async Task BuildContext_CallsStreamOncePerSlot()
+    {
+        var config = new DayPlanConfigViewModel
+        {
+            MealCount = 3,
+            SelectedMonth = DateTime.Today.Month,
+            SelectedDay = DateTime.Today.Day,
+            MealPreferences =
+            [
+                new MealPreferenceViewModel { Size = MealSize.Average },
+                new MealPreferenceViewModel { Size = MealSize.Average },
+                new MealPreferenceViewModel { Size = MealSize.Average }
+            ]
+        };
+
+        await _service.GetRecommendedMealsForUser(_user, DateTime.Today, config);
+
+        _streamMock.Verify(s => s.GetRankedCandidatesAsync(It.IsAny<RecommendationContext>()), Times.Exactly(3));
+    }
+
+    // --- Ranking trust tests (service trusts stream order) ---
 
     [Test]
     public async Task UpvotedRecipe_OutranksHighCommunityVotePercentageNonUpvotedRecipe()

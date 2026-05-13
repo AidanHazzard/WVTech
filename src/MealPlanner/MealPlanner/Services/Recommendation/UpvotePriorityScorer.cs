@@ -11,5 +11,5 @@ public sealed class UpvotePriorityScorer : IRecipeScorer
     private const float UpvoteBonus = 100f;
 
     public float Score(Recipe recipe, RecommendationContext ctx) =>
-        ctx.Upvoted.Any(r => r.Id == recipe.Id) ? UpvoteBonus : 0f;
+        ctx.User.Upvoted.Any(r => r.Id == recipe.Id) ? UpvoteBonus : 0f;
 }
