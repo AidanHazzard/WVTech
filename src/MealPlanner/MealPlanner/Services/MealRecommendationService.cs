@@ -3,7 +3,6 @@ using MealPlanner.Helpers;
 using MealPlanner.Models;
 using MealPlanner.Services.Recommendation;
 using MealPlanner.ViewModels;
-using Microsoft.IdentityModel.Tokens;
 
 namespace MealPlanner.Services;
 
@@ -70,69 +69,6 @@ public class MealRecommendationService : IMealRecommendationService
             .OrderByDescending(r => _scorers.Sum(s => s.Score(r, ctx)));
     }
 
-    // Yields candidates in priority order: upvoted first, then non-downvoted sorted by community
-    // vote percentage. Excludes any recipe whose ID is in excludeIds.
-    private static IEnumerable<Recipe> OrderedCandidates(
-        IEnumerable<Recipe> upvoted,
-        IEnumerable<Recipe> allWithTags,
-        Dictionary<int, UserVoteType> userVotes,
-        Dictionary<int, float> votePercentages,
-        HashSet<int> excludeIds)
-    {
-        var upvotedList = upvoted.Where(r => !excludeIds.Contains(r.Id)).ToList();
-        var upvotedIds = upvotedList.Select(r => r.Id).ToHashSet();
-
-        foreach (var r in upvotedList) yield return r;
-
-        foreach (var r in allWithTags
-            .Where(r => userVotes.GetValueOrDefault(r.Id, UserVoteType.NoVote) != UserVoteType.DownVote
-                     && !upvotedIds.Contains(r.Id)
-                     && !excludeIds.Contains(r.Id))
-            .OrderByDescending(r => votePercentages.GetValueOrDefault(r.Id, 0f)))
-        {
-            yield return r;
-        }
-    }
-
-    // Applies dietary restriction and tag-preference filters lazily, then greedily picks
-    // up to _MAX_RECIPES that fit within the calorie and macro budgets.
-    private static List<Recipe> SelectFromCandidates(
-        IEnumerable<Recipe> candidates,
-        int calorieTarget,
-        HashSet<string> restrictionNames,
-        IReadOnlyList<int> preferredTagIds,
-        int? proteinTarget = null,
-        int? carbTarget = null,
-        int? fatTarget = null)
-    {
-        IEnumerable<Recipe> pipeline = candidates;
-
-        if (restrictionNames.Count > 0)
-            pipeline = pipeline.Where(r => restrictionNames.All(name => r.Tags.Any(t => t.Name == name)));
-
-        // Sort by number of matching tags descending; within same count, upvote/vote order is preserved
-        if (preferredTagIds.Count > 0)
-            pipeline = pipeline.OrderByDescending(r => r.Tags.Count(t => preferredTagIds.Contains(t.Id)));
-
-        var recipes = new List<Recipe>();
-        int runningCalories = 0, runningProtein = 0, runningCarbs = 0, runningFat = 0;
-        foreach (var recipe in pipeline)
-        {
-            if (recipes.Count >= _MAX_RECIPES) break;
-            if (recipe.Calories + runningCalories <= calorieTarget
-                && (!proteinTarget.HasValue || recipe.Protein + runningProtein <= proteinTarget.Value)
-                && (!carbTarget.HasValue   || recipe.Carbs   + runningCarbs   <= carbTarget.Value)
-                && (!fatTarget.HasValue    || recipe.Fat     + runningFat     <= fatTarget.Value))
-            {
-                recipes.Add(recipe);
-                runningCalories += recipe.Calories;
-                runningProtein  += recipe.Protein;
-                runningCarbs    += recipe.Carbs;
-                runningFat      += recipe.Fat;
-            }
-        }
-        return recipes;
-    }
 
     public async Task<Recipe?> GetOneRecipeRecommendation(User user, DateTime date, IEnumerable<int> excludeRecipeIds)
     {
@@ -175,8 +111,15 @@ public class MealRecommendationService : IMealRecommendationService
                 ? (int)Math.Round(weight * nutritionPrefs.FatTarget.Value)
                 : (int?)null;
 
-            var candidates = OrderedCandidates(ctx.Upvoted, ctx.AllWithTags, ctx.UserVotes, ctx.VotePercentages, usedRecipeIds);
-            var recipes = SelectFromCandidates(candidates, calorieTarget, ctx.RestrictionNames, pref.TagIds, proteinTarget, carbTarget, fatTarget);
+            IEnumerable<Recipe> pipeline = ScoreAndRank(ctx.AllWithTags, ctx, usedRecipeIds)
+                .Where(r => ctx.RestrictionNames.Count == 0
+                         || ctx.RestrictionNames.All(name => r.Tags.Any(t => t.Name == name)));
+
+            if (pref.TagIds.Count > 0)
+                pipeline = pipeline.OrderByDescending(r => r.Tags.Count(t => pref.TagIds.Contains(t.Id)));
+
+            var recipes = MealComposer.PackUpToCalorieBudget(
+                pipeline, calorieTarget, _MAX_RECIPES, proteinTarget, carbTarget, fatTarget);
             usedRecipeIds.UnionWith(recipes.Select(r => r.Id));
 
             result.Add(new Meal
