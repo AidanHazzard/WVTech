@@ -7,6 +7,8 @@ using MealPlanner.Services;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
 using Microsoft.IdentityModel.Tokens;
+using Azure.Storage.Blobs;
+using Microsoft.AspNetCore.Hosting;
 
 namespace MealPlanner.Controllers;
 
@@ -19,6 +21,8 @@ public class FoodEntriesController : Controller
     private readonly INutritionProgressService? _nutritionProgressService;
     private readonly IRegistrationService _registrationService;
     private readonly IExternalRecipeService? _externalRecipeService;
+    private readonly BlobContainerClient? _blobContainer;
+    private readonly IWebHostEnvironment? _env;
 
     public FoodEntriesController(
         IRecipeRepository recipeRepository,
@@ -26,6 +30,8 @@ public class FoodEntriesController : Controller
         IUserRecipeRepository userRecipeRepository,
         MealPlannerDBContext context,
         IRegistrationService registrationService,
+        IWebHostEnvironment env,
+        BlobContainerClient? blobContainer = null,
         IExternalRecipeService? externalRecipeService = null,
         INutritionProgressService? nutritionProgressService = null)
     {
@@ -36,6 +42,8 @@ public class FoodEntriesController : Controller
         _nutritionProgressService = nutritionProgressService;
         _userRecipeRepository = userRecipeRepository;
         _externalRecipeService = externalRecipeService;
+        _blobContainer = blobContainer;
+        _env = env;
     }
 
     public IActionResult SearchRecipes()
@@ -49,22 +57,38 @@ public class FoodEntriesController : Controller
     }
 
     [Authorize]
-    public async Task<IActionResult> Nutrition()
+    public async Task<IActionResult> NutritionSummary(string tab = "weekly")
     {
         if (_nutritionProgressService is null)
             return StatusCode(500, "NutritionProgressService not configured.");
 
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-
         if (string.IsNullOrWhiteSpace(userId))
             return Unauthorized();
 
         var today = DateOnly.FromDateTime(DateTime.Today);
+        var startDay = today.AddDays(-29);
+        var progress = await _nutritionProgressService.GetRangeProgressAsync(userId, startDay, today);
+        var allDays   = await _nutritionProgressService.GetDailyBreakdownAsync(userId, startDay, today);
 
-        var progress = await _nutritionProgressService.GetDailyProgressAsync(userId, today);
+        var todayData = allDays.FirstOrDefault(d => d.Day == today);
+        var todayBar = new NutritionBarInfoViewModel(
+            todayData?.Calories ?? 0, progress.Targets.Calories,
+            todayData?.Protein  ?? 0, progress.Targets.Protein,
+            todayData?.Fat      ?? 0, progress.Targets.Fat,
+            todayData?.Carbs    ?? 0, progress.Targets.Carbs);
 
-        return View(progress);
+        return View(new NutritionSummaryViewModel
+        {
+            ActiveTab    = tab,
+            DailyTargets = progress.Targets,
+            AllDays      = allDays,
+            TodayBar     = todayBar
+        });
     }
+
+
+
 
     [Route("/FoodEntries/Recipes")]
     public async Task<IActionResult> Recipes()
@@ -140,6 +164,10 @@ public class FoodEntriesController : Controller
         }
 
         Recipe recipe = ViewModelService.RecipeFromRecipeVM(newRecipeViewModel);
+        if (_blobContainer != null)
+            await recipe.SaveImageAsync(newRecipeViewModel.ImageFile, _blobContainer);
+        else if (_env != null)
+            await recipe.SaveImageAsync(newRecipeViewModel.ImageFile, _env.WebRootPath);
         _recipeRepository.CreateOrUpdate(recipe);
 
         User? user = await _registrationService.FindUserByClaimAsync(User);
@@ -210,8 +238,24 @@ public class FoodEntriesController : Controller
             return RedirectToAction("SearchRecipes");
         }
 
+        if (editedRecipeViewModel.RemoveImage || editedRecipeViewModel.ImageFile != null)
+            await Recipe.DeleteImageAsync(existing.ImageUrl, _blobContainer, _env?.WebRootPath);
+
+        if (editedRecipeViewModel.RemoveImage)
+            editedRecipeViewModel.ImageUrl = null;
+
+        Recipe updated = ViewModelService.EditRecipeVMToModel(existing, editedRecipeViewModel);
+
+        if (!editedRecipeViewModel.RemoveImage && editedRecipeViewModel.ImageFile != null)
+        {
+            if (_blobContainer != null)
+                await updated.SaveImageAsync(editedRecipeViewModel.ImageFile, _blobContainer);
+            else if (_env != null)
+                await updated.SaveImageAsync(editedRecipeViewModel.ImageFile, _env.WebRootPath);
+        }
+
         //updates the databse with the new and improved existing
-        _recipeRepository.CreateOrUpdate(ViewModelService.EditRecipeVMToModel(existing, editedRecipeViewModel));
+        _recipeRepository.CreateOrUpdate(updated);
         _context.SaveChanges();
 
         return RedirectToAction("Recipes");
@@ -231,6 +275,8 @@ public async Task<IActionResult> DeleteRecipe(int id)
 
     var recipe = await _recipeRepository.ReadRecipeWithIngredientsAsync(id);
     if (recipe == null) return NotFound();
+
+    await Recipe.DeleteImageAsync(recipe.ImageUrl, _blobContainer, _env?.WebRootPath);
 
     // Remove ingredients first
     _context.Set<Ingredient>().RemoveRange(recipe.Ingredients);

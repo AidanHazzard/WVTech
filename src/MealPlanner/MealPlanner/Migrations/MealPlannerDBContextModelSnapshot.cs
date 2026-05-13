@@ -101,6 +101,62 @@ namespace MealPlanner.Migrations
                     b.ToTable("IngredientBase");
                 });
 
+            modelBuilder.Entity("MealPlanner.Models.KrogerExport", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("ExportedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("KrogerExports");
+                });
+
+            modelBuilder.Entity("MealPlanner.Models.KrogerExportItem", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<float>("Amount")
+                        .HasColumnType("real");
+
+                    b.Property<int>("ExportId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Measurement")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Quantity")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Upc")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ExportId");
+
+                    b.ToTable("KrogerExportItems");
+                });
+
             modelBuilder.Entity("MealPlanner.Models.Meal", b =>
                 {
                     b.Property<int>("Id")
@@ -138,6 +194,40 @@ namespace MealPlanner.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("Meal");
+                });
+
+            modelBuilder.Entity("MealPlanner.Models.MealAutoRemovedIngredient", b =>
+                {
+                    b.Property<int>("MealId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CompletionDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("IngredientBaseId")
+                        .HasColumnType("int");
+
+                    b.Property<float>("Amount")
+                        .HasColumnType("real");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("DisplayName")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<int>("MeasurementId")
+                        .HasColumnType("int");
+
+                    b.HasKey("MealId", "CompletionDate", "IngredientBaseId");
+
+                    b.HasIndex("IngredientBaseId");
+
+                    b.HasIndex("MeasurementId");
+
+                    b.ToTable("MealAutoRemovedIngredient");
                 });
 
             modelBuilder.Entity("MealPlanner.Models.MealCompletion", b =>
@@ -210,6 +300,9 @@ namespace MealPlanner.Migrations
 
                     b.Property<int>("Fat")
                         .HasColumnType("int");
+
+                    b.Property<string>("ImageUrl")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -536,6 +629,10 @@ namespace MealPlanner.Migrations
                     b.Property<decimal?>("Weight")
                         .HasColumnType("decimal(18,2)");
 
+                    b.Property<string>("ZipCode")
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
+
                     b.Property<string>("age")
                         .HasColumnType("nvarchar(max)");
 
@@ -775,6 +872,17 @@ namespace MealPlanner.Migrations
                     b.Navigation("Measurement");
                 });
 
+            modelBuilder.Entity("MealPlanner.Models.KrogerExportItem", b =>
+                {
+                    b.HasOne("MealPlanner.Models.KrogerExport", "Export")
+                        .WithMany("Items")
+                        .HasForeignKey("ExportId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Export");
+                });
+
             modelBuilder.Entity("MealPlanner.Models.Meal", b =>
                 {
                     b.HasOne("MealPlanner.Models.User", "User")
@@ -784,6 +892,33 @@ namespace MealPlanner.Migrations
                         .IsRequired();
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("MealPlanner.Models.MealAutoRemovedIngredient", b =>
+                {
+                    b.HasOne("MealPlanner.Models.IngredientBase", "IngredientBase")
+                        .WithMany()
+                        .HasForeignKey("IngredientBaseId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("MealPlanner.Models.Meal", "Meal")
+                        .WithMany()
+                        .HasForeignKey("MealId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("MealPlanner.Models.Measurement", "Measurement")
+                        .WithMany()
+                        .HasForeignKey("MeasurementId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("IngredientBase");
+
+                    b.Navigation("Meal");
+
+                    b.Navigation("Measurement");
                 });
 
             modelBuilder.Entity("MealPlanner.Models.MealCompletion", b =>
@@ -1000,6 +1135,11 @@ namespace MealPlanner.Migrations
                         .HasForeignKey("UsersId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("MealPlanner.Models.KrogerExport", b =>
+                {
+                    b.Navigation("Items");
                 });
 
             modelBuilder.Entity("MealPlanner.Models.Recipe", b =>

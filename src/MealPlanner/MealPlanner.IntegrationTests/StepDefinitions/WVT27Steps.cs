@@ -25,6 +25,7 @@ public class WVT27Steps
     }
 
     [Given("{string} is on the pantry page")]
+    [When("{string} is on the pantry page")]
     public void GivenUserIsOnThePantryPage(string userName)
     {
         _driver.Navigate().GoToUrl($"{_baseUrl}/Shopping/Pantry");
@@ -169,9 +170,10 @@ public class WVT27Steps
             .FirstOrDefault(m => m.Name == measurement)
             ?? BDDSetup.Context.Set<Measurement>().Add(new Measurement { Name = measurement }).Entity;
 
+        var normalizedName = IngredientNameNormalizer.NormalizeKey(name);
         var ingredientBase = BDDSetup.Context.Set<IngredientBase>()
-            .FirstOrDefault(b => b.Name == name)
-            ?? BDDSetup.Context.Set<IngredientBase>().Add(new IngredientBase { Name = name }).Entity;
+            .FirstOrDefault(b => b.Name == normalizedName)
+            ?? BDDSetup.Context.Set<IngredientBase>().Add(new IngredientBase { Name = normalizedName }).Entity;
 
         user!.PantryItems.Add(new Ingredient
         {

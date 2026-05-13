@@ -118,6 +118,7 @@ public class WVT144Steps
     private void ClearTodaysMealsForUser(string userName)
     {
         var ctx = BDDSetup.Context;
+        ctx.ChangeTracker.Clear();
         var user = ctx.Set<User>().First(u => u.NormalizedEmail == $"{userName}@fakeemail.com".ToUpper());
         var today = DateTime.Today;
         var existing = ctx.Set<Meal>()
@@ -692,5 +693,63 @@ public class WVT144Steps
             var text = s.Text.Replace(" cal", "").Trim();
             return int.TryParse(text, out var n) ? n : 0;
         });
+    }
+
+    [Given("{string} has a nutrition target of {int} calories, {int}g protein, {int}g carbs, and {int}g fat")]
+    public void GivenUserHasFullNutritionTarget(string userName, int calories, int protein, int carbs, int fat)
+    {
+        var ctx = BDDSetup.Context;
+        var user = ctx.Set<User>().First(u => u.NormalizedEmail == $"{userName}@fakeemail.com".ToUpper());
+        var existing = ctx.Set<UserNutritionPreference>().FirstOrDefault(p => p.UserId == user.Id);
+        if (existing != null)
+        {
+            existing.CalorieTarget = calories;
+            existing.ProteinTarget = protein;
+            existing.CarbTarget = carbs;
+            existing.FatTarget = fat;
+        }
+        else
+        {
+            ctx.Add(new UserNutritionPreference
+            {
+                UserId = user.Id,
+                CalorieTarget = calories,
+                ProteinTarget = protein,
+                CarbTarget = carbs,
+                FatTarget = fat
+            });
+        }
+        ctx.SaveChanges();
+    }
+
+    [Given("{string} has a recipe named {string} with {int} calories, {int}g protein, {int}g carbs, and {int}g fat tagged {string}")]
+    public void GivenUserHasRecipeWithMacrosTagged(string userName, string recipeName, int calories, int protein, int carbs, int fat, string tagName)
+    {
+        var ctx = BDDSetup.Context;
+        var user = ctx.Set<User>().First(u => u.NormalizedEmail == $"{userName}@fakeemail.com".ToUpper());
+
+        var tag = ctx.Set<Tag>().FirstOrDefault(t => t.Name == tagName);
+        if (tag == null)
+        {
+            tag = new Tag { Name = tagName };
+            ctx.Add(tag);
+            ctx.SaveChanges();
+        }
+
+        var recipe = new Recipe
+        {
+            Name = recipeName,
+            Directions = "Test",
+            Calories = calories,
+            Protein = protein,
+            Carbs = carbs,
+            Fat = fat,
+            Tags = [tag]
+        };
+        ctx.Add(recipe);
+        ctx.SaveChanges();
+
+        ctx.Add(new UserRecipe { UserId = user.Id, RecipeId = recipe.Id, UserOwner = true, UserVote = UserVoteType.NoVote });
+        ctx.SaveChanges();
     }
 }

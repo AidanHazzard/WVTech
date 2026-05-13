@@ -156,6 +156,13 @@ async function recipeSearchHandler(event)
         $(".recipeRating", row).text(rating);
         $(".recipeRating", row).attr("style", `color: color-mix(in oklch, ${LOW_RATING_COLOR}, ${HIGH_RATING_COLOR} ${rating});`);
 
+        const hasImage = recipe.imageUrl && recipe.imageUrl.length > 0;
+        const thumbnailSrc = hasImage ? recipe.imageUrl : "/images/placeholder/no-image.svg";
+        $(".recipe-thumbnail", row)
+            .attr("src", thumbnailSrc)
+            .attr("alt", recipe.name)
+            .addClass(hasImage ? "recipe-has-image" : "recipe-no-image");
+
         if (recipe.matchedRestrictionTags && recipe.matchedRestrictionTags.length > 0)
         {
             recipe.matchedRestrictionTags.forEach(tag => {

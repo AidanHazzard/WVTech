@@ -12,7 +12,7 @@
     right: 0px;
     transform: translateY(-50%);
 
-    width: 120px;
+    width: 65px;
     height: 86.5%;
     background-color: #ff4d4d;
     border: none;
@@ -56,6 +56,21 @@
     padding-right: 130px;
 }
 
+/* Keep the amount number input wide enough to read on small screens */
+.input-wrapper input[type="number"] {
+    min-width: 60px;
+}
+
+/* Keep the measurement dropdown wide enough to show its selected value */
+.input-wrapper select {
+    min-width: 110px;
+}
+
+/* Keep the ingredient name input wide enough to be usable */
+.input-wrapper input[type="text"] {
+    min-width: 120px;
+}
+
 .instructionsBox{
     height: 400px;
 }
@@ -76,5 +91,50 @@
   display: flex;
   align-items: center;
   margin: 5px 0;
+}
+
+.file-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding: 0;
+  overflow: hidden;
+}
+
+.file-browse-btn {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 105%;
+  width: 100px;
+  border-radius: 19px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.image-preview {
+  display: none;
+  max-width: 200px;
+  max-height: 150px;
+  object-fit: cover;
+  margin-top: 8px;
+  border-radius: 12px;
+}
+
+.file-name-display {
+  padding-left: 112px;
+  padding-right: 68px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+}
+
+.file-remove-btn {
+  width: 56px;
+  height: 100%;
 }
 

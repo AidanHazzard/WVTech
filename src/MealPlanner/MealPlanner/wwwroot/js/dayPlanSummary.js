@@ -95,6 +95,33 @@ function initTagManager(formWrapper, availableTags) {
     });
 }
 
+async function regenerateSingleRecipe(mealId, recipeId, rowEl) {
+    try {
+        const response = await fetch(`/Meal/RegenerateRecipe?mealId=${mealId}&recipeId=${recipeId}`, {
+            method: 'POST'
+        });
+        if (!response.ok) throw new Error(`Server error ${response.status}`);
+        const data = await response.json();
+
+        if (data.noAlternative) {
+            rowEl.insertAdjacentHTML('afterend',
+                '<p class="text-warning small mt-1" data-regen-no-alternative>No alternative recipe available.</p>');
+            return;
+        }
+
+        const newRecipe = data.newRecipe;
+        rowEl.dataset.recipeId = newRecipe.id;
+        rowEl.dataset.recipeUrl = `/FoodEntries/Recipes/${newRecipe.id}`;
+        rowEl.querySelector('h4').textContent = newRecipe.name;
+        const calSpan = rowEl.querySelector('span.text-nowrap');
+        if (calSpan) calSpan.textContent = `${newRecipe.calories} cal`;
+        const regenBtn = rowEl.querySelector('[data-action="regenerate-recipe"]');
+        if (regenBtn) regenBtn.dataset.recipeId = newRecipe.id;
+    } catch (e) {
+        alert('Failed to regenerate recipe. Please try again.');
+    }
+}
+
 // Wire up buttons and init tag managers
 const availableTags = JSON.parse(document.getElementById('day-plan-summary').dataset.tags || '[]');
 
@@ -108,6 +135,20 @@ document.querySelectorAll('[data-action="cancel-regenerate"]').forEach(btn => {
 
 document.querySelectorAll('[id^="regenerate-form-"]').forEach(formWrapper => {
     initTagManager(formWrapper, availableTags);
+});
+
+document.getElementById('day-plan-summary').addEventListener('click', e => {
+    const btn = e.target.closest('[data-action="regenerate-recipe"]');
+    if (btn) {
+        const row = btn.closest('.mealRecipeItem');
+        regenerateSingleRecipe(btn.dataset.mealId, btn.dataset.recipeId, row);
+        return;
+    }
+
+    if (e.target.closest('.d-flex.gap-2.align-items-center')) return;
+
+    const row = e.target.closest('.mealRecipeItem');
+    if (row?.dataset.recipeUrl) location.href = row.dataset.recipeUrl;
 });
 
 document.querySelectorAll('[data-action="submit-regenerate"]').forEach(btn => {

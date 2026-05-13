@@ -61,8 +61,8 @@ public class ShoppingControllerTests
             _shoppingListServiceMock.Object,
             _pantryServiceMock.Object,
             null!,
+            null!,
             _registrationServiceMock.Object,
-            new Mock<IMealRepository>().Object,
             _context);
         _controller.ControllerContext = new ControllerContext
         {
@@ -95,7 +95,7 @@ public class ShoppingControllerTests
     }
 
     [Test]
-    public async Task AddPantryItem_WithValidModel_AddsPantryItemToUser()
+    public async Task AddPantryItem_WithValidModel_DelegatesToPantryService()
     {
         var model = new PantryItemViewModel { Name = "Milk", Amount = 2f, Measurement = "cups" };
         var built = new Ingredient
@@ -111,14 +111,7 @@ public class ShoppingControllerTests
 
         await _controller.AddPantryItem(model);
 
-        var user = await _context.Users
-            .Include(u => u.PantryItems)
-            .ThenInclude(i => i.IngredientBase)
-            .FirstAsync(u => u.Id == "user-1");
-
-        Assert.That(user.PantryItems, Has.Count.EqualTo(1));
-        Assert.That(user.PantryItems[0].DisplayName, Is.EqualTo("Milk"));
-        Assert.That(user.PantryItems[0].IngredientBase.Name, Is.EqualTo(IngredientNameNormalizer.NormalizeKey("Milk")));
+        _pantryServiceMock.Verify(s => s.AddPantryItem("user-1", built), Times.Once);
     }
 
     [Test]

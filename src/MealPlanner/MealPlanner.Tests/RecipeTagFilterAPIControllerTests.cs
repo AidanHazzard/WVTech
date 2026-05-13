@@ -142,6 +142,49 @@ public class RecipeTagFilterAPIControllerTests
     }
 
     [Test]
+    public async Task SearchRecipesByName_WithTag_ReturnsCorrectVotePercentage()
+    {
+        // Arrange — reproduces WVT-178: lazy Select re-evaluated after foreach loses VotePercentage
+        var repo = new Mock<IRecipeRepository>();
+        repo.Setup(r => r.GetRecipesByNameAndTag("Oat", "Breakfast"))
+            .Returns([new Recipe { Id = 5, Name = "Oatmeal Bowl", Directions = "" }]);
+
+        var urRepo = new Mock<IUserRecipeRepository>();
+        urRepo.Setup(r => r.GetRecipeVotePercentage(5)).ReturnsAsync(0.75f);
+
+        var controller = CreateController(recipeRepo: repo.Object, urRepo: urRepo.Object);
+
+        // Act
+        var result = (await controller.SearchRecipesByName("Oat", tag: "Breakfast")) as OkObjectResult;
+        var recipes = result?.Value as IEnumerable<RecipeDTO>;
+
+        // Assert
+        Assert.That(recipes?.First().VotePercentage, Is.EqualTo(0.75f));
+    }
+
+    [Test]
+    public async Task SearchRecipesByName_WithoutTag_ReturnsCorrectVotePercentage()
+    {
+        // Arrange — reproduces WVT-178: name-only path also has lazy Select bug when no external service
+        var repo = new Mock<IRecipeRepository>();
+        repo.Setup(r => r.GetRecipesByName("Oat"))
+            .Returns([new Recipe { Id = 7, Name = "Oatmeal Bowl", Directions = "" }]);
+
+        var urRepo = new Mock<IUserRecipeRepository>();
+        urRepo.Setup(r => r.GetRecipeVotePercentage(7)).ReturnsAsync(0.80f);
+
+        // No external service — keeps results lazy in name-only path
+        var controller = CreateController(recipeRepo: repo.Object, urRepo: urRepo.Object);
+
+        // Act
+        var result = (await controller.SearchRecipesByName("Oat")) as OkObjectResult;
+        var recipes = result?.Value as IEnumerable<RecipeDTO>;
+
+        // Assert
+        Assert.That(recipes?.First().VotePercentage, Is.EqualTo(0.80f));
+    }
+
+    [Test]
     public async Task SearchRecipesByName_WithoutTag_StillUsesGetRecipesByName()
     {
         // Arrange

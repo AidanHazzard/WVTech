@@ -233,4 +233,66 @@ public class ViewModelServiceTests
         // Assert
         Assert.That(result.Tags, Is.Empty);
     }
+
+    [Test]
+    public void RecipeFromRecipeVM_MapsImageUrl()
+    {
+        var vm = new RecipeViewModel
+        {
+            Name = "name",
+            Directions = "dir",
+            ImageUrl = "/images/recipes/test.png"
+        };
+
+        Recipe r = ViewModelService.RecipeFromRecipeVM(vm);
+
+        Assert.That(r.ImageUrl, Is.EqualTo("/images/recipes/test.png"));
+    }
+
+    [Test]
+    public void RecipeFromRecipeVM_ImageUrl_IsNullWhenVmHasNoImage()
+    {
+        var vm = new RecipeViewModel { Name = "name", Directions = "dir" };
+
+        Recipe r = ViewModelService.RecipeFromRecipeVM(vm);
+
+        Assert.That(r.ImageUrl, Is.Null);
+    }
+
+    [Test]
+    public void RecipeToRecipeVM_MapsImageUrl()
+    {
+        var recipe = new Recipe
+        {
+            Name = "name",
+            Directions = "dir",
+            ImageUrl = "/images/recipes/test.png"
+        };
+
+        RecipeViewModel vm = ViewModelService.RecipeToRecipeVM(recipe);
+
+        Assert.That(vm.ImageUrl, Is.EqualTo("/images/recipes/test.png"));
+    }
+
+    [Test]
+    public void EditRecipeVMToModel_MapsImageUrl()
+    {
+        var existing = new Recipe { Name = "name", Directions = "dir", ImageUrl = "/old.png" };
+        var vm = new RecipeViewModel { Name = "name", Directions = "dir", ImageUrl = "/new.png" };
+
+        Recipe result = ViewModelService.EditRecipeVMToModel(existing, vm);
+
+        Assert.That(result.ImageUrl, Is.EqualTo("/new.png"));
+    }
+
+    [Test]
+    public void EditRecipeVMToModel_ClearsImageUrl_WhenVmImageUrlIsNull()
+    {
+        var existing = new Recipe { Name = "name", Directions = "dir", ImageUrl = "/old.png" };
+        var vm = new RecipeViewModel { Name = "name", Directions = "dir", ImageUrl = null };
+
+        Recipe result = ViewModelService.EditRecipeVMToModel(existing, vm);
+
+        Assert.That(result.ImageUrl, Is.Null);
+    }
 }

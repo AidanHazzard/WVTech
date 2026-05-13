@@ -22,7 +22,7 @@ Feature: nutritionBar
     And 'bob' marks the meal as completed
     And 'bob' is on the page 'UserSettings/Nutrition'
     And 'bob' fills in the nutrition targets
-    And 'bob' is on the page 'FoodEntries/Nutrition'
+    And 'bob' is on the page 'FoodEntries/NutritionSummary'
     Then Meal Bars callories are at 20/40
     Then Meal Bars protien are at 30/50
     Then Meal Bars fats are at 40/60
