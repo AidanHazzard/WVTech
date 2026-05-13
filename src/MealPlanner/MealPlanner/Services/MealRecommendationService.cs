@@ -74,10 +74,7 @@ public class MealRecommendationService : IMealRecommendationService
     {
         var ctx = await BuildContextAsync(user.Id);
         var excludeIds = new HashSet<int>(excludeRecipeIds);
-        return ScoreAndRank(ctx.AllWithTags, ctx, excludeIds)
-            .Where(r => ctx.RestrictionNames.Count == 0
-                     || ctx.RestrictionNames.All(name => r.Tags.Any(t => t.Name == name)))
-            .FirstOrDefault();
+        return ScoreAndRank(ctx.AllWithTags, ctx, excludeIds).FirstOrDefault();
     }
 
     public async Task<List<Meal>> GetRecommendedMealsForUser(User user, DateTime mealDate, DayPlanConfigViewModel config)
@@ -111,9 +108,7 @@ public class MealRecommendationService : IMealRecommendationService
                 ? (int)Math.Round(weight * nutritionPrefs.FatTarget.Value)
                 : (int?)null;
 
-            IEnumerable<Recipe> pipeline = ScoreAndRank(ctx.AllWithTags, ctx, usedRecipeIds)
-                .Where(r => ctx.RestrictionNames.Count == 0
-                         || ctx.RestrictionNames.All(name => r.Tags.Any(t => t.Name == name)));
+            IEnumerable<Recipe> pipeline = ScoreAndRank(ctx.AllWithTags, ctx, usedRecipeIds);
 
             if (pref.TagIds.Count > 0)
                 pipeline = pipeline.OrderByDescending(r => r.Tags.Count(t => pref.TagIds.Contains(t.Id)));

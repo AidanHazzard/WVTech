@@ -171,4 +171,60 @@ public class RecipeScorerTests
 
         Assert.That(scorer.Score(recipe, ctx), Is.EqualTo(0f));
     }
+
+    // --- DietaryRestrictionFilter ---
+
+    [Test]
+    public void DietaryRestrictionFilter_NoRestrictions_AllowsAnyRecipe()
+    {
+        var recipe = new Recipe { Id = 1, Tags = [] };
+        var ctx = EmptyContext(restrictions: []);
+        var filter = new DietaryRestrictionFilter();
+
+        Assert.That(filter.Allow(recipe, ctx), Is.True);
+    }
+
+    [Test]
+    public void DietaryRestrictionFilter_RecipeHasMatchingTag_ReturnsTrue()
+    {
+        var recipe = new Recipe { Id = 1, Tags = [new Tag { Id = 1, Name = "Vegan" }] };
+        var ctx = EmptyContext(restrictions: ["Vegan"]);
+        var filter = new DietaryRestrictionFilter();
+
+        Assert.That(filter.Allow(recipe, ctx), Is.True);
+    }
+
+    [Test]
+    public void DietaryRestrictionFilter_RecipeMissingRequiredTag_ReturnsFalse()
+    {
+        var recipe = new Recipe { Id = 1, Tags = [] };
+        var ctx = EmptyContext(restrictions: ["Vegan"]);
+        var filter = new DietaryRestrictionFilter();
+
+        Assert.That(filter.Allow(recipe, ctx), Is.False);
+    }
+
+    [Test]
+    public void DietaryRestrictionFilter_MultipleRestrictions_RequiresAllTagsPresent()
+    {
+        var veganOnly = new Recipe { Id = 1, Tags = [new Tag { Id = 1, Name = "Vegan" }] };
+        var ctx = EmptyContext(restrictions: ["Vegan", "Gluten-Free"]);
+        var filter = new DietaryRestrictionFilter();
+
+        Assert.That(filter.Allow(veganOnly, ctx), Is.False);
+    }
+
+    [Test]
+    public void DietaryRestrictionFilter_AllRestrictionsPresent_ReturnsTrue()
+    {
+        var recipe = new Recipe
+        {
+            Id = 1,
+            Tags = [new Tag { Id = 1, Name = "Vegan" }, new Tag { Id = 2, Name = "Gluten-Free" }]
+        };
+        var ctx = EmptyContext(restrictions: ["Vegan", "Gluten-Free"]);
+        var filter = new DietaryRestrictionFilter();
+
+        Assert.That(filter.Allow(recipe, ctx), Is.True);
+    }
 }

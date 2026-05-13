@@ -130,6 +130,7 @@ builder.Services.AddScoped<IMealRecommendationService, MealRecommendationService
 builder.Services.AddScoped<IRecipeScorer, UpvotePriorityScorer>();
 builder.Services.AddScoped<IRecipeScorer, VotePercentageScorer>();
 builder.Services.AddScoped<IRecipeFilter, DownVoteFilter>();
+builder.Services.AddScoped<IRecipeFilter, DietaryRestrictionFilter>();
 builder.Services.AddScoped<ThemeFilter>();
 builder.Services.AddScoped<ShoppingListService>();
 builder.Services.AddScoped<IShoppingListService>(sp => sp.GetRequiredService<ShoppingListService>());

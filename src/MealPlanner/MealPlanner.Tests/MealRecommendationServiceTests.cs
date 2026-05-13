@@ -58,7 +58,7 @@ public class MealRecommendationServiceTests
             _nutritionRepoMock.Object,
             _dietaryRestrictionRepoMock.Object,
             scorers: [new UpvotePriorityScorer(), new VotePercentageScorer()],
-            filters: [new DownVoteFilter()]);
+            filters: [new DownVoteFilter(), new DietaryRestrictionFilter()]);
     }
 
     [Test]
