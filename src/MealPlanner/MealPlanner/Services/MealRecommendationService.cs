@@ -54,7 +54,7 @@ public class MealRecommendationService : IMealRecommendationService
         RecommendationContext ctx,
         HashSet<string> usedKeys)
     {
-        var streamResults = await Task.WhenAll(_streams.Select(s => s.GetRankedCandidatesAsync(ctx)));
+        var streamResults = _streams.Select(s => s.GetRankedCandidatesAsync(ctx).Result).ToList();
 
         var seenKeys = new HashSet<string>();
         var candidates = new List<Recipe>();

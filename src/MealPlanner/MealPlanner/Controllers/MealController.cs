@@ -4,7 +4,6 @@ using MealPlanner.Models;
 using MealPlanner.Services;
 using MealPlanner.ViewModels;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -21,6 +20,7 @@ public class MealController : Controller
     private readonly ITagRepository _tagRepo;
     private readonly IMealRecommendationService? _recommendationService;
     private readonly IPantryService? _pantryService;
+    private readonly IExternalRecipeService? _externalRecipeService;
 
     public MealController(
         IRegistrationService registrationService,
@@ -29,7 +29,8 @@ public class MealController : Controller
         MealPlannerDBContext context,
         ITagRepository tagRepo,
         IMealRecommendationService? mealRecommendationService = null,
-        IPantryService? pantryService = null)
+        IPantryService? pantryService = null,
+        IExternalRecipeService? externalRecipeService = null)
     {
         _registrationService = registrationService;
         _recipeRepo = recipeRepo;
@@ -38,6 +39,7 @@ public class MealController : Controller
         _tagRepo = tagRepo;
         _recommendationService = mealRecommendationService;
         _pantryService = pantryService;
+        _externalRecipeService = externalRecipeService;
     }
 
     [HttpGet]
@@ -194,7 +196,7 @@ public class MealController : Controller
 
         var selectedDate = new DateTime(DateTime.Today.Year, model.SelectedMonth, model.SelectedDay);
 
-        var preference = new ViewModels.MealPreferenceViewModel
+        var preference = new MealPreferenceViewModel
         {
             Title = model.Title.Trim(),
             Size = model.Size,
@@ -203,7 +205,7 @@ public class MealController : Controller
         };
         await ResolveCustomTagNamesAsync([preference]);
 
-        var config = new ViewModels.DayPlanConfigViewModel
+        var config = new DayPlanConfigViewModel
         {
             MealCount = 1,
             SelectedMonth = model.SelectedMonth,
@@ -222,7 +224,7 @@ public class MealController : Controller
     }
 
     [HttpPost]
-    public async Task<IActionResult> GenerateDayPlan(ViewModels.DayPlanConfigViewModel model)
+    public async Task<IActionResult> GenerateDayPlan(DayPlanConfigViewModel model)
     {
         var user = await _registrationService.FindUserByClaimAsync(User);
         if (user == null) return Challenge();
@@ -243,7 +245,7 @@ public class MealController : Controller
     }
 
     [HttpPost]
-    public async Task<IActionResult> RegenerateMeal(int mealId, ViewModels.MealPreferenceViewModel preferences)
+    public async Task<IActionResult> RegenerateMeal(int mealId, MealPreferenceViewModel preferences)
     {
         var user = await _registrationService.FindUserByClaimAsync(User);
         if (user == null) return Challenge();
@@ -352,11 +354,16 @@ public class MealController : Controller
         DateTime selectedDate = DateTime.TryParse(date, out var parsed) ? parsed.Date : DateTime.Today;
         var meals = await _mealRepo.GetMealsByIdsAsync(generatedIds);
 
-        var vm = new ViewModels.DayPlanSummaryViewModel
+        foreach(var meal in meals)
+        {
+            await meal.Recipes.LoadExternalRecipesAsync(_externalRecipeService);
+        }
+
+        var vm = new DayPlanSummaryViewModel
         {
             Date = selectedDate,
             AvailableTags = await _tagRepo.GetTagsByPopularityAsync(),
-            Meals = meals.Select(m => new ViewModels.DayPlanMealViewModel
+            Meals = meals.Select(m => new DayPlanMealViewModel
             {
                 MealId = m.Id,
                 Title = m.Title ?? string.Empty,
@@ -610,7 +617,7 @@ public class MealController : Controller
             : RedirectToAction("PlannerHome", "Meal", new { date });
     }
 
-    private async Task ResolveCustomTagNamesAsync(IEnumerable<ViewModels.MealPreferenceViewModel> preferences)
+    private async Task ResolveCustomTagNamesAsync(IEnumerable<MealPreferenceViewModel> preferences)
     {
         foreach (var pref in preferences)
         {
