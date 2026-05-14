@@ -1,5 +1,6 @@
 using MealPlanner.Models;
 using MealPlanner.Services;
+using MealPlanner.Services.Recommendation;
 using MealPlanner.DAL.Abstract;
 using MealPlanner.DAL.Concrete;
 using MealPlanner.Filters;
@@ -125,7 +126,16 @@ builder.Services.AddScoped<INutritionProgressService, NutritionProgressService>(
 builder.Services.AddScoped<ILoginService, LoginService>();
 builder.Services.AddScoped<IRegistrationService, RegistrationService>();
 builder.Services.AddScoped<IUserSettingsService, UserSettingsService>();
+builder.Services.AddScoped<IRecommendationStream, LocalRecipeStream>();
+builder.Services.AddScoped<IRecommendationStream, ExternalRecipeStream>();
 builder.Services.AddScoped<IMealRecommendationService, MealRecommendationService>();
+builder.Services.AddScoped<IRecipeScorer, UpvotePriorityScorer>();
+builder.Services.AddScoped<IRecipeScorer, VotePercentageScorer>();
+builder.Services.AddScoped<IRecipeScorer, UserPreferredTagScorer>();
+builder.Services.AddScoped<IRecipeScorer, MealPreferredTagScorer>();
+builder.Services.AddScoped<IRecipeFilter, DownVoteFilter>();
+builder.Services.AddScoped<IRecipeFilter, DietaryRestrictionFilter>();
+builder.Services.AddScoped<IRecipeFilter, PreferredTagFilter>();
 builder.Services.AddScoped<ThemeFilter>();
 builder.Services.AddScoped<ShoppingListService>();
 builder.Services.AddScoped<IShoppingListService>(sp => sp.GetRequiredService<ShoppingListService>());
