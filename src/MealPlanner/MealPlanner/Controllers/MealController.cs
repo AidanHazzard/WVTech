@@ -354,9 +354,18 @@ public class MealController : Controller
         DateTime selectedDate = DateTime.TryParse(date, out var parsed) ? parsed.Date : DateTime.Today;
         var meals = await _mealRepo.GetMealsByIdsAsync(generatedIds);
 
+        var mealRecipes = meals.SelectMany(m => m.Recipes).ToList();
+        await mealRecipes.LoadExternalRecipesAsync(_externalRecipeService);
+
         foreach(var meal in meals)
         {
-            await meal.Recipes.LoadExternalRecipesAsync(_externalRecipeService);
+            for (int i = 0; i < meal.Recipes.Count; i++)
+            {
+                if (meal.Recipes[i].ExternalUri.IsNullOrEmpty()) continue;
+                var external = mealRecipes.Find(r => r.ExternalUri == meal.Recipes[i].ExternalUri);
+                if (external == null) continue;
+                meal.Recipes[i] = external;
+            }
         }
 
         var vm = new DayPlanSummaryViewModel
@@ -621,6 +630,7 @@ public class MealController : Controller
     {
         foreach (var pref in preferences)
         {
+            var titleTags = pref.Title?.Split(" ") ?? null;
             foreach (var name in new[] { pref.CustomTagName, pref.Title }
                 .Where(n => !string.IsNullOrWhiteSpace(n)))
             {
