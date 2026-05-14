@@ -55,20 +55,8 @@ public class HomeController : Controller
                 : DateTime.Today;
 
         var meals = await _mealRepo.GetUserMealsByDateWithIngredientsAsync(user, selectedDate);
-
-        var mealRecipes = meals.SelectMany(m => m.Recipes).ToList();
-        await mealRecipes.LoadExternalRecipesAsync(_externalRecipeService);
-
-        foreach(var meal in meals)
-        {
-            for (int i = 0; i < meal.Recipes.Count; i++)
-            {
-                if (meal.Recipes[i].ExternalUri.IsNullOrEmpty()) continue;
-                var external = mealRecipes.Find(r => r.ExternalUri == meal.Recipes[i].ExternalUri);
-                if (external == null) continue;
-                meal.Recipes[i] = external;
-            }
-        }
+        
+        await meals.LoadExternalRecipesAsync(_externalRecipeService);
 
         var pantryMatchIds = _pantryService.GetMealPantryMatchIds(user.Id, meals);
 
@@ -78,9 +66,6 @@ public class HomeController : Controller
             if (_pantryService.HasAutoRemovedIngredients(meal.Id, selectedDate))
                 autoRemovedIds.Add(meal.Id);
         }
-
-        foreach (var meal in meals)
-            await meal.Recipes.LoadExternalRecipesAsync(_externalRecipeService);
 
         var nutrition = await _nutritionProgressService.GetDailyProgressAsync(
             user.Id,
