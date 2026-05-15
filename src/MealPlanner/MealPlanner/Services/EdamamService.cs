@@ -73,6 +73,60 @@ public class EdamamService:IExternalRecipeService
             }).FirstOrDefault();
     }
 
+    public async Task<IEnumerable<Recipe>> SearchByContextAsync(ExternalSearchQuery query)
+    {
+        if (!query.HasAnyCriteria) return [];
+
+        var parts = new List<string>
+        {
+            "type=any",
+            $"app_id={_appId}",
+            $"app_key={_apiKey}"
+        };
+
+        if (!string.IsNullOrWhiteSpace(query.FreeText))
+            parts.Add($"q={WebUtility.UrlEncode(query.FreeText)}");
+
+        if (query.CaloriesMin.HasValue || query.CaloriesMax.HasValue)
+            parts.Add($"calories={query.CaloriesMin ?? 0}-{query.CaloriesMax ?? 99999}");
+
+        if (query.ProteinMin.HasValue || query.ProteinMax.HasValue)
+            parts.Add($"nutrients%5BPROCNT%5D={query.ProteinMin ?? 0}-{query.ProteinMax ?? 99999}");
+
+        if (query.CarbsMin.HasValue || query.CarbsMax.HasValue)
+            parts.Add($"nutrients%5BCHOCDF%5D={query.CarbsMin ?? 0}-{query.CarbsMax ?? 99999}");
+
+        if (query.FatMin.HasValue || query.FatMax.HasValue)
+            parts.Add($"nutrients%5BFAT%5D={query.FatMin ?? 0}-{query.FatMax ?? 99999}");
+
+        foreach (var h in query.HealthFilters)
+            parts.Add($"health={WebUtility.UrlEncode(h)}");
+
+        string endpoint = $"recipes/v2?{string.Join("&", parts)}";
+
+        HttpResponseMessage response = await _httpClient.GetAsync(endpoint);
+        if (!response.IsSuccessStatusCode)
+            throw new Exception($"Error accessing Edamam Recipe Search API: {response.StatusCode}");
+
+        string responseBody = await response.Content.ReadAsStringAsync();
+        EdamamRecipeSearchResponse? edamamResponse = JsonSerializer.Deserialize<EdamamRecipeSearchResponse>(
+            responseBody, _responseDeserializerOptions);
+
+        return edamamResponse?.Hits.Select(e => new Recipe
+        {
+            Name = e.Recipe.Label,
+            ExternalUri = e.Recipe.Uri,
+            Directions = "",
+            Calories = (int?) e.Recipe.TotalNutrients?["ENERC_KCAL"]?.Quantity ?? 0,
+            Protein  = (int?) e.Recipe.TotalNutrients?["PROCNT"]?.Quantity ?? 0,
+            Carbs    = (int?) e.Recipe.TotalNutrients?["CHOCDF"]?.Quantity ?? 0,
+            Fat      = (int?) e.Recipe.TotalNutrients?["FAT"]?.Quantity ?? 0,
+            ImageUrl = e.Recipe.Image,
+            Tags = [],
+            Ingredients = ParseIngredientsFromResponse(e.Recipe.Ingredients ?? [])
+        }) ?? [];
+    }
+
     public async Task<IEnumerable<Recipe>> GetExternalRecipesByURIs(IEnumerable<string> uris)
     {
         var uriList = uris.ToList();

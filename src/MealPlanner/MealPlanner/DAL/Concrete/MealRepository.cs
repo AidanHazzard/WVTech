@@ -231,6 +231,7 @@ public class MealRepository : Repository<Meal>, IMealRepository
             .FirstOrDefaultAsync(m => m.Id == id);
     }
 
+    // Get multiple meals, include recipes
     public async Task<List<Meal>> GetMealsByIdsAsync(IEnumerable<int> ids)
     {
         var idSet = ids.ToHashSet();
