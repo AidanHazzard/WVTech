@@ -288,7 +288,8 @@ public class WVT28Steps
             catch (NoSuchElementException) { return null; }
         });
         Assert.That(btn, Is.Not.Null, $"Modal button '{buttonId}' not found");
-        btn!.Click();
+        ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].scrollIntoView(true);", btn!);
+        ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].click();", btn!);
     }
 
     // Clicks a modal button and waits for the resulting form-submit navigation to complete.
