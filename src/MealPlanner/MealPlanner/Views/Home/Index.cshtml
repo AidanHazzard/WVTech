@@ -1,173 +1,293 @@
-﻿@model MealPlanner.ViewModels.PlannerHomeViewModel
+@model MealPlanner.ViewModels.PlannerHomeViewModel
 
 <link rel="stylesheet" href="~/css/index.css" asp-append-version="true" />
 <p id="modelsDate" hidden>@Model.SelectedDate</p>
 
-
-<div class="back1Dates">
-    <button class="Arrow" id="ALeft">
-        <img src="~/images/icons/arrow.png" alt="arrow" draggable="false">
-    </button>
-
-    <div id="back1DatesInnerContainer">
-
-    </div>
-
-    <button class="Arrow" id="ARight">
-        <img src="~/images/icons/arrow.png" alt="arrow" draggable="false">
-    </button>
+<!-- Date Strip -->
+<div class="date-strip">
+    <button class="date-strip-arrow" id="ALeft" type="button" aria-label="Scroll left">&#8249;</button>
+    <div class="date-strip-inner" id="back1DatesInnerContainer"></div>
+    <button class="date-strip-arrow" id="ARight" type="button" aria-label="Scroll right">&#8250;</button>
 </div>
 
-<div class="back1 backHasButton">
-    <h1 class="back1Title">
-        Meals On @Model.SelectedDate.ToString("MMM")/@Model.SelectedDate.Day/@Model.SelectedDate.ToString("yy")
+<!-- Page Heading -->
+<div class="home-heading">
+    <span class="home-date-label">@Model.SelectedDate.ToString("dddd, MMMM d")</span>
+    <h1 class="home-title">
+        @(Model.SelectedDate.Date == DateTime.Today ? "Today's meals." : Model.SelectedDate.ToString("dddd") + "'s meals.")
     </h1>
+</div>
 
-    <div class="row align-items-center">
-        <div class="col d-flex justify-content-center flex-wrap gap-3">
+<!-- Meal Cards Grid -->
+@{
+    var slotLabels = new[] { "Breakfast", "Lunch", "Dinner" };
+    int totalSlots = Math.Max(3, Model.Meals.Count);
+}
+<div class="meal-cards-row">
+    <button type="button" class="day-nav-arrow" id="dayNavPrev" aria-label="Previous day">
+        <i class="ti ti-chevron-left"></i>
+    </button>
+    <div class="meal-cards-grid">
+    @for (int slot = 0; slot < totalSlots; slot++)
+    {
+        bool hasMeal = slot < Model.Meals.Count;
+        string slotLabel = slot < slotLabels.Length ? slotLabels[slot] : "Meal " + (slot + 1);
 
-        @if (@Model.Meals.Count == 0)
+        if (hasMeal)
         {
-            <div class="back2">
-                <h2 class="back1Title">You are yet to add a meal to this day.</h2>
-            </div>
-        }
+            var meal = Model.Meals[slot];
+            var firstImage = meal.Recipes.FirstOrDefault(r => !string.IsNullOrEmpty(r.ImageUrl))?.ImageUrl;
+            int totalCals = meal.Recipes.Sum(r => r.Calories);
 
-        @foreach (Meal meal in Model.Meals)
-        {
-            <div class="mealCardWrapper">
+            <div class="meal-card meal-card--filled @(meal.IsCompleted ? "meal-card--checked" : "")" data-edit-url="@Url.Action("EditMeal", "Meal", new { id = meal.Id })" data-repeat="@(meal.RepeatRule == "Weekly" ? "true" : "false")">
 
-                <!-- Delete meal button (red X in top-right corner of card) -->
-                <form asp-controller="Meal" asp-action="DeleteMeal" method="post" class="mealDeleteForm">
+                <!-- Edit overlay (hover / tap) -->
+                <div class="meal-card-overlay">
+                    <button type="button" class="meal-card-edit-btn">
+                        <i class="ti ti-edit" style="font-size:14px"></i>
+                        Edit meal
+                    </button>
+                </div>
+
+                <!-- Delete button (× top-right) -->
+                <form asp-controller="Meal" asp-action="DeleteMeal" method="post" class="meal-card-delete-form">
                     @Html.AntiForgeryToken()
                     <input type="hidden" name="id" value="@meal.Id" />
                     <input type="hidden" name="date" value="@Model.SelectedDate.ToString("yyyy-MM-dd")" />
                     <input type="hidden" name="source" value="home" />
-                    <button type="submit" class="mealDeleteButton" title="Delete meal">✕</button>
+                    <button type="submit" class="meal-card-delete-btn" title="Remove meal">✕</button>
                 </form>
 
-                <!-- Meal card container -->
-                <div class="mealCardInner">
+                <!-- Complete button (✓ top-right, left of delete) -->
+                <button type="button" class="meal-card-complete-btn" title="@(meal.IsCompleted ? "Mark as not eaten" : "Mark as eaten")">
+                    <i class="ti ti-check"></i>
+                </button>
 
-                    <!-- Checkbox (toggles completion) -->
-                    <form asp-controller="Meal" asp-action="ToggleMealCompleted" method="post" class="mealCompleteForm"
-                          data-has-pantry-match="@(Model.MealPantryMatchIds.Contains(meal.Id) ? "true" : "false")"
-                          data-has-auto-removed="@(Model.MealAutoRemovedIds.Contains(meal.Id) ? "true" : "false")">
-                        @Html.AntiForgeryToken()
-                        <input type="hidden" name="id" value="@meal.Id" />
-                        <input type="hidden" name="date" value="@Model.SelectedDate.ToString("yyyy-MM-dd")" />
-                        <input type="hidden" name="source" value="home" />
-                        <input type="hidden" name="removePantry" value="false" class="removePantryInput" />
-                        <input type="hidden" name="restorePantry" value="false" class="restorePantryInput" />
+                <!-- Completion toggle (hidden, retained for pantry JS) -->
+                <form asp-controller="Meal" asp-action="ToggleMealCompleted" method="post" class="mealCompleteForm"
+                      style="display:none"
+                      data-has-pantry-match="@(Model.MealPantryMatchIds.Contains(meal.Id) ? "true" : "false")"
+                      data-has-auto-removed="@(Model.MealAutoRemovedIds.Contains(meal.Id) ? "true" : "false")">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="id" value="@meal.Id" />
+                    <input type="hidden" name="date" value="@Model.SelectedDate.ToString("yyyy-MM-dd")" />
+                    <input type="hidden" name="source" value="home" />
+                    <input type="hidden" name="removePantry" value="false" class="removePantryInput" />
+                    <input type="hidden" name="restorePantry" value="false" class="restorePantryInput" />
+                    <input type="checkbox" name="isCompleted" value="true" class="MealCheckBox"
+                           @(meal.IsCompleted ? "checked" : null) />
+                </form>
 
-                        <input type="checkbox"
-                               name="isCompleted"
-                               value="true"
-                               class="MealCheckBox"
-                               @(meal.IsCompleted ? "checked" : null) />
-                    </form>
-
-                    <!-- Meal card button (opens the meal view) -->
-                    <form asp-controller="Meal" asp-action="ViewMeal" method="get" class="mealViewForm">
-                        <input type="hidden" name="id" value="@meal.Id" />
-
-                        <button type="submit" class="imageButton mealButton">
-                            @{
-                                var sortedRecipes = meal.Recipes
-                                    .OrderByDescending(r => r.Calories)
-                                    .ToList();
-                            }
-                            
-                            <!-- Recipe image collage -->
-                            @if (sortedRecipes.Any())
+                <!-- Image area → ViewMeal -->
+                <form asp-controller="Meal" asp-action="ViewMeal" method="get" class="meal-card-view-form">
+                    <input type="hidden" name="id" value="@meal.Id" />
+                    <button type="submit" class="meal-card-image-btn">
+                        @{
+                            var recipes = meal.Recipes;
+                            int recipeCount = recipes.Count;
+                            // Slots: 1→1col, 2→2col, 3→3col, 4→2×2, 5+→2×2 with overflow cell
+                            int displaySlots = recipeCount <= 3 ? recipeCount : 4;
+                            int extraCount   = recipeCount > 4 ? recipeCount - 4 : 0;
+                            // Grid class driven by slot count
+                            string gridClass = displaySlots switch {
+                                2 => "meal-img-grid--2",
+                                3 => "meal-img-grid--3",
+                                >= 4 => "meal-img-grid--4",
+                                _ => ""
+                            };
+                        }
+                        @if (recipeCount <= 1)
+                        {
+                            // Single recipe or no recipes — existing behaviour
+                            @if (firstImage != null)
                             {
-                                @for(int i=0; i<sortedRecipes.Count; i++)
-                                {
-                                    Recipe r = sortedRecipes[i];
-                                    bool rHasImage = !string.IsNullOrEmpty(r.ImageUrl);
-                                    string rSrc = rHasImage ? r.ImageUrl! : "/images/placeholder/no-image.svg";
-                                    <!-- Even horizontally splits, odd vertically, last in list fills rest -->
-                                    if(i== sortedRecipes.Count-1)
-                                    {
-                                        <div class="recipe-collage-full">
-                                            <img src="@rSrc"
-                                                alt="@r.Name"
-                                                data-calories="@r.Calories"
-                                                data-recipe-id="@r.Id"
-                                                class="recipe-collage-img @(rHasImage ? "recipe-has-image" : "recipe-no-image")" />
-                                        </div>
-                                    }
-                                    else if(i%2==0)
-                                    {
-                                        <div class="recipe-collage-left-half">
-                                            <img src="@rSrc"
-                                                alt="@r.Name"
-                                                data-calories="@r.Calories"
-                                                data-recipe-id="@r.Id"
-                                                class="recipe-collage-img @(rHasImage ? "recipe-has-image" : "recipe-no-image")" />
-                                        </div>
-                                        @:<div class="recipe-collage-right-half">
-                                    }
-                                    else
-                                    {
-                                        <div class="recipe-collage-vert-half">
-                                            <img src="@rSrc"
-                                                alt="@r.Name"
-                                                data-calories="@r.Calories"
-                                                data-recipe-id="@r.Id"
-                                                class="recipe-collage-img @(rHasImage ? "recipe-has-image" : "recipe-no-image")" />
-                                        </div>
-                                        @:<div class="recipe-collage-vert-half">
-                                    }
-                                }
-                                <!-- Clean up hanging tags (needed for nesting DOM elements with loops) -->
-                                @for(int i=0; i<sortedRecipes.Count-1; i++)
-                                {
-                                    @:</div>
-                                }
+                                <img src="@firstImage" alt="@meal.Title" class="meal-card-img" />
                             }
                             else
                             {
-                                <img src="~/images/placeholder/apples.avif"
-                                     alt="apples"
-                                     class="fullImage">
+                                <div class="meal-card-placeholder">
+                                    <i class="ti ti-tools-kitchen-2" style="font-size:36px"></i>
+                                </div>
                             }
-
-                            <div class="buttonGreen noBevelTop">
-                                <h2 class="buttonText">@meal.Title</h2>
+                        }
+                        else
+                        {
+                            <div class="meal-img-grid @gridClass">
+                                @for (int i = 0; i < displaySlots; i++)
+                                {
+                                    bool isOverflow = i == 3 && extraCount > 0;
+                                    if (isOverflow)
+                                    {
+                                        <div class="meal-img-cell meal-img-cell--more">
+                                            <span class="meal-img-more-label">+@extraCount more</span>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        var cellImage = recipes[i].ImageUrl;
+                                        if (!string.IsNullOrEmpty(cellImage))
+                                        {
+                                            <div class="meal-img-cell">
+                                                <img src="@cellImage" alt="@recipes[i].Name" class="meal-img-cell-img" />
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            <div class="meal-img-cell meal-img-cell--placeholder">
+                                                <i class="ti ti-tools-kitchen-2" style="font-size:20px; color:#2EC99A"></i>
+                                            </div>
+                                        }
+                                    }
+                                }
                             </div>
-                        </button>
-                    </form>
+                        }
+                        <div class="meal-card-dim-overlay"></div>
+                    </button>
+                </form>
 
+                <!-- Footer -->
+                <div class="meal-card-footer meal-card-footer--filled">
+                    <div class="meal-card-info">
+                        <span class="meal-card-name">@meal.Title</span>
+                        <span class="meal-card-calories">@totalCals kcal</span>
+                    </div>
+                    <span class="meal-card-badge meal-card-badge--added">Added</span>
+                    <span class="meal-card-badge meal-card-badge--checked">
+                        <i class="ti ti-check" style="font-size:11px"></i>
+                    </span>
                 </div>
 
             </div>
         }
+        else
+        {
+            <div class="meal-card meal-card--empty">
 
+                <!-- Subtle delete button top-right -->
+                <button type="button" class="meal-card-empty-delete-btn" title="Remove this slot">
+                    <i class="ti ti-x"></i>
+                </button>
+
+                <!-- Normal card content -->
+                <div class="meal-card-normal-content">
+                    <div class="meal-card-image-area">
+                        <form asp-controller="Meal" asp-action="SelectMeal" method="get" class="meal-card-add-form">
+                            <input type="hidden" name="date" value="@Model.SelectedDate.ToString("yyyy-MM-dd")" />
+                            <button type="submit" class="meal-card-add-btn" title="Add @slotLabel">
+                                <span class="meal-card-add-circle">+</span>
+                                <span class="meal-card-add-label">Add @slotLabel</span>
+                            </button>
+                        </form>
+                    </div>
+                    <div class="meal-card-footer">
+                        <div class="meal-card-info">
+                            <span class="meal-card-name">@slotLabel</span>
+                            <span class="meal-card-calories">—</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Inline confirmation (hidden until delete clicked) -->
+                <div class="meal-card-confirm-content" style="display:none">
+                    <p class="meal-card-confirm-msg">Remove this meal slot?</p>
+                    <div class="meal-card-confirm-btns">
+                        <button type="button" class="meal-card-confirm-cancel">Cancel</button>
+                        <button type="button" class="meal-card-confirm-remove">Remove</button>
+                    </div>
+                </div>
+
+            </div>
+        }
+    }
+    </div><!-- /.meal-cards-grid -->
+    <button type="button" class="day-nav-arrow" id="dayNavNext" aria-label="Next day">
+        <i class="ti ti-chevron-right"></i>
+    </button>
+</div><!-- /.meal-cards-row -->
+
+<!-- All-slots-removed empty state (shown by JS when grid is emptied) -->
+<div id="meal-empty-state" style="display:none">
+    <div class="meal-slots-empty">
+        <i class="ti ti-calendar-off" style="font-size:32px; color:#555;"></i>
+        <p class="meal-slots-empty-text">No meals planned for this day</p>
+        <form asp-controller="Meal" asp-action="SelectMeal" method="get">
+            <input type="hidden" name="date" value="@Model.SelectedDate.ToString("yyyy-MM-dd")" />
+            <button type="submit" class="meal-slots-empty-btn">+ Add a meal</button>
+        </form>
     </div>
-
-        <div class="back2">
-            <h2 class="back1Title">Statistics</h2>
-
-            @if (Model.NutritionBar != null)
-            {
-                <partial name="_NutritionBarDisplayPartial" model="Model.NutritionBar" />
-            }
-            else
-            {
-                <img src="~/images/placeholder/nutrients.png" alt="nutrients" class="imageFit">
-            }
-        </div>
-    </div>
-
-    <form asp-controller="Meal" asp-action="SelectMeal" method="get">
-        <input type="hidden" name="date" value="@Model.SelectedDate.ToString("yyyy-MM-dd")" />
-        <button class="buttonBlue">
-            <h2 class="buttonText">Select A Meal</h2>
-        </button>
-    </form>
 </div>
 
+<!-- Nutrition Card -->
+<div class="nutrition-card">
+    <div class="nutrition-card-header">
+        <span class="nutrition-card-title">Today's nutrition</span>
+        @if (Model.NutritionBar != null)
+        {
+            <span class="nutrition-card-cal">@Model.NutritionBar.CaloriesCurrent / @Model.NutritionBar.CaloriesMax kcal</span>
+        }
+    </div>
+
+    @if (Model.NutritionBar != null)
+    {
+        var nb = Model.NutritionBar;
+        <div class="nutrition-row">
+            <span class="nutrition-row-label" style="color: var(--macro-calories);">Calories</span>
+            <div class="nutrition-row-bar">
+                <div class="nutrition-row-fill" style="width: @nb.CaloriesAverage%; background-color: var(--macro-calories);"></div>
+            </div>
+            <span class="nutrition-row-value">@nb.CaloriesCurrent / @nb.CaloriesMax</span>
+        </div>
+        <div class="nutrition-row">
+            <span class="nutrition-row-label" style="color: var(--macro-protein);">Protein</span>
+            <div class="nutrition-row-bar">
+                <div class="nutrition-row-fill" style="width: @nb.ProteinAverage%; background-color: var(--macro-protein);"></div>
+            </div>
+            <span class="nutrition-row-value">@nb.ProteinCurrent / @nb.ProteinMax g</span>
+        </div>
+        <div class="nutrition-row">
+            <span class="nutrition-row-label" style="color: var(--macro-fats);">Fats</span>
+            <div class="nutrition-row-bar">
+                <div class="nutrition-row-fill" style="width: @nb.FatsAverage%; background-color: var(--macro-fats);"></div>
+            </div>
+            <span class="nutrition-row-value">@nb.FatsCurrent / @nb.FatsMax g</span>
+        </div>
+        <div class="nutrition-row">
+            <span class="nutrition-row-label" style="color: var(--macro-carbs);">Carbs</span>
+            <div class="nutrition-row-bar">
+                <div class="nutrition-row-fill" style="width: @nb.CarbsAverage%; background-color: var(--macro-carbs);"></div>
+            </div>
+            <span class="nutrition-row-value">@nb.CarbsCurrent / @nb.CarbsMax g</span>
+        </div>
+    }
+    else
+    {
+        <p style="color: var(--muted-text); font-size: 13px; margin: 0;">No nutrition data available.</p>
+    }
+</div>
+
+<!-- CTA: Select a meal -->
+<form asp-controller="Meal" asp-action="SelectMeal" method="get" class="cta-select-meal-form">
+    <input type="hidden" name="date" value="@Model.SelectedDate.ToString("yyyy-MM-dd")" />
+    <button type="submit" class="cta-select-meal">
+        <span class="cta-select-meal-icon">+</span>
+        Select a meal.
+    </button>
+</form>
+
+<!-- Repeat-delete modal -->
+<div id="repeatDeleteModal" class="rdm-backdrop" style="display:none" aria-modal="true" role="dialog">
+    <div class="rdm-panel">
+        <p class="rdm-title">Remove recurring meal</p>
+        <p class="rdm-msg">This meal repeats weekly. How would you like to remove it?</p>
+        <div class="rdm-btns">
+            <button type="button" id="rdmThisOnly" class="rdm-btn rdm-btn--secondary">Delete This Meal Only</button>
+            <button type="button" id="rdmAllFuture" class="rdm-btn rdm-btn--danger">Delete All Future Meals</button>
+        </div>
+        <button type="button" id="rdmCancel" class="rdm-cancel">Cancel</button>
+    </div>
+</div>
+
+<!-- Pantry modal (retained) -->
 <div id="pantryPromptModal" class="app-modal-overlay">
     <div class="back2 app-modal-panel">
         <p id="pantryPromptMessage" class="fs-5 mb-4"></p>

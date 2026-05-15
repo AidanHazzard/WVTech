@@ -1,310 +1,940 @@
-button {
-    border: none;
-    outline: none;
+/* ── Date Strip ─────────────────────────────────────────────── */
+.date-strip {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 20px 0 8px;
+    width: 100%;
+}
+
+.date-strip-arrow {
+    flex: 0 0 auto;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
     background: none;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    line-height: 1;
+    color: var(--text-primary);
+    transition: background-color 0.2s;
     padding: 0;
 }
 
-.back1Dates {
-    background-color: var(--layer1-bg);
-    border-radius: 20px;
-    margin: 24px 0;
-    width: 100%;
-    box-sizing: border-box;
-    position: relative;
-    display: flex;
-    align-items: stretch;
-    overflow: hidden;
+.date-strip-arrow:hover {
+    background-color: var(--layer2-bg);
 }
 
-#back1DatesInnerContainer {
+.date-strip-inner {
+    flex: 1;
     display: flex;
-    gap: 10px;
+    gap: 6px;
     overflow-x: auto;
     scroll-behavior: smooth;
     -webkit-overflow-scrolling: touch;
     flex-wrap: nowrap;
-    width: max-content;
-    overflow-anchor: none;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
     align-items: center;
-    padding: 5px 0 5px 0;
+    padding: 4px 2px;
     cursor: grab;
 }
 
-#back1DatesInnerContainer.dragging {
+.date-strip-inner.dragging {
     cursor: grabbing;
     scroll-behavior: auto;
     user-select: none;
 }
 
-#scrollAnchor {
-    overflow-anchor: auto;
-}
-
-.Date {
-    background-color: var(--layer2-bg);
-    border-radius: 20px;
-    flex: 0 0 auto;
-    width: 90px;
-    height: 90px;
-    position: relative;
-    display: flex;
-    display: inline-block;
-    align-items: center;
-    text-align: center;
-    transition: background-color 0.3s ease-in-out;
-    transition: transform 0.3s ease-in-out;
-}
-
-.Date:hover {
-    background-color: var(--date-hover-bg);
-    transform: scale(1.08);
-}
-
-#Selected {
-    background-color: var(--button-green-bg);
-    border-radius: 20px;
-    flex: 0 0 auto;
-    width: 90px;
-    height: 90px;
-    position: relative;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    text-align: center;
-}
-
-#Selected .back1Title {
-    color: black;
-    -webkit-user-select: none;
-    -ms-user-select: none;
-    user-select: none;
-}
-
-.Arrow {
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50.3%);
-    z-index: 10;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    background-color: var(--layer1-bg);
-    width: 60px;
-    height: 110.1px;
-    transition: background-color 0.3s ease-in-out;
-}
-
-.Arrow:hover {
-    background-color: var(--arrow-hover-bg);
-}
-
-.Arrow img {
-    position: relative;
-    display: block;
-    width: 60px;
-    height: 60px;
-    object-fit: contain;
-    transition: transform 0.3s ease-in-out;
-    -webkit-user-drag: none;
-    user-select: none;
-    pointer-events: none;
-    filter: var(--image-filter);
-}
-
-#ALeft {
-    border-radius: 20px 0 0 20px;
-    left: 0;
-}
-
-#ALeft img {
-    transform: rotate(90deg);
-}
-
-#ALeft:hover img {
-    transform: rotate(90deg) scale(1.14);
-}
-
-#ARight {
-    border-radius: 0 20px 20px 0;
-    right: 0;
-}
-
-#ARight img {
-    transform: rotate(270deg);
-}
-
-#ARight:hover img {
-    transform: rotate(270deg) scale(1.14);
-}
-
-#ALeft::after {
-    content: "";
-    position: absolute;
-    top: 0;
-    right: -400%;
-    width: 400%;
-    height: 100%;
-    pointer-events: none;
-    background: linear-gradient(to right,
-            var(--arrow-shadow),
-            rgba(0, 0, 0, 0));
-}
-
-#ARight::after {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: -400%;
-    width: 400%;
-    height: 100%;
-    pointer-events: none;
-    background: linear-gradient(to left,
-            var(--arrow-shadow),
-            rgba(0, 0, 0, 0));
-}
-
-/*hides scrollbar*/
-#back1DatesInnerContainer::-webkit-scrollbar {
+.date-strip-inner::-webkit-scrollbar {
     display: none;
 }
 
-#back1DatesInnerContainer {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-}
-
-.MealCheckBox {
-    position: absolute;
-    top: 34px;
-    left: 34px;
-    margin: 0;
-    width: 50px;
-    height: 50px;
-    z-index: 3;
+.date-chip {
+    flex: 0 0 auto;
+    font-size: 14px;
+    padding: 5px 14px;
+    border-radius: 9999px;
+    background-color: var(--chip-bg);
+    border: 0.5px solid var(--chip-border);
+    color: var(--text-primary);
     cursor: pointer;
-    transition: transform 0.3s ease-in-out;
-    accent-color: #1e73ff;
+    white-space: nowrap;
+    transition: border-color 0.2s;
+    line-height: 1.4;
 }
 
-.MealCheckBox:hover {
-    transform: scale(1.08);
+.date-chip:hover {
+    border-color: var(--teal);
 }
 
-.MealCheckBox:checked~img {
-    filter: grayscale(1);
-}
-
-.MealCheckBox:checked~.buttonGreen {
-    background-color: #808080;
-}
-
-.noBevelTop {
-    border-radius: 0px 0px 20px 20px;
-}
-
-.fullImage {
-    width: 100%;
-    height: 100%;
-    transition: all 0.3s ease-in-out;
-}
-
-.imageButton:hover .fullImage {
-    transform: scale(1.08);
-}
-
-.imageButton:has(.MealCheckBox:checked):hover .fullImage {
-    transform: scale(1);
-}
-
-.imageButton:has(.MealCheckBox:checked):hover .buttonText {
-    transform: scale(1);
-}
-
-.imageButton:has(.MealCheckBox:checked):hover {
+.date-chip.selected {
+    background-color: var(--teal) !important;
+    border-color: var(--teal) !important;
+    color: #ffffff !important;
     cursor: default;
 }
 
-.mealCardWrapper {
-    position: relative;
-    display: inline-block;
-    line-height: 0;
-    border-radius: 20px;
-    overflow: hidden;
+/* ── Page Heading ───────────────────────────────────────────── */
+.home-heading {
+    margin: 8px 0 20px;
+}
+
+.home-date-label {
+    display: block;
+    font-size: 13px;
+    color: var(--muted-text);
+    margin-bottom: 4px;
+}
+
+.home-title {
+    font-size: 18px;
+    font-weight: 500;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+/* ── Meal Cards Row (grid + day-nav arrows) ─────────────────── */
+.meal-cards-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 1.25rem;
+}
+
+.day-nav-arrow {
     flex-shrink: 0;
-}
-
-.mealCardInner {
-    position: relative;
-}
-
-.mealViewForm {
-    margin: 0;
-    display: block;
-}
-
-.mealButton {
-    position: relative;
-    display: block;
-}
-
-.mealDeleteForm {
-    position: absolute;
-    top: 34px;
-    right: 34px;
-    margin: 0;
-    z-index: 2;
-}
-
-.mealDeleteButton {
-    width: 50px;
-    height: 50px;
-    margin: 0;
-    padding: 0;
-    cursor: pointer;
-    transition: transform 0.3s ease-in-out, background-color 0.3s ease-in-out;
-    background-color: #ff4d4f;
-    color: white;
-    font-size: 30px;
-    font-weight: bold;
-    line-height: 1;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: var(--bg1, #1a1a1a);
+    border: 0.5px solid rgba(255, 255, 255, 0.08);
+    color: #a0a0a0;
     display: flex;
     align-items: center;
     justify-content: center;
+    cursor: pointer;
+    font-size: 18px;
+    transition: all 0.15s ease;
+    padding: 0;
+    line-height: 1;
+}
+
+.day-nav-arrow:hover {
+    background: #2e2e2e;
+    color: #f0f0f0;
+    border-color: rgba(255, 255, 255, 0.14);
+}
+
+[data-theme="light"] .day-nav-arrow {
+    background: #ffffff;
+    border-color: #e0e0e0;
+}
+
+[data-theme="light"] .day-nav-arrow:hover {
+    background: #f0f0f0;
+    color: #1a1a1a;
+    border-color: #d0d0d0;
+}
+
+.day-nav-arrow:disabled,
+.day-nav-arrow.disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+/* ── Meal Cards Grid ────────────────────────────────────────── */
+.meal-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    flex: 1;
+    min-width: 0;
+}
+
+.meal-card {
+    background-color: var(--card-bg);
+    border-radius: 12px;
+    border: 0.5px solid var(--card-border);
+    overflow: hidden;
+    position: relative;
+    transition: border-color 0.2s;
+}
+
+.meal-card:hover {
+    border-color: var(--teal);
+}
+
+/* Image area */
+.meal-card-image-area {
+    height: 120px;
+    position: relative;
+    overflow: hidden;
+    background-color: var(--layer2-bg);
+}
+
+/* View form fills the image area */
+.meal-card-view-form {
+    margin: 0;
+    height: 120px;
+    display: block;
+}
+
+.meal-card-image-btn {
+    width: 100%;
+    height: 100%;
+    padding: 0;
     border: none;
-    outline: none;
+    background: none;
+    cursor: pointer;
+    display: block;
+    overflow: hidden;
 }
 
-.mealDeleteButton:hover {
-    background-color: #e53935;
-    transform: scale(1.08);
+.meal-card-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.2s;
 }
 
-/*When the page is below this width then put it into verticle mode*/
-@media (max-width: 900px) {
-    .ALeft::after {
-        content: "";
-        position: absolute;
-        top: 0;
-        right: -200%;
-        width: 200%;
-        height: 100%;
-        pointer-events: none;
-        background: linear-gradient(to right,
-                var(--arrow-shadow),
-                rgba(0, 0, 0, 0));
+.meal-card-image-btn:hover .meal-card-img {
+    transform: scale(1.04);
+}
+
+/* Teal placeholder when no image */
+.meal-card-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--teal-light);
+    color: var(--teal);
+}
+
+/* ── Multi-recipe image grid ─────────────────────────────── */
+.meal-img-grid {
+    width: 100%;
+    height: 100%;
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr;
+    gap: 0;
+}
+
+.meal-img-grid--2 {
+    grid-template-columns: 1fr 1fr;
+}
+
+.meal-img-grid--3 {
+    grid-template-columns: 1fr 1fr 1fr;
+}
+
+.meal-img-grid--4 {
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+}
+
+.meal-img-cell {
+    overflow: hidden;
+    position: relative;
+    box-shadow: inset 0.5px 0 0 rgba(0,0,0,0.15), inset 0 0.5px 0 rgba(0,0,0,0.15);
+}
+
+.meal-img-cell:first-child {
+    box-shadow: none;
+}
+
+.meal-img-cell-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.2s;
+}
+
+.meal-card-image-btn:hover .meal-img-cell-img {
+    transform: scale(1.04);
+}
+
+.meal-img-cell--placeholder {
+    background-color: var(--teal-light);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.meal-img-cell--more {
+    background-color: rgba(0, 0, 0, 0.55);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.meal-img-more-label {
+    font-size: 14px;
+    font-weight: 500;
+    color: #ffffff;
+}
+
+/* Delete button (× top-right) */
+.meal-card-delete-form {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    z-index: 3;
+    margin: 0;
+}
+
+.meal-card-delete-btn {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background-color: #ef4444;
+    border: none;
+    color: #ffffff;
+    font-size: 11px;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: background-color 0.2s, transform 0.15s, opacity 0.15s;
+    padding: 0;
+    line-height: 1;
+}
+
+.meal-card--filled:hover .meal-card-delete-btn {
+    opacity: 1;
+}
+
+.meal-card-delete-btn:hover {
+    background-color: #dc2626;
+    transform: scale(1.1);
+}
+
+/* Complete button (✓ top-right, left of delete) */
+.meal-card-complete-btn {
+    position: absolute;
+    top: 8px;
+    right: 36px;
+    z-index: 3;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background-color: #22c55e;
+    border: none;
+    color: #ffffff;
+    font-size: 11px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: background-color 0.2s, transform 0.15s, opacity 0.15s;
+    padding: 0;
+    line-height: 1;
+}
+
+.meal-card--filled:hover .meal-card-complete-btn {
+    opacity: 1;
+}
+
+.meal-card-complete-btn:hover {
+    background-color: #16a34a;
+    transform: scale(1.1);
+}
+
+/* Footer label row */
+.meal-card-footer {
+    padding: 10px 12px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.meal-card-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.meal-card-name {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.meal-card-calories {
+    font-size: 12px;
+    color: var(--muted-text);
+}
+
+.meal-card-badge {
+    flex: 0 0 auto;
+    font-size: 11px;
+    font-weight: 500;
+    padding: 2px 8px;
+    border-radius: 9999px;
+    background-color: var(--teal-light);
+    color: var(--teal);
+    white-space: nowrap;
+    align-self: center;
+}
+
+/* Empty card */
+.meal-card--empty .meal-card-image-area {
+    background-color: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.meal-card-add-form {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.meal-card-add-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+}
+
+.meal-card-add-circle {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 2px dashed var(--muted-text);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    color: var(--muted-text);
+    transition: border-color 0.2s, color 0.2s;
+    line-height: 1;
+}
+
+.meal-card-add-label {
+    font-size: 12px;
+    color: var(--muted-text);
+    transition: color 0.2s;
+}
+
+.meal-card--empty:hover .meal-card-add-circle {
+    border-color: var(--teal);
+    color: var(--teal);
+}
+
+.meal-card--empty:hover .meal-card-add-label {
+    color: var(--teal);
+}
+
+/* ── Empty card subtle delete button ───────────────────────── */
+.meal-card-empty-delete-btn {
+    position: absolute;
+    top: 7px;
+    right: 7px;
+    z-index: 3;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: transparent;
+    border: none;
+    color: #E24B4A;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+    opacity: 0;
+    transition: background-color 0.15s, opacity 0.15s;
+}
+
+.meal-card--empty:hover .meal-card-empty-delete-btn {
+    opacity: 1;
+    background: rgba(226, 75, 74, 0.12);
+}
+
+/* ── Empty card confirmation overlay ───────────────────────── */
+.meal-card-confirm-content {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 16px;
+    background-color: var(--card-bg);
+    border-radius: 12px;
+    z-index: 4;
+}
+
+.meal-card-confirm-msg {
+    font-size: 12px;
+    color: #a0a0a0;
+    margin: 0;
+    text-align: center;
+}
+
+.meal-card-confirm-btns {
+    display: flex;
+    gap: 8px;
+}
+
+.meal-card-confirm-cancel,
+.meal-card-confirm-remove {
+    padding: 5px 12px;
+    font-size: 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.15s, color 0.15s;
+    line-height: 1.4;
+}
+
+.meal-card-confirm-cancel {
+    background: transparent;
+    border: 0.5px solid rgba(255, 255, 255, 0.08);
+    color: #a0a0a0;
+}
+
+[data-theme="light"] .meal-card-confirm-cancel {
+    border-color: #d0d0d0;
+}
+
+.meal-card-confirm-cancel:hover {
+    background: var(--layer2-bg);
+    color: var(--text-primary);
+}
+
+.meal-card-confirm-remove {
+    background: rgba(226, 75, 74, 0.15);
+    border: 0.5px solid rgba(226, 75, 74, 0.3);
+    color: #E24B4A;
+}
+
+.meal-card-confirm-remove:hover {
+    background: rgba(226, 75, 74, 0.25);
+}
+
+/* Suppress teal hover effects while card is confirming */
+.meal-card--empty.confirming:hover {
+    border-color: var(--card-border);
+}
+
+.meal-card--empty.confirming:hover .meal-card-add-circle,
+.meal-card--empty.confirming:hover .meal-card-add-label {
+    border-color: var(--muted-text);
+    color: var(--muted-text);
+}
+
+/* ── Checked-off card state ─────────────────────────────────── */
+.meal-card--filled {
+    transition: transform 0.25s ease, border-color 0.25s ease;
+}
+
+.meal-card--checked {
+    transform: scale(0.96);
+    border-color: rgba(46, 201, 154, 0.4) !important;
+    border-width: 1.5px !important;
+}
+
+/* Dim overlay inside image area */
+.meal-card-dim-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0);
+    transition: background 0.25s ease;
+    pointer-events: none;
+    border-radius: 0;
+}
+
+.meal-card--checked .meal-card-dim-overlay {
+    background: rgba(0, 0, 0, 0.35);
+}
+
+/* Desaturate image on checked */
+.meal-card-image-btn {
+    transition: filter 0.25s ease;
+}
+
+.meal-card--checked .meal-card-image-btn {
+    filter: saturate(0.4);
+}
+
+/* Footer tint */
+.meal-card-footer--filled {
+    transition: background-color 0.25s ease, border-top-color 0.25s ease;
+    border-top: 1.5px solid transparent;
+}
+
+.meal-card--checked .meal-card-footer--filled {
+    background-color: rgba(46, 201, 154, 0.12);
+    border-top-color: rgba(46, 201, 154, 0.3);
+}
+
+/* Calorie strikethrough */
+.meal-card-calories {
+    transition: text-decoration 0.25s ease, color 0.25s ease;
+}
+
+.meal-card--checked .meal-card-calories {
+    text-decoration: line-through;
+    color: #a0a0a0;
+}
+
+/* Badge swap */
+.meal-card-badge--added {
+    transition: opacity 0.25s ease;
+}
+
+.meal-card-badge--checked {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background-color: #2EC99A;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    opacity: 0;
+    transition: opacity 0.25s ease;
+    flex: 0 0 auto;
+    align-self: center;
+}
+
+.meal-card--checked .meal-card-badge--added {
+    opacity: 0;
+}
+
+.meal-card--checked .meal-card-badge--checked {
+    opacity: 1;
+}
+
+/* ── Filled card cursor ─────────────────────────────────────── */
+.meal-card--filled {
+    cursor: pointer;
+}
+
+/* ── Edit overlay (hover / tap) ─────────────────────────────── */
+.meal-card-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 120px;
+    background: rgba(0, 0, 0, 0.45);
+    border-radius: 12px 12px 0 0;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.18s ease;
+    z-index: 2;
+}
+
+.meal-card--filled:hover .meal-card-overlay,
+.meal-card--filled.overlay-visible .meal-card-overlay {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.meal-card-edit-btn {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    color: #ffffff;
+    font-size: 13px;
+    font-weight: 500;
+    border-radius: 8px;
+    padding: 8px 18px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.15s;
+}
+
+.meal-card-edit-btn:hover {
+    background: rgba(255, 255, 255, 0.25);
+}
+
+
+/* ── All-slots-removed empty state ─────────────────────────── */
+.meal-slots-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 2rem 0;
+    margin-bottom: 1.25rem;
+}
+
+.meal-slots-empty-text {
+    font-size: 13px;
+    color: #555;
+    margin: 0;
+}
+
+.meal-slots-empty-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--teal);
+    color: #ffffff;
+    border: none;
+    border-radius: 10px;
+    padding: 10px 20px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.15s;
+    margin-top: 4px;
+}
+
+.meal-slots-empty-btn:hover {
+    background: var(--teal-hover);
+}
+
+/* ── Nutrition Card ─────────────────────────────────────────── */
+.nutrition-card {
+    background-color: var(--card-bg);
+    border-radius: 12px;
+    border: 0.5px solid var(--card-border);
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+}
+
+.nutrition-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.nutrition-card-title {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.nutrition-card-cal {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--teal);
+}
+
+.nutrition-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.nutrition-row:last-child {
+    margin-bottom: 0;
+}
+
+.nutrition-row-label {
+    width: 60px;
+    min-width: 60px;
+    font-size: 13px;
+    color: var(--muted-text);
+    text-align: right;
+}
+
+.nutrition-row-bar {
+    flex: 1;
+    height: 6px;
+    border-radius: 9999px;
+    background-color: var(--nutrition-bar-track);
+    overflow: hidden;
+}
+
+.nutrition-row-fill {
+    height: 100%;
+    border-radius: 9999px;
+    transition: width 0.4s ease;
+    min-width: 0;
+}
+
+.nutrition-row-value {
+    font-size: 12px;
+    color: var(--text-primary);
+    white-space: nowrap;
+    text-align: right;
+    min-width: 80px;
+}
+
+/* ── CTA Button ─────────────────────────────────────────────── */
+.cta-select-meal-form {
+    margin-bottom: 1.5rem;
+}
+
+.cta-select-meal {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 14px;
+    background-color: var(--teal);
+    color: #ffffff;
+    border: none;
+    border-radius: 13px;
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.cta-select-meal:hover {
+    background-color: var(--teal-hover);
+}
+
+.cta-select-meal-icon {
+    font-size: 18px;
+    line-height: 1;
+    font-weight: 400;
+}
+
+/* ── Responsive ─────────────────────────────────────────────── */
+@media (max-width: 768px) {
+    .meal-cards-grid {
+        grid-template-columns: repeat(2, 1fr);
     }
 
-    .ARight::after {
-        content: "";
-        position: absolute;
-        top: 0;
-        left: -200%;
-        width: 200%;
-        height: 100%;
-        pointer-events: none;
-        background: linear-gradient(to left,
-                var(--arrow-shadow),
-                rgba(0, 0, 0, 0));
+    .day-nav-arrow {
+        width: 28px;
+        height: 28px;
+        font-size: 14px;
+        border-radius: 8px;
     }
+}
+
+@media (max-width: 480px) {
+    .meal-cards-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ── Repeat-delete modal ────────────────────────────────────── */
+.rdm-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.rdm-panel {
+    background-color: var(--card-bg);
+    border: 0.5px solid var(--card-border);
+    border-radius: 16px;
+    padding: 28px 24px 20px;
+    width: min(360px, calc(100vw - 32px));
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.rdm-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.rdm-msg {
+    font-size: 13px;
+    color: var(--muted-text);
+    margin: 0 0 8px;
+    line-height: 1.5;
+}
+
+.rdm-btns {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.rdm-btn {
+    width: 100%;
+    padding: 11px 16px;
+    font-size: 13px;
+    font-weight: 500;
+    border-radius: 10px;
+    cursor: pointer;
+    border: none;
+    transition: background-color 0.15s;
+    text-align: center;
+}
+
+.rdm-btn--secondary {
+    background-color: var(--layer2-bg);
+    color: var(--text-primary);
+    border: 0.5px solid var(--card-border);
+}
+
+.rdm-btn--secondary:hover {
+    background-color: var(--chip-bg);
+}
+
+.rdm-btn--danger {
+    background-color: rgba(239, 68, 68, 0.12);
+    color: #ef4444;
+    border: 0.5px solid rgba(239, 68, 68, 0.3);
+}
+
+.rdm-btn--danger:hover {
+    background-color: rgba(239, 68, 68, 0.2);
+}
+
+.rdm-cancel {
+    background: none;
+    border: none;
+    color: var(--muted-text);
+    font-size: 13px;
+    cursor: pointer;
+    padding: 6px 0 0;
+    text-align: center;
+    transition: color 0.15s;
+    align-self: center;
+}
+
+.rdm-cancel:hover {
+    color: var(--text-primary);
 }

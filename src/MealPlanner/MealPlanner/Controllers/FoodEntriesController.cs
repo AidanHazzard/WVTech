@@ -23,6 +23,7 @@ public class FoodEntriesController : Controller
     private readonly IExternalRecipeService? _externalRecipeService;
     private readonly BlobContainerClient? _blobContainer;
     private readonly IWebHostEnvironment? _env;
+    private readonly IShoppingListService? _shoppingListService;
 
     public FoodEntriesController(
         IRecipeRepository recipeRepository,
@@ -33,7 +34,8 @@ public class FoodEntriesController : Controller
         IWebHostEnvironment env,
         BlobContainerClient? blobContainer = null,
         IExternalRecipeService? externalRecipeService = null,
-        INutritionProgressService? nutritionProgressService = null)
+        INutritionProgressService? nutritionProgressService = null,
+        IShoppingListService? shoppingListService = null)
     {
         _recipeRepository = recipeRepository;
         _tagRepository = tagRepository;
@@ -44,6 +46,7 @@ public class FoodEntriesController : Controller
         _externalRecipeService = externalRecipeService;
         _blobContainer = blobContainer;
         _env = env;
+        _shoppingListService = shoppingListService;
     }
 
     public IActionResult SearchRecipes()
@@ -105,7 +108,11 @@ public class FoodEntriesController : Controller
             if (vm.Id == null) continue;
             vm.VotePercentage = await _userRecipeRepository.GetRecipeVotePercentage(vm.Id ?? 0);
         }
-        return View(userRecipeVMs);
+
+        return View(new RecipesAndShoppingViewModel
+        {
+            Recipes = userRecipeVMs,
+        });
     }
 
     [HttpGet]

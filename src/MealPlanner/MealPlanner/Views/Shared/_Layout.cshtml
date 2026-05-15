@@ -1,8 +1,33 @@
-﻿@{
+@{
     var currentController = ViewContext.RouteData.Values["Controller"]?.ToString();
     var currentAction = ViewContext.RouteData.Values["Action"]?.ToString();
     var isAuthed = User?.Identity?.IsAuthenticated == true;
     var theme = Context.Items["Theme"]?.ToString() ?? "light";
+
+    var isHome    = currentController == "Home" && currentAction == "Index";
+    var isRecipes = currentController == "FoodEntries" && currentAction != "NutritionSummary";
+    var isReport  = currentController == "FoodEntries" && currentAction == "NutritionSummary";
+    var isCart    = currentController == "Shopping";
+
+    string initials = "";
+    if (isAuthed)
+    {
+        var navInitialsOverride = Context.Items["NavInitials"]?.ToString() ?? "";
+        if (!string.IsNullOrEmpty(navInitialsOverride))
+        {
+            initials = navInitialsOverride;
+        }
+        else
+        {
+            var name  = User.Identity?.Name ?? "";
+            var local = name.Contains('@') ? name.Split('@')[0] : name;
+            initials  = local.Length >= 2
+                ? $"{char.ToUpper(local[0])}{char.ToUpper(local[1])}"
+                : local.ToUpper();
+        }
+    }
+
+    var navPhotoUrl = Context.Items["ProfilePictureUrl"]?.ToString() ?? "";
 }
 
 <!DOCTYPE html>
@@ -12,6 +37,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] - OneBite</title>
     <script type="importmap"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@@tabler/icons-webfont@@latest/dist/tabler-icons.min.css" />
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/MealPlanner.styles.css" asp-append-version="true" />
@@ -19,110 +45,47 @@
 
 <body>
 <header>
-    <nav class="custom-navbar" id="mainNavbar">
-        <div class="nav-mobile-header">
-            <button class="hamburger-btn" id="hamburgerBtn" aria-label="Toggle navigation" aria-expanded="false">
-                <span class="hamburger-line"></span>
-                <span class="hamburger-line"></span>
-                <span class="hamburger-line"></span>
-            </button>
-        </div>
-        <ul class="nav-list">
+    <nav class="top-nav">
+        <a class="top-nav-logo" href="/">
+            <i class="ti ti-bowl-spoon"></i>
+            <span>OneBite</span>
+        </a>
 
-            <li class="nav-item">
-                <button
-                    class="nav-button @(currentController == "Home" && currentAction == "Index" ? "active" : "")"
-                    onclick="location.href='/'">
-                    <span class="nav-text">Home</span>
-                </button>
-            </li>
-<!--
-            <li class="nav-item">
-                <button
-                    class="nav-button @(currentController == "Meal" && currentAction == "PlannerHome" ? "active" : "")"
-                    onclick="location.href='@Url.Action("PlannerHome", "Meal")'">
-                    <span class="nav-text">Planner</span>
-                </button>
-            </li>
--->
-            <li class="nav-item">
-                <button
-                    class="nav-button @(currentController == "FoodEntries" && currentAction != "Nutrition" ? "active" : "")"
-                    onclick="location.href='@Url.Action("Recipes", "FoodEntries")'">
-                    <span class="nav-text">Recipes</span>
-                </button>
-            </li>
+        <div class="top-nav-links">
+            <a href="@Url.Action("Index", "Home")"
+               class="top-nav-link @(isHome ? "active" : "")">Home</a>
 
-            @* <li class="nav-item">
-                <button
-                    class="nav-button @(currentController == "FoodEntries" && currentAction == "Nutrition" ? "active" : "")"
-                    onclick="location.href='@Url.Action("Nutrition", "FoodEntries")'">
-                    <span class="nav-text">Nutrients</span>
-                </button>
-            </li> *@
+            <a href="@Url.Action("Recipes", "FoodEntries", new { id = (int?)null })"
+               class="top-nav-link @(isRecipes ? "active" : "")">Recipes</a>
 
-            <li class="nav-item">
-                <button
-                    class="nav-button @(currentController == "FoodEntries" && currentAction == "NutritionSummary" ? "active" : "")"
-                    onclick="location.href='@Url.Action("NutritionSummary", "FoodEntries")'">
-                    <span class="nav-text">Report</span>
-                </button>
-            </li>
-<!--
+            <a href="@Url.Action("NutritionSummary", "FoodEntries")"
+               class="top-nav-link @(isReport ? "active" : "")">Summary</a>
 
-            <li class="nav-item">
-                <button
-                    class="nav-button @(currentController == "Statistics" && currentAction == "Index" ? "active" : "")"
-                    onclick="location.href='/'">
-                    <span class="nav-text">Statistics</span>
+            <div class="top-nav-dropdown" id="cartDropdown">
+                <button type="button"
+                        class="top-nav-link top-nav-dropdown-btn @(isCart ? "active" : "")">
+                    MyCart
+                    <svg class="top-nav-chevron" xmlns="http://www.w3.org/2000/svg"
+                         viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                         stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="6 9 12 15 18 9"/>
+                    </svg>
                 </button>
-            </li>
--->
-
-            <li class="nav-item nav-dropdown">
-                <button class="nav-button @(currentController == "Shopping" ? "active" : "")">
-                    <span class="nav-text">MyCart<span class="nav-caret">&#9660;</span></span>
-                </button>
-                <div class="nav-dropdown-menu">
+                <div class="top-nav-dropdown-menu">
                     <a href="@Url.Action("Index", "Shopping")">Shopping List</a>
                     <a href="@Url.Action("Pantry", "Shopping")">Pantry</a>
                 </div>
-            </li>
-<!--
-            @if (User?.IsInRole("Admin") == true)
-            {
-                <li class="nav-item">
-                    <a class="nav-link text-dark" asp-controller="Home" asp-action="Admin">Admin</a>
-                </li>
-            }
-            else if (User?.IsInRole("User") == true)
-            {
-                <li class="nav-item">
-                    <button
-                        class="nav-button @(currentController == "Favorites" ? "active" : "")"
-                        onclick="location.href='@Url.Action("Index", "Favorites")'">
-                        <span class="nav-text">Favorites</span>
-                    </button>
-                </li>
-
-                <li class="nav-item">
-                    <button
-                        class="nav-button @(currentController == "UserSettings" ? "active" : "")"
-                        onclick="location.href='@Url.Action("Index", "UserSettings")'">
-                        <span class="nav-text">User Settings</span>
-                    </button>
-                </li>
-            }
-
-            <partial name="_LoginPartial" />
-            -->
-        </ul>
+            </div>
+        </div>
 
         @if (isAuthed)
         {
-            <button class="profile-button" type="button" onclick="location.href='@Url.Action("Index", "UserSettings")'">
-                <img src="~/images/icons/profiledefault.webp" alt="profiledefault" class="imageFit" />
-            </button>
+            <a href="@Url.Action("Index", "UserSettings")" class="top-nav-avatar @(!string.IsNullOrEmpty(navPhotoUrl) ? "has-photo" : "")" id="navAvatar">
+                <span id="navAvatarInitials">@initials</span>
+                <img id="navAvatarPhoto" src="@navPhotoUrl" alt=""
+                     style="@(string.IsNullOrEmpty(navPhotoUrl) ? "display:none" : "")"
+                     onerror="this.style.display='none'; var el=document.getElementById('navAvatarInitials'); if(el) el.style.display=''; var av=document.getElementById('navAvatar'); if(av) av.classList.remove('has-photo');" />
+            </a>
         }
     </nav>
 </header>
@@ -133,9 +96,25 @@
     </main>
 </div>
 
+<!-- Global delete confirmation modal -->
+<div id="deleteConfirmModal" class="dcm-backdrop" style="display:none" aria-modal="true" role="dialog">
+    <div class="dcm-panel">
+        <div class="dcm-icon-wrap">
+            <i class="ti ti-trash dcm-icon"></i>
+        </div>
+        <p class="dcm-title" id="dcmTitle">Delete this item?</p>
+        <p class="dcm-sub">This action cannot be undone. The item will be permanently removed.</p>
+        <div class="dcm-btn-row">
+            <button type="button" class="dcm-btn dcm-btn--cancel" id="dcmCancel">Cancel</button>
+            <button type="button" class="dcm-btn dcm-btn--delete" id="dcmConfirm">Delete</button>
+        </div>
+    </div>
+</div>
+
 <script src="~/lib/jquery/dist/jquery.min.js"></script>
 <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
 <script src="~/js/site.js" type="module" asp-append-version="true"></script>
+<script src="~/js/deleteModal.js" asp-append-version="true"></script>
 <script src="~/js/inlineConfirm.js" asp-append-version="true"></script>
 @await RenderSectionAsync("Scripts", required: false)
 

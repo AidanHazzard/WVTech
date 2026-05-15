@@ -1,0 +1,483 @@
+/* ── Top bar ─────────────────────────────────────────────── */
+.em-top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.25rem;
+}
+
+.em-back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 13px;
+    color: #a0a0a0;
+    text-decoration: none;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    transition: color 0.15s;
+}
+
+.em-back-link:hover {
+    color: #f0f0f0;
+    text-decoration: none;
+}
+
+[data-theme="light"] .em-back-link:hover {
+    color: #1a1a1a;
+}
+
+.em-delete-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(226, 75, 74, 0.1);
+    border: 0.5px solid rgba(226, 75, 74, 0.3);
+    color: #E24B4A;
+    border-radius: 8px;
+    padding: 7px 14px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: background-color 0.15s;
+}
+
+.em-delete-btn:hover {
+    background: rgba(226, 75, 74, 0.2);
+}
+
+/* ── Page heading ────────────────────────────────────────── */
+.em-page-heading {
+    margin-bottom: 1.25rem;
+}
+
+.em-page-title {
+    font-size: 18px;
+    font-weight: 500;
+    color: #f0f0f0;
+    margin: 0 0 3px;
+}
+
+[data-theme="light"] .em-page-title {
+    color: #1a1a1a;
+}
+
+.em-page-subtitle {
+    font-size: 13px;
+    color: #555;
+    margin: 0;
+}
+
+/* ── Shared card ─────────────────────────────────────────── */
+.em-card {
+    background: #1a1a1a;
+    border: 0.5px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 12px;
+}
+
+[data-theme="light"] .em-card {
+    background: #ffffff;
+    border-color: #e0e0e0;
+}
+
+.em-card-title-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 1rem;
+}
+
+.em-card-title-icon {
+    width: 26px;
+    height: 26px;
+    border-radius: 7px;
+    background: #0d2e22;
+    color: #2EC99A;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    flex-shrink: 0;
+    line-height: 1;
+}
+
+.em-card-title-text {
+    font-size: 15px;
+    font-weight: 500;
+    color: #f0f0f0;
+}
+
+[data-theme="light"] .em-card-title-text {
+    color: #1a1a1a;
+}
+
+/* ── Form grid ───────────────────────────────────────────── */
+.em-form-grid {
+    display: grid;
+    grid-template-columns: 1fr 140px 100px;
+    gap: 12px;
+    margin-bottom: 1rem;
+}
+
+.em-field {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.em-label {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #555;
+}
+
+.em-input {
+    width: 100%;
+    padding: 9px 12px;
+    font-size: 13px;
+    background: #2e2e2e;
+    border: 0.5px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    color: #f0f0f0;
+    outline: none;
+    box-sizing: border-box;
+    transition: border-color 0.15s;
+    appearance: none;
+    -webkit-appearance: none;
+}
+
+.em-input:focus {
+    border-color: #2EC99A;
+}
+
+.em-input::placeholder {
+    color: #555;
+}
+
+[data-theme="light"] .em-input {
+    background: #f0f0f0;
+    border-color: #d8d8d8;
+    color: #1a1a1a;
+}
+
+[data-theme="light"] .em-input::placeholder {
+    color: #999;
+}
+
+.em-select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    padding-right: 28px;
+    cursor: pointer;
+}
+
+.em-select option {
+    background: #2e2e2e;
+    color: #f0f0f0;
+}
+
+[data-theme="light"] .em-select option {
+    background: #f0f0f0;
+    color: #1a1a1a;
+}
+
+/* ── Repeat weekly toggle ────────────────────────────────── */
+.em-toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.em-toggle-label {
+    font-size: 13px;
+    color: #a0a0a0;
+    cursor: pointer;
+}
+
+.em-toggle-switch {
+    width: 38px;
+    height: 22px;
+    background-color: #2e2e2e;
+    border-radius: 9999px;
+    position: relative;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    flex-shrink: 0;
+}
+
+.em-toggle-switch.on {
+    background-color: #2EC99A;
+}
+
+[data-theme="light"] .em-toggle-switch {
+    background-color: #d1d1d1;
+}
+
+[data-theme="light"] .em-toggle-switch.on {
+    background-color: #2EC99A;
+}
+
+.em-toggle-knob {
+    width: 16px;
+    height: 16px;
+    background: #ffffff;
+    border-radius: 50%;
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    transition: transform 0.2s;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.em-toggle-switch.on .em-toggle-knob {
+    transform: translateX(16px);
+}
+
+/* ── Repeat days panel (slide open/close) ────────────────── */
+#emRepeatDaysPanel {
+    overflow: hidden;
+    max-height: 0;
+    transition: max-height 0.2s ease;
+}
+
+#emRepeatDaysPanel.open {
+    max-height: 48px;
+}
+
+/* ── Repeat day chips ────────────────────────────────────── */
+.em-days-row {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    padding-top: 12px;
+}
+
+.em-day-chip {
+    padding: 5px 10px;
+    font-size: 11px;
+    border-radius: 9999px;
+    border: 0.5px solid rgba(255, 255, 255, 0.08);
+    background: #2e2e2e;
+    color: #555;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background-color 0.15s, border-color 0.15s, color 0.15s;
+    user-select: none;
+}
+
+[data-theme="light"] .em-day-chip {
+    background: #f0f0f0;
+    border-color: #e0e0e0;
+    color: #a0a0a0;
+}
+
+.em-day-chip.on {
+    background: rgba(239, 159, 39, 0.15);
+    border-color: rgba(239, 159, 39, 0.4);
+    color: #EF9F27;
+    font-weight: 500;
+}
+
+/* ── Recipe rows (current recipes card) ──────────────────── */
+.em-recipe-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 0;
+    border-top: 0.5px solid rgba(255, 255, 255, 0.08);
+    cursor: pointer;
+    transition: opacity 0.15s;
+}
+
+.em-recipe-row:first-of-type {
+    border-top: none;
+}
+
+[data-theme="light"] .em-recipe-row {
+    border-top-color: #e0e0e0;
+}
+
+.em-recipe-row:hover {
+    opacity: 0.85;
+}
+
+.em-recipe-name {
+    flex: 1;
+    font-size: 13px;
+    color: #f0f0f0;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+[data-theme="light"] .em-recipe-name {
+    color: #1a1a1a;
+}
+
+.em-recipe-actions {
+    display: flex;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+.em-recipe-remove-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    background: rgba(226, 75, 74, 0.12);
+    border: 0.5px solid rgba(226, 75, 74, 0.25);
+    color: #E24B4A;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    cursor: pointer;
+    transition: opacity 0.15s;
+    padding: 0;
+    line-height: 1;
+}
+
+.em-recipe-remove-btn:hover {
+    opacity: 0.75;
+}
+
+.em-empty-recipes {
+    font-size: 13px;
+    color: #555;
+    padding: 4px 0;
+}
+
+/* ── Search card ─────────────────────────────────────────── */
+.em-search-input-wrapper {
+    position: relative;
+    margin-bottom: 10px;
+}
+
+.em-search-icon {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #555;
+    pointer-events: none;
+    font-size: 14px;
+    line-height: 1;
+}
+
+.em-search-input {
+    width: 100%;
+    padding: 9px 12px 9px 34px;
+    font-size: 13px;
+    background: #2e2e2e;
+    border: 0.5px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    color: #f0f0f0;
+    outline: none;
+    box-sizing: border-box;
+    transition: border-color 0.15s;
+}
+
+.em-search-input:focus {
+    border-color: #2EC99A;
+}
+
+.em-search-input::placeholder {
+    color: #555;
+}
+
+[data-theme="light"] .em-search-input {
+    background: #f0f0f0;
+    border-color: #d8d8d8;
+    color: #1a1a1a;
+}
+
+[data-theme="light"] .em-search-input::placeholder {
+    color: #999;
+}
+
+/* Recipe add indicator on search results */
+.em-add-indicator {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: rgba(46, 201, 154, 0.15);
+    color: #2EC99A;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    flex-shrink: 0;
+    line-height: 1;
+}
+
+/* ── Action bar ──────────────────────────────────────────── */
+.em-action-bar {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-bottom: 24px;
+}
+
+.em-action-cancel {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #a0a0a0;
+    text-decoration: none;
+    background: none;
+    border: none;
+    padding: 7px 0;
+    cursor: pointer;
+    transition: color 0.15s;
+}
+
+.em-action-cancel:hover {
+    color: #f0f0f0;
+    text-decoration: none;
+}
+
+[data-theme="light"] .em-action-cancel:hover {
+    color: #1a1a1a;
+}
+
+.em-action-save {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #2EC99A;
+    color: #0d2e22;
+    border: none;
+    border-radius: 8px;
+    padding: 7px 14px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.15s;
+}
+
+.em-action-save:hover {
+    background: #26b389;
+}
+
+/* ── Responsive ─────────────────────────────────────────── */
+@media (max-width: 600px) {
+    .em-form-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .em-form-grid > .em-field:first-child {
+        grid-column: 1 / -1;
+    }
+}

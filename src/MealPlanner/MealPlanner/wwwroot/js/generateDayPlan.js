@@ -4,24 +4,25 @@ let currentMeal = 0;
 function showMeal(index) {
     mealSections.forEach((s, i) => s.style.display = i === index ? '' : 'none');
 
-    const prev = document.getElementById('btnPrevMeal');
-    const next = document.getElementById('btnNextMeal');
+    const prev     = document.getElementById('btnPrevMeal');
+    const next     = document.getElementById('btnNextMeal');
     const generate = document.getElementById('btnGeneratePlan');
 
-    prev.style.display = index > 0 ? '' : 'none';
-    next.style.display = index < mealSections.length - 1 ? '' : 'none';
+    prev.style.display     = index > 0 ? '' : 'none';
+    next.style.display     = index < mealSections.length - 1 ? '' : 'none';
     generate.style.display = index === mealSections.length - 1 ? '' : 'none';
 
-    // Rounding: :first-child/:last-child counts hidden elements, so set explicitly.
-    const visible = [prev, next, generate].filter(b => b.style.display !== 'none');
-    visible.forEach((btn, i) => {
-        if (visible.length === 1) btn.style.borderRadius = '20px';
-        else if (i === 0) btn.style.borderRadius = '20px 0 0 20px';
-        else if (i === visible.length - 1) btn.style.borderRadius = '0 20px 20px 0';
-        else btn.style.borderRadius = '0';
-    });
-
     document.getElementById('mealStepLabel').textContent = `Meal ${index + 1} of ${mealSections.length}`;
+
+    const bar = document.getElementById('gdpProgressBar');
+    if (bar) {
+        bar.innerHTML = '';
+        for (let i = 0; i < mealSections.length; i++) {
+            const seg = document.createElement('div');
+            seg.className = 'gdp-progress-seg' + (i <= index ? ' filled' : '');
+            bar.appendChild(seg);
+        }
+    }
 }
 
 function initTagManager(section, mealIndex, availableTags) {
@@ -111,25 +112,25 @@ document.querySelector('[data-action="next-step"]').addEventListener('click', fu
         const section = document.createElement('div');
         section.style.display = 'none';
         section.innerHTML = `
-            <div class="d-flex flex-column gap-3 mb-3">
-                <div>
-                    <label class="form-label">Meal title (optional)</label>
+            <div class="gdp-fields">
+                <div class="gdp-field">
+                    <label class="gdp-label">Meal title (optional)</label>
                     <input type="text"
                            name="MealPreferences[${i}].Title"
-                           class="back2-textbox"
+                           class="gdp-input"
                            placeholder="e.g. Lunch, Weekend Brunch…" />
                 </div>
-                <div>
-                    <label class="form-label">Size</label>
-                    <select name="MealPreferences[${i}].Size" class="back2-textbox">
+                <div class="gdp-field">
+                    <label class="gdp-label">Size</label>
+                    <select name="MealPreferences[${i}].Size" class="gdp-input gdp-select">
                         <option value="Small">Small</option>
                         <option value="Average" selected>Average</option>
                         <option value="Large">Large</option>
                     </select>
                 </div>
-                <div>
-                    <label class="form-label">Tags</label>
-                    <div class="tag-area mt-1"></div>
+                <div class="gdp-field">
+                    <label class="gdp-label">Tags</label>
+                    <div class="tag-area"></div>
                 </div>
             </div>`;
 

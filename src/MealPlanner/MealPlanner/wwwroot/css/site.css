@@ -1,4 +1,8 @@
 :root {
+  --macro-calories: #3B82F6;
+  --macro-carbs:    #8B5CF6;
+  --macro-fats:     #F97316;
+  --macro-protein:  #92400E;
   --body-bg: rgb(21, 21, 21);
   --layer1-bg: #4a4a4a;
   --layer2-bg: #737373;
@@ -20,6 +24,14 @@
   --image-filter: none;
   --button-text: black;
   --nutrition-bar-track: #2f2f2f;
+  --teal: #14b8a6;
+  --teal-hover: #0d9488;
+  --teal-light: rgba(20, 184, 166, 0.18);
+  --card-bg: #3d3d3d;
+  --card-border: rgba(255, 255, 255, 0.12);
+  --chip-bg: #4a4a4a;
+  --chip-border: rgba(255, 255, 255, 0.2);
+  --muted-text: #9ca3af;
 }
 
 [data-theme="light"] {
@@ -44,6 +56,36 @@
   --image-filter: invert(1);
   --button-text: black;
   --nutrition-bar-track: #9a9a9a;
+  --teal: #14b8a6;
+  --teal-hover: #0d9488;
+  --teal-light: #ccfbf1;
+  --card-bg: #f5f5f5;
+  --card-border: #e0e0e0;
+  --chip-bg: #ffffff;
+  --chip-border: rgba(0, 0, 0, 0.15);
+  --muted-text: #6b7280;
+}
+
+/* ── Avatar images: always contained within their circle ────── */
+[class*="avatar"] img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+/* ── Light mode: inputs never match card background ─────────── */
+[data-theme="light"] input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]):not([type="range"]):not([type="hidden"]):not([type="file"]),
+[data-theme="light"] textarea,
+[data-theme="light"] select {
+    background-color: #f0f0f0;
+    color: #1a1a1a;
+    border-color: #d8d8d8;
+}
+
+[data-theme="light"] input::placeholder,
+[data-theme="light"] textarea::placeholder {
+    color: #999;
 }
 
 html {
@@ -62,6 +104,124 @@ html {
 body {
   margin-bottom: 60px;
   background-color: var(--body-bg);
+  text-transform: capitalize;
+}
+
+/* ── Global delete confirmation modal ───────────────────────── */
+.dcm-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.dcm-panel {
+    background: #1a1a1a;
+    border: 0.5px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    padding: 1.75rem;
+    max-width: 400px;
+    width: 90%;
+    text-align: center;
+}
+
+[data-theme="light"] .dcm-panel {
+    background: #ffffff;
+    border-color: #e0e0e0;
+}
+
+.dcm-icon-wrap {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: rgba(226, 75, 74, 0.12);
+    border: 0.5px solid rgba(226, 75, 74, 0.25);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1rem;
+}
+
+.dcm-icon {
+    font-size: 22px;
+    color: #E24B4A;
+}
+
+.dcm-title {
+    font-size: 17px;
+    font-weight: 500;
+    color: #f0f0f0;
+    margin-bottom: 8px;
+}
+
+[data-theme="light"] .dcm-title {
+    color: #1a1a1a;
+}
+
+.dcm-sub {
+    font-size: 13px;
+    color: #a0a0a0;
+    line-height: 1.5;
+    margin-bottom: 1.5rem;
+}
+
+.dcm-btn-row {
+    display: flex;
+    gap: 10px;
+}
+
+.dcm-btn {
+    flex: 1;
+    border-radius: 10px;
+    padding: 11px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.15s, opacity 0.15s;
+    border: none;
+}
+
+.dcm-btn--cancel {
+    background: #2e2e2e;
+    border: 0.5px solid rgba(255, 255, 255, 0.08);
+    color: #a0a0a0;
+}
+
+[data-theme="light"] .dcm-btn--cancel {
+    background: #f0f0f0;
+    border-color: #e0e0e0;
+}
+
+.dcm-btn--cancel:hover {
+    background: #3a3a3a;
+}
+
+[data-theme="light"] .dcm-btn--cancel:hover {
+    background: #e4e4e4;
+}
+
+.dcm-btn--delete {
+    background: #E24B4A;
+    color: #ffffff;
+}
+
+.dcm-btn--delete:hover {
+    background: #cc3b3a;
+}
+
+/* Don't capitalize user-typed content or technical values */
+input,
+textarea,
+select,
+code,
+pre,
+[data-no-capitalize] {
+  text-transform: none;
 }
 
 .btn:focus,
@@ -136,6 +296,31 @@ li {
 
 #themeToggle[type=checkbox] {
     --bs-form-switch-bg: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%23737373'/%3e%3c/svg%3e");
+}
+
+/* ── Global back link ────────────────────────────────────────── */
+.page-back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 13px;
+    color: #a0a0a0;
+    text-decoration: none;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    margin-bottom: 1.25rem;
+    transition: color 0.15s;
+}
+
+.page-back-link:hover {
+    color: #f0f0f0;
+    text-decoration: none;
+}
+
+[data-theme="light"] .page-back-link:hover {
+    color: #1a1a1a;
 }
 
 /*Use this for the first background layer*/

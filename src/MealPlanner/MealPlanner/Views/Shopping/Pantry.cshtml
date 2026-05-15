@@ -5,25 +5,50 @@
     ViewData["Title"] = "My Pantry";
 }
 
-<div class="back1">
-    <h1 class="back1Title">My Pantry</h1>
+<link rel="stylesheet" href="~/css/shopping-shared.css" asp-append-version="true" />
+<link rel="stylesheet" href="~/css/pantry.css" asp-append-version="true" />
 
+<a href="/" class="page-back-link">
+    <i class="ti ti-arrow-left"></i>
+    Back
+</a>
+
+<div class="pantry-page">
+
+    <!-- Header -->
+    <div class="pantry-header">
+        <span class="pantry-header-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                 fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round">
+                <path d="M22 8H2"/>
+                <path d="M2 8v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8"/>
+                <path d="M22 8l-2-4H4L2 8"/>
+                <path d="M12 12v4"/>
+                <path d="M10 14h4"/>
+            </svg>
+        </span>
+        <h1 class="pantry-title">My Pantry</h1>
+    </div>
+
+    <!-- Alerts -->
     @if (TempData["SuccessMessage"] != null)
     {
-        <div class="alert alert-success text-center">@TempData["SuccessMessage"]</div>
+        <div class="pantry-alert pantry-alert-success">@TempData["SuccessMessage"]</div>
     }
     @if (TempData["ValidationError"] != null)
     {
-        <div class="field-validation-error text-danger text-center">@TempData["ValidationError"]</div>
+        <div class="pantry-alert pantry-alert-error">@TempData["ValidationError"]</div>
     }
 
-    <form asp-action="AddPantryItem" method="post" class="mb-4">
-        @Html.AntiForgeryToken()
-        <div class="row align-items-center flex-wrap">
-            <input id="Amount" name="Amount" type="number" step="any" min="0" class="col-1 back2-textbox-partial mx-1" placeholder="0" style="min-width: 70px;" />
-
-            <select id="Measurement" name="Measurement" class="back2-textbox-partial col-2 mx-1" style="min-width: 110px;">
-                <option value="" selected>Select</option>
+    <!-- Add item card -->
+    <div class="pantry-card">
+        <form asp-action="AddPantryItem" method="post" class="pantry-add-form">
+            @Html.AntiForgeryToken()
+            <input id="Amount" name="Amount" type="number" step="any" min="0"
+                   class="pantry-input pantry-qty-field" placeholder="0" />
+            <select id="Measurement" name="Measurement" class="pantry-input pantry-unit-select">
+                <option value="">Unit</option>
                 <option value="Count">Count</option>
                 <option value="Cup(s)">Cup(s)</option>
                 <option value="Ounce(s)">Ounce(s)</option>
@@ -31,25 +56,22 @@
                 <option value="L">L</option>
                 <option value="KG">KG</option>
             </select>
-            <div class="col" style="min-width: 150px;">
-                <input id="Name" name="Name" class="back2-textbox-partial w-100" placeholder="Ingredient name" />
-                <span class="field-validation-error text-danger" data-valmsg-for="Name"></span>
-            </div>
-                <button id="addPantryItemBtn" type="submit" class="btn btn-success col-auto mx-1 rounded-4 px-4">Add to Pantry</button>
-        </div>
-    </form>
+            <input id="Name" name="Name" type="text"
+                   class="pantry-input pantry-name-field" placeholder="Ingredient name" />
+            <button id="addPantryItemBtn" type="submit" class="pantry-add-btn">Add to Pantry</button>
+        </form>
+    </div>
 
-    <div class="back2">
+    <!-- Items list card -->
+    <div class="pantry-card">
         @if (Model.Any())
         {
-            <div class="d-flex flex-column gap-3">
-                @foreach (var item in Model)
-                {
-                    <div class="pantry-item d-flex align-items-center gap-2">
-                        <span class="pantry-item-name fs-5 flex-grow-1" style="min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
-                            @($"{item.Amount:G} {item.Measurement?.Name} of {item.IngredientBase.Display()}")
-                        </span>
-                        <form asp-action="UpdatePantryItemAmount" method="post" class="d-flex align-items-center gap-2 m-0">
+            @foreach (var item in Model)
+            {
+                <div class="pantry-item-row">
+                    <span class="pantry-item-name">@item.IngredientBase.Display()</span>
+                    <div class="pantry-item-right">
+                        <form asp-action="UpdatePantryItemAmount" method="post" class="pantry-qty-form">
                             @Html.AntiForgeryToken()
                             <input type="hidden" name="ingredientId" value="@item.Id" />
                             <input type="number"
@@ -57,26 +79,46 @@
                                    value="@item.Amount.ToString(System.Globalization.CultureInfo.InvariantCulture)"
                                    min="0.01"
                                    step="any"
-                                   class="back2-textbox-partial pantry-qty-input"
-                                   style="width: 80px"
+                                   class="pantry-qty-pill-input pantry-qty-input"
                                    data-original="@item.Amount.ToString(System.Globalization.CultureInfo.InvariantCulture)"
                                    oninput="togglePantryQtySave(this)" />
-                            <button type="submit" class="pantry-qty-save btn btn-primary btn-sm rounded-4 px-3" style="display:none">Save</button>
+                            <span class="pantry-qty-unit">@item.Measurement?.Name</span>
+                            <button type="submit" class="pantry-qty-save-btn pantry-qty-save" style="display:none">Save</button>
                         </form>
-                        <form asp-action="RemovePantryItem" method="post" class="d-inline">
+                        <form asp-action="RemovePantryItem" method="post" class="pantry-remove-form">
                             @Html.AntiForgeryToken()
                             <input type="hidden" name="ingredientId" value="@item.Id" />
-                            <button type="submit" class="remove-pantry-item btn btn-danger">X</button>
+                            <button type="submit" class="pantry-remove-btn" title="Remove item">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24"
+                                     fill="none" stroke="currentColor" stroke-width="2.5"
+                                     stroke-linecap="round" stroke-linejoin="round">
+                                    <line x1="18" y1="6" x2="6" y2="18"/>
+                                    <line x1="6" y1="6" x2="18" y2="18"/>
+                                </svg>
+                            </button>
                         </form>
                     </div>
-                }
-            </div>
+                </div>
+            }
         }
         else
         {
-            <p class="text-center fs-5 mb-0">Your pantry is empty. Add an item above.</p>
+            <div class="pantry-empty">
+                <svg class="pantry-empty-icon" xmlns="http://www.w3.org/2000/svg"
+                     width="40" height="40" viewBox="0 0 24 24"
+                     fill="none" stroke="currentColor" stroke-width="1.5"
+                     stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M22 8H2"/>
+                    <path d="M2 8v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8"/>
+                    <path d="M22 8l-2-4H4L2 8"/>
+                    <path d="M12 12v4"/>
+                    <path d="M10 14h4"/>
+                </svg>
+                <p class="pantry-empty-text">Your pantry is empty. Add an item above.</p>
+            </div>
         }
     </div>
+
 </div>
 
 <script>
@@ -84,4 +126,10 @@
         const btn = input.closest('form').querySelector('.pantry-qty-save');
         btn.style.display = parseFloat(input.value) !== parseFloat(input.dataset.original) ? 'inline-block' : 'none';
     }
+    document.addEventListener('DOMContentLoaded', function () {
+        document.getElementById('cartDropdown')?.classList.remove('open');
+    });
+    window.addEventListener('pageshow', function () {
+        document.getElementById('cartDropdown')?.classList.remove('open');
+    });
 </script>

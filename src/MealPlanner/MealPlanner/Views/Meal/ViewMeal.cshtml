@@ -1,88 +1,115 @@
 @model MealPlanner.Models.Meal
 
-<!-- Title-->
-<div class="back1 backHasButton">
+@{
+    var title      = Model.Title ?? "Meal";
+    var lower      = title.ToLower();
+    var mealIcon   = lower.Contains("breakfast") ? "ti-sun"
+                   : lower.Contains("dinner")    ? "ti-moon"
+                   : "ti-sun-high";
 
-    <!-- Back Button Top Left, inline with layout -->
-    <div class="mb-3">
-       <a href="@Url.Action("Index", "Home", new { id = Model.Id })" 
-   class="btn btn-outline-secondary back1Title">
-    &larr; Back
+    var dateStr    = Model.StartTime?.ToString("MMM d, yyyy") ?? "No date set";
+    var timeStr    = Model.StartTime?.ToString("h:mm tt") ?? "";
+    var endTimeStr = Model.EndTime?.ToString("h:mm tt");
+    var dateLabel  = string.IsNullOrEmpty(timeStr)
+                        ? dateStr
+                        : endTimeStr != null
+                            ? $"{dateStr} · {timeStr} – {endTimeStr}"
+                            : $"{dateStr} · {timeStr}";
+}
+
+<link rel="stylesheet" href="~/css/viewMeal.css" asp-append-version="true" />
+
+<!-- Back link -->
+<a href="@Url.Action("Index", "Home", new { id = Model.Id })" class="vm-back-link">
+    <i class="ti ti-arrow-left"></i>
+    Back
 </a>
+
+<!-- Page header -->
+<div class="vm-header">
+    <div class="vm-header-icon">
+        <i class="ti @mealIcon"></i>
     </div>
-
-    <div class="flex-grow-1 text-center">
-        <h2 id="mealTitle" class="back1Title">@Model.Title</h2>
-        <div class="back1Title">
-            <!-- Show date first -->
-            @(Model.StartTime?.ToString("MMM dd, yyyy") ?? "No date set")
-
-            <!-- Show time -->
-            @(Model.StartTime?.ToString("h:mm tt") ?? "No time set")
-
-            @if (Model.EndTime.HasValue)
-            {
-                <span>– @Model.EndTime.Value.ToString("h:mm tt")</span>
-            }
-            <!-- Show repeat badge -->
+    <div>
+        <h1 class="vm-meal-name">@title</h1>
+        <div class="vm-meal-date">
+            @dateLabel
             @if (!string.IsNullOrWhiteSpace(Model.RepeatRule))
             {
-                <span class="badge bg-info ms-2">@Model.RepeatRule</span>
+                <span style="margin-left:8px; padding:2px 8px; border-radius:9999px; background:rgba(20,184,166,0.1); border:0.5px solid rgba(20,184,166,0.3); font-size:11px; color:#2EC99A;">
+                    @Model.RepeatRule
+                </span>
             }
         </div>
-        <hr>
+    </div>
+</div>
+
+<!-- Recipes card -->
+<div class="vm-card">
+    <div class="vm-card-title-row">
+        <div class="vm-card-title-icon">
+            <i class="ti ti-bowl-chopsticks"></i>
+        </div>
+        <span class="vm-card-title-text">Recipes in this meal</span>
     </div>
 
-    <!-- Meal info -->
- @if (Model.Recipes != null && Model.Recipes.Any())
-{
-    <div class="list-group">
+    @if (Model.Recipes != null && Model.Recipes.Any())
+    {
         @foreach (var recipe in Model.Recipes)
         {
-            <div class="mealRecipeItem d-flex align-items-center justify-content-between mb-2 back2 back2-textbox"
+            <div class="vm-recipe-row mealRecipeItem"
                  data-recipe-id="@recipe.Id"
-                 data-meal-id="@Model.Id"
-                 style="cursor:pointer;">
-                <h4 class="buttonText mb-0">@recipe.Name</h4>
-                <div class="d-flex gap-2 align-items-center">
+                 data-meal-id="@Model.Id">
+                <span class="vm-recipe-name">@recipe.Name</span>
+                <div class="vm-recipe-actions">
                     @if (Model.Recipes.Count > 1)
                     {
                         <button type="button"
-                                class="btn btn-sm btn-warning"
+                                class="vm-regen-btn"
                                 data-action="regenerate-recipe"
                                 data-recipe-id="@recipe.Id"
                                 data-meal-id="@Model.Id"
-                                title="Regenerate this recipe">↻</button>
+                                title="Regenerate this recipe">
+                            <i class="ti ti-refresh"></i>
+                        </button>
                     }
-                    <button type="button" class="btn btn-danger delete-recipe-btn">X</button>
+                    <button type="button"
+                            class="vm-remove-btn delete-recipe-btn"
+                            title="Remove this recipe">
+                        <i class="ti ti-x"></i>
+                    </button>
                 </div>
             </div>
         }
-    </div>
-}
- else
-    {
-        <p class="text-muted mb-0">There are no recipes in this meal.</p>
     }
+    else
+    {
+        <p class="vm-empty">There are no recipes in this meal.</p>
+    }
+</div>
 
-    <div id="regen-no-alt-msg" data-regen-no-alternative class="alert alert-warning mt-2" style="display:none">
-        No alternative recipe is available right now.
-    </div>
+<!-- Regen feedback banners -->
+<div id="regen-no-alt-msg" data-regen-no-alternative class="vm-alert vm-alert-warning" style="display:none">
+    <i class="ti ti-alert-triangle"></i>
+    No alternative recipe is available right now.
+</div>
 
-    <div id="regen-undo-toast" class="alert alert-success mt-2" style="display:none">
-        <span>Recipe replaced.</span>
-        <button type="button"
-                class="btn btn-sm btn-outline-success ms-3"
-                data-action="undo-regenerate-recipe">Undo</button>
-    </div>
+<div id="regen-undo-toast" class="vm-alert vm-alert-success" style="display:none">
+    <i class="ti ti-check"></i>
+    <span>Recipe replaced.</span>
+    <button type="button" class="vm-undo-btn" data-action="undo-regenerate-recipe">Undo</button>
+</div>
 
-    <form asp-controller="Meal" asp-action="EditMeal" method="get">
-        <input type="hidden" name="id" value="@Model.Id" />
-        <button type="submit" class="buttonBlue">
-            <h2 class="buttonText">Edit Meal</h2>
-        </button>
-    </form>
-
+<!-- Action bar -->
+<div class="vm-action-bar">
+    <a href="@Url.Action("Index", "Home", new { id = Model.Id })" class="vm-action-back">
+        <i class="ti ti-arrow-left"></i>
+        Back
+    </a>
+    <a href="@Url.Action("EditMeal", "Meal", new { id = Model.Id })" class="vm-action-edit">
+        <i class="ti ti-edit"></i>
+        Edit Meal
+    </a>
 </div>
 
 @section Scripts {
