@@ -452,6 +452,163 @@ public class EdamamServiceTests
         Assert.That(result.Count(), Is.EqualTo(2));
     }
 
+    // ── SearchByContextAsync ─────────────────────────────────────────────────
+
+    private (EdamamService service, List<HttpRequestMessage> requests) SetupMocksCapturingRequests(
+        string jsonResponse, HttpStatusCode statusCode = HttpStatusCode.OK)
+    {
+        var requests = new List<HttpRequestMessage>();
+        var messageHandler = new Mock<HttpMessageHandler>(MockBehavior.Strict);
+        messageHandler.Protected()
+            .Setup<Task<HttpResponseMessage>>(
+                "SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(),
+                ItExpr.IsAny<CancellationToken>())
+            .Callback<HttpRequestMessage, CancellationToken>((req, _) => requests.Add(req))
+            .ReturnsAsync(new HttpResponseMessage
+            {
+                StatusCode = statusCode,
+                Content = new StringContent(jsonResponse)
+            });
+        var client = new HttpClient(messageHandler.Object) { BaseAddress = new Uri("https://api.test.com/api/") };
+        return (new EdamamService(client, "testid", "testkey"), requests);
+    }
+
+    private const string EmptyHitsJson = """{ "from": 1, "to": 0, "count": 0, "_links": {}, "hits": [] }""";
+
+    [Test]
+    public async Task SearchByContextAsync_NoCriteria_ReturnsEmptyAndMakesNoCall()
+    {
+        var (service, requests) = SetupMocksCapturingRequests(EmptyHitsJson);
+        var query = new ExternalSearchQuery(null, null, null, null, null, null, null, null, null, []);
+
+        var result = await service.SearchByContextAsync(query);
+
+        Assert.That(result, Is.Empty);
+        Assert.That(requests, Is.Empty, "Should short-circuit when no criteria are present");
+    }
+
+    [Test]
+    public async Task SearchByContextAsync_BuildsUrlWithCaloriesRange()
+    {
+        var (service, requests) = SetupMocksCapturingRequests(EmptyHitsJson);
+        var query = new ExternalSearchQuery(null, 100, 500, null, null, null, null, null, null, []);
+
+        await service.SearchByContextAsync(query);
+
+        Assert.That(requests, Has.Count.EqualTo(1));
+        var uri = requests[0].RequestUri!.ToString();
+        Assert.That(uri, Does.Contain("calories=100-500"));
+    }
+
+    [Test]
+    public async Task SearchByContextAsync_BuildsUrlWithMacroNutrientRanges()
+    {
+        var (service, requests) = SetupMocksCapturingRequests(EmptyHitsJson);
+        var query = new ExternalSearchQuery(
+            null,
+            null, null,
+            10, 50,   // protein
+            20, 60,   // carbs
+            5, 15,    // fat
+            []);
+
+        await service.SearchByContextAsync(query);
+
+        var uri = requests[0].RequestUri!.ToString();
+        Assert.That(uri, Does.Contain("nutrients%5BPROCNT%5D=10-50"));
+        Assert.That(uri, Does.Contain("nutrients%5BCHOCDF%5D=20-60"));
+        Assert.That(uri, Does.Contain("nutrients%5BFAT%5D=5-15"));
+    }
+
+    [Test]
+    public async Task SearchByContextAsync_BuildsUrlWithHealthFilters()
+    {
+        var (service, requests) = SetupMocksCapturingRequests(EmptyHitsJson);
+        var query = new ExternalSearchQuery(
+            null, null, null, null, null, null, null, null, null,
+            ["vegan", "gluten-free"]);
+
+        await service.SearchByContextAsync(query);
+
+        var uri = requests[0].RequestUri!.ToString();
+        Assert.That(uri, Does.Contain("health=vegan"));
+        Assert.That(uri, Does.Contain("health=gluten-free"));
+    }
+
+    [Test]
+    public async Task SearchByContextAsync_IncludesFreeTextQuery()
+    {
+        var (service, requests) = SetupMocksCapturingRequests(EmptyHitsJson);
+        var query = new ExternalSearchQuery("Italian Breakfast", null, null, null, null, null, null, null, null, []);
+
+        await service.SearchByContextAsync(query);
+
+        var uri = requests[0].RequestUri!.ToString();
+        Assert.That(uri, Does.Contain("q=Italian"));
+    }
+
+    [Test]
+    public async Task SearchByContextAsync_OmitsParamsForUnsetBounds()
+    {
+        var (service, requests) = SetupMocksCapturingRequests(EmptyHitsJson);
+        var query = new ExternalSearchQuery(null, 100, 500, null, null, null, null, null, null, []);
+
+        await service.SearchByContextAsync(query);
+
+        var uri = requests[0].RequestUri!.ToString();
+        Assert.That(uri, Does.Contain("calories="));
+        Assert.That(uri, Does.Not.Contain("nutrients"));
+        Assert.That(uri, Does.Not.Contain("health="));
+    }
+
+    [Test]
+    public async Task SearchByContextAsync_ParsesRecipeMacrosFromResponse()
+    {
+        string json =
+            """
+            {
+                "from": 1, "to": 1, "count": 1, "_links": {},
+                "hits": [{
+                    "recipe": {
+                        "uri": "http://TestUri.com/X",
+                        "label": "Test Recipe",
+                        "ingredients": [],
+                        "totalNutrients": {
+                            "ENERC_KCAL": { "label": "Energy", "quantity": 420, "unit": "kcal" },
+                            "FAT":        { "label": "Fat",    "quantity": 12,  "unit": "g" },
+                            "CHOCDF":     { "label": "Carbs",  "quantity": 45,  "unit": "g" },
+                            "PROCNT":     { "label": "Protein","quantity": 30,  "unit": "g" }
+                        }
+                    },
+                    "_links": { "self": { "href": "https://api.test.com/api/x", "title": "Self" } }
+                }]
+            }
+            """;
+        var (service, _) = SetupMocksCapturingRequests(json);
+        var query = new ExternalSearchQuery(null, 1, 1000, null, null, null, null, null, null, []);
+
+        var result = (await service.SearchByContextAsync(query)).ToList();
+
+        Assert.That(result, Has.Count.EqualTo(1));
+        Assert.That(result[0].Name, Is.EqualTo("Test Recipe"));
+        Assert.That(result[0].ExternalUri, Is.EqualTo("http://TestUri.com/X"));
+        Assert.That(result[0].Calories, Is.EqualTo(420));
+        Assert.That(result[0].Protein, Is.EqualTo(30));
+        Assert.That(result[0].Carbs, Is.EqualTo(45));
+        Assert.That(result[0].Fat, Is.EqualTo(12));
+    }
+
+    [TestCase(HttpStatusCode.Forbidden)]
+    [TestCase(HttpStatusCode.BadRequest)]
+    public void SearchByContextAsync_ThrowsOnNonSuccessStatus(HttpStatusCode statusCode)
+    {
+        var (service, _) = SetupMocksCapturingRequests("", statusCode);
+        var query = new ExternalSearchQuery(null, 1, 500, null, null, null, null, null, null, []);
+
+        Assert.CatchAsync(async () => await service.SearchByContextAsync(query));
+    }
+
     [Test]
     public async Task GetExternalRecipesByURIs_MakesOneCall_When20URIsGiven()
     {

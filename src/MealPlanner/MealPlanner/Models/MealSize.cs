@@ -40,4 +40,11 @@ public static class MealSizeExtensions
 
     public static bool IsSnack(this MealSize size) =>
         size == MealSize.SmallSnack || size == MealSize.LargeSnack;
+
+    /// <summary>
+    /// The fraction of a 2000 cal/day reference diet this size represents.
+    /// Used to compare a meal's macro ratios against size thresholds uniformly
+    /// across calories, protein, carbs, and fat.
+    /// </summary>
+    public static double Ratio(this MealSize size) => size.Calories() / 2000.0;
 }
