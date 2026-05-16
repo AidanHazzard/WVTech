@@ -156,7 +156,19 @@ public class FoodEntriesController : Controller
     [HttpPost]
     public async Task<IActionResult> RecipeAdded(RecipeViewModel newRecipeViewModel)
     {
-        //error checking
+        // Validate that all ingredient amounts are parseable fractions/decimals
+        for (int i = 0; i < newRecipeViewModel.IngredientAmounts.Count; i++)
+        {
+            string amountStr = newRecipeViewModel.IngredientAmounts[i];
+            if (!string.IsNullOrWhiteSpace(amountStr) && FractionParser.ParseAmount(amountStr) == null)
+            {
+                string name = i < newRecipeViewModel.Ingredients.Count
+                    ? newRecipeViewModel.Ingredients[i] : $"ingredient {i + 1}";
+                ModelState.AddModelError(string.Empty,
+                    $"Invalid amount for '{name}': enter a number, decimal, or fraction (e.g. 1/2, 1 1/4).");
+            }
+        }
+
         if (!ModelState.IsValid)
         {
             newRecipeViewModel.AvailableTags = await _tagRepository.GetTagNamesAsync();

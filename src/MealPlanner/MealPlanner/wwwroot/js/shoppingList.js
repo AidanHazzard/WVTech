@@ -1,20 +1,55 @@
-document.querySelectorAll(".date-range-input").forEach((input) => {
-  input.addEventListener("change", function () {
-    document.getElementById("dateRangeForm").submit();
+function parseAmountFloat(str) {
+  str = str.trim();
+  const mixed = str.match(/^(\d+)\s+(\d+)\/(\d+)$/);
+  if (mixed) return parseInt(mixed[1]) + parseInt(mixed[2]) / parseInt(mixed[3]);
+  const frac = str.match(/^(\d+)\/(\d+)$/);
+  if (frac) return parseInt(frac[1]) / parseInt(frac[2]);
+  const num = parseFloat(str);
+  return isNaN(num) ? 0 : num;
+}
+
+function formatAmountStr(val) {
+  if (val <= 0) return "0";
+  const whole = Math.floor(val);
+  const frac = val - whole;
+  const common = [[1,8],[1,4],[1,3],[3,8],[1,2],[5,8],[2,3],[3,4],[7,8]];
+  if (frac < 0.05) return String(whole || "0");
+  let best = null, bestDiff = Infinity;
+  for (const [n, d] of common) {
+    const diff = Math.abs(frac - n / d);
+    if (diff < bestDiff) { bestDiff = diff; best = [n, d]; }
+  }
+  if (best && bestDiff < 0.1) {
+    const fracStr = `${best[0]}/${best[1]}`;
+    return whole > 0 ? `${whole} ${fracStr}` : fracStr;
+  }
+  return val % 1 === 0 ? String(val) : val.toFixed(2);
+}
+
+document.addEventListener("click", function (e) {
+  const btn = e.target.closest(".qty-increment, .qty-decrement");
+  if (!btn) return;
+  const input = btn.closest(".qty-controls").querySelector(".qty-input");
+  const val = parseAmountFloat(input.value);
+  if (btn.classList.contains("qty-increment")) {
+    input.value = formatAmountStr(val + 1);
+  } else {
+    input.value = formatAmountStr(Math.max(0, val - 1));
+  }
+  input.closest("form").submit();
+});
+
+document.querySelectorAll(".qty-input").forEach((input) => {
+  input.addEventListener("blur", function () {
+    if (input.value.trim() !== input.dataset.original.trim()) {
+      input.closest("form").submit();
+    }
   });
 });
 
-function toggleSaveButton(input) {
-  const btn = input.closest("form").querySelector(".qty-save");
-  btn.style.display =
-    parseFloat(input.value) !== parseFloat(input.dataset.original)
-      ? "inline-block"
-      : "none";
-}
-
-document.querySelectorAll(".qty-input").forEach((input) => {
-  input.addEventListener("input", function () {
-    toggleSaveButton(this);
+document.querySelectorAll(".date-range-input").forEach((input) => {
+  input.addEventListener("change", function () {
+    document.getElementById("dateRangeForm").submit();
   });
 });
 

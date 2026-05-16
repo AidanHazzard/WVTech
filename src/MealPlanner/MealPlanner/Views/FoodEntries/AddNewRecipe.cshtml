@@ -5,6 +5,11 @@
 <div class="back1 backHasButton">
     <h1 class="back1Title">Create a Recipe</h1>
 
+    @if (!ViewData.ModelState.IsValid)
+    {
+        @Html.ValidationSummary(false, null, new { @class = "alert alert-danger" })
+    }
+
     <form asp-controller="FoodEntries" asp-action="RecipeAdded" method="post" enctype="multipart/form-data">
         <h2 class="back1Title left">
             <span>Name:</span>

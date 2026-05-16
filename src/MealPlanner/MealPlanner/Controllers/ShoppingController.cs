@@ -92,14 +92,22 @@ public class ShoppingController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> AddItem(string itemName, float amount, string measurement)
+    public async Task<IActionResult> AddItem(string itemName, string amount, string measurement)
     {
         User? user = await _userManager.GetUserAsync(User);
         if (user == null) return Challenge();
 
+        float? parsedAmount = FractionParser.ParseAmount(amount);
+        if (parsedAmount == null)
+        {
+            TempData["ShoppingListError"] = $"Invalid amount \"{amount}\". Use a number, fraction (1/2), or mixed number (1 1/2).";
+            return RedirectToAction(nameof(Index));
+        }
+
         try
         {
-            _shoppingListService.AddItem(user.Id, itemName, amount, measurement);
+            _shoppingListService.AddItem(user.Id, itemName, parsedAmount.Value, measurement);
+            TempData["ShoppingListSuccess"] = $"{itemName} added to your shopping list.";
         }
         catch (ArgumentException ex)
         {
@@ -111,14 +119,15 @@ public class ShoppingController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> UpdateItemAmount(int ingredientBaseId, float newAmount)
+    public async Task<IActionResult> UpdateItemAmount(int ingredientBaseId, string newAmount)
     {
         User? user = await _userManager.GetUserAsync(User);
         if (user == null) return Challenge();
 
+        float parsedAmount = FractionParser.ParseAmount(newAmount) ?? 0f;
         try
         {
-            _shoppingListService.UpdateItemAmount(user.Id, ingredientBaseId, newAmount);
+            _shoppingListService.UpdateItemAmount(user.Id, ingredientBaseId, parsedAmount);
         }
         catch (ArgumentException ex)
         {

@@ -31,7 +31,7 @@ public class ViewModelService
             recipe.Ingredients.Add(new Ingredient
             {
                 DisplayName = vm.Ingredients[i],
-                Amount = vm.IngredientAmounts[i],
+                Amount = FractionParser.ParseAmount(vm.IngredientAmounts[i]) ?? 0f,
                 IngredientBase = new IngredientBase { Name = IngredientNameNormalizer.NormalizeKey(vm.Ingredients[i]) },
                 Measurement = new Measurement { Name = vm.IngredientMeasurements[i] }
             });

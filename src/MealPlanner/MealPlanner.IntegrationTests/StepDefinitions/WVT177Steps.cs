@@ -1,0 +1,163 @@
+using System.Globalization;
+using MealPlanner.Models;
+using MealPlanner.Services;
+using Microsoft.EntityFrameworkCore;
+using OpenQA.Selenium;
+using OpenQA.Selenium.Support.UI;
+using Reqnroll;
+
+namespace Mealplanner.IntegrationTests;
+
+[Binding]
+public class WVT177Steps
+{
+    private readonly IWebDriver _driver;
+    private readonly WebDriverWait _wait;
+    private readonly string _baseUrl;
+
+    public WVT177Steps()
+    {
+        _driver = BDDSetup.Driver;
+        _wait = BDDSetup.Wait;
+        _baseUrl = AUTHost.BaseUrl;
+    }
+
+    [When("{string} adds an ingredient row")]
+    public void WhenUserAddsAnIngredientRow(string username)
+    {
+        _driver.FindElement(By.Id("buttonAppend")).Click();
+        _wait.Until(d => d.FindElements(By.CssSelector("select[name='IngredientMeasurements']")).Count > 0);
+    }
+
+    [Then("the ingredient measurement dropdown contains {string}")]
+    public void ThenIngredientMeasurementDropdownContains(string measurement)
+    {
+        var selects = _driver.FindElements(By.CssSelector("select[name='IngredientMeasurements']"));
+        Assert.That(selects, Is.Not.Empty, "No ingredient measurement dropdowns found on page");
+        var options = selects.Last().FindElements(By.TagName("option"));
+        Assert.That(
+            options.Any(o => (o.GetAttribute("value") ?? "").Equals(measurement, StringComparison.OrdinalIgnoreCase)),
+            Is.True,
+            $"'{measurement}' not found. Available: {string.Join(", ", options.Select(o => o.GetAttribute("value")))}");
+    }
+
+    [When("{string} adds an ingredient with name {string} amount {string} and measurement {string}")]
+    public void WhenUserAddsIngredientWithAmountAndMeasurement(string username, string name, string amount, string measurement)
+    {
+        _driver.FindElement(By.Id("buttonAppend")).Click();
+
+        _wait.Until(d => d.FindElements(By.CssSelector("input[name='IngredientAmounts']")).Count > 0);
+
+        var amountInputs = _driver.FindElements(By.CssSelector("input[name='IngredientAmounts']"));
+        var amountInput = amountInputs.Last();
+        amountInput.Clear();
+        amountInput.SendKeys(amount);
+
+        var measureSelects = _driver.FindElements(By.CssSelector("select[name='IngredientMeasurements']"));
+        new SelectElement(measureSelects.Last()).SelectByValue(measurement);
+
+        var nameInputs = _driver.FindElements(By.CssSelector("input[name='Ingredients']"));
+        nameInputs.Last().SendKeys(name);
+    }
+
+    [Then("the recipe {string} stores {string} with amount {string}")]
+    public void ThenRecipeStoresIngredientWithAmount(string recipeName, string ingredientName, string expectedAmountStr)
+    {
+        float expectedAmount = float.Parse(expectedAmountStr, CultureInfo.InvariantCulture);
+        using var ctx = BDDSetup.CreateContext();
+        var recipe = ctx.Recipes
+            .Include(r => r.Ingredients)
+            .FirstOrDefault(r => r.Name == recipeName);
+        Assert.That(recipe, Is.Not.Null, $"Recipe '{recipeName}' not found in database");
+
+        var normalizedName = IngredientNameNormalizer.NormalizeKey(ingredientName);
+        var ingredient = recipe!.Ingredients.FirstOrDefault(i =>
+            i.IngredientBase.Name.Equals(normalizedName, StringComparison.OrdinalIgnoreCase));
+        Assert.That(ingredient, Is.Not.Null, $"Ingredient '{ingredientName}' not found in recipe '{recipeName}'");
+        Assert.That(ingredient!.Amount, Is.EqualTo(expectedAmount).Within(0.001f));
+    }
+
+    [Given("{string} navigates to the shopping list")]
+    [When("{string} navigates to the shopping list")]
+    public void WhenUserNavigatesToShoppingList(string username)
+    {
+        _driver.Navigate().GoToUrl($"{_baseUrl}/Shopping");
+        _wait.Until(d => ((IJavaScriptExecutor)d)
+            .ExecuteScript("return document.readyState").ToString() == "complete");
+    }
+
+    [Then("the shopping list measurement dropdown contains {string}")]
+    public void ThenShoppingListMeasurementDropdownContains(string measurement)
+    {
+        var select = _wait.Until(d =>
+        {
+            try { return d.FindElement(By.CssSelector("select[name='measurement']")); }
+            catch (NoSuchElementException) { return null; }
+        });
+        Assert.That(select, Is.Not.Null, "Shopping list measurement dropdown not found");
+        var options = select!.FindElements(By.TagName("option"));
+        Assert.That(
+            options.Any(o => (o.GetAttribute("value") ?? "").Equals(measurement, StringComparison.OrdinalIgnoreCase)),
+            Is.True,
+            $"'{measurement}' not found in shopping list dropdown. Available: {string.Join(", ", options.Select(o => o.GetAttribute("value")))}");
+    }
+
+    [Given("{string} has {string} with amount {string} and measurement {string} on the shopping list")]
+    public void GivenUserHasItemOnShoppingList(string userName, string ingredientName, string amountStr, string measurement)
+    {
+        float amount = float.Parse(amountStr, CultureInfo.InvariantCulture);
+        using var ctx = BDDSetup.CreateContext();
+
+        var user = ctx.Set<User>().FirstOrDefault(u => u.Email == $"{userName}@fakeemail.com");
+        Assert.That(user, Is.Not.Null, $"User '{userName}' not found");
+
+        var normalizedName = IngredientNameNormalizer.NormalizeKey(ingredientName);
+        var ingredientBase = ctx.Set<IngredientBase>().FirstOrDefault(b => b.Name == normalizedName)
+            ?? ctx.Set<IngredientBase>().Add(new IngredientBase { Name = normalizedName }).Entity;
+
+        var measurementEntity = ctx.Set<Measurement>().FirstOrDefault(m => m.Name == measurement)
+            ?? ctx.Set<Measurement>().Add(new Measurement { Name = measurement }).Entity;
+
+        ctx.SaveChanges();
+
+        var existing = ctx.ShoppingListItems
+            .Where(i => i.UserId == user!.Id && i.IngredientBaseId == ingredientBase.Id)
+            .ToList();
+        ctx.ShoppingListItems.RemoveRange(existing);
+        ctx.SaveChanges();
+
+        ctx.ShoppingListItems.Add(new ShoppingListItem
+        {
+            UserId = user!.Id,
+            IngredientBase = ingredientBase,
+            Measurement = measurementEntity,
+            Amount = amount,
+            IsAutoAdded = false
+        });
+        ctx.SaveChanges();
+    }
+
+    [Then("{string} displays with amount {string} on the shopping list")]
+    public void ThenIngredientDisplaysWithAmountOnShoppingList(string ingredientName, string expectedAmount)
+    {
+        var items = _wait.Until(d => d.FindElements(By.CssSelector(".item-display")));
+        var matchingItem = items?.FirstOrDefault(i =>
+            i.Text.Contains(ingredientName, StringComparison.OrdinalIgnoreCase));
+        Assert.That(matchingItem, Is.Not.Null, $"Item '{ingredientName}' not found on shopping list");
+        var row = matchingItem!.FindElement(By.XPath("../.."));
+        var qtyInput = row.FindElement(By.CssSelector("input[name='newAmount']"));
+        Assert.That(qtyInput.GetAttribute("value"), Does.Contain(expectedAmount),
+            $"Expected amount '{expectedAmount}' not found in qty input for '{ingredientName}'");
+    }
+
+    [Then("an invalid amount error is displayed")]
+    public void ThenAnInvalidAmountErrorIsDisplayed()
+    {
+        _wait.Until(d =>
+        {
+            try { return d.FindElement(By.CssSelector(".validation-summary-errors")).Displayed; }
+            catch (NoSuchElementException) { return false; }
+            catch (StaleElementReferenceException) { return false; }
+        });
+    }
+}

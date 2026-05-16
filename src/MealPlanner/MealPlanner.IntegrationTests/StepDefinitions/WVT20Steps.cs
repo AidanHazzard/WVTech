@@ -409,24 +409,13 @@ public class WVT20Steps
         });
         Assert.That(span, Is.Not.Null, $"Shopping list item '{itemName}' not found");
 
-        var row = span!.FindElement(By.XPath(".."));
+        var row = span!.FindElement(By.XPath("../.."));
         var input = row.FindElement(By.CssSelector("input[name='newAmount']"));
 
-        // Use JS to set the value to avoid Clear()+SendKeys() issues with number inputs
+        // Use JS to set the value and trigger blur to auto-submit
         ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].value = arguments[1]", input, amountStr);
         ((IJavaScriptExecutor)_driver).ExecuteScript(
-            "arguments[0].dispatchEvent(new Event('input', {bubbles:true}))", input);
-
-        var saveBtn = _wait.Until(d =>
-        {
-            try
-            {
-                var btn = row.FindElement(By.CssSelector("button.qty-save"));
-                return btn.Displayed ? btn : null;
-            }
-            catch (StaleElementReferenceException) { return null; }
-        });
-        saveBtn!.Click();
+            "arguments[0].dispatchEvent(new Event('blur', {bubbles:true}))", input);
 
         _wait.Until(d => ((IJavaScriptExecutor)d)
             .ExecuteScript("return document.readyState").ToString() == "complete");
@@ -440,13 +429,16 @@ public class WVT20Steps
 
         var input = _wait.Until(d =>
         {
-            var rows = d.FindElements(By.CssSelector(".back2 .d-flex.gap-2"));
-            foreach (var row in rows)
+            try
             {
-                if (row.Text.Contains(itemName))
-                    return row.FindElement(By.CssSelector("input[name='newAmount']"));
+                var span = d.FindElements(By.CssSelector(".item-display[data-name]"))
+                    .FirstOrDefault(s => s.GetAttribute("data-name")
+                        .Contains(itemName, StringComparison.OrdinalIgnoreCase));
+                if (span == null) return null;
+                var row = span.FindElement(By.XPath("../.."));
+                return row.FindElement(By.CssSelector("input[name='newAmount']"));
             }
-            return null;
+            catch (StaleElementReferenceException) { return null; }
         });
 
         Assert.That(input, Is.Not.Null);

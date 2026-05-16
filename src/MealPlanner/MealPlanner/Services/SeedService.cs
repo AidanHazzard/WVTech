@@ -26,6 +26,9 @@ public class SeedService
             logger.LogInformation("Purging expired auto-removed pantry records.");
             await PurgeExpiredAutoRemovedIngredientsAsync(context, logger);
 
+            logger.LogInformation("Seeding measurements.");
+            await SeedMeasurementsAsync(context, logger);
+
             logger.LogInformation("Seeding dietary restrictions.");
             await SeedDietaryRestrictionsAsync(context, logger);
 
@@ -91,6 +94,35 @@ public class SeedService
         context.MealAutoRemovedIngredients.RemoveRange(expired);
         await context.SaveChangesAsync();
         logger.LogInformation("Purged {Count} expired auto-removed pantry records.", expired.Count);
+    }
+
+    private static async Task SeedMeasurementsAsync(MealPlannerDBContext context, ILogger logger)
+    {
+        HashSet<string> existing = (await context.Set<Measurement>()
+            .Select(m => m.Name)
+            .ToListAsync())
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        string[] names =
+        [
+            "Count", "Teaspoon", "Tablespoon", "Fluid Ounce", "Cup",
+            "Pint", "Quart", "Gallon", "Milliliter", "Liter",
+            "Ounce", "Pound", "Gram"
+        ];
+
+        var toAdd = names.Where(n => !existing.Contains(n))
+                         .Select(n => new Measurement { Name = n })
+                         .ToList();
+
+        if (toAdd.Count == 0)
+        {
+            logger.LogInformation("All standard measurements already exist; skipping seed.");
+            return;
+        }
+
+        context.Set<Measurement>().AddRange(toAdd);
+        await context.SaveChangesAsync();
+        logger.LogInformation("Seeded {Count} measurements.", toAdd.Count);
     }
 
     private static async Task SeedDietaryRestrictionsAsync(MealPlannerDBContext context, ILogger logger)
