@@ -46,26 +46,26 @@
                     <button type="submit" class="mealDeleteButton" title="Delete meal">✕</button>
                 </form>
 
-                <!-- Checkbox (toggles completion) — top-left corner, mirrors delete button placement -->
-                <form asp-controller="Meal" asp-action="ToggleMealCompleted" method="post" class="mealCompleteForm"
-                      data-has-pantry-match="@(Model.MealPantryMatchIds.Contains(meal.Id) ? "true" : "false")"
-                      data-has-auto-removed="@(Model.MealAutoRemovedIds.Contains(meal.Id) ? "true" : "false")">
-                    @Html.AntiForgeryToken()
-                    <input type="hidden" name="id" value="@meal.Id" />
-                    <input type="hidden" name="date" value="@Model.SelectedDate.ToString("yyyy-MM-dd")" />
-                    <input type="hidden" name="source" value="home" />
-                    <input type="hidden" name="removePantry" value="false" class="removePantryInput" />
-                    <input type="hidden" name="restorePantry" value="false" class="restorePantryInput" />
-
-                    <input type="checkbox"
-                           name="isCompleted"
-                           value="true"
-                           class="MealCheckBox"
-                           @(meal.IsCompleted ? "checked" : null) />
-                </form>
-
                 <!-- Meal card container -->
                 <div class="mealCardInner">
+
+                    <!-- Checkbox (toggles completion) — top-left corner, mirrors delete button placement -->
+                    <form asp-controller="Meal" asp-action="ToggleMealCompleted" method="post" class="mealCompleteForm"
+                          data-has-pantry-match="@(Model.MealPantryMatchIds.Contains(meal.Id) ? "true" : "false")"
+                          data-has-auto-removed="@(Model.MealAutoRemovedIds.Contains(meal.Id) ? "true" : "false")">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@meal.Id" />
+                        <input type="hidden" name="date" value="@Model.SelectedDate.ToString("yyyy-MM-dd")" />
+                        <input type="hidden" name="source" value="home" />
+                        <input type="hidden" name="removePantry" value="false" class="removePantryInput" />
+                        <input type="hidden" name="restorePantry" value="false" class="restorePantryInput" />
+
+                        <input type="checkbox"
+                               name="isCompleted"
+                               value="true"
+                               class="MealCheckBox"
+                               @(meal.IsCompleted ? "checked" : null) />
+                    </form>
 
                     <!-- Meal card button (opens the meal view) -->
                     <form asp-controller="Meal" asp-action="ViewMeal" method="get" class="mealViewForm">
