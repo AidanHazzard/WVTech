@@ -138,6 +138,19 @@ public class ShoppingController : Controller
     }
 
     [HttpPost]
+    [IgnoreAntiforgeryToken]
+    public async Task<IActionResult> UpdateItemAmountJson([FromBody] UpdateAmountRequest request)
+    {
+        User? user = await _userManager.GetUserAsync(User);
+        if (user == null) return Unauthorized();
+        float parsedAmount = FractionParser.ParseAmount(request.NewAmount) ?? 0f;
+        _shoppingListService.UpdateItemAmount(user.Id, request.IngredientBaseId, parsedAmount);
+        return Ok();
+    }
+
+    public record UpdateAmountRequest(int IngredientBaseId, string NewAmount);
+
+    [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> RemoveItem(int itemId)
     {

@@ -38,10 +38,11 @@ public class KrogerController : Controller
     }
 
     [HttpGet]
-    public async Task<IActionResult> Stores(string zipCode)
+    public async Task<IActionResult> Stores(string zipCode, int radiusInMiles = 50)
     {
         if (_krogerService == null) return Json(Array.Empty<object>());
-        return Json(await _krogerService.FindNearestStoresAsync(zipCode));
+        radiusInMiles = Math.Clamp(radiusInMiles, 1, 50);
+        return Json(await _krogerService.FindNearestStoresAsync(zipCode, radiusInMiles));
     }
 
     [HttpPost]

@@ -67,47 +67,52 @@
                 <option value="Gram">g</option>
             </select>
             <input type="text" class="back2-textbox-partial" name="itemName" placeholder="Enter Ingredient" required style="min-width: 150px; flex: 1 1 150px;" />
-            <button type="submit" class="btn btn-success rounded-4 px-4" style="flex-shrink: 0;">Add Item</button>
+            <button type="submit" class="buttonGreenInline" style="flex-shrink: 0;">
+                <h4 class="buttonText">Add Item</h4>
+            </button>
         </div>
     </form>
 
     <div class="back2">
         @if (Model.Items.Any())
         {
-            <div class="d-flex flex-column gap-3">
+            <div class="shopping-list-grid">
+                <h6 class="back1Title shopping-grid-header">Quantity</h6>
+                <h6 class="back1Title shopping-grid-header">Measurement</h6>
+                <h6 class="back1Title shopping-grid-header">Ingredient</h6>
+                <h6 class="back1Title shopping-grid-header">Delete</h6>
+
                 @foreach (var item in Model.Items)
                 {
-                    <div class="row align-items-center g-2 w-100">
-                        <div class="col-auto">
-                            <form asp-action="UpdateItemAmount" method="post" class="d-flex align-items-center gap-2 m-0">
-                                @Html.AntiForgeryToken()
-                                <input type="hidden" name="ingredientBaseId" value="@item.IngredientBase.Id" />
-                                <div class="qty-controls">
-                                    <button type="button" class="qty-btn qty-decrement">&#8722;</button>
-                                    <input type="text"
-                                           name="newAmount"
-                                           value="@MealPlanner.Services.FractionParser.FormatAmount(item.Amount)"
-                                           class="qty-input qty-pill-input"
-                                           data-original="@MealPlanner.Services.FractionParser.FormatAmount(item.Amount)" />
-                                    <button type="button" class="qty-btn qty-increment">&#43;</button>
-                                </div>
-                            </form>
-                        </div>
-                        <div class="col-2">
-                            <span class="fs-5">@MealPlanner.Services.FractionParser.AbbreviateMeasurement(item.Measurement.Name)</span>
-                        </div>
-                        <div class="col">
-                            <span class="fs-5 item-display"
-                                  data-measurement="@item.Measurement.Name"
-                                  data-name="@item.IngredientBase.Name">@item.IngredientBase.Display()</span>
-                        </div>
-                        <div class="col-auto">
-                            <form asp-action="RemoveItem" method="post" class="m-0">
-                                @Html.AntiForgeryToken()
-                                <input type="hidden" name="itemId" value="@item.Id" />
-                                <button type="submit" class="btn btn-danger delete-recipe-btn">X</button>
-                            </form>
-                        </div>
+                    <div>
+                        <form asp-action="UpdateItemAmount" method="post" class="m-0">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="ingredientBaseId" value="@item.IngredientBase.Id" />
+                            <div class="qty-controls">
+                                <button type="button" class="qty-btn qty-decrement">&#8722;</button>
+                                <input type="text"
+                                       name="newAmount"
+                                       value="@MealPlanner.Services.FractionParser.FormatAmount(item.Amount)"
+                                       class="qty-input qty-pill-input"
+                                       data-original="@MealPlanner.Services.FractionParser.FormatAmount(item.Amount)" />
+                                <button type="button" class="qty-btn qty-increment">&#43;</button>
+                            </div>
+                        </form>
+                    </div>
+                    <div>
+                        <span class="fs-5">@MealPlanner.Services.FractionParser.AbbreviateMeasurement(item.Measurement.Name)</span>
+                    </div>
+                    <div>
+                        <span class="fs-5 item-display"
+                              data-measurement="@item.Measurement.Name"
+                              data-name="@item.IngredientBase.Name">@item.IngredientBase.Display()</span>
+                    </div>
+                    <div>
+                        <form asp-action="RemoveItem" method="post" class="m-0">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="itemId" value="@item.Id" />
+                            <button type="submit" class="btn btn-danger delete-recipe-btn">X</button>
+                        </form>
                     </div>
                 }
             </div>
@@ -123,56 +128,63 @@
                 <p class="text-center fs-5 mb-0">No items in your shopping list yet.</p>
             }
         }
-    </div>
-</div>
 
-    <div class="back2 mt-4 p-3">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <h4 class="back1Title mb-0">Export to Kroger</h4>
-            <button type="button" id="previousExportsBtn" class="btn btn-primary rounded-4 px-3" style="font-size:0.9rem">
-                Previous Exports
-            </button>
+        <hr class="kroger-divider" />
+
+        <div class="kroger-section-header">
+            <h2 class="back1Title mb-0">Export to Kroger</h2>
+            @if (Model.KrogerConnected)
+            {
+                <span class="kroger-connected-badge">&#10003; Connected</span>
+            }
         </div>
-
-        @if (Model.KrogerConnected)
-        {
-            <p class="mb-3">&#10003; Kroger account connected</p>
-        }
 
         @if (!Model.Items.Any())
         {
-            <p class="text-muted fst-italic">Add items to your shopping list to export to Kroger.</p>
+            <p class="back1Title">Add items to your shopping list to export to Kroger.</p>
         }
         else
         {
-            <div class="d-flex gap-2 align-items-center flex-wrap mb-3">
-                <input type="text"
-                       id="ZipCode"
-                       value="@Model.ZipCode"
-                       placeholder="Zip code"
-                       maxlength="10"
-                       class="back2-textbox-partial"
-                       style="width:130px" />
-                <button type="button" id="findKrogerStores" class="btn btn-primary rounded-4 px-3">
-                    Find Stores
-                </button>
-            </div>
+            <div class="kroger-card">
+                <p class="kroger-card-label">Find a Store</p>
+                <div class="kroger-find-row">
+                    <input type="text"
+                           id="ZipCode"
+                           value="@Model.ZipCode"
+                           placeholder="Enter zip code"
+                           maxlength="10"
+                           class="back2-textbox kroger-zip-input" />
+                    <button type="button" id="findKrogerStores" class="buttonBlueInline kroger-header-btn">
+                        <h4 class="buttonText">Find Stores</h4>
+                    </button>
+                    <button type="button" id="previousExportsBtn" class="buttonBlueInline kroger-header-btn">
+                        <h4 class="buttonText">Previous Exports</h4>
+                    </button>
+                </div>
+                <div class="radius-slider-row">
+                    <span class="kroger-field-label">Radius</span>
+                    <input type="range" id="radiusSlider" min="1" max="50" value="50" class="radius-slider" />
+                    <span class="kroger-radius-badge" id="radiusLabel">50 mi</span>
+                </div>
 
-            <div id="krogerStoreSection" style="display:none">
-                <p id="krogerStoreMessage" class="mb-2 fw-semibold" style="display:none"></p>
-                <form asp-controller="Kroger" asp-action="Export" method="post" id="krogerExportForm">
-                    @Html.AntiForgeryToken()
-                    <input type="hidden" id="zipCodeHidden" name="zipCode" />
-                    <select id="krogerStoreSelect" name="storeId" class="back2-textbox-partial mb-3 rounded-4" style="width:100%;max-width:520px;padding:0.5rem 1rem;font-size:1rem;height:auto"></select>
-                    <div>
-                        <button type="submit" id="exportToKroger" class="btn btn-success rounded-4 px-4">
-                            Export to Kroger Cart
-                        </button>
-                        <span id="exportSpinner" style="display:none" class="text-muted fst-italic ms-2">Exporting...</span>
-                    </div>
-                </form>
+                <div id="krogerStoreSection" class="kroger-store-panel" style="display:none;">
+                    <hr class="kroger-inner-divider" />
+                    <p id="krogerStoreMessage" class="kroger-store-message" style="display:none;"></p>
+                    <form asp-controller="Kroger" asp-action="Export" method="post" id="krogerExportForm">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" id="zipCodeHidden" name="zipCode" />
+                        <select id="krogerStoreSelect" name="storeId" class="back2-textbox-partial kroger-store-select"></select>
+                        <div class="kroger-export-row">
+                            <button type="submit" id="exportToKroger" class="buttonBlueInline">
+                                <h4 class="buttonText">Export to Kroger Cart</h4>
+                            </button>
+                            <span id="exportSpinner" style="display:none;" class="back1Title">Exporting...</span>
+                        </div>
+                    </form>
+                </div>
             </div>
         }
+
     </div>
 </div>
 
