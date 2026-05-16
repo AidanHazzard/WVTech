@@ -7,6 +7,7 @@ using MealPlanner.Models;
 using MealPlanner.Services;
 using MealPlanner.ViewModels;
 using System.Collections.Generic;
+using Microsoft.IdentityModel.Tokens;
 
 namespace MealPlanner.Controllers;
 
@@ -54,6 +55,8 @@ public class HomeController : Controller
                 : DateTime.Today;
 
         var meals = await _mealRepo.GetUserMealsByDateWithIngredientsAsync(user, selectedDate);
+        
+        await meals.LoadExternalRecipesAsync(_externalRecipeService);
 
         var pantryMatchIds = _pantryService.GetMealPantryMatchIds(user.Id, meals);
 
@@ -63,9 +66,6 @@ public class HomeController : Controller
             if (_pantryService.HasAutoRemovedIngredients(meal.Id, selectedDate))
                 autoRemovedIds.Add(meal.Id);
         }
-
-        foreach (var meal in meals)
-            await meal.Recipes.LoadExternalRecipesAsync(_externalRecipeService);
 
         var nutrition = await _nutritionProgressService.GetDailyProgressAsync(
             user.Id,

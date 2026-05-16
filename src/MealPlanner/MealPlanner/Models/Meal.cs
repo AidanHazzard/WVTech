@@ -33,6 +33,9 @@ public class Meal
 
     public List<Recipe> Recipes { get; set; } = [];
 
+    public List<Tag> GetMealTags() =>
+        Recipes.SelectMany(r => r.Tags).DistinctBy(t => t.Id).ToList();
+
     public void UpdateFromEdit(Meal editedMeal, IEnumerable<Recipe> selectedRecipes)
     {
         StartTime = editedMeal.StartTime;
