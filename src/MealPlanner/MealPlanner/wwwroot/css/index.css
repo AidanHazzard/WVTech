@@ -175,13 +175,10 @@ button {
 }
 
 .MealCheckBox {
-    position: absolute;
-    top: 34px;
-    left: 34px;
+    display: block;
     margin: 0;
     width: 50px;
     height: 50px;
-    z-index: 3;
     cursor: pointer;
     transition: transform 0.3s ease-in-out;
     accent-color: #1e73ff;
@@ -246,6 +243,14 @@ button {
 .mealButton {
     position: relative;
     display: block;
+}
+
+.mealCompleteForm {
+    position: absolute;
+    top: 34px;
+    left: 34px;
+    margin: 0;
+    z-index: 3;
 }
 
 .mealDeleteForm {
