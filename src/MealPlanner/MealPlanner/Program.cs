@@ -134,6 +134,7 @@ builder.Services.AddScoped<IRecipeScorer, VotePercentageScorer>();
 builder.Services.AddScoped<IRecipeScorer, UserPreferredTagScorer>();
 builder.Services.AddScoped<IRecipeScorer, MealPreferredTagScorer>();
 builder.Services.AddScoped<IRecipeScorer, TagSimilarityScorer>();
+builder.Services.AddScoped<IRecipeScorer, NutrientFitScorer>();
 builder.Services.AddScoped<IRecipeFilter, DownVoteFilter>();
 builder.Services.AddScoped<IRecipeFilter, DietaryRestrictionFilter>();
 builder.Services.AddScoped<IRecipeFilter, PreferredTagFilter>();

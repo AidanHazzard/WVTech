@@ -14,5 +14,23 @@ namespace MealPlanner.Services.Recommendation;
 /// </summary>
 public sealed class NutrientFitScorer : IRecipeScorer
 {
-    public float Score(Recipe recipe, RecommendationContext ctx) => 0f;
+    public float Score(Recipe recipe, RecommendationContext ctx)
+    {
+        var meal = ctx.Meal;
+        if (!meal.ProteinTarget.HasValue || !meal.CarbTarget.HasValue || !meal.FatTarget.HasValue)
+            return 0f;
+
+        float targetTotal = meal.ProteinTarget.Value + meal.CarbTarget.Value + meal.FatTarget.Value;
+        float recipeTotal = recipe.Protein + recipe.Carbs + recipe.Fat;
+        if (targetTotal <= 0f || recipeTotal <= 0f) return 0f;
+
+        // L1 distance between the two macro-fraction vectors. Both lie on the
+        // simplex (components sum to 1), so the distance is at most 2.
+        float distance =
+            Math.Abs(recipe.Protein / recipeTotal - meal.ProteinTarget.Value / targetTotal)
+            + Math.Abs(recipe.Carbs / recipeTotal - meal.CarbTarget.Value / targetTotal)
+            + Math.Abs(recipe.Fat / recipeTotal - meal.FatTarget.Value / targetTotal);
+
+        return 1f - distance / 2f;
+    }
 }
