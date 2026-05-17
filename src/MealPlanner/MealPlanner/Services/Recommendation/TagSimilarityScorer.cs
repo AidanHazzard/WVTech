@@ -13,5 +13,21 @@ namespace MealPlanner.Services.Recommendation;
 /// </summary>
 public sealed class TagSimilarityScorer : IRecipeScorer
 {
-    public float Score(Recipe recipe, RecommendationContext ctx) => 0f;
+    public float Score(Recipe recipe, RecommendationContext ctx)
+    {
+        var profile = new Dictionary<int, int>();
+        foreach (var upvoted in ctx.User.Upvoted)
+            foreach (var tag in upvoted.Tags)
+                profile[tag.Id] = profile.GetValueOrDefault(tag.Id) + 1;
+
+        if (profile.Count == 0) return 0f;
+
+        int total = profile.Values.Sum();
+        int matched = recipe.Tags
+            .Select(t => t.Id)
+            .Distinct()
+            .Sum(id => profile.GetValueOrDefault(id));
+
+        return (float)matched / total;
+    }
 }
