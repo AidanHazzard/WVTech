@@ -222,39 +222,51 @@ public class MealRecommendationServiceTests
             });
 
     [Test]
-    public async Task ProteinTarget_RecipeExceedsBudget_RecipeExcluded()
+    public async Task ProteinTarget_PrefersRecipeCloserToTarget()
     {
-        SetNutritionPrefs(protein: 20);
-        var tooMuchProtein = new Recipe { Id = 1, Name = "High Protein", Calories = 100, Protein = 50, Tags = [] };
-        _streamMock.Setup(s => s.GetRankedCandidatesAsync(It.IsAny<RecommendationContext>())).ReturnsAsync([tooMuchProtein]);
+        // Soft macros: the recipe matching the protein target is chosen over
+        // one that overshoots it, even though the overshooting recipe ranks
+        // first. The old greedy algorithm hard-excluded any overshoot.
+        SetNutritionPrefs(protein: 30);
+        var overshoots = new Recipe { Id = 1, Name = "High Protein", Calories = 100, Protein = 90, Tags = [] };
+        var onTarget   = new Recipe { Id = 2, Name = "Right Protein", Calories = 100, Protein = 30, Tags = [] };
+        _streamMock.Setup(s => s.GetRankedCandidatesAsync(It.IsAny<RecommendationContext>()))
+                   .ReturnsAsync([overshoots, onTarget]);
 
         var result = await _service.GetRecommendedMealsForUser(_user, DateTime.Today, SingleMealConfig());
 
-        Assert.That(result[0].Recipes, Does.Not.Contain(tooMuchProtein));
+        Assert.That(result[0].Recipes, Does.Contain(onTarget));
+        Assert.That(result[0].Recipes, Does.Not.Contain(overshoots));
     }
 
     [Test]
-    public async Task CarbTarget_RecipeExceedsBudget_RecipeExcluded()
+    public async Task CarbTarget_PrefersRecipeCloserToTarget()
     {
-        SetNutritionPrefs(carbs: 10);
-        var tooManyCarbs = new Recipe { Id = 1, Name = "High Carb", Calories = 100, Carbs = 30, Tags = [] };
-        _streamMock.Setup(s => s.GetRankedCandidatesAsync(It.IsAny<RecommendationContext>())).ReturnsAsync([tooManyCarbs]);
+        SetNutritionPrefs(carbs: 30);
+        var overshoots = new Recipe { Id = 1, Name = "High Carb", Calories = 100, Carbs = 90, Tags = [] };
+        var onTarget   = new Recipe { Id = 2, Name = "Right Carb", Calories = 100, Carbs = 30, Tags = [] };
+        _streamMock.Setup(s => s.GetRankedCandidatesAsync(It.IsAny<RecommendationContext>()))
+                   .ReturnsAsync([overshoots, onTarget]);
 
         var result = await _service.GetRecommendedMealsForUser(_user, DateTime.Today, SingleMealConfig());
 
-        Assert.That(result[0].Recipes, Does.Not.Contain(tooManyCarbs));
+        Assert.That(result[0].Recipes, Does.Contain(onTarget));
+        Assert.That(result[0].Recipes, Does.Not.Contain(overshoots));
     }
 
     [Test]
-    public async Task FatTarget_RecipeExceedsBudget_RecipeExcluded()
+    public async Task FatTarget_PrefersRecipeCloserToTarget()
     {
-        SetNutritionPrefs(fat: 5);
-        var tooMuchFat = new Recipe { Id = 1, Name = "High Fat", Calories = 100, Fat = 20, Tags = [] };
-        _streamMock.Setup(s => s.GetRankedCandidatesAsync(It.IsAny<RecommendationContext>())).ReturnsAsync([tooMuchFat]);
+        SetNutritionPrefs(fat: 10);
+        var overshoots = new Recipe { Id = 1, Name = "High Fat", Calories = 100, Fat = 30, Tags = [] };
+        var onTarget   = new Recipe { Id = 2, Name = "Right Fat", Calories = 100, Fat = 10, Tags = [] };
+        _streamMock.Setup(s => s.GetRankedCandidatesAsync(It.IsAny<RecommendationContext>()))
+                   .ReturnsAsync([overshoots, onTarget]);
 
         var result = await _service.GetRecommendedMealsForUser(_user, DateTime.Today, SingleMealConfig());
 
-        Assert.That(result[0].Recipes, Does.Not.Contain(tooMuchFat));
+        Assert.That(result[0].Recipes, Does.Contain(onTarget));
+        Assert.That(result[0].Recipes, Does.Not.Contain(overshoots));
     }
 
     [Test]
@@ -302,8 +314,10 @@ public class MealRecommendationServiceTests
     }
 
     [Test]
-    public async Task RunningProteinTotal_SecondRecipeExcludedWhenCombinedExceedsBudget()
+    public async Task RunningProteinTotal_IncludesSecondRecipeWhenItImprovesMacroFit()
     {
+        // Two 30g recipes total 60g — closer to the 50g target than 30g alone —
+        // so the composer keeps both. The old greedy cap dropped the second.
         SetNutritionPrefs(protein: 50);
         var recipeA = new Recipe { Id = 1, Name = "Recipe A", Calories = 100, Protein = 30, Tags = [] };
         var recipeB = new Recipe { Id = 2, Name = "Recipe B", Calories = 100, Protein = 30, Tags = [] };
@@ -311,19 +325,20 @@ public class MealRecommendationServiceTests
 
         var result = await _service.GetRecommendedMealsForUser(_user, DateTime.Today, SingleMealConfig());
 
-        Assert.That(result[0].Recipes, Does.Contain(recipeA),     "First recipe (30g) fits the 50g budget");
-        Assert.That(result[0].Recipes, Does.Not.Contain(recipeB), "Second recipe (30g+30g=60g) exceeds the 50g budget");
+        Assert.That(result[0].Recipes, Does.Contain(recipeA));
+        Assert.That(result[0].Recipes, Does.Contain(recipeB));
     }
 
     [Test]
     public async Task MacroTargets_ScaleProportionallyToMealSize()
     {
         // Daily protein = 60g. Small weight=0.5, Large weight=1.5, totalWeight=2.0.
-        // Small budget: round(0.5/2.0 * 60) = 15g  →  20g protein recipe is excluded
-        // Large budget: round(1.5/2.0 * 60) = 45g  →  20g protein recipe is included
+        // Small slot target: round(0.5/2.0 * 60) = 15g; Large: round(1.5/2.0 * 60) = 45g.
         SetNutritionPrefs(protein: 60);
-        var recipe = new Recipe { Id = 1, Name = "Moderate Protein", Calories = 100, Protein = 20, Tags = [] };
-        _streamMock.Setup(s => s.GetRankedCandidatesAsync(It.IsAny<RecommendationContext>())).ReturnsAsync([recipe]);
+        var captured = new List<RecommendationContext>();
+        _streamMock.Setup(s => s.GetRankedCandidatesAsync(It.IsAny<RecommendationContext>()))
+                   .Callback<RecommendationContext>(c => captured.Add(c))
+                   .ReturnsAsync([]);
 
         var config = new DayPlanConfigViewModel
         {
@@ -332,15 +347,15 @@ public class MealRecommendationServiceTests
             SelectedDay = DateTime.Today.Day,
             MealPreferences =
             [
-                new MealPreferenceViewModel { Size = MealSize.Small },  // protein budget = 15g
-                new MealPreferenceViewModel { Size = MealSize.Large }   // protein budget = 45g
+                new MealPreferenceViewModel { Size = MealSize.Small },
+                new MealPreferenceViewModel { Size = MealSize.Large }
             ]
         };
 
-        var result = await _service.GetRecommendedMealsForUser(_user, DateTime.Today, config);
+        await _service.GetRecommendedMealsForUser(_user, DateTime.Today, config);
 
-        Assert.That(result[0].Recipes, Does.Not.Contain(recipe), "Small meal (15g budget) should exclude 20g protein recipe");
-        Assert.That(result[1].Recipes, Does.Contain(recipe),     "Large meal (45g budget) should include 20g protein recipe");
+        Assert.That(captured[0].Meal.ProteinTarget, Is.EqualTo(15), "Small slot protein target");
+        Assert.That(captured[1].Meal.ProteinTarget, Is.EqualTo(45), "Large slot protein target");
     }
 
     // --- GetOneRecipeRecommendation ---
@@ -551,15 +566,14 @@ public class MealRecommendationServiceTests
         Assert.That(result[0].Recipes, Does.Not.Contain(lowVote), "Recipe with lower vote% should be displaced");
     }
 
-    // --- Known bug: greedy macro underfill ---
+    // --- Soft macro composition (formerly the greedy underfill bug) ---
 
-    [Ignore("Known bug: greedy macro-fill commits to the high-protein upvoted recipe first, exhausting the protein budget and blocking lower-protein recipes that would otherwise fit")]
     [Test]
-    public async Task GreedyMacroFill_HighProteinUpvotedRecipeExhaustsProteinBudget_SmallerRecipesStillAdded()
+    public async Task SoftMacroFill_HighProteinRecipeDoesNotBlockSmallerRecipes()
     {
-        // bigProtein (upvoted, 30g) is selected first and fills the entire 30g protein budget.
-        // smallProA and smallProB (5g each) are then excluded: 30+5=35 > 30.
-        // A smarter algorithm would skip bigProtein in favour of fitting more recipes under the budget.
+        // bigProtein (30g) alone hits the 30g target exactly, but the composer
+        // still fits the two 5g recipes alongside it rather than letting one
+        // recipe monopolise the meal — the greedy algorithm stopped at one.
         SetNutritionPrefs(calories: 9999, protein: 30);
         var bigProtein = new Recipe { Id = 1, Name = "Protein Shake", Calories = 100, Protein = 30, Tags = [] };
         var smallProA  = new Recipe { Id = 2, Name = "Light Snack A", Calories = 100, Protein = 5,  Tags = [] };

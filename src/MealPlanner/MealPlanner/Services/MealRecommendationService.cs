@@ -126,7 +126,7 @@ public class MealRecommendationService : IMealRecommendationService
 
             var candidates = await FetchSlotCandidatesAsync(ctx, usedKeys);
 
-            var recipes = MealComposer.PackUpToCalorieBudget(
+            var recipes = MealComposer.Compose(
                 candidates, calorieTarget, _MAX_RECIPES, proteinTarget, carbTarget, fatTarget);
             foreach (var r in recipes) usedKeys.Add(RecipeKey(r));
 
