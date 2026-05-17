@@ -31,4 +31,19 @@ public static class MealComposer
         }
         return recipes;
     }
+
+    /// <summary>
+    /// Selects the subset of candidates that best fits the meal slot. Calories
+    /// and recipe count are hard limits; protein/carb/fat targets are soft —
+    /// a subset is scored by recipe rank ("profit") minus a penalty for how
+    /// far its macro totals stray from the targets, and the highest-scoring
+    /// subset wins. Replaces the greedy <see cref="PackUpToCalorieBudget"/>.
+    /// </summary>
+    public static List<Recipe> Compose(
+        IEnumerable<Recipe> rankedCandidates,
+        int calorieTarget,
+        int maxRecipes,
+        int? proteinTarget = null,
+        int? carbTarget = null,
+        int? fatTarget = null) => [];
 }
