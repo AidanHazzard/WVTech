@@ -95,9 +95,9 @@ Feature: Recommend meals for entire day
     When 'Gary' sets the regenerate size to 'Large' and confirms
     Then the first meal in the day plan summary shows more than 1200 total calories
 
-  # Macro-target filtering
+  # Macro-target fit (soft — recipes are ranked by macro fit, not hard-excluded)
 
-  Scenario: Day plan excludes recipe that exceeds user's protein target
+  Scenario: Day plan prefers the recipe that better fits the user's protein target
     Given 'Gary' has a 'MacroProteinTest' dietary restriction
     And 'Gary' has a nutrition target of 2000 calories, 20g protein, 200g carbs, and 200g fat
     And 'Gary' has a recipe named 'High Protein Dish' with 200 calories, 50g protein, 10g carbs, and 5g fat tagged 'MacroProteinTest'
@@ -108,7 +108,7 @@ Feature: Recommend meals for entire day
     Then the day plan summary includes a recipe named 'Low Protein Dish'
     And the day plan summary does not include a recipe named 'High Protein Dish'
 
-  Scenario: Day plan excludes recipe that exceeds user's carb target
+  Scenario: Day plan prefers the recipe that better fits the user's carb target
     Given 'Gary' has a 'MacroCarbTest' dietary restriction
     And 'Gary' has a nutrition target of 2000 calories, 200g protein, 10g carbs, and 200g fat
     And 'Gary' has a recipe named 'High Carb Dish' with 200 calories, 10g protein, 50g carbs, and 5g fat tagged 'MacroCarbTest'
@@ -119,7 +119,7 @@ Feature: Recommend meals for entire day
     Then the day plan summary includes a recipe named 'Low Carb Dish'
     And the day plan summary does not include a recipe named 'High Carb Dish'
 
-  Scenario: Day plan excludes recipe that exceeds user's fat target
+  Scenario: Day plan prefers the recipe that better fits the user's fat target
     Given 'Gary' has a 'MacroFatTest' dietary restriction
     And 'Gary' has a nutrition target of 2000 calories, 200g protein, 200g carbs, and 10g fat
     And 'Gary' has a recipe named 'High Fat Dish' with 200 calories, 10g protein, 5g carbs, and 50g fat tagged 'MacroFatTest'
