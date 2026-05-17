@@ -49,7 +49,7 @@
                 <!-- Meal card container -->
                 <div class="mealCardInner">
 
-                    <!-- Checkbox (toggles completion) -->
+                    <!-- Checkbox (toggles completion) — top-left corner, mirrors delete button placement -->
                     <form asp-controller="Meal" asp-action="ToggleMealCompleted" method="post" class="mealCompleteForm"
                           data-has-pantry-match="@(Model.MealPantryMatchIds.Contains(meal.Id) ? "true" : "false")"
                           data-has-auto-removed="@(Model.MealAutoRemovedIds.Contains(meal.Id) ? "true" : "false")">
