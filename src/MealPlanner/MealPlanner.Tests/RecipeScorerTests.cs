@@ -345,4 +345,89 @@ public class RecipeScorerTests
 
         Assert.That(filter.Allow(recipe, ctx), Is.True);
     }
+
+    // --- TagSimilarityScorer ---
+
+    [Test]
+    public void TagSimilarityScorer_NoUpvotedRecipes_ReturnsZero()
+    {
+        var recipe = new Recipe { Id = 1, Tags = [new Tag { Id = 1, Name = "Italian" }] };
+        var ctx = EmptyContext(upvoted: []);
+        var scorer = new TagSimilarityScorer();
+
+        Assert.That(scorer.Score(recipe, ctx), Is.EqualTo(0f));
+    }
+
+    [Test]
+    public void TagSimilarityScorer_UpvotedRecipesHaveNoTags_ReturnsZero()
+    {
+        var recipe = new Recipe { Id = 1, Tags = [new Tag { Id = 1, Name = "Italian" }] };
+        var ctx = EmptyContext(upvoted: [new Recipe { Id = 2, Tags = [] }]);
+        var scorer = new TagSimilarityScorer();
+
+        Assert.That(scorer.Score(recipe, ctx), Is.EqualTo(0f));
+    }
+
+    [Test]
+    public void TagSimilarityScorer_RecipeMatchesEntireProfile_ReturnsOne()
+    {
+        var ctx = EmptyContext(upvoted: [new Recipe { Id = 2, Tags = [new Tag { Id = 1, Name = "Italian" }] }]);
+        var recipe = new Recipe { Id = 1, Tags = [new Tag { Id = 1, Name = "Italian" }] };
+        var scorer = new TagSimilarityScorer();
+
+        Assert.That(scorer.Score(recipe, ctx), Is.EqualTo(1f).Within(0.001f));
+    }
+
+    [Test]
+    public void TagSimilarityScorer_RecipeMatchesNoProfileTags_ReturnsZero()
+    {
+        var ctx = EmptyContext(upvoted: [new Recipe { Id = 2, Tags = [new Tag { Id = 1, Name = "Italian" }] }]);
+        var recipe = new Recipe { Id = 1, Tags = [new Tag { Id = 99, Name = "Mexican" }] };
+        var scorer = new TagSimilarityScorer();
+
+        Assert.That(scorer.Score(recipe, ctx), Is.EqualTo(0f));
+    }
+
+    [Test]
+    public void TagSimilarityScorer_RecipeWithNoTags_ReturnsZero()
+    {
+        var ctx = EmptyContext(upvoted: [new Recipe { Id = 2, Tags = [new Tag { Id = 1, Name = "Italian" }] }]);
+        var recipe = new Recipe { Id = 1, Tags = [] };
+        var scorer = new TagSimilarityScorer();
+
+        Assert.That(scorer.Score(recipe, ctx), Is.EqualTo(0f));
+    }
+
+    [Test]
+    public void TagSimilarityScorer_PartialProfileOverlap_ReturnsFraction()
+    {
+        // Profile built from one upvoted recipe carrying two equally-weighted tags.
+        var ctx = EmptyContext(upvoted:
+        [
+            new Recipe { Id = 2, Tags = [new Tag { Id = 1 }, new Tag { Id = 2 }] }
+        ]);
+        var recipe = new Recipe { Id = 1, Tags = [new Tag { Id = 1 }] };
+        var scorer = new TagSimilarityScorer();
+
+        Assert.That(scorer.Score(recipe, ctx), Is.EqualTo(0.5f).Within(0.001f));
+    }
+
+    [Test]
+    public void TagSimilarityScorer_FrequentTagOutweighsRareTag()
+    {
+        // Tag 1 appears in all three upvoted recipes; tag 2 appears in only one.
+        var ctx = EmptyContext(upvoted:
+        [
+            new Recipe { Id = 2, Tags = [new Tag { Id = 1 }] },
+            new Recipe { Id = 3, Tags = [new Tag { Id = 1 }] },
+            new Recipe { Id = 4, Tags = [new Tag { Id = 1 }, new Tag { Id = 2 }] }
+        ]);
+        var scorer = new TagSimilarityScorer();
+        var frequentTagRecipe = new Recipe { Id = 1, Tags = [new Tag { Id = 1 }] };
+        var rareTagRecipe = new Recipe { Id = 5, Tags = [new Tag { Id = 2 }] };
+
+        Assert.That(
+            scorer.Score(frequentTagRecipe, ctx),
+            Is.GreaterThan(scorer.Score(rareTagRecipe, ctx)));
+    }
 }
