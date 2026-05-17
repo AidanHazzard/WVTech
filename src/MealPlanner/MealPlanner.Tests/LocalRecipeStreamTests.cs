@@ -168,4 +168,59 @@ public class LocalRecipeStreamTests
 
         Assert.DoesNotThrowAsync(() => stream.GetRankedCandidatesAsync(EmptyContext()));
     }
+
+    [Test]
+    public async Task GetRankedCandidatesAsync_DropsLocalRecipesBelowScoreFloor()
+    {
+        var top    = new Recipe { Id = 1, Tags = [] };
+        var mid    = new Recipe { Id = 2, Tags = [] };
+        var low    = new Recipe { Id = 3, Tags = [] };
+        var lowest = new Recipe { Id = 4, Tags = [] };
+        var ctx = EmptyContext(percentages: new Dictionary<int, float>
+        {
+            [1] = 1.0f, [2] = 0.5f, [3] = 0.1f, [4] = 0.0f
+        });
+        var stream = BuildStream([top, mid, low, lowest], scorers: [new VotePercentageScorer()]);
+
+        var result = await stream.GetRankedCandidatesAsync(ctx);
+
+        Assert.That(result, Does.Contain(top));
+        Assert.That(result, Does.Contain(mid));
+        Assert.That(result, Does.Not.Contain(low));
+        Assert.That(result, Does.Not.Contain(lowest));
+    }
+
+    [Test]
+    public async Task GetRankedCandidatesAsync_KeepsUpvotedRecipeBelowScoreFloor()
+    {
+        var strong  = new Recipe { Id = 1, Tags = [] };
+        var upvoted = new Recipe { Id = 2, Tags = [] };
+        var weak    = new Recipe { Id = 3, Tags = [] };
+        var ctx = EmptyContext(
+            percentages: new Dictionary<int, float> { [1] = 1.0f, [2] = 0.0f, [3] = 0.5f },
+            upvoted: [upvoted]);
+        var stream = BuildStream([strong, upvoted, weak], scorers: [new VotePercentageScorer()]);
+
+        var result = await stream.GetRankedCandidatesAsync(ctx);
+
+        Assert.That(result, Does.Contain(upvoted), "upvoted recipe is exempt from the floor");
+        Assert.That(result, Does.Not.Contain(weak), "non-upvoted recipe below the floor is dropped");
+    }
+
+    [Test]
+    public async Task GetRankedCandidatesAsync_AllScoresEqual_KeepsEveryRecipe()
+    {
+        var a = new Recipe { Id = 1, Tags = [] };
+        var b = new Recipe { Id = 2, Tags = [] };
+        var c = new Recipe { Id = 3, Tags = [] };
+        var ctx = EmptyContext(percentages: new Dictionary<int, float>
+        {
+            [1] = 0.5f, [2] = 0.5f, [3] = 0.5f
+        });
+        var stream = BuildStream([a, b, c], scorers: [new VotePercentageScorer()]);
+
+        var result = await stream.GetRankedCandidatesAsync(ctx);
+
+        Assert.That(result.Count(), Is.EqualTo(3));
+    }
 }
