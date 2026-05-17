@@ -430,4 +430,80 @@ public class RecipeScorerTests
             scorer.Score(frequentTagRecipe, ctx),
             Is.GreaterThan(scorer.Score(rareTagRecipe, ctx)));
     }
+
+    // --- NutrientFitScorer ---
+
+    [Test]
+    public void NutrientFitScorer_NoMacroTargets_ReturnsZero()
+    {
+        var recipe = new Recipe { Id = 1, Tags = [], Protein = 30, Carbs = 40, Fat = 10 };
+        var ctx = EmptyContext();
+        var scorer = new NutrientFitScorer();
+
+        Assert.That(scorer.Score(recipe, ctx), Is.EqualTo(0f));
+    }
+
+    [Test]
+    public void NutrientFitScorer_PartialMacroTargets_ReturnsZero()
+    {
+        // Only protein target set — composition needs all three macros.
+        var recipe = new Recipe { Id = 1, Tags = [], Protein = 30, Carbs = 40, Fat = 10 };
+        var ctx = EmptyContext(proteinTarget: 50);
+        var scorer = new NutrientFitScorer();
+
+        Assert.That(scorer.Score(recipe, ctx), Is.EqualTo(0f));
+    }
+
+    [Test]
+    public void NutrientFitScorer_RecipeWithNoMacros_ReturnsZero()
+    {
+        var recipe = new Recipe { Id = 1, Tags = [], Protein = 0, Carbs = 0, Fat = 0 };
+        var ctx = EmptyContext(proteinTarget: 30, carbTarget: 40, fatTarget: 10);
+        var scorer = new NutrientFitScorer();
+
+        Assert.That(scorer.Score(recipe, ctx), Is.EqualTo(0f));
+    }
+
+    [Test]
+    public void NutrientFitScorer_RecipeMatchesTargetComposition_ReturnsOne()
+    {
+        var recipe = new Recipe { Id = 1, Tags = [], Protein = 30, Carbs = 40, Fat = 10 };
+        var ctx = EmptyContext(proteinTarget: 30, carbTarget: 40, fatTarget: 10);
+        var scorer = new NutrientFitScorer();
+
+        Assert.That(scorer.Score(recipe, ctx), Is.EqualTo(1f).Within(0.001f));
+    }
+
+    [Test]
+    public void NutrientFitScorer_SameCompositionDifferentScale_ReturnsOne()
+    {
+        // Recipe carries double the target's macros but the same balance.
+        var recipe = new Recipe { Id = 1, Tags = [], Protein = 60, Carbs = 80, Fat = 20 };
+        var ctx = EmptyContext(proteinTarget: 30, carbTarget: 40, fatTarget: 10);
+        var scorer = new NutrientFitScorer();
+
+        Assert.That(scorer.Score(recipe, ctx), Is.EqualTo(1f).Within(0.001f));
+    }
+
+    [Test]
+    public void NutrientFitScorer_OppositeComposition_ScoresLow()
+    {
+        // Target is almost all protein; recipe is almost all fat.
+        var recipe = new Recipe { Id = 1, Tags = [], Protein = 5, Carbs = 5, Fat = 90 };
+        var ctx = EmptyContext(proteinTarget: 90, carbTarget: 5, fatTarget: 5);
+        var scorer = new NutrientFitScorer();
+
+        Assert.That(scorer.Score(recipe, ctx), Is.LessThan(0.3f));
+    }
+
+    [Test]
+    public void NutrientFitScorer_CloserCompositionScoresHigher()
+    {
+        var ctx = EmptyContext(proteinTarget: 30, carbTarget: 40, fatTarget: 10);
+        var scorer = new NutrientFitScorer();
+        var near = new Recipe { Id = 1, Tags = [], Protein = 28, Carbs = 42, Fat = 10 };
+        var far = new Recipe { Id = 2, Tags = [], Protein = 5, Carbs = 5, Fat = 90 };
+
+        Assert.That(scorer.Score(near, ctx), Is.GreaterThan(scorer.Score(far, ctx)));
+    }
 }
