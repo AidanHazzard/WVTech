@@ -19,12 +19,13 @@ public class MealRepository : Repository<Meal>, IMealRepository
         return base.CreateOrUpdate(meal);
     }
 
-    // External recipes selected into a meal are persisted as a bare URI cache
-    // row: the Edamam payload (ingredients, tags) is dropped, and an already
-    // cached row is reused untouched. Persisting the Edamam ingredient graph
-    // would collide with the IngredientBase/Measurement unique indexes, and a
-    // second row for an already-cached ExternalUri violates the ExternalUri
-    // unique index — either failure aborts the whole meal save.
+    // An external recipe selected into a meal is persisted as a URI-only row:
+    // Edamam's TOS permits caching only the recipe URI, so no name, nutrition,
+    // image or ingredients are stored — display code re-fetches the recipe
+    // from Edamam by URI when needed. An already-cached row is reused
+    // untouched. (Persisting the Edamam ingredient graph would also collide
+    // with the IngredientBase/Measurement unique indexes, and a duplicate
+    // ExternalUri violates that unique index — either aborts the meal save.)
     private void ResolveExternalRecipes(Meal meal)
     {
         var recipeSet = _context.Set<Recipe>();
@@ -44,14 +45,9 @@ public class MealRepository : Repository<Meal>, IMealRepository
 
             var shell = new Recipe
             {
-                Name = recipe.Name,
+                Name = string.Empty,
                 Directions = string.Empty,
-                ExternalUri = uri,
-                ImageUrl = recipe.ImageUrl,
-                Calories = recipe.Calories,
-                Protein = recipe.Protein,
-                Carbs = recipe.Carbs,
-                Fat = recipe.Fat
+                ExternalUri = uri
             };
             recipeSet.Add(shell);
             meal.Recipes[i] = shell;
