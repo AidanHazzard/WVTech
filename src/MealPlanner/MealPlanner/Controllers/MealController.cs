@@ -264,7 +264,13 @@ public class MealController : Controller
             MealPreferences = [preferences]
         };
 
-        var newMeals = await _recommendationService.GetRecommendedMealsForUser(user, mealDate, config);
+        var dayMeals = await _mealRepo.GetUserMealsByDateAsync(user, mealDate);
+        var excludeIds = dayMeals
+            .Where(m => m.Id != mealId)
+            .SelectMany(m => m.Recipes.Select(r => r.Id))
+            .ToHashSet();
+
+        var newMeals = await _recommendationService.GetRecommendedMealsForUser(user, mealDate, config, excludeIds);
         await _mealRepo.LoadRecipesAsync(meal);
         meal.Recipes = newMeals.FirstOrDefault()?.Recipes ?? [];
         _mealRepo.CreateOrUpdate(meal);
@@ -296,7 +302,8 @@ public class MealController : Controller
             .Union(meal.Recipes.Select(r => r.Id))
             .ToHashSet();
 
-        var replacement = await _recommendationService.GetOneRecipeRecommendation(user, mealDate, excludeIds);
+        var slotTemplate = await _recipeRepo.ReadRecipeWithIngredientsAsync(recipeId);
+        var replacement = await _recommendationService.GetOneRecipeRecommendation(user, mealDate, excludeIds, slotTemplate);
         if (replacement == null)
             return Json(new { noAlternative = true });
 

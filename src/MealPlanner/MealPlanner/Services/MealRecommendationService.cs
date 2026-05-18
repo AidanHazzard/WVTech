@@ -127,11 +127,29 @@ public class MealRecommendationService : IMealRecommendationService
     {
         var userCtx = await BuildUserContextAsync(user, date);
         var excludeKeys = excludeRecipeIds.Select(id => $"id:{id}").ToHashSet();
-        var mealCtx = new MealRecommendationContext(null, null, null, null, [], excludeKeys);
+        var mealCtx = BuildReplacementSlotContext(slotTemplate, excludeKeys);
         var ctx = new RecommendationContext(userCtx, mealCtx);
 
         var candidates = await FetchSlotCandidatesAsync(ctx);
         return candidates.FirstOrDefault();
+    }
+
+    // Slot context for a single-recipe replacement: macro targets and tag
+    // preferences are taken from the recipe being replaced, so the swap stays
+    // close in nutrition and theme to what it replaces.
+    private static MealRecommendationContext BuildReplacementSlotContext(
+        Recipe? slotTemplate, HashSet<string> excludeKeys)
+    {
+        if (slotTemplate == null)
+            return new MealRecommendationContext(null, null, null, null, [], excludeKeys);
+
+        return new MealRecommendationContext(
+            null,
+            slotTemplate.Protein,
+            slotTemplate.Carbs,
+            slotTemplate.Fat,
+            slotTemplate.Tags.Select(t => t.Id).ToHashSet(),
+            excludeKeys);
     }
 
     public async Task<List<Meal>> GetRecommendedMealsForUser(User user, DateTime mealDate, DayPlanConfigViewModel config, IEnumerable<int>? excludeRecipeIds = null)
@@ -147,7 +165,7 @@ public class MealRecommendationService : IMealRecommendationService
         var nutritionPrefs = await _nutrionRepository.GetUsersNutritionPreferenceAsync(user.Id);
         var totalWeight = preferences.Sum(p => p.Size.Weight());
 
-        var usedKeys = new HashSet<string>();
+        var usedKeys = (excludeRecipeIds ?? []).Select(id => $"id:{id}").ToHashSet();
         int mealIndex = 0;
         foreach (var pref in preferences)
         {
