@@ -159,8 +159,11 @@ public class RecipeRepository : Repository<Recipe>, IRecipeRepository
         return query.ToList();
     }
 
-    public async Task<List<Recipe>> GetAllWithTagsAsync()
+    public async Task<List<Recipe>> GetAllWithTagsAndIngredientsAsync()
     {
-        return await _dbset.Include(r => r.Tags).ToListAsync();
+        return await _dbset
+            .Include(r => r.Tags)
+            .Include(r => r.Ingredients)
+            .ToListAsync();
     }
 }

@@ -41,7 +41,7 @@ public class LocalRecipeStreamTests
         IEnumerable<IRecipeFilter>? filters = null)
     {
         var repoMock = new Mock<IRecipeRepository>();
-        repoMock.Setup(r => r.GetAllWithTagsAsync()).ReturnsAsync(pool);
+        repoMock.Setup(r => r.GetAllWithTagsAndIngredientsAsync()).ReturnsAsync(pool);
         return new LocalRecipeStream(
             repoMock.Object,
             scorers ?? [
@@ -164,7 +164,7 @@ public class LocalRecipeStreamTests
     public async Task GetRankedCandidatesAsync_EmptyScorersAndFilters_DoesNotThrow()
     {
         var repoMock = new Mock<IRecipeRepository>();
-        repoMock.Setup(r => r.GetAllWithTagsAsync()).ReturnsAsync([]);
+        repoMock.Setup(r => r.GetAllWithTagsAndIngredientsAsync()).ReturnsAsync([]);
         var stream = new LocalRecipeStream(repoMock.Object, [], []);
 
         Assert.DoesNotThrowAsync(() => stream.GetRankedCandidatesAsync(EmptyContext()));

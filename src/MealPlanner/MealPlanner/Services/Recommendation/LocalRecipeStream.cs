@@ -26,7 +26,7 @@ public sealed class LocalRecipeStream : IRecommendationStream
 
     public async Task<IEnumerable<Recipe>> GetRankedCandidatesAsync(RecommendationContext ctx)
     {
-        var recipes = await _recipeRepository.GetAllWithTagsAsync();
+        var recipes = await _recipeRepository.GetAllWithTagsAndIngredientsAsync();
         var upvotedIds = ctx.User.Upvoted.Select(r => r.Id).ToHashSet();
 
         var scored = recipes

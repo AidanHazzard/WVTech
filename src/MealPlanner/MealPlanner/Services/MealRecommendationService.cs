@@ -47,7 +47,10 @@ public class MealRecommendationService : IMealRecommendationService
         var votePercentages  = await _userRecipeRepository.GetAllVotePercentagesAsync();
         var upvoted          = await _userRecipeRepository.GetUserRecipesByVoteType(userId, UserVoteType.UpVote);
         var preferredTagIds  = await _foodPreferenceRepository.GetFoodPreferenceTagIdsAsync(userId);
-        return new UserRecommendationContext(restrictionNames, userVotes, votePercentages, upvoted, preferredTagIds, []);
+        var pantryNames      = _pantryService?.GetPantryItems(userId)
+            .Select(i => IngredientNameNormalizer.NormalizeKey(i.IngredientBase.Name))
+            .ToHashSet() ?? [];
+        return new UserRecommendationContext(restrictionNames, userVotes, votePercentages, upvoted, preferredTagIds, pantryNames);
     }
 
     private static string RecipeKey(Recipe r) =>

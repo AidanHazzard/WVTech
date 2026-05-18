@@ -10,5 +10,18 @@ namespace MealPlanner.Services.Recommendation;
 /// </summary>
 public sealed class PantryOverlapScorer : IRecipeScorer
 {
-    public float Score(Recipe recipe, RecommendationContext ctx) => 0f;
+    public float Score(Recipe recipe, RecommendationContext ctx)
+    {
+        var pantry = ctx.User.PantryIngredientNames;
+        if (pantry.Count == 0) return 0f;
+
+        var recipeIngredients = recipe.Ingredients
+            .Select(i => IngredientNameNormalizer.NormalizeKey(i.IngredientBase.Name))
+            .Distinct()
+            .ToList();
+        if (recipeIngredients.Count == 0) return 0f;
+
+        int matches = recipeIngredients.Count(pantry.Contains);
+        return (float)matches / recipeIngredients.Count;
+    }
 }
