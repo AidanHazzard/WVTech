@@ -50,8 +50,10 @@ Feature: Recommend meals for entire day
     Then 'Gary' sees a summary of his meal plan for the day
 
   Scenario: Day plan recommendations respect the user's dietary restrictions
-    Given 'Gary' has a 'Vegan' dietary restriction
-    And 'Gary' has a recipe tagged 'Vegan' named 'Tofu Stir Fry'
+    # Uses a test-specific restriction tag so the seeded recipe catalogue
+    # (which carries real tags like 'Vegan') cannot crowd out 'Tofu Stir Fry'.
+    Given 'Gary' has a 'DietaryFilterTest' dietary restriction
+    And 'Gary' has a recipe tagged 'DietaryFilterTest' named 'Tofu Stir Fry'
     And 'Gary' has a recipe named 'Beef Stew' without any tags
     And 'Gary' has specified 1 meals for his day plan
     When 'Gary' is presented with the configuration for each meal
