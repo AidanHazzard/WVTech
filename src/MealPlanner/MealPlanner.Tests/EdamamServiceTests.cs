@@ -549,6 +549,28 @@ public class EdamamServiceTests
     }
 
     [Test]
+    public async Task SearchByContextAsync_BuildsUrlWithFacets()
+    {
+        var (service, requests) = SetupMocksCapturingRequests(EmptyHitsJson);
+        var query = new ExternalSearchQuery(null, null, null, null, null, null, null, null, null, [])
+        {
+            Diets = ["high-protein"],
+            CuisineTypes = ["Italian"],
+            MealTypes = ["Breakfast"],
+            DishTypes = ["Salad"],
+        };
+
+        await service.SearchByContextAsync(query);
+
+        Assert.That(requests, Has.Count.EqualTo(1));
+        var uri = requests[0].RequestUri!.ToString();
+        Assert.That(uri, Does.Contain("diet=high-protein"));
+        Assert.That(uri, Does.Contain("cuisineType=Italian"));
+        Assert.That(uri, Does.Contain("mealType=Breakfast"));
+        Assert.That(uri, Does.Contain("dishType=Salad"));
+    }
+
+    [Test]
     public async Task SearchByContextAsync_OmitsParamsForUnsetBounds()
     {
         var (service, requests) = SetupMocksCapturingRequests(EmptyHitsJson);

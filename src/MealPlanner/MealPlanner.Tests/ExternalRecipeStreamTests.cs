@@ -136,7 +136,7 @@ public class ExternalRecipeStreamTests
     }
 
     [Test]
-    public async Task GetRankedCandidatesAsync_LooksUpTagNamesForFreeTextQuery()
+    public async Task GetRankedCandidatesAsync_RoutesMatchingSlotTagsToFacets()
     {
         _tagRepoMock
             .Setup(r => r.GetTagsByIdsAsync(It.IsAny<IEnumerable<int>>()))
@@ -155,21 +155,16 @@ public class ExternalRecipeStreamTests
         var stream = BuildStream();
         await stream.GetRankedCandidatesAsync(BuildContext(mealTags: [10, 20]));
 
-        Assert.That(captured!.FreeText, Is.Not.Null);
-        Assert.That(captured.FreeText, Does.Contain("Italian"));
-        Assert.That(captured.FreeText, Does.Contain("Breakfast"));
+        Assert.That(captured!.CuisineTypes, Does.Contain("Italian"));
+        Assert.That(captured.MealTypes, Does.Contain("Breakfast"));
     }
 
     [Test]
-    public async Task GetRankedCandidatesAsync_CombinesUserAndMealTagsInFreeText()
+    public async Task GetRankedCandidatesAsync_RoutesUnmatchedSlotTagToFreeText()
     {
         _tagRepoMock
-            .Setup(r => r.GetTagsByIdsAsync(It.Is<IEnumerable<int>>(ids => ids.Contains(10) && ids.Contains(20))))
-            .ReturnsAsync(new List<Tag>
-            {
-                new() { Id = 10, Name = "Italian" },
-                new() { Id = 20, Name = "Breakfast" }
-            });
+            .Setup(r => r.GetTagsByIdsAsync(It.IsAny<IEnumerable<int>>()))
+            .ReturnsAsync(new List<Tag> { new() { Id = 30, Name = "Comfort Food" } });
 
         ExternalSearchQuery? captured = null;
         _externalServiceMock
@@ -178,10 +173,51 @@ public class ExternalRecipeStreamTests
             .ReturnsAsync([]);
 
         var stream = BuildStream();
-        await stream.GetRankedCandidatesAsync(BuildContext(userTags: [10], mealTags: [20]));
+        await stream.GetRankedCandidatesAsync(BuildContext(mealTags: [30]));
 
-        Assert.That(captured!.FreeText, Does.Contain("Italian"));
-        Assert.That(captured.FreeText, Does.Contain("Breakfast"));
+        Assert.That(captured!.FreeText, Does.Contain("Comfort Food"));
+    }
+
+    [Test]
+    public async Task GetRankedCandidatesAsync_DoesNotClassifyUserTagsIntoFacets()
+    {
+        // Standing user tags are an OR-style preference; only the meal slot's
+        // tags drive the structured query. User taste still re-ranks results
+        // through the scorers after the fetch.
+        _tagRepoMock
+            .Setup(r => r.GetTagsByIdsAsync(It.IsAny<IEnumerable<int>>()))
+            .ReturnsAsync(new List<Tag> { new() { Id = 10, Name = "Italian" } });
+
+        ExternalSearchQuery? captured = null;
+        _externalServiceMock
+            .Setup(s => s.SearchByContextAsync(It.IsAny<ExternalSearchQuery>()))
+            .Callback<ExternalSearchQuery>(q => captured = q)
+            .ReturnsAsync([]);
+
+        var stream = BuildStream();
+        await stream.GetRankedCandidatesAsync(BuildContext(userTags: [10], calorieTarget: 500));
+
+        Assert.That(captured!.CuisineTypes, Is.Empty);
+    }
+
+    [Test]
+    public async Task GetRankedCandidatesAsync_MergesClassifiedHealthTagsWithRestrictionFilters()
+    {
+        _tagRepoMock
+            .Setup(r => r.GetTagsByIdsAsync(It.IsAny<IEnumerable<int>>()))
+            .ReturnsAsync(new List<Tag> { new() { Id = 40, Name = "Paleo" } });
+
+        ExternalSearchQuery? captured = null;
+        _externalServiceMock
+            .Setup(s => s.SearchByContextAsync(It.IsAny<ExternalSearchQuery>()))
+            .Callback<ExternalSearchQuery>(q => captured = q)
+            .ReturnsAsync([]);
+
+        var stream = BuildStream();
+        await stream.GetRankedCandidatesAsync(BuildContext(restrictions: ["Vegan"], mealTags: [40]));
+
+        Assert.That(captured!.HealthFilters, Does.Contain("vegan"));
+        Assert.That(captured.HealthFilters, Does.Contain("paleo"));
     }
 
     [Test]
