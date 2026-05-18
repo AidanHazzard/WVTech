@@ -29,8 +29,17 @@ public sealed class ExternalRecipeStream : IRecommendationStream
     {
         _tagRepository = tagRepository;
         _recipeRepository = recipeRepository;
-        _scorers = scorers.ToList();
-        _filters = filters.ToList();
+        // External recipes carry no Tag entities. The meal-slot tag filter
+        // would hard-drop every one of them, and the tag scorers can only ever
+        // return zero for them — so this stream is exempt from both. The
+        // Phase 10 facet query already applies the slot's tag intent to the
+        // Edamam search.
+        _scorers = scorers
+            .Where(s => s is not (UserPreferredTagScorer or MealPreferredTagScorer or TagSimilarityScorer))
+            .ToList();
+        _filters = filters
+            .Where(f => f is not PreferredTagFilter)
+            .ToList();
         _externalRecipeService = externalRecipeService;
     }
 
