@@ -221,7 +221,7 @@
                             <div>
                                 <div class="macro-field-label">Calories</div>
                                 <div class="macro-input-group">
-                                    <input name="CalorieTarget" type="number" class="macro-input-field"
+                                    <input id="CalorieTarget" name="CalorieTarget" type="number" class="macro-input-field"
                                            placeholder="0" min="0" max="32767" step="1"
                                            value="@Model.CalorieTarget" />
                                     <span class="macro-unit">kcal</span>
@@ -230,7 +230,7 @@
                             <div>
                                 <div class="macro-field-label">Protein</div>
                                 <div class="macro-input-group">
-                                    <input name="ProteinTarget" type="number" class="macro-input-field"
+                                    <input id="ProteinTarget" name="ProteinTarget" type="number" class="macro-input-field"
                                            placeholder="0" min="0" max="32767" step="1"
                                            value="@Model.ProteinTarget" />
                                     <span class="macro-unit">g</span>
@@ -239,7 +239,7 @@
                             <div>
                                 <div class="macro-field-label">Carbohydrates</div>
                                 <div class="macro-input-group">
-                                    <input name="CarbTarget" type="number" class="macro-input-field"
+                                    <input id="CarbTarget" name="CarbTarget" type="number" class="macro-input-field"
                                            placeholder="0" min="0" max="32767" step="1"
                                            value="@Model.CarbTarget" />
                                     <span class="macro-unit">g</span>
@@ -248,7 +248,7 @@
                             <div>
                                 <div class="macro-field-label">Fat</div>
                                 <div class="macro-input-group">
-                                    <input name="FatTarget" type="number" class="macro-input-field"
+                                    <input id="FatTarget" name="FatTarget" type="number" class="macro-input-field"
                                            placeholder="0" min="0" max="32767" step="1"
                                            value="@Model.FatTarget" />
                                     <span class="macro-unit">g</span>
@@ -324,16 +324,16 @@
                     <span class="settings-card-title">Food Preferences</span>
                 </div>
                 <div class="settings-card-body">
-                    @if (Model.CurrentFoodPrefs.Count > 0)
+                    @if (Model.CurrentPreferences.Count > 0)
                     {
                         <div class="food-pref-section-label">Saved preferences</div>
                         <div class="settings-chips-row">
-                            @foreach (var pref in Model.CurrentFoodPrefs)
+                            @foreach (var pref in Model.CurrentPreferences)
                             {
                                 <form asp-action="RemoveFoodPreference" method="post" class="d-inline">
                                     @Html.AntiForgeryToken()
                                     <input type="hidden" name="tagName" value="@pref" />
-                                    <button type="submit" class="settings-chip removable active">
+                                    <button type="submit" class="settings-chip removable active food-pref-remove-btn food-pref-item" data-tag-name="@pref">
                                         <svg class="chip-check-icon" xmlns="http://www.w3.org/2000/svg"
                                              viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                              stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
@@ -408,7 +408,7 @@
                             <div class="appearance-row-title">Dark mode</div>
                             <div class="appearance-row-sub">Use dark background across the app</div>
                         </div>
-                        <div class="custom-toggle" id="darkModeToggle" role="switch" tabindex="0"
+                        <div class="custom-toggle" id="themeToggle-panel" role="switch" tabindex="0"
                              aria-label="Toggle dark mode">
                             <div class="custom-toggle-knob"></div>
                         </div>

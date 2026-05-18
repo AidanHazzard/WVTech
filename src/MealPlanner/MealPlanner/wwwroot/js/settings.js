@@ -100,16 +100,17 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // ── Dark mode toggle ──────────────────────────────────────
-    const darkToggle = document.getElementById('darkModeToggle');
-    if (darkToggle) {
-        const html = document.documentElement;
-        const isDark = () => html.getAttribute('data-theme') !== 'light';
+    const html = document.documentElement;
+    const isDark = () => html.getAttribute('data-theme') !== 'light';
 
-        darkToggle.classList.toggle('on', isDark());
-
-        darkToggle.addEventListener('click', function () {
+    function applyThemeToggle(toggle) {
+        if (!toggle) return;
+        toggle.classList.toggle('on', isDark());
+        toggle.addEventListener('click', function () {
             const willBeDark = !this.classList.contains('on');
-            this.classList.toggle('on', willBeDark);
+            document.querySelectorAll('#themeToggle-panel').forEach(t => {
+                t.classList.toggle('on', willBeDark);
+            });
             if (willBeDark) {
                 html.removeAttribute('data-theme');
             } else {
@@ -118,6 +119,8 @@ document.addEventListener('DOMContentLoaded', function () {
             fetch('/UserSettings/ToggleTheme', { method: 'POST' });
         });
     }
+
+    applyThemeToggle(document.getElementById('themeToggle-panel'));
 
     // ── Food preferences ─────────────────────────────────────
     const pendingTags = new Set();
@@ -133,7 +136,7 @@ document.addEventListener('DOMContentLoaded', function () {
         pendingTags.add(name.toLowerCase());
 
         const chip = document.createElement('span');
-        chip.className = 'settings-chip active';
+        chip.className = 'settings-chip active food-pref-pending-pill';
         chip.innerHTML = `
             <svg class="chip-check-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
                  fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">

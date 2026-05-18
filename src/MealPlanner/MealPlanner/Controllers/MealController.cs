@@ -482,8 +482,7 @@ public class MealController : Controller
 
         Response.Cookies.Delete("ShoppingListSynced");
 
-        var dateParam = selectedDate.ToString("yyyy-MM-dd");
-        return RedirectToAction("Index", "Home", new { date = dateParam });
+        return RedirectToAction("ViewMeal", new { id = model.Id });
     }
 
     [HttpPost]

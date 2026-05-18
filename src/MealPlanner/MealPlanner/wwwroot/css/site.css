@@ -104,7 +104,6 @@ html {
 body {
   margin-bottom: 60px;
   background-color: var(--body-bg);
-  text-transform: capitalize;
 }
 
 /* ── Global delete confirmation modal ───────────────────────── */
@@ -128,6 +127,9 @@ body {
     max-width: 400px;
     width: 90%;
     text-align: center;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    white-space: normal;
 }
 
 [data-theme="light"] .dcm-panel {
@@ -168,6 +170,9 @@ body {
     color: #a0a0a0;
     line-height: 1.5;
     margin-bottom: 1.5rem;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    white-space: normal;
 }
 
 .dcm-btn-row {

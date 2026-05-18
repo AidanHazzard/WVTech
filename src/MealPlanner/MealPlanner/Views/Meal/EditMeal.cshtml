@@ -41,7 +41,7 @@
                     @for (int i = 1; i <= 12; i++)
                     {
                         <!option @(i == Model.SelectedMonth ? "selected" : "") value="@i">
-                            @System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat.GetAbbreviatedMonthName(i)
+                            @System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(i)
                         </!option>
                     }
                 </select>
@@ -61,7 +61,7 @@
         </div>
 
         <!-- Repeat weekly toggle -->
-        <input asp-for="RepeatWeekly" id="repeatWeeklyCheckbox" type="checkbox" style="display:none" />
+        <input asp-for="RepeatWeekly" id="repeatWeeklyToggle" type="checkbox" style="position:absolute; width:1px; height:1px; overflow:hidden;" />
         <div class="em-toggle-row">
             <span class="em-toggle-label">Repeat weekly</span>
             <div class="em-toggle-switch @(Model.RepeatWeekly ? "on" : "")" id="emRepeatToggle">
@@ -70,17 +70,20 @@
         </div>
 
         <!-- Repeat on days (slides open when toggle is on) -->
-        <div id="emRepeatDaysPanel" class="@(Model.RepeatWeekly ? "open" : "")">
+        <div id="repeatDaysPanel" class="@(Model.RepeatWeekly ? "open" : "")">
             <div class="em-days-row">
                 @foreach (DayOfWeek day in Enum.GetValues(typeof(DayOfWeek)))
                 {
                     <label class="em-day-chip @(Model.RepeatDays.Contains(day) ? "on" : "")"
-                           data-day="@((int)day)">
+                           data-day="@((int)day)"
+                           style="position:relative;">
                         <input type="checkbox"
+                               id="repeatDay_@day"
                                name="RepeatDays"
                                value="@((int)day)"
+                               class="repeat-day-checkbox"
                                @(Model.RepeatDays.Contains(day) ? "checked" : "")
-                               style="display:none" />
+                               style="position:absolute; width:1px; height:1px; overflow:hidden;" />
                         @day.ToString().Substring(0, 3)
                     </label>
                 }
@@ -101,7 +104,7 @@
                 @foreach (var recipe in Model.Recipes)
                 {
                     <div class="em-recipe-row mealRecipeItem" data-id="@recipe.Id">
-                        <span class="em-recipe-name">@recipe.Name</span>
+                        <h4 class="em-recipe-name">@recipe.Name</h4>
                         <div class="em-recipe-actions">
                             <button type="button"
                                     class="em-recipe-remove-btn delete-recipe-btn"
@@ -154,7 +157,7 @@
                     <div class="recipeName"></div>
                     <div class="recipeTags"></div>
                     <div hidden class="recipeId"></div>
-                    <input type="hidden" name="RecipeIds" class="recipeIdInput" value="" />
+                    <input type="hidden" class="recipeIdInput" value="" />
                     <div class="recipeRating"></div>
                 </div>
                 <div class="em-add-indicator">
@@ -167,25 +170,30 @@
         <img src="~/images/icons/Edamam_Badge.svg" class="edamam-badge" width="200" height="100" />
     </div>
 
-    <!-- Action bar -->
-    <div class="em-action-bar">
-        <a href="@(ViewBag.ReturnUrl ?? Url.Action("ViewMeal", "Meal", new { id = Model.Id }))" class="em-action-cancel">Cancel</a>
-        <form asp-action="DeleteMeal" asp-controller="Meal" method="post" class="m-0">
-            @Html.AntiForgeryToken()
-            <input type="hidden" name="id" value="@Model.Id" />
-            <input type="hidden" name="source" value="home" />
-            <button type="button" class="em-delete-btn btn-delete-meal">
-                <i class="ti ti-trash"></i>
-                Delete meal
-            </button>
-        </form>
-        <button type="submit" class="em-action-save">
-            <i class="ti ti-check"></i>
-            Save changes
-        </button>
+    <!-- Action bar save button (inside editMealForm so it submits it) -->
+    <div style="display:none">
+        <button type="submit" id="saveMealBtnInner"></button>
     </div>
 
 </form>
+
+<!-- Action bar (outside editMealForm so delete form is not nested) -->
+<div class="em-action-bar">
+    <a href="@(ViewBag.ReturnUrl ?? Url.Action("ViewMeal", "Meal", new { id = Model.Id }))" class="em-action-cancel">Cancel</a>
+    <form asp-action="DeleteMeal" asp-controller="Meal" method="post" class="m-0">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="id" value="@Model.Id" />
+        <input type="hidden" name="source" value="home" />
+        <button type="button" class="em-delete-btn btn-delete-meal">
+            <i class="ti ti-trash"></i>
+            Delete meal
+        </button>
+    </form>
+    <button type="submit" class="em-action-save" id="saveMealBtn" form="editMealForm">
+        <i class="ti ti-check"></i>
+        Save changes
+    </button>
+</div>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />

@@ -180,7 +180,7 @@
 <!-- ── Segmented control ───────────────────────────────────────── -->
 <div class="meal-seg-control">
     <button type="button" class="meal-seg-btn active" id="segSingle">Single meal</button>
-    <button type="button" class="meal-seg-btn" id="segDayPlan"
+    <button type="button" class="meal-seg-btn" id="showDayPlanWizard"
             data-bs-toggle="modal" data-bs-target="#dayPlanModal">Generate day plan</button>
 </div>
 
@@ -188,7 +188,7 @@
 <form id="createMealForm" asp-action="NewMeal" method="post">
 
     <!-- AI recommendation banner -->
-    <div class="ai-banner" data-bs-toggle="modal" data-bs-target="#recommendMealModel" role="button" tabindex="0">
+    <div class="ai-banner" id="recommendMeal" data-bs-toggle="modal" data-bs-target="#recommendMealModel" role="button" tabindex="0">
         <div class="ai-banner-icon">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
                  fill="none" stroke="currentColor" stroke-width="2"
@@ -197,7 +197,7 @@
             </svg>
         </div>
         <div class="ai-banner-body">
-            <div class="ai-banner-title">AI meal recommendation</div>
+            <div class="ai-banner-title">OneBite Recommendation</div>
             <div class="ai-banner-sub">Let us suggest a meal based on your nutrition goals</div>
         </div>
         <div class="ai-banner-arrow">
@@ -231,17 +231,17 @@
             <div class="meal-form-grid">
                 <div>
                     <label class="meal-label" asp-for="Title">Title</label>
-                    <input asp-for="Title" class="meal-input" placeholder="e.g. Lunch" />
+                    <input asp-for="Title" class="meal-input mealInput" placeholder="e.g. Lunch" />
                     <span asp-validation-for="Title" class="text-danger" style="font-size:11px"></span>
                 </div>
                 <div>
                     <label class="meal-label" asp-for="SelectedMonth">Month</label>
-                    <select asp-for="SelectedMonth" class="meal-input meal-select" id="mealMonth">
+                    <select asp-for="SelectedMonth" class="meal-input meal-select" id="SelectedMonth">
                         <option value="">Month</option>
                         @for (int i = 1; i <= 12; i++)
                         {
                             <!option @(i == Model.SelectedMonth ? "selected" : "") value="@i">
-                                @System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat.GetAbbreviatedMonthName(i)
+                                @System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(i)
                             </!option>
                         }
                     </select>
@@ -249,7 +249,7 @@
                 </div>
                 <div>
                     <label class="meal-label" asp-for="SelectedDay">Day</label>
-                    <select asp-for="SelectedDay" class="meal-input meal-select" id="mealDay">
+                    <select asp-for="SelectedDay" class="meal-input meal-select" id="SelectedDay">
                         <option value="">Day</option>
                         @for (int i = 1; i <= 31; i++)
                         {
@@ -262,8 +262,9 @@
 
             <!-- Repeat weekly visual toggle -->
             <div class="repeat-toggle-row">
-                <input asp-for="RepeatWeekly" id="repeatWeeklyToggle" type="checkbox" style="display:none" />
-                <div class="toggle-switch" id="repeatToggleVisual" role="button" tabindex="0" aria-label="Toggle repeat weekly">
+                <div class="toggle-switch" id="repeatToggleVisual" role="button" tabindex="0" aria-label="Toggle repeat weekly" style="position:relative; overflow:hidden;">
+                    <input asp-for="RepeatWeekly" id="repeatWeeklyToggle" type="checkbox"
+                           style="position:absolute; opacity:0; inset:0; width:100%; height:100%; cursor:pointer; margin:0;" />
                     <div class="toggle-knob"></div>
                 </div>
                 <span class="toggle-label" id="repeatToggleLabel">Repeat weekly</span>
@@ -275,12 +276,15 @@
                     @foreach (DayOfWeek day in Enum.GetValues(typeof(DayOfWeek)))
                     {
                         <label class="repeat-day-chip @(Model.RepeatDays.Contains(day) ? "on" : "")"
-                               data-day="@((int)day)">
+                               data-day="@((int)day)"
+                               style="position:relative;">
                             <input type="checkbox"
+                                   id="repeatDay_@day"
                                    name="RepeatDays"
                                    value="@((int)day)"
+                                   class="repeat-day-checkbox"
                                    @(Model.RepeatDays.Contains(day) ? "checked" : "")
-                                   style="display:none" />
+                                   style="position:absolute; width:1px; height:1px; overflow:hidden;" />
                             @day.ToString().Substring(0, 3)
                         </label>
                     }
@@ -297,7 +301,7 @@
             </div>
             <span class="new-meal-card-header-title">Recipes in this meal</span>
         </div>
-        <div class="new-meal-card-body nm-selected-body" id="selectedRecipesList"></div>
+        <div class="new-meal-card-body nm-selected-body" id="createMealList"></div>
     </div>
 
     <!-- Recipe search card -->
@@ -327,12 +331,9 @@
                        placeholder="Search recipes…" autocomplete="off" />
             </div>
 
-            <!-- Multi-select tag filter dropdown — populated by createMeal.js -->
-            <div id="tagFilterDropdown" class="tfd-container"></div>
-
-            <!-- Hidden select — loadTags() populates this; dropdown observes it -->
-            <select id="tagFilter" style="display:none">
-                <option value="">All</option>
+            <!-- Tag filter — populated by loadTags() in recipeSearch.js -->
+            <select id="tagFilter" class="meal-input meal-select">
+                <option value="">All tags</option>
             </select>
 
             <div id="error" style="font-size:13px; color:var(--muted-text); text-align:center; min-height:0"></div>
@@ -368,7 +369,7 @@
     <!-- Action bar -->
     <div class="meal-action-bar">
         <a href="@Url.Action("Index", "Home")" class="meal-action-cancel">Cancel</a>
-        <button type="submit" class="meal-action-submit" id="addMealBtn">
+        <button type="submit" class="meal-action-submit" id="createMeal" form="createMealForm">
             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
                  fill="none" stroke="currentColor" stroke-width="2.5"
                  stroke-linecap="round" stroke-linejoin="round">
@@ -401,19 +402,19 @@
         // ── Segmented control ─────────────────────────────────────
         (function () {
             const segSingle  = document.getElementById('segSingle');
-            const segDayPlan = document.getElementById('segDayPlan');
+            const showDayPlanWizard = document.getElementById('showDayPlanWizard');
             const modal      = document.getElementById('dayPlanModal');
             const aiBanner   = document.querySelector('.ai-banner');
 
             function activate(btn) {
                 segSingle.classList.remove('active');
-                segDayPlan.classList.remove('active');
+                showDayPlanWizard.classList.remove('active');
                 btn.classList.add('active');
                 if (aiBanner) aiBanner.style.display = btn === segSingle ? '' : 'none';
             }
 
             segSingle.addEventListener('click', function () { activate(segSingle); });
-            segDayPlan.addEventListener('click', function () { activate(segDayPlan); });
+            showDayPlanWizard.addEventListener('click', function () { activate(showDayPlanWizard); });
 
             // Revert to single-meal when modal closes
             if (modal) {
@@ -433,9 +434,10 @@
             }
 
             visual.addEventListener('click', function () {
-                checkbox.checked = !checkbox.checked;
                 sync();
             });
+
+            checkbox.addEventListener('change', sync);
 
             visual.addEventListener('keydown', function (e) {
                 if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); checkbox.checked = !checkbox.checked; sync(); }
@@ -448,18 +450,25 @@
         (function () {
             document.querySelectorAll('.repeat-day-chip').forEach(function (chip) {
                 chip.addEventListener('click', function (e) {
-                    e.preventDefault(); // stop browser auto-toggling the nested checkbox a second time
-                    this.classList.toggle('on');
                     const cb = this.querySelector('input[type="checkbox"]');
-                    if (cb) cb.checked = this.classList.contains('on');
+                    if (!cb) return;
+                    if (e.target === cb) {
+                        // Selenium/direct checkbox click: checkbox already toggled, sync class
+                        this.classList.toggle('on', cb.checked);
+                    } else {
+                        // Click on label area: toggle manually
+                        e.preventDefault();
+                        cb.checked = !cb.checked;
+                        this.classList.toggle('on', cb.checked);
+                    }
                 });
             });
         })();
 
         // ── Update "Add meal to …" label when date selects change ─
         (function () {
-            const monthSel = document.getElementById('mealMonth');
-            const daySel   = document.getElementById('mealDay');
+            const monthSel = document.getElementById('SelectedMonth');
+            const daySel   = document.getElementById('SelectedDay');
             const label    = document.getElementById('addMealBtnLabel');
 
             const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
