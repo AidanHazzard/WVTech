@@ -347,4 +347,24 @@ public class ExternalRecipeStreamTests
         Assert.That(result, Has.Count.EqualTo(1));
         Assert.That(result[0].ExternalUri, Is.EqualTo("u-new"));
     }
+
+    [Test]
+    public async Task GetRankedCandidatesAsync_IsExemptFromPreferredTagFilter()
+    {
+        // External recipes carry no tags, so the meal-slot tag filter would
+        // drop every one of them. The Phase 10 facet query already applied the
+        // slot's tag intent, so the external stream skips PreferredTagFilter.
+        var external = new Recipe { Id = 0, ExternalUri = "u1", Name = "Tagless", Tags = [] };
+        _externalServiceMock
+            .Setup(s => s.SearchByContextAsync(It.IsAny<ExternalSearchQuery>()))
+            .ReturnsAsync([external]);
+
+        var ctx = BuildContext(mealTags: [10], calorieTarget: 500); // slot specifies a tag
+        var stream = BuildStream(filters: [new PreferredTagFilter()]);
+
+        var result = await stream.GetRankedCandidatesAsync(ctx);
+
+        Assert.That(result, Has.Count.EqualTo(1),
+            "PreferredTagFilter must not drop tagless external recipes");
+    }
 }
