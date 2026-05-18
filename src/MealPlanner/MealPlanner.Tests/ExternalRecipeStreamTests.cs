@@ -234,7 +234,7 @@ public class ExternalRecipeStreamTests
             calorieTarget: 500);
 
         var stream = BuildStream(filters: [new DownVoteFilter()]);
-        var result = await stream.GetRankedCandidatesAsync(ctx);
+        var result = (await stream.GetRankedCandidatesAsync(ctx)).Select(s => s.Recipe).ToList();
 
         Assert.That(result, Does.Not.Contain(downvoted));
         Assert.That(result, Does.Contain(allowed));
@@ -252,7 +252,7 @@ public class ExternalRecipeStreamTests
         var ctx = BuildContext(upvoted: [upvoted], calorieTarget: 500);
         var stream = BuildStream(scorers: [new UpvotePriorityScorer()]);
 
-        var result = (await stream.GetRankedCandidatesAsync(ctx)).ToList();
+        var result = (await stream.GetRankedCandidatesAsync(ctx)).Select(s => s.Recipe).ToList();
 
         Assert.That(result[0].Id, Is.EqualTo(upvoted.Id), "Upvoted external recipe should rank first");
     }

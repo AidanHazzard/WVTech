@@ -61,12 +61,18 @@ public class LocalRecipeStreamTests
             ]);
     }
 
+    // The stream now returns ScoredRecipe; most tests only care about the
+    // recipes and their order, so unwrap to a plain recipe list.
+    private static async Task<List<Recipe>> RankedRecipes(
+        LocalRecipeStream stream, RecommendationContext ctx) =>
+        (await stream.GetRankedCandidatesAsync(ctx)).Select(s => s.Recipe).ToList();
+
     [Test]
     public async Task GetRankedCandidatesAsync_EmptyPool_ReturnsEmpty()
     {
         var stream = BuildStream([]);
 
-        var result = await stream.GetRankedCandidatesAsync(EmptyContext());
+        var result = await RankedRecipes(stream, EmptyContext());
 
         Assert.That(result, Is.Empty);
     }
@@ -78,9 +84,25 @@ public class LocalRecipeStreamTests
         var b = new Recipe { Id = 2, Tags = [] };
         var stream = BuildStream([a, b]);
 
-        var result = (await stream.GetRankedCandidatesAsync(EmptyContext())).ToList();
+        var result = await RankedRecipes(stream, EmptyContext());
 
         Assert.That(result, Has.Count.EqualTo(2));
+    }
+
+    [Test]
+    public async Task GetRankedCandidatesAsync_PopulatesScoreFromScorers()
+    {
+        // The score travels out of the stream so the service can merge streams
+        // by score — it must reflect the scorers, not be a placeholder zero.
+        var recipe = new Recipe { Id = 1, Tags = [] };
+        var scorer = new VotePercentageScorer();
+        var ctx = EmptyContext(percentages: new Dictionary<int, float> { [1] = 0.7f });
+        var stream = BuildStream([recipe], scorers: [scorer]);
+
+        var result = (await stream.GetRankedCandidatesAsync(ctx)).ToList();
+
+        Assert.That(result[0].Score, Is.EqualTo(scorer.Score(recipe, ctx)).Within(0.0001f));
+        Assert.That(result[0].Score, Is.GreaterThan(0f), "scorer should produce a non-zero score here");
     }
 
     [Test]
@@ -91,7 +113,7 @@ public class LocalRecipeStreamTests
         var ctx = EmptyContext(votes: new Dictionary<int, UserVoteType> { [1] = UserVoteType.DownVote });
         var stream = BuildStream([downvoted, allowed]);
 
-        var result = await stream.GetRankedCandidatesAsync(ctx);
+        var result = await RankedRecipes(stream, ctx);
 
         Assert.That(result, Does.Not.Contain(downvoted));
         Assert.That(result, Does.Contain(allowed));
@@ -105,7 +127,7 @@ public class LocalRecipeStreamTests
         var ctx = EmptyContext(restrictions: ["Vegan"]);
         var stream = BuildStream([vegan, nonVegan]);
 
-        var result = await stream.GetRankedCandidatesAsync(ctx);
+        var result = await RankedRecipes(stream, ctx);
 
         Assert.That(result, Does.Contain(vegan));
         Assert.That(result, Does.Not.Contain(nonVegan));
@@ -119,7 +141,7 @@ public class LocalRecipeStreamTests
         var ctx = EmptyContext(upvoted: [upvoted]);
         var stream = BuildStream([normal, upvoted]); // normal listed first in pool
 
-        var result = (await stream.GetRankedCandidatesAsync(ctx)).ToList();
+        var result = await RankedRecipes(stream, ctx);
 
         Assert.That(result[0].Id, Is.EqualTo(upvoted.Id));
     }
@@ -132,7 +154,7 @@ public class LocalRecipeStreamTests
         var ctx = EmptyContext(percentages: new Dictionary<int, float> { [1] = 0.8f, [2] = 0.2f });
         var stream = BuildStream([lowVote, highVote]); // lowVote listed first in pool
 
-        var result = (await stream.GetRankedCandidatesAsync(ctx)).ToList();
+        var result = await RankedRecipes(stream, ctx);
 
         Assert.That(result[0].Id, Is.EqualTo(highVote.Id));
     }
@@ -145,7 +167,7 @@ public class LocalRecipeStreamTests
         var ctx = EmptyContext(mealPreferredTagIds: [10]);
         var stream = BuildStream([matching, nonMatching]);
 
-        var result = await stream.GetRankedCandidatesAsync(ctx);
+        var result = await RankedRecipes(stream, ctx);
 
         Assert.That(result, Does.Contain(matching));
         Assert.That(result, Does.Not.Contain(nonMatching));
@@ -159,13 +181,13 @@ public class LocalRecipeStreamTests
         var ctx = EmptyContext(mealPreferredTagIds: [10, 11]);
         var stream = BuildStream([singleMatch, doubleMatch]); // singleMatch listed first
 
-        var result = (await stream.GetRankedCandidatesAsync(ctx)).ToList();
+        var result = await RankedRecipes(stream, ctx);
 
         Assert.That(result[0].Id, Is.EqualTo(doubleMatch.Id));
     }
 
     [Test]
-    public async Task GetRankedCandidatesAsync_EmptyScorersAndFilters_DoesNotThrow()
+    public void GetRankedCandidatesAsync_EmptyScorersAndFilters_DoesNotThrow()
     {
         var repoMock = new Mock<IRecipeRepository>();
         repoMock.Setup(r => r.GetAllWithTagsAndIngredientsAsync()).ReturnsAsync([]);
@@ -187,7 +209,7 @@ public class LocalRecipeStreamTests
         });
         var stream = BuildStream([top, mid, low, lowest], scorers: [new VotePercentageScorer()]);
 
-        var result = await stream.GetRankedCandidatesAsync(ctx);
+        var result = await RankedRecipes(stream, ctx);
 
         Assert.That(result, Does.Contain(top));
         Assert.That(result, Does.Contain(mid));
@@ -206,7 +228,7 @@ public class LocalRecipeStreamTests
             upvoted: [upvoted]);
         var stream = BuildStream([strong, upvoted, weak], scorers: [new VotePercentageScorer()]);
 
-        var result = await stream.GetRankedCandidatesAsync(ctx);
+        var result = await RankedRecipes(stream, ctx);
 
         Assert.That(result, Does.Contain(upvoted), "upvoted recipe is exempt from the floor");
         Assert.That(result, Does.Not.Contain(weak), "non-upvoted recipe below the floor is dropped");
@@ -224,9 +246,9 @@ public class LocalRecipeStreamTests
         });
         var stream = BuildStream([a, b, c], scorers: [new VotePercentageScorer()]);
 
-        var result = await stream.GetRankedCandidatesAsync(ctx);
+        var result = await RankedRecipes(stream, ctx);
 
-        Assert.That(result.Count(), Is.EqualTo(3));
+        Assert.That(result.Count, Is.EqualTo(3));
     }
 
     [Test]
@@ -237,7 +259,7 @@ public class LocalRecipeStreamTests
         var ctx = EmptyContext(excludedRecipeKeys: ["id:1"]);
         var stream = BuildStream([planned, available]);
 
-        var result = await stream.GetRankedCandidatesAsync(ctx);
+        var result = await RankedRecipes(stream, ctx);
 
         Assert.That(result, Does.Not.Contain(planned));
         Assert.That(result, Does.Contain(available));

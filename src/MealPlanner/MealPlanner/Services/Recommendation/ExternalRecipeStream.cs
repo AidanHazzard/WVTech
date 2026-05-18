@@ -31,7 +31,7 @@ public sealed class ExternalRecipeStream : IRecommendationStream
         _externalRecipeService = externalRecipeService;
     }
 
-    public async Task<IEnumerable<Recipe>> GetRankedCandidatesAsync(RecommendationContext ctx)
+    public async Task<IReadOnlyList<ScoredRecipe>> GetRankedCandidatesAsync(RecommendationContext ctx)
     {
         if (_externalRecipeService == null) return [];
 
@@ -50,7 +50,9 @@ public sealed class ExternalRecipeStream : IRecommendationStream
 
         return recipes
             .Where(r => _filters.All(f => f.Allow(r, ctx)))
-            .OrderByDescending(r => _scorers.Sum(s => s.Score(r, ctx)));
+            .Select(r => new ScoredRecipe(r, _scorers.Sum(s => s.Score(r, ctx))))
+            .OrderByDescending(x => x.Score)
+            .ToList();
     }
 
     private async Task<ExternalSearchQuery> BuildQueryAsync(RecommendationContext ctx)

@@ -24,7 +24,7 @@ public sealed class LocalRecipeStream : IRecommendationStream
         _filters = filters.ToList();
     }
 
-    public async Task<IEnumerable<Recipe>> GetRankedCandidatesAsync(RecommendationContext ctx)
+    public async Task<IReadOnlyList<ScoredRecipe>> GetRankedCandidatesAsync(RecommendationContext ctx)
     {
         var recipes = await _recipeRepository.GetAllWithTagsAndIngredientsAsync();
         var upvotedIds = ctx.User.Upvoted.Select(r => r.Id).ToHashSet();
@@ -36,7 +36,7 @@ public sealed class LocalRecipeStream : IRecommendationStream
 
         return ApplyScoreFloor(scored, upvotedIds)
             .OrderByDescending(x => x.Score)
-            .Select(x => x.Recipe)
+            .Select(x => new ScoredRecipe(x.Recipe, x.Score))
             .ToList();
     }
 

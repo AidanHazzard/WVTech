@@ -112,12 +112,12 @@ public class MealRecommendationService : IMealRecommendationService
         var candidates = new List<Recipe>();
         foreach (var streamResult in streamResults)
         {
-            foreach (var r in streamResult)
+            foreach (var scored in streamResult)
             {
-                var key = RecipeKey.For(r);
+                var key = RecipeKey.For(scored.Recipe);
                 if (key == "uri:") continue;
                 if (!seenKeys.Add(key)) continue;
-                candidates.Add(r);
+                candidates.Add(scored.Recipe);
             }
         }
         return candidates;

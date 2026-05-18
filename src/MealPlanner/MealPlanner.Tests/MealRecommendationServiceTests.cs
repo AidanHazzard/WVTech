@@ -25,6 +25,12 @@ public class MealRecommendationServiceTests
     private static Tag VeganTag => new() { Id = 1, Name = "Vegan" };
     private static Tag GlutenFreeTag => new() { Id = 2, Name = "Gluten-Free" };
 
+    // Streams return scored candidates; tests that don't exercise scoring build
+    // a list of zero-scored recipes. Equal scores keep input order (the merge
+    // sorts stably), so order-sensitive tests stay valid.
+    private static IReadOnlyList<ScoredRecipe> Ranked(params Recipe[] recipes) =>
+        recipes.Select(r => new ScoredRecipe(r, 0f)).ToList();
+
     [SetUp]
     public void SetUp()
     {
@@ -37,7 +43,7 @@ public class MealRecommendationServiceTests
         _mealRepoMock = new Mock<IMealRepository>();
 
         _streamMock.Setup(s => s.GetRankedCandidatesAsync(It.IsAny<RecommendationContext>()))
-                   .ReturnsAsync(Enumerable.Empty<Recipe>());
+                   .ReturnsAsync([]);
 
         _userRecipeRepoMock
             .Setup(r => r.GetUserRecipesByVoteType(_user.Id, UserVoteType.UpVote))
@@ -86,7 +92,7 @@ public class MealRecommendationServiceTests
         // Downvote filtering is the stream's responsibility; mock it returning only the allowed recipe.
         var downvoted = new Recipe { Id = 1, Name = "Downvoted", Calories = 300, Tags = [] };
         var allowed = new Recipe { Id = 2, Name = "Allowed", Calories = 300, Tags = [] };
-        _streamMock.Setup(s => s.GetRankedCandidatesAsync(It.IsAny<RecommendationContext>())).ReturnsAsync([allowed]);
+        _streamMock.Setup(s => s.GetRankedCandidatesAsync(It.IsAny<RecommendationContext>())).ReturnsAsync(Ranked(allowed));
 
         var config = new DayPlanConfigViewModel
         {
@@ -106,7 +112,7 @@ public class MealRecommendationServiceTests
     public async Task GetRecommendedMealsForUser_WithNoDietaryRestrictions_IncludesAllCandidates()
     {
         var recipe = new Recipe { Id = 1, Name = "Any Recipe", Calories = 300, Tags = [] };
-        _streamMock.Setup(s => s.GetRankedCandidatesAsync(It.IsAny<RecommendationContext>())).ReturnsAsync([recipe]);
+        _streamMock.Setup(s => s.GetRankedCandidatesAsync(It.IsAny<RecommendationContext>())).ReturnsAsync(Ranked(recipe));
 
         var config = new DayPlanConfigViewModel
         {
@@ -126,7 +132,7 @@ public class MealRecommendationServiceTests
     {
         // Restriction filtering is the stream's responsibility; mock it returning only the matching recipe.
         var veganRecipe = new Recipe { Id = 1, Name = "Vegan Dish", Calories = 300, Tags = [VeganTag] };
-        _streamMock.Setup(s => s.GetRankedCandidatesAsync(It.IsAny<RecommendationContext>())).ReturnsAsync([veganRecipe]);
+        _streamMock.Setup(s => s.GetRankedCandidatesAsync(It.IsAny<RecommendationContext>())).ReturnsAsync(Ranked(veganRecipe));
 
         var config = new DayPlanConfigViewModel
         {
@@ -147,7 +153,7 @@ public class MealRecommendationServiceTests
         // Restriction filtering is the stream's responsibility; mock it returning an empty list.
         var nonVeganRecipe = new Recipe { Id = 2, Name = "Beef Stew", Calories = 300, Tags = [] };
         _streamMock.Setup(s => s.GetRankedCandidatesAsync(It.IsAny<RecommendationContext>()))
-                   .ReturnsAsync(Enumerable.Empty<Recipe>());
+                   .ReturnsAsync([]);
 
         var config = new DayPlanConfigViewModel
         {
@@ -174,7 +180,7 @@ public class MealRecommendationServiceTests
         var captured = new List<RecommendationContext>();
         _streamMock.Setup(s => s.GetRankedCandidatesAsync(It.IsAny<RecommendationContext>()))
                    .Callback<RecommendationContext>(c => captured.Add(c))
-                   .ReturnsAsync([recipe1, recipe2, recipe3]);
+                   .ReturnsAsync(Ranked(recipe1, recipe2, recipe3));
 
         var config = new DayPlanConfigViewModel
         {
@@ -219,7 +225,7 @@ public class MealRecommendationServiceTests
         // Restriction filtering is the stream's responsibility; mock it returning only the fully-matching recipe.
         var veganOnly = new Recipe { Id = 1, Name = "Vegan Only", Calories = 300, Tags = [VeganTag] };
         var veganGlutenFree = new Recipe { Id = 2, Name = "Vegan GF", Calories = 300, Tags = [VeganTag, GlutenFreeTag] };
-        _streamMock.Setup(s => s.GetRankedCandidatesAsync(It.IsAny<RecommendationContext>())).ReturnsAsync([veganGlutenFree]);
+        _streamMock.Setup(s => s.GetRankedCandidatesAsync(It.IsAny<RecommendationContext>())).ReturnsAsync(Ranked(veganGlutenFree));
 
         var config = new DayPlanConfigViewModel
         {
@@ -267,7 +273,7 @@ public class MealRecommendationServiceTests
         var overshoots = new Recipe { Id = 1, Name = "High Protein", Calories = 100, Protein = 90, Tags = [] };
         var onTarget   = new Recipe { Id = 2, Name = "Right Protein", Calories = 100, Protein = 30, Tags = [] };
         _streamMock.Setup(s => s.GetRankedCandidatesAsync(It.IsAny<RecommendationContext>()))
-                   .ReturnsAsync([overshoots, onTarget]);
+                   .ReturnsAsync(Ranked(overshoots, onTarget));
 
         var result = await _service.GetRecommendedMealsForUser(_user, DateTime.Today, SingleMealConfig());
 
@@ -282,7 +288,7 @@ public class MealRecommendationServiceTests
         var overshoots = new Recipe { Id = 1, Name = "High Carb", Calories = 100, Carbs = 90, Tags = [] };
         var onTarget   = new Recipe { Id = 2, Name = "Right Carb", Calories = 100, Carbs = 30, Tags = [] };
         _streamMock.Setup(s => s.GetRankedCandidatesAsync(It.IsAny<RecommendationContext>()))
-                   .ReturnsAsync([overshoots, onTarget]);
+                   .ReturnsAsync(Ranked(overshoots, onTarget));
 
         var result = await _service.GetRecommendedMealsForUser(_user, DateTime.Today, SingleMealConfig());
 
@@ -297,7 +303,7 @@ public class MealRecommendationServiceTests
         var overshoots = new Recipe { Id = 1, Name = "High Fat", Calories = 100, Fat = 30, Tags = [] };
         var onTarget   = new Recipe { Id = 2, Name = "Right Fat", Calories = 100, Fat = 10, Tags = [] };
         _streamMock.Setup(s => s.GetRankedCandidatesAsync(It.IsAny<RecommendationContext>()))
-                   .ReturnsAsync([overshoots, onTarget]);
+                   .ReturnsAsync(Ranked(overshoots, onTarget));
 
         var result = await _service.GetRecommendedMealsForUser(_user, DateTime.Today, SingleMealConfig());
 
@@ -310,7 +316,7 @@ public class MealRecommendationServiceTests
     {
         SetNutritionPrefs(calories: 500, protein: 50, carbs: 60, fat: 20);
         var balanced = new Recipe { Id = 1, Name = "Balanced", Calories = 200, Protein = 30, Carbs = 40, Fat = 10, Tags = [] };
-        _streamMock.Setup(s => s.GetRankedCandidatesAsync(It.IsAny<RecommendationContext>())).ReturnsAsync([balanced]);
+        _streamMock.Setup(s => s.GetRankedCandidatesAsync(It.IsAny<RecommendationContext>())).ReturnsAsync(Ranked(balanced));
 
         var result = await _service.GetRecommendedMealsForUser(_user, DateTime.Today, SingleMealConfig());
 
@@ -327,7 +333,7 @@ public class MealRecommendationServiceTests
         var failsCal  = new Recipe { Id = 2, Name = "Fails Calorie", Calories = 100, Protein = 10,  Carbs = 5, Fat = 5, Tags = [] };
         var failsCarb = new Recipe { Id = 3, Name = "Fails Carbs",   Calories = 0,   Protein = 5,   Carbs = 5, Fat = 0, Tags = [] };
         var failsFat  = new Recipe { Id = 4, Name = "Fails Fat",     Calories = 0,   Protein = 5,   Carbs = 0, Fat = 5, Tags = [] };
-        _streamMock.Setup(s => s.GetRankedCandidatesAsync(It.IsAny<RecommendationContext>())).ReturnsAsync([fitsAll, failsCal, failsCarb, failsFat]);
+        _streamMock.Setup(s => s.GetRankedCandidatesAsync(It.IsAny<RecommendationContext>())).ReturnsAsync(Ranked(fitsAll, failsCal, failsCarb, failsFat));
 
         var result = await _service.GetRecommendedMealsForUser(_user, DateTime.Today, SingleMealConfig());
 
@@ -342,7 +348,7 @@ public class MealRecommendationServiceTests
     {
         SetNutritionPrefs(protein: 50); // no carb/fat targets
         var highCarbFat = new Recipe { Id = 1, Name = "High Carb Fat", Calories = 100, Protein = 30, Carbs = 999, Fat = 999, Tags = [] };
-        _streamMock.Setup(s => s.GetRankedCandidatesAsync(It.IsAny<RecommendationContext>())).ReturnsAsync([highCarbFat]);
+        _streamMock.Setup(s => s.GetRankedCandidatesAsync(It.IsAny<RecommendationContext>())).ReturnsAsync(Ranked(highCarbFat));
 
         var result = await _service.GetRecommendedMealsForUser(_user, DateTime.Today, SingleMealConfig());
 
@@ -357,7 +363,7 @@ public class MealRecommendationServiceTests
         SetNutritionPrefs(protein: 50);
         var recipeA = new Recipe { Id = 1, Name = "Recipe A", Calories = 100, Protein = 30, Tags = [] };
         var recipeB = new Recipe { Id = 2, Name = "Recipe B", Calories = 100, Protein = 30, Tags = [] };
-        _streamMock.Setup(s => s.GetRankedCandidatesAsync(It.IsAny<RecommendationContext>())).ReturnsAsync([recipeA, recipeB]);
+        _streamMock.Setup(s => s.GetRankedCandidatesAsync(It.IsAny<RecommendationContext>())).ReturnsAsync(Ranked(recipeA, recipeB));
 
         var result = await _service.GetRecommendedMealsForUser(_user, DateTime.Today, SingleMealConfig());
 
@@ -410,7 +416,7 @@ public class MealRecommendationServiceTests
     public async Task GetOneRecipeRecommendation_WhenRecipesAvailable_ReturnsOneRecipe()
     {
         var recipe = new Recipe { Id = 1, Name = "Pasta", Calories = 400, Tags = [] };
-        _streamMock.Setup(s => s.GetRankedCandidatesAsync(It.IsAny<RecommendationContext>())).ReturnsAsync([recipe]);
+        _streamMock.Setup(s => s.GetRankedCandidatesAsync(It.IsAny<RecommendationContext>())).ReturnsAsync(Ranked(recipe));
 
         var result = await _service.GetOneRecipeRecommendation(_user, DateTime.Today, []);
 
@@ -441,7 +447,7 @@ public class MealRecommendationServiceTests
         var upvotedRecipe = new Recipe { Id = 2, Name = "Upvoted Pasta", Calories = 400, Tags = [] };
         var normalRecipe  = new Recipe { Id = 1, Name = "Normal Salad",  Calories = 200, Tags = [] };
         _streamMock.Setup(s => s.GetRankedCandidatesAsync(It.IsAny<RecommendationContext>()))
-                   .ReturnsAsync([upvotedRecipe, normalRecipe]);
+                   .ReturnsAsync(Ranked(upvotedRecipe, normalRecipe));
 
         var result = await _service.GetOneRecipeRecommendation(_user, DateTime.Today, []);
 
@@ -454,7 +460,7 @@ public class MealRecommendationServiceTests
         // Restriction filtering is the stream's responsibility; mock it returning only the matching recipe.
         var veganRecipe = new Recipe { Id = 1, Name = "Vegan Bowl", Calories = 400, Tags = [VeganTag] };
         _streamMock.Setup(s => s.GetRankedCandidatesAsync(It.IsAny<RecommendationContext>()))
-                   .ReturnsAsync([veganRecipe]);
+                   .ReturnsAsync(Ranked(veganRecipe));
 
         var result = await _service.GetOneRecipeRecommendation(_user, DateTime.Today, []);
 
@@ -504,6 +510,38 @@ public class MealRecommendationServiceTests
         Assert.That(captured.Meal.CarbTarget, Is.EqualTo(50));
         Assert.That(captured.Meal.FatTarget, Is.EqualTo(15));
         Assert.That(captured.Meal.PreferredTagIds, Does.Contain(3));
+    }
+
+    [Test]
+    public async Task GetOneRecipeRecommendation_MergesStreamsByScore_HigherScoredExternalRecipeOutranksLocal()
+    {
+        // Candidates from every stream are merged into one score-ranked pool, so a
+        // strongly-scored external recipe outranks a weakly-scored local one even
+        // though the local stream is consulted first.
+        var localRecipe = new Recipe { Id = 1, Name = "Weak Local", Calories = 100, Tags = [] };
+        var externalRecipe = new Recipe { Id = 0, ExternalUri = "ext-1", Name = "Strong External", Calories = 100, Tags = [] };
+
+        var localStream = new Mock<IRecommendationStream>();
+        localStream.Setup(s => s.GetRankedCandidatesAsync(It.IsAny<RecommendationContext>()))
+                   .ReturnsAsync([new ScoredRecipe(localRecipe, 1f)]);
+        var externalStream = new Mock<IRecommendationStream>();
+        externalStream.Setup(s => s.GetRankedCandidatesAsync(It.IsAny<RecommendationContext>()))
+                      .ReturnsAsync([new ScoredRecipe(externalRecipe, 9f)]);
+
+        var service = new MealRecommendationService(
+            _userRecipeRepoMock.Object,
+            _nutritionRepoMock.Object,
+            _dietaryRestrictionRepoMock.Object,
+            _foodPrefRepoMock.Object,
+            _mealRepoMock.Object,
+            [localStream.Object, externalStream.Object],
+            _pantryServiceMock.Object);
+
+        var result = await service.GetOneRecipeRecommendation(_user, DateTime.Today, []);
+
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result!.Name, Is.EqualTo("Strong External"),
+            "the higher-scored external recipe should outrank the local one regardless of stream order");
     }
 
     // --- Context construction ---
@@ -655,7 +693,7 @@ public class MealRecommendationServiceTests
         var upvoted = new Recipe { Id = 1, Name = "Upvoted", Calories = 100, Tags = [] };
         var popular = new Recipe { Id = 2, Name = "Popular", Calories = 100, Tags = [] };
         _streamMock.Setup(s => s.GetRankedCandidatesAsync(It.IsAny<RecommendationContext>()))
-                   .ReturnsAsync([upvoted, popular]);
+                   .ReturnsAsync(Ranked(upvoted, popular));
 
         var result = await _service.GetRecommendedMealsForUser(_user, DateTime.Today, SingleMealConfig());
 
@@ -671,7 +709,7 @@ public class MealRecommendationServiceTests
         var highVote = new Recipe { Id = 1, Name = "Popular",   Calories = 100, Tags = [] };
         var lowVote  = new Recipe { Id = 2, Name = "Unpopular", Calories = 100, Tags = [] };
         _streamMock.Setup(s => s.GetRankedCandidatesAsync(It.IsAny<RecommendationContext>()))
-                   .ReturnsAsync([highVote, lowVote]);
+                   .ReturnsAsync(Ranked(highVote, lowVote));
 
         var result = await _service.GetRecommendedMealsForUser(_user, DateTime.Today, SingleMealConfig());
 
@@ -693,7 +731,7 @@ public class MealRecommendationServiceTests
         var smallProB  = new Recipe { Id = 3, Name = "Light Snack B", Calories = 100, Protein = 5,  Tags = [] };
 
         _streamMock.Setup(s => s.GetRankedCandidatesAsync(It.IsAny<RecommendationContext>()))
-                   .ReturnsAsync([bigProtein, smallProA, smallProB]);
+                   .ReturnsAsync(Ranked(bigProtein, smallProA, smallProB));
 
         var result = await _service.GetRecommendedMealsForUser(_user, DateTime.Today, SingleMealConfig());
 
