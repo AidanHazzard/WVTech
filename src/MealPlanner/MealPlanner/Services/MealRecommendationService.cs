@@ -13,19 +13,22 @@ public class MealRecommendationService : IMealRecommendationService
     private IUserDietaryRestrictionRepository _dietaryRestrictionRepository;
     private IUserFoodPreferenceRepository _foodPreferenceRepository;
     private IReadOnlyList<IRecommendationStream> _streams;
+    private IPantryService? _pantryService;
 
     public MealRecommendationService(
         IUserRecipeRepository userRecipeRepository,
         IUserNutritionPreferenceRepository nutritionRepository,
         IUserDietaryRestrictionRepository dietaryRestrictionRepository,
         IUserFoodPreferenceRepository foodPreferenceRepository,
-        IEnumerable<IRecommendationStream> streams)
+        IEnumerable<IRecommendationStream> streams,
+        IPantryService? pantryService = null)
     {
         _userRecipeRepository = userRecipeRepository;
         _nutrionRepository = nutritionRepository;
         _dietaryRestrictionRepository = dietaryRestrictionRepository;
         _foodPreferenceRepository = foodPreferenceRepository;
         _streams = streams.ToList();
+        _pantryService = pantryService;
     }
 
     private async Task<HashSet<string>> GetRestrictionNamesAsync(string userId)
@@ -44,7 +47,7 @@ public class MealRecommendationService : IMealRecommendationService
         var votePercentages  = await _userRecipeRepository.GetAllVotePercentagesAsync();
         var upvoted          = await _userRecipeRepository.GetUserRecipesByVoteType(userId, UserVoteType.UpVote);
         var preferredTagIds  = await _foodPreferenceRepository.GetFoodPreferenceTagIdsAsync(userId);
-        return new UserRecommendationContext(restrictionNames, userVotes, votePercentages, upvoted, preferredTagIds);
+        return new UserRecommendationContext(restrictionNames, userVotes, votePercentages, upvoted, preferredTagIds, []);
     }
 
     private static string RecipeKey(Recipe r) =>

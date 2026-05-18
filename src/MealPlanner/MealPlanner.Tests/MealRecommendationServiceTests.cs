@@ -16,6 +16,7 @@ public class MealRecommendationServiceTests
     private Mock<IUserNutritionPreferenceRepository> _nutritionRepoMock;
     private Mock<IUserDietaryRestrictionRepository> _dietaryRestrictionRepoMock;
     private Mock<IUserFoodPreferenceRepository> _foodPrefRepoMock;
+    private Mock<IPantryService> _pantryServiceMock;
     private MealRecommendationService _service;
 
     private readonly User _user = new() { Id = "user-1" };
@@ -31,6 +32,7 @@ public class MealRecommendationServiceTests
         _nutritionRepoMock = new Mock<IUserNutritionPreferenceRepository>();
         _dietaryRestrictionRepoMock = new Mock<IUserDietaryRestrictionRepository>();
         _foodPrefRepoMock = new Mock<IUserFoodPreferenceRepository>();
+        _pantryServiceMock = new Mock<IPantryService>();
 
         _streamMock.Setup(s => s.GetRankedCandidatesAsync(It.IsAny<RecommendationContext>()))
                    .ReturnsAsync(Enumerable.Empty<Recipe>());
@@ -59,13 +61,17 @@ public class MealRecommendationServiceTests
         _foodPrefRepoMock
             .Setup(r => r.GetFoodPreferenceTagIdsAsync(_user.Id))
             .ReturnsAsync([]);
+        _pantryServiceMock
+            .Setup(p => p.GetPantryItems(It.IsAny<string>()))
+            .Returns(new List<Ingredient>());
 
         _service = new MealRecommendationService(
             _userRecipeRepoMock.Object,
             _nutritionRepoMock.Object,
             _dietaryRestrictionRepoMock.Object,
             _foodPrefRepoMock.Object,
-            [_streamMock.Object]);
+            [_streamMock.Object],
+            _pantryServiceMock.Object);
     }
 
     [Test]
@@ -530,6 +536,39 @@ public class MealRecommendationServiceTests
         await _service.GetRecommendedMealsForUser(_user, DateTime.Today, config);
 
         _streamMock.Verify(s => s.GetRankedCandidatesAsync(It.IsAny<RecommendationContext>()), Times.Exactly(3));
+    }
+
+    [Test]
+    public async Task BuildContext_PopulatesPantryIngredientNamesFromPantryService()
+    {
+        // Pantry item names are normalized into the singular, lowercased keys
+        // the scorer compares against.
+        _pantryServiceMock
+            .Setup(p => p.GetPantryItems(_user.Id))
+            .Returns(new List<Ingredient>
+            {
+                new()
+                {
+                    DisplayName = "Eggs",
+                    IngredientBase = new IngredientBase { Name = "Eggs" },
+                    Measurement = new Measurement { Name = "unit" }
+                },
+                new()
+                {
+                    DisplayName = "Flour",
+                    IngredientBase = new IngredientBase { Name = "Flour" },
+                    Measurement = new Measurement { Name = "cup" }
+                }
+            });
+
+        RecommendationContext? captured = null;
+        _streamMock.Setup(s => s.GetRankedCandidatesAsync(It.IsAny<RecommendationContext>()))
+                   .Callback<RecommendationContext>(c => captured = c)
+                   .ReturnsAsync([]);
+
+        await _service.GetRecommendedMealsForUser(_user, DateTime.Today, SingleMealConfig());
+
+        Assert.That(captured!.User.PantryIngredientNames, Is.EquivalentTo(new[] { "egg", "flour" }));
     }
 
     // --- Ranking trust tests (service trusts stream order) ---

@@ -13,6 +13,7 @@ public class RecipeScorerTests
         Dictionary<int, float>? percentages = null,
         List<Recipe>? upvoted = null,
         HashSet<int>? userPreferredTagIds = null,
+        HashSet<string>? pantryIngredientNames = null,
         int? calorieTarget = null,
         int? proteinTarget = null,
         int? carbTarget = null,
@@ -24,7 +25,8 @@ public class RecipeScorerTests
                 votes ?? [],
                 percentages ?? [],
                 upvoted ?? [],
-                userPreferredTagIds ?? []),
+                userPreferredTagIds ?? [],
+                pantryIngredientNames ?? []),
             new MealRecommendationContext(
                 calorieTarget,
                 proteinTarget,
@@ -505,5 +507,96 @@ public class RecipeScorerTests
         var far = new Recipe { Id = 2, Tags = [], Protein = 5, Carbs = 5, Fat = 90 };
 
         Assert.That(scorer.Score(near, ctx), Is.GreaterThan(scorer.Score(far, ctx)));
+    }
+
+    // --- PantryOverlapScorer ---
+
+    private static Recipe RecipeWithIngredients(int id, params string[] ingredientNames) =>
+        new()
+        {
+            Id = id,
+            Tags = [],
+            Ingredients = ingredientNames
+                .Select(n => new Ingredient
+                {
+                    DisplayName = n,
+                    IngredientBase = new IngredientBase { Name = n },
+                    Measurement = new Measurement { Name = "unit" }
+                })
+                .ToList()
+        };
+
+    [Test]
+    public void PantryOverlapScorer_EmptyPantry_ReturnsZero()
+    {
+        var recipe = RecipeWithIngredients(1, "egg", "flour");
+        var ctx = EmptyContext(pantryIngredientNames: []);
+        var scorer = new PantryOverlapScorer();
+
+        Assert.That(scorer.Score(recipe, ctx), Is.EqualTo(0f));
+    }
+
+    [Test]
+    public void PantryOverlapScorer_RecipeWithNoIngredients_ReturnsZero()
+    {
+        var recipe = new Recipe { Id = 1, Tags = [], Ingredients = [] };
+        var ctx = EmptyContext(pantryIngredientNames: ["egg"]);
+        var scorer = new PantryOverlapScorer();
+
+        Assert.That(scorer.Score(recipe, ctx), Is.EqualTo(0f));
+    }
+
+    [Test]
+    public void PantryOverlapScorer_AllIngredientsInPantry_ReturnsOne()
+    {
+        var recipe = RecipeWithIngredients(1, "egg", "flour");
+        var ctx = EmptyContext(pantryIngredientNames: ["egg", "flour"]);
+        var scorer = new PantryOverlapScorer();
+
+        Assert.That(scorer.Score(recipe, ctx), Is.EqualTo(1f).Within(0.001f));
+    }
+
+    [Test]
+    public void PantryOverlapScorer_NoIngredientsInPantry_ReturnsZero()
+    {
+        var recipe = RecipeWithIngredients(1, "egg", "flour");
+        var ctx = EmptyContext(pantryIngredientNames: ["beef", "rice"]);
+        var scorer = new PantryOverlapScorer();
+
+        Assert.That(scorer.Score(recipe, ctx), Is.EqualTo(0f));
+    }
+
+    [Test]
+    public void PantryOverlapScorer_HalfIngredientsInPantry_ReturnsHalf()
+    {
+        var recipe = RecipeWithIngredients(1, "egg", "flour");
+        var ctx = EmptyContext(pantryIngredientNames: ["egg"]);
+        var scorer = new PantryOverlapScorer();
+
+        Assert.That(scorer.Score(recipe, ctx), Is.EqualTo(0.5f).Within(0.001f));
+    }
+
+    [Test]
+    public void PantryOverlapScorer_NormalizesIngredientNamesBeforeMatching()
+    {
+        // Recipe lists plural "Eggs"/"Tomatoes"; the pantry holds the
+        // singular, lowercased keys the normalizer produces.
+        var recipe = RecipeWithIngredients(1, "Eggs", "Tomatoes");
+        var ctx = EmptyContext(pantryIngredientNames: ["egg", "tomato"]);
+        var scorer = new PantryOverlapScorer();
+
+        Assert.That(scorer.Score(recipe, ctx), Is.EqualTo(1f).Within(0.001f));
+    }
+
+    [Test]
+    public void PantryOverlapScorer_CountsDistinctIngredientsOnce()
+    {
+        // "egg" is listed twice but counts as a single ingredient, so one of
+        // two distinct ingredients matching the pantry scores 0.5.
+        var recipe = RecipeWithIngredients(1, "egg", "egg", "flour");
+        var ctx = EmptyContext(pantryIngredientNames: ["egg"]);
+        var scorer = new PantryOverlapScorer();
+
+        Assert.That(scorer.Score(recipe, ctx), Is.EqualTo(0.5f).Within(0.001f));
     }
 }

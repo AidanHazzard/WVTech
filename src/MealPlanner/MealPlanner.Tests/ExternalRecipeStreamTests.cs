@@ -42,7 +42,8 @@ public class ExternalRecipeStreamTests
                 votes ?? [],
                 [],
                 upvoted ?? [],
-                userTags ?? []),
+                userTags ?? [],
+                []),
             new MealRecommendationContext(
                 calorieTarget,
                 proteinTarget,
