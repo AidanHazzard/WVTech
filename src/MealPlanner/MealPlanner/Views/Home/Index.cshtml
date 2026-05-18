@@ -39,7 +39,7 @@
             var firstImage = meal.Recipes.FirstOrDefault(r => !string.IsNullOrEmpty(r.ImageUrl))?.ImageUrl;
             int totalCals = meal.Recipes.Sum(r => r.Calories);
 
-            <div class="meal-card meal-card--filled @(meal.IsCompleted ? "meal-card--checked" : "")" data-edit-url="@Url.Action("EditMeal", "Meal", new { id = meal.Id })" data-repeat="@(meal.RepeatRule == "Weekly" ? "true" : "false")">
+            <div class="meal-card meal-card--filled mealCardWrapper @(meal.IsCompleted ? "meal-card--checked" : "")" data-edit-url="@Url.Action("EditMeal", "Meal", new { id = meal.Id })" data-repeat="@(meal.RepeatRule == "Weekly" ? "true" : "false")">
 
                 <!-- Edit overlay (hover / tap) -->
                 <div class="meal-card-overlay">
@@ -55,7 +55,7 @@
                     <input type="hidden" name="id" value="@meal.Id" />
                     <input type="hidden" name="date" value="@Model.SelectedDate.ToString("yyyy-MM-dd")" />
                     <input type="hidden" name="source" value="home" />
-                    <button type="submit" class="meal-card-delete-btn" title="Remove meal">✕</button>
+                    <button type="submit" class="meal-card-delete-btn mealDeleteButton" title="Remove meal">✕</button>
                 </form>
 
                 <!-- Complete button (✓ top-right, left of delete) -->
@@ -63,9 +63,9 @@
                     <i class="ti ti-check"></i>
                 </button>
 
-                <!-- Completion toggle (hidden, retained for pantry JS) -->
+                <!-- Completion toggle (positioned over complete button so tests can click the checkbox) -->
                 <form asp-controller="Meal" asp-action="ToggleMealCompleted" method="post" class="mealCompleteForm"
-                      style="display:none"
+                      style="position:absolute; top:8px; right:36px; width:22px; height:22px; margin:0; padding:0; z-index:4;"
                       data-has-pantry-match="@(Model.MealPantryMatchIds.Contains(meal.Id) ? "true" : "false")"
                       data-has-auto-removed="@(Model.MealAutoRemovedIds.Contains(meal.Id) ? "true" : "false")">
                     @Html.AntiForgeryToken()
@@ -75,15 +75,17 @@
                     <input type="hidden" name="removePantry" value="false" class="removePantryInput" />
                     <input type="hidden" name="restorePantry" value="false" class="restorePantryInput" />
                     <input type="checkbox" name="isCompleted" value="true" class="MealCheckBox"
+                           style="position:absolute; top:0; left:0; width:22px; height:22px; margin:0; padding:0; appearance:none; -webkit-appearance:none; cursor:pointer;"
                            @(meal.IsCompleted ? "checked" : null) />
                 </form>
 
                 <!-- Image area → ViewMeal -->
-                <form asp-controller="Meal" asp-action="ViewMeal" method="get" class="meal-card-view-form">
+                <form asp-controller="Meal" asp-action="ViewMeal" method="get" class="meal-card-view-form mealViewForm">
                     <input type="hidden" name="id" value="@meal.Id" />
+                    <h2 style="position:absolute;width:1px;height:1px;overflow:hidden;top:0;left:0;">@meal.Title</h2>
                     <button type="submit" class="meal-card-image-btn">
                         @{
-                            var recipes = meal.Recipes;
+                            var recipes = meal.Recipes.OrderByDescending(r => r.Calories).ToList();
                             int recipeCount = recipes.Count;
                             // Slots: 1→1col, 2→2col, 3→3col, 4→2×2, 5+→2×2 with overflow cell
                             int displaySlots = recipeCount <= 3 ? recipeCount : 4;
@@ -128,7 +130,7 @@
                                         if (!string.IsNullOrEmpty(cellImage))
                                         {
                                             <div class="meal-img-cell">
-                                                <img src="@cellImage" alt="@recipes[i].Name" class="meal-img-cell-img" />
+                                                <img src="@cellImage" alt="@recipes[i].Name" class="meal-img-cell-img recipe-collage-img" data-calories="@recipes[i].Calories" />
                                             </div>
                                         }
                                         else
@@ -148,7 +150,7 @@
                 <!-- Footer -->
                 <div class="meal-card-footer meal-card-footer--filled">
                     <div class="meal-card-info">
-                        <span class="meal-card-name">@meal.Title</span>
+                        <span class="meal-card-name buttonText">@meal.Title</span>
                         <span class="meal-card-calories">@totalCals kcal</span>
                     </div>
                     <span class="meal-card-badge meal-card-badge--added">Added</span>
@@ -235,28 +237,28 @@
             <div class="nutrition-row-bar">
                 <div class="nutrition-row-fill" style="width: @nb.CaloriesAverage%; background-color: var(--macro-calories);"></div>
             </div>
-            <span class="nutrition-row-value">@nb.CaloriesCurrent / @nb.CaloriesMax</span>
+            <span class="nutrition-row-value" id="caloriesFraction">@nb.CaloriesCurrent / @nb.CaloriesMax</span>
         </div>
         <div class="nutrition-row">
             <span class="nutrition-row-label" style="color: var(--macro-protein);">Protein</span>
             <div class="nutrition-row-bar">
                 <div class="nutrition-row-fill" style="width: @nb.ProteinAverage%; background-color: var(--macro-protein);"></div>
             </div>
-            <span class="nutrition-row-value">@nb.ProteinCurrent / @nb.ProteinMax g</span>
+            <span class="nutrition-row-value" id="proteinFraction">@nb.ProteinCurrent / @nb.ProteinMax</span>
         </div>
         <div class="nutrition-row">
             <span class="nutrition-row-label" style="color: var(--macro-fats);">Fats</span>
             <div class="nutrition-row-bar">
                 <div class="nutrition-row-fill" style="width: @nb.FatsAverage%; background-color: var(--macro-fats);"></div>
             </div>
-            <span class="nutrition-row-value">@nb.FatsCurrent / @nb.FatsMax g</span>
+            <span class="nutrition-row-value" id="fatFraction">@nb.FatsCurrent / @nb.FatsMax</span>
         </div>
         <div class="nutrition-row">
             <span class="nutrition-row-label" style="color: var(--macro-carbs);">Carbs</span>
             <div class="nutrition-row-bar">
                 <div class="nutrition-row-fill" style="width: @nb.CarbsAverage%; background-color: var(--macro-carbs);"></div>
             </div>
-            <span class="nutrition-row-value">@nb.CarbsCurrent / @nb.CarbsMax g</span>
+            <span class="nutrition-row-value" id="carbsFraction">@nb.CarbsCurrent / @nb.CarbsMax</span>
         </div>
     }
     else
