@@ -1,4 +1,5 @@
 using MealPlanner.DAL.Abstract;
+using MealPlanner.Helpers;
 using MealPlanner.Models;
 using MealPlanner.Services.Recommendation;
 using MealPlanner.ViewModels;
@@ -43,17 +44,62 @@ public class MealRecommendationService : IMealRecommendationService
             .ToHashSet()!;
     }
 
-    private async Task<UserRecommendationContext> BuildUserContextAsync(string userId)
+    private async Task<UserRecommendationContext> BuildUserContextAsync(User user, DateTime date)
     {
-        var restrictionNames = await GetRestrictionNamesAsync(userId);
-        var userVotes        = await _userRecipeRepository.GetUserVotesByUserIdAsync(userId);
+        var restrictionNames = await GetRestrictionNamesAsync(user.Id);
+        var userVotes        = await _userRecipeRepository.GetUserVotesByUserIdAsync(user.Id);
         var votePercentages  = await _userRecipeRepository.GetAllVotePercentagesAsync();
-        var upvoted          = await _userRecipeRepository.GetUserRecipesByVoteType(userId, UserVoteType.UpVote);
-        var preferredTagIds  = await _foodPreferenceRepository.GetFoodPreferenceTagIdsAsync(userId);
-        var pantryNames      = _pantryService?.GetPantryItems(userId)
+        var upvoted          = await _userRecipeRepository.GetUserRecipesByVoteType(user.Id, UserVoteType.UpVote);
+        var preferredTagIds  = await _foodPreferenceRepository.GetFoodPreferenceTagIdsAsync(user.Id);
+        var pantryNames      = _pantryService?.GetPantryItems(user.Id)
             .Select(i => IngredientNameNormalizer.NormalizeKey(i.IngredientBase.Name))
             .ToHashSet() ?? [];
-        return new UserRecommendationContext(restrictionNames, userVotes, votePercentages, upvoted, preferredTagIds, pantryNames, []);
+        var recentOffsets    = await BuildRecentRecipeOffsetsAsync(user, date);
+        return new UserRecommendationContext(
+            restrictionNames, userVotes, votePercentages, upvoted, preferredTagIds, pantryNames, recentOffsets);
+    }
+
+    // Maps each recipe id to the day-distances at which it appears on the
+    // user's planned meals within VarietyScorer.VarietyWindowDays either side
+    // of the target date. The target date itself is skipped — repetition
+    // within the day plan is the ExcludedRecipeFilter's job.
+    private async Task<Dictionary<int, List<int>>> BuildRecentRecipeOffsetsAsync(User user, DateTime date)
+    {
+        int window = VarietyScorer.VarietyWindowDays;
+        var targetDate = date.Date;
+        var meals = await _mealRepository.GetUserMealsByDateRangeAsync(
+            user, targetDate.AddDays(-window), targetDate.AddDays(window));
+
+        var offsets = new Dictionary<int, List<int>>();
+        foreach (var meal in meals)
+        {
+            foreach (int offset in OccurrenceOffsets(meal, targetDate, window))
+            {
+                foreach (var recipe in meal.Recipes)
+                {
+                    if (recipe.Id == 0) continue;
+                    if (!offsets.TryGetValue(recipe.Id, out var list))
+                        offsets[recipe.Id] = list = [];
+                    list.Add(offset);
+                }
+            }
+        }
+        return offsets;
+    }
+
+    // Day-distances within the window on which a meal occurs — every matching
+    // weekday for a weekly meal, otherwise just its scheduled date.
+    private static IEnumerable<int> OccurrenceOffsets(Meal meal, DateTime targetDate, int window)
+    {
+        for (int d = -window; d <= window; d++)
+        {
+            if (d == 0) continue;
+            var day = targetDate.AddDays(d);
+            bool occurs = meal.RepeatRule == "Weekly"
+                ? MealSchedule.RepeatMatchesDay(meal, day.DayOfWeek)
+                : meal.StartTime?.Date == day;
+            if (occurs) yield return Math.Abs(d);
+        }
     }
 
     private async Task<List<Recipe>> FetchSlotCandidatesAsync(RecommendationContext ctx)
@@ -79,7 +125,7 @@ public class MealRecommendationService : IMealRecommendationService
 
     public async Task<Recipe?> GetOneRecipeRecommendation(User user, DateTime date, IEnumerable<int> excludeRecipeIds)
     {
-        var userCtx = await BuildUserContextAsync(user.Id);
+        var userCtx = await BuildUserContextAsync(user, date);
         var excludeKeys = excludeRecipeIds.Select(id => $"id:{id}").ToHashSet();
         var mealCtx = new MealRecommendationContext(null, null, null, null, [], excludeKeys);
         var ctx = new RecommendationContext(userCtx, mealCtx);
@@ -97,7 +143,7 @@ public class MealRecommendationService : IMealRecommendationService
                 .Select(_ => new MealPreferenceViewModel { Size = MealSize.Average })
                 .ToList();
 
-        var userCtx = await BuildUserContextAsync(user.Id);
+        var userCtx = await BuildUserContextAsync(user, mealDate);
         var nutritionPrefs = await _nutrionRepository.GetUsersNutritionPreferenceAsync(user.Id);
         var totalWeight = preferences.Sum(p => p.Size.Weight());
 

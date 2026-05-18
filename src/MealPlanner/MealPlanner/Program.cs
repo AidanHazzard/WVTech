@@ -136,6 +136,7 @@ builder.Services.AddScoped<IRecipeScorer, MealPreferredTagScorer>();
 builder.Services.AddScoped<IRecipeScorer, TagSimilarityScorer>();
 builder.Services.AddScoped<IRecipeScorer, NutrientFitScorer>();
 builder.Services.AddScoped<IRecipeScorer, PantryOverlapScorer>();
+builder.Services.AddScoped<IRecipeScorer, VarietyScorer>();
 builder.Services.AddScoped<IRecipeFilter, DownVoteFilter>();
 builder.Services.AddScoped<IRecipeFilter, DietaryRestrictionFilter>();
 builder.Services.AddScoped<IRecipeFilter, PreferredTagFilter>();
