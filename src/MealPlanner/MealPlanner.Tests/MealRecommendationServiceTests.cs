@@ -157,12 +157,18 @@ public class MealRecommendationServiceTests
     }
 
     [Test]
-    public async Task GetRecommendedMealsForUser_WithMultipleMeals_DoesNotRepeatRecipesAcrossMeals()
+    public async Task GetRecommendedMealsForUser_FeedsPriorSlotRecipesToLaterSlotExcludedKeys()
     {
+        // Cross-meal de-duplication is now the ExcludedRecipeFilter's job. The
+        // service's part is feeding each prior slot's composed recipes into the
+        // next slot's ExcludedRecipeKeys.
         var recipe1 = new Recipe { Id = 1, Name = "Recipe 1", Calories = 100, Tags = [] };
         var recipe2 = new Recipe { Id = 2, Name = "Recipe 2", Calories = 100, Tags = [] };
         var recipe3 = new Recipe { Id = 3, Name = "Recipe 3", Calories = 100, Tags = [] };
-        _streamMock.Setup(s => s.GetRankedCandidatesAsync(It.IsAny<RecommendationContext>())).ReturnsAsync([recipe1, recipe2, recipe3]);
+        var captured = new List<RecommendationContext>();
+        _streamMock.Setup(s => s.GetRankedCandidatesAsync(It.IsAny<RecommendationContext>()))
+                   .Callback<RecommendationContext>(c => captured.Add(c))
+                   .ReturnsAsync([recipe1, recipe2, recipe3]);
 
         var config = new DayPlanConfigViewModel
         {
@@ -178,9 +184,11 @@ public class MealRecommendationServiceTests
 
         var result = await _service.GetRecommendedMealsForUser(_user, DateTime.Today, config);
 
-        var allAssigned = result.SelectMany(m => m.Recipes).ToList();
-        var distinctIds = allAssigned.Select(r => r.Id).Distinct().ToList();
-        Assert.That(allAssigned.Count, Is.EqualTo(distinctIds.Count), "Each recipe should appear in at most one meal");
+        var firstSlotKeys = result[0].Recipes.Select(r => $"id:{r.Id}").ToList();
+        Assert.That(firstSlotKeys, Is.Not.Empty, "first slot should compose at least one recipe");
+        Assert.That(captured[0].Meal.ExcludedRecipeKeys, Is.Empty, "first slot starts with nothing excluded");
+        Assert.That(captured[1].Meal.ExcludedRecipeKeys, Is.SupersetOf(firstSlotKeys),
+            "second slot excludes every recipe placed in the first");
     }
 
     [Test]
@@ -389,27 +397,19 @@ public class MealRecommendationServiceTests
     }
 
     [Test]
-    public async Task GetOneRecipeRecommendation_ExcludesRecipesInExcludeList()
+    public async Task GetOneRecipeRecommendation_PassesExcludeIdsAsExcludedRecipeKeys()
     {
-        var recipe1 = new Recipe { Id = 1, Name = "Pasta", Calories = 400, Tags = [] };
-        var recipe2 = new Recipe { Id = 2, Name = "Salad", Calories = 200, Tags = [] };
-        _streamMock.Setup(s => s.GetRankedCandidatesAsync(It.IsAny<RecommendationContext>())).ReturnsAsync([recipe1, recipe2]);
+        // The exclude list reaches the stream as ExcludedRecipeKeys; the
+        // ExcludedRecipeFilter then drops those recipes. (End-to-end exclusion
+        // is covered by the filter and stream tests.)
+        RecommendationContext? captured = null;
+        _streamMock.Setup(s => s.GetRankedCandidatesAsync(It.IsAny<RecommendationContext>()))
+                   .Callback<RecommendationContext>(c => captured = c)
+                   .ReturnsAsync([]);
 
-        var result = await _service.GetOneRecipeRecommendation(_user, DateTime.Today, [1]);
+        await _service.GetOneRecipeRecommendation(_user, DateTime.Today, [1, 5]);
 
-        Assert.That(result, Is.Not.Null);
-        Assert.That(result!.Id, Is.EqualTo(2));
-    }
-
-    [Test]
-    public async Task GetOneRecipeRecommendation_WhenAllRecipesExcluded_ReturnsNull()
-    {
-        var recipe = new Recipe { Id = 1, Name = "Pasta", Calories = 400, Tags = [] };
-        _streamMock.Setup(s => s.GetRankedCandidatesAsync(It.IsAny<RecommendationContext>())).ReturnsAsync([recipe]);
-
-        var result = await _service.GetOneRecipeRecommendation(_user, DateTime.Today, [1]);
-
-        Assert.That(result, Is.Null);
+        Assert.That(captured!.Meal.ExcludedRecipeKeys, Is.EquivalentTo(new[] { "id:1", "id:5" }));
     }
 
     [Test]
@@ -458,6 +458,7 @@ public class MealRecommendationServiceTests
         Assert.That(captured.Meal.CarbTarget, Is.Null);
         Assert.That(captured.Meal.FatTarget, Is.Null);
         Assert.That(captured.Meal.PreferredTagIds, Is.Empty);
+        Assert.That(captured.Meal.ExcludedRecipeKeys, Is.Empty);
     }
 
     // --- Context construction ---

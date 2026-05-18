@@ -49,7 +49,8 @@ public class ExternalRecipeStreamTests
                 proteinTarget,
                 carbTarget,
                 fatTarget,
-                mealTags ?? []));
+                mealTags ?? [],
+                []));
 
     private ExternalRecipeStream BuildStream(
         IEnumerable<IRecipeScorer>? scorers = null,

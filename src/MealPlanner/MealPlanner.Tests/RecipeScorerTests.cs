@@ -18,7 +18,8 @@ public class RecipeScorerTests
         int? proteinTarget = null,
         int? carbTarget = null,
         int? fatTarget = null,
-        HashSet<int>? mealPreferredTagIds = null) =>
+        HashSet<int>? mealPreferredTagIds = null,
+        HashSet<string>? excludedRecipeKeys = null) =>
         new(
             new UserRecommendationContext(
                 restrictions ?? [],
@@ -32,7 +33,8 @@ public class RecipeScorerTests
                 proteinTarget,
                 carbTarget,
                 fatTarget,
-                mealPreferredTagIds ?? []));
+                mealPreferredTagIds ?? [],
+                excludedRecipeKeys ?? []));
 
     // --- UpvotePriorityScorer ---
 
@@ -598,5 +600,48 @@ public class RecipeScorerTests
         var scorer = new PantryOverlapScorer();
 
         Assert.That(scorer.Score(recipe, ctx), Is.EqualTo(0.5f).Within(0.001f));
+    }
+
+    // --- ExcludedRecipeFilter ---
+
+    [Test]
+    public void ExcludedRecipeFilter_NoExcludedKeys_AllowsAnyRecipe()
+    {
+        var recipe = new Recipe { Id = 1, Tags = [] };
+        var ctx = EmptyContext(excludedRecipeKeys: []);
+        var filter = new ExcludedRecipeFilter();
+
+        Assert.That(filter.Allow(recipe, ctx), Is.True);
+    }
+
+    [Test]
+    public void ExcludedRecipeFilter_RecipeKeyExcluded_ReturnsFalse()
+    {
+        var recipe = new Recipe { Id = 7, Tags = [] };
+        var ctx = EmptyContext(excludedRecipeKeys: ["id:7"]);
+        var filter = new ExcludedRecipeFilter();
+
+        Assert.That(filter.Allow(recipe, ctx), Is.False);
+    }
+
+    [Test]
+    public void ExcludedRecipeFilter_RecipeKeyNotExcluded_ReturnsTrue()
+    {
+        var recipe = new Recipe { Id = 7, Tags = [] };
+        var ctx = EmptyContext(excludedRecipeKeys: ["id:99"]);
+        var filter = new ExcludedRecipeFilter();
+
+        Assert.That(filter.Allow(recipe, ctx), Is.True);
+    }
+
+    [Test]
+    public void ExcludedRecipeFilter_ExternalRecipeExcludedByUri_ReturnsFalse()
+    {
+        // External recipes have no database id, so they are keyed by their URI.
+        var recipe = new Recipe { Id = 0, ExternalUri = "http://edamam/abc", Tags = [] };
+        var ctx = EmptyContext(excludedRecipeKeys: ["uri:http://edamam/abc"]);
+        var filter = new ExcludedRecipeFilter();
+
+        Assert.That(filter.Allow(recipe, ctx), Is.False);
     }
 }

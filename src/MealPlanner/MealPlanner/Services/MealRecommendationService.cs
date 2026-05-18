@@ -81,7 +81,7 @@ public class MealRecommendationService : IMealRecommendationService
     public async Task<Recipe?> GetOneRecipeRecommendation(User user, DateTime date, IEnumerable<int> excludeRecipeIds)
     {
         var userCtx = await BuildUserContextAsync(user.Id);
-        var mealCtx = new MealRecommendationContext(null, null, null, null, []);
+        var mealCtx = new MealRecommendationContext(null, null, null, null, [], []);
         var ctx = new RecommendationContext(userCtx, mealCtx);
 
         var excludeIds = new HashSet<int>(excludeRecipeIds);
@@ -127,7 +127,8 @@ public class MealRecommendationService : IMealRecommendationService
                 proteinTarget,
                 carbTarget,
                 fatTarget,
-                pref.TagIds.ToHashSet());
+                pref.TagIds.ToHashSet(),
+                []);
             var ctx = new RecommendationContext(userCtx, mealCtx);
 
             var candidates = await FetchSlotCandidatesAsync(ctx, usedKeys);

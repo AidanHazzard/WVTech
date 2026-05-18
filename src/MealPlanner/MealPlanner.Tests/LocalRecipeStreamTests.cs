@@ -19,7 +19,8 @@ public class LocalRecipeStreamTests
         int? proteinTarget = null,
         int? carbTarget = null,
         int? fatTarget = null,
-        HashSet<int>? mealPreferredTagIds = null) =>
+        HashSet<int>? mealPreferredTagIds = null,
+        HashSet<string>? excludedRecipeKeys = null) =>
         new(
             new UserRecommendationContext(
                 restrictions ?? [],
@@ -33,7 +34,8 @@ public class LocalRecipeStreamTests
                 proteinTarget,
                 carbTarget,
                 fatTarget,
-                mealPreferredTagIds ?? []));
+                mealPreferredTagIds ?? [],
+                excludedRecipeKeys ?? []));
 
     private static LocalRecipeStream BuildStream(
         List<Recipe> pool,
@@ -53,7 +55,8 @@ public class LocalRecipeStreamTests
             filters ?? [
                 new DownVoteFilter(),
                 new DietaryRestrictionFilter(),
-                new PreferredTagFilter()
+                new PreferredTagFilter(),
+                new ExcludedRecipeFilter()
             ]);
     }
 
@@ -223,5 +226,19 @@ public class LocalRecipeStreamTests
         var result = await stream.GetRankedCandidatesAsync(ctx);
 
         Assert.That(result.Count(), Is.EqualTo(3));
+    }
+
+    [Test]
+    public async Task GetRankedCandidatesAsync_ExcludesAlreadyPlannedRecipes()
+    {
+        var planned   = new Recipe { Id = 1, Tags = [] };
+        var available = new Recipe { Id = 2, Tags = [] };
+        var ctx = EmptyContext(excludedRecipeKeys: ["id:1"]);
+        var stream = BuildStream([planned, available]);
+
+        var result = await stream.GetRankedCandidatesAsync(ctx);
+
+        Assert.That(result, Does.Not.Contain(planned));
+        Assert.That(result, Does.Contain(available));
     }
 }
