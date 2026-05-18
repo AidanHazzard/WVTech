@@ -118,7 +118,7 @@ public class MealRepositoryTests
     }
 
     [Test]
-    public void CreateOrUpdate_NewExternalRecipe_CachesUriShellWithoutIngredients()
+    public void CreateOrUpdate_NewExternalRecipe_CachesUriOnlyShell()
     {
         using var context = CreateContext();
         var repo = new MealRepository(context);
@@ -129,6 +129,7 @@ public class MealRepositoryTests
             Directions = "from edamam",
             ExternalUri = "http://edamam/curry",
             Calories = 500,
+            ImageUrl = "http://edamam/curry.jpg",
             Ingredients =
             [
                 new Ingredient
@@ -152,8 +153,11 @@ public class MealRepositoryTests
         var cached = verify.Set<Recipe>()
             .Include(r => r.Ingredients)
             .Single(r => r.ExternalUri == "http://edamam/curry");
-        Assert.That(cached.Ingredients, Is.Empty, "external recipe is cached as a URI-only shell");
-        Assert.That(cached.Name, Is.EqualTo("Edamam Curry"));
+        // Edamam's TOS permits caching only the recipe URI — no recipe data.
+        Assert.That(cached.Ingredients, Is.Empty, "no ingredients may be persisted");
+        Assert.That(cached.Name, Is.Empty, "no name may be persisted");
+        Assert.That(cached.Calories, Is.EqualTo(0), "no nutrition data may be persisted");
+        Assert.That(cached.ImageUrl, Is.Null, "no image may be persisted");
 
         var savedMeal = verify.Set<Meal>().Include(m => m.Recipes)
             .Single(m => m.Title == "Curry Night");
