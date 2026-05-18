@@ -55,17 +55,24 @@ public sealed class ExternalRecipeStream : IRecommendationStream
 
     private async Task<ExternalSearchQuery> BuildQueryAsync(RecommendationContext ctx)
     {
-        var tagIds = ctx.Meal.PreferredTagIds.Union(ctx.User.PreferredTagIds).ToList();
-        string? freeText = null;
-        if (tagIds.Count > 0)
-        {
-            var tags = await _tagRepository.GetTagsByIdsAsync(tagIds);
-            if (tags.Count > 0)
-                freeText = string.Join(" ", tags.Select(t => t.Name));
-        }
+        // Only the meal slot's tags drive the structured query. The standing
+        // user tag list is an OR-style preference, so ANDing it across Edamam's
+        // facets would mis-model it; user taste still re-ranks results through
+        // the scorers below.
+        var slotTagIds = ctx.Meal.PreferredTagIds.ToList();
+        IEnumerable<string> slotTagNames = slotTagIds.Count > 0
+            ? (await _tagRepository.GetTagsByIdsAsync(slotTagIds)).Select(t => t.Name)
+            : [];
+        var facets = EdamamTagClassifier.Classify(slotTagNames);
+
+        var freeText = facets.FreeTextTerms.Count > 0
+            ? string.Join(" ", facets.FreeTextTerms)
+            : null;
 
         var healthFilters = ctx.User.RestrictionNames
             .Select(n => n.ToLowerInvariant())
+            .Concat(facets.HealthLabels)
+            .Distinct()
             .ToList();
 
         return new ExternalSearchQuery(
@@ -78,6 +85,12 @@ public sealed class ExternalRecipeStream : IRecommendationStream
             CarbsMax: ctx.Meal.CarbTarget,
             FatMin: ctx.Meal.FatTarget.HasValue ? 0 : (int?)null,
             FatMax: ctx.Meal.FatTarget,
-            healthFilters);
+            healthFilters)
+        {
+            Diets = facets.Diets,
+            CuisineTypes = facets.CuisineTypes,
+            MealTypes = facets.MealTypes,
+            DishTypes = facets.DishTypes,
+        };
     }
 }

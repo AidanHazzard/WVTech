@@ -102,6 +102,18 @@ public class EdamamService:IExternalRecipeService
         foreach (var h in query.HealthFilters)
             parts.Add($"health={WebUtility.UrlEncode(h)}");
 
+        foreach (var d in query.Diets)
+            parts.Add($"diet={WebUtility.UrlEncode(d)}");
+
+        foreach (var c in query.CuisineTypes)
+            parts.Add($"cuisineType={WebUtility.UrlEncode(c)}");
+
+        foreach (var m in query.MealTypes)
+            parts.Add($"mealType={WebUtility.UrlEncode(m)}");
+
+        foreach (var dt in query.DishTypes)
+            parts.Add($"dishType={WebUtility.UrlEncode(dt)}");
+
         string endpoint = $"recipes/v2?{string.Join("&", parts)}";
 
         HttpResponseMessage response = await _httpClient.GetAsync(endpoint);
