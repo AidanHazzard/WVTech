@@ -62,17 +62,17 @@
             <option value="L">L</option>
             <option value="KG">KG</option>
         </select>
-        <button type="submit" class="sl-add-btn">Add item</button>
+        <button type="submit" class="sl-add-btn btn-success">Add item</button>
     </form>
 
     <!-- Items list card -->
-    <div class="sl-card">
+    <div class="sl-card back2">
         @if (Model.Items.Any())
         {
             <div id="shoppingItems">
                 @foreach (var item in Model.Items)
                 {
-                    <div class="sl-item-row">
+                    <div class="sl-item-row d-flex gap-2">
                         <span class="item-display sl-item-name"
                               data-amount="@item.Amount.ToString(System.Globalization.CultureInfo.InvariantCulture)"
                               data-measurement="@item.Measurement.Name"

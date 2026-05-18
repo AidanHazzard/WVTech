@@ -151,6 +151,16 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
+    // Update card visual state when the completion checkbox changes
+    document.querySelectorAll('.MealCheckBox').forEach(function (checkbox) {
+        checkbox.addEventListener('change', function () {
+            const card = this.closest('.meal-card--filled');
+            if (card) {
+                card.classList.toggle('meal-card--checked', this.checked);
+            }
+        });
+    });
+
     // ── Repeat-delete modal ─────────────────────────────────────
     const repeatModal = document.getElementById('repeatDeleteModal');
     const rdmThisOnly = document.getElementById('rdmThisOnly');
@@ -209,8 +219,8 @@ document.addEventListener('DOMContentLoaded', function () {
             const card = e.target.closest('.meal-card--filled');
             if (!card) return;
 
-            // Tapping the delete or complete button — don't interfere
-            if (e.target.closest('.meal-card-delete-form') || e.target.closest('.meal-card-complete-btn')) return;
+            // Tapping the delete or complete area — don't interfere
+            if (e.target.closest('.meal-card-delete-form') || e.target.closest('.meal-card-complete-btn') || e.target.closest('.mealCompleteForm')) return;
 
             if (!card.classList.contains('overlay-visible')) {
                 card.classList.add('overlay-visible');
@@ -256,21 +266,8 @@ document.addEventListener('DOMContentLoaded', function () {
             // Delete form area clicked → don't navigate via overlay
             if (e.target.closest('.meal-card-delete-form')) return;
 
-            // Complete button clicked → toggle MealCheckBox and fire change for pantry JS
-            const completeBtn = e.target.closest('.meal-card-complete-btn');
-            if (completeBtn) {
-                e.stopPropagation();
-                const card = completeBtn.closest('.meal-card--filled');
-                if (!card) return;
-                const form = card.querySelector('.mealCompleteForm');
-                if (!form) return;
-                const checkbox = form.querySelector('.MealCheckBox');
-                if (!checkbox) return;
-                checkbox.checked = !checkbox.checked;
-                card.classList.toggle('meal-card--checked', checkbox.checked);
-                checkbox.dispatchEvent(new Event('change', { bubbles: true }));
-                return;
-            }
+            // Complete form area clicked → don't navigate via overlay
+            if (e.target.closest('.mealCompleteForm')) return;
 
             // Subtle delete button clicked → show inline confirm
             const emptyDeleteBtn = e.target.closest('.meal-card-empty-delete-btn');

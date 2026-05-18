@@ -34,11 +34,11 @@
     <!-- Alerts -->
     @if (TempData["SuccessMessage"] != null)
     {
-        <div class="pantry-alert pantry-alert-success">@TempData["SuccessMessage"]</div>
+        <div class="pantry-alert pantry-alert-success alert-success">@TempData["SuccessMessage"]</div>
     }
     @if (TempData["ValidationError"] != null)
     {
-        <div class="pantry-alert pantry-alert-error">@TempData["ValidationError"]</div>
+        <div class="pantry-alert pantry-alert-error text-danger">@TempData["ValidationError"]</div>
     }
 
     <!-- Add item card -->
@@ -68,8 +68,9 @@
         {
             @foreach (var item in Model)
             {
-                <div class="pantry-item-row">
+                <div class="pantry-item-row pantry-item">
                     <span class="pantry-item-name">@item.IngredientBase.Display()</span>
+                    <span class="pantry-item-amount-text">@item.Amount.ToString(System.Globalization.CultureInfo.InvariantCulture)</span>
                     <div class="pantry-item-right">
                         <form asp-action="UpdatePantryItemAmount" method="post" class="pantry-qty-form">
                             @Html.AntiForgeryToken()
@@ -88,7 +89,7 @@
                         <form asp-action="RemovePantryItem" method="post" class="pantry-remove-form">
                             @Html.AntiForgeryToken()
                             <input type="hidden" name="ingredientId" value="@item.Id" />
-                            <button type="submit" class="pantry-remove-btn" title="Remove item">
+                            <button type="submit" class="pantry-remove-btn remove-pantry-item" title="Remove item">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24"
                                      fill="none" stroke="currentColor" stroke-width="2.5"
                                      stroke-linecap="round" stroke-linejoin="round">

@@ -27,11 +27,11 @@
 
             @if (!string.IsNullOrEmpty(Model.ImageUrl))
             {
-                <img src="@Model.ImageUrl" alt="@Model.Name" class="sr-image" />
+                <img src="@Model.ImageUrl" alt="@Model.Name" class="sr-image recipe-image recipe-has-image" />
             }
             else
             {
-                <div class="sr-image-placeholder">
+                <div class="sr-image-placeholder recipe-image recipe-no-image">
                     <i class="ti ti-tools-kitchen-2"></i>
                 </div>
             }

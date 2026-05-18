@@ -9,16 +9,22 @@ document.addEventListener('DOMContentLoaded', function () {
 // ── Repeat weekly toggle ──────────────────────────────────────
 
 function initRepeatToggle() {
-    const checkbox = document.getElementById('repeatWeeklyCheckbox');
+    const checkbox = document.getElementById('repeatWeeklyToggle');
     const visual   = document.getElementById('emRepeatToggle');
-    const panel    = document.getElementById('emRepeatDaysPanel');
+    const panel    = document.getElementById('repeatDaysPanel');
     if (!checkbox || !visual || !panel) return;
+
+    function sync() {
+        visual.classList.toggle('on', checkbox.checked);
+        panel.classList.toggle('open', checkbox.checked);
+    }
 
     visual.addEventListener('click', function () {
         checkbox.checked = !checkbox.checked;
-        visual.classList.toggle('on', checkbox.checked);
-        panel.classList.toggle('open', checkbox.checked);
+        sync();
     });
+
+    checkbox.addEventListener('change', sync);
 }
 
 // ── Repeat day chips ──────────────────────────────────────────
@@ -26,10 +32,17 @@ function initRepeatToggle() {
 function initDayChips() {
     document.querySelectorAll('.em-day-chip').forEach(function (chip) {
         chip.addEventListener('click', function (e) {
-            e.preventDefault(); // stop browser auto-toggling the nested checkbox a second time
-            this.classList.toggle('on');
             const cb = this.querySelector('input[type="checkbox"]');
-            if (cb) cb.checked = this.classList.contains('on');
+            if (!cb) return;
+            if (e.target === cb) {
+                // Selenium/direct checkbox click: checkbox already toggled, sync class
+                this.classList.toggle('on', cb.checked);
+            } else {
+                // Click on label area: toggle manually
+                e.preventDefault();
+                cb.checked = !cb.checked;
+                this.classList.toggle('on', cb.checked);
+            }
         });
     });
 }

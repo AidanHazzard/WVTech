@@ -1,10 +1,7 @@
 namespace MealPlanner.ViewModels;
 
-public class SettingsViewModel
+public class SettingsViewModel : FoodPreferenceViewModel
 {
-    public List<string> CurrentFoodPrefs { get; set; } = [];
-    public List<string> AvailableTags { get; set; } = [];
-    public List<string> NewPreferences { get; set; } = [];
 
     public int? CalorieTarget { get; set; }
     public int? ProteinTarget { get; set; }

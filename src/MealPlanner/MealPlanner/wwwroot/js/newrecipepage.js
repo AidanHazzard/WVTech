@@ -129,6 +129,20 @@ document.addEventListener('DOMContentLoaded', function () {
         createInput();
     });
 
+    // Prevent form submission when any ingredient row has a blank name
+    const recipeForm = addButton.closest('form');
+    if (recipeForm) {
+        recipeForm.addEventListener('submit', function (e) {
+            const ingredientInputs = recipeForm.querySelectorAll('input[name="Ingredients"]');
+            for (const input of ingredientInputs) {
+                if (!input.value.trim()) {
+                    e.preventDefault();
+                    return;
+                }
+            }
+        });
+    }
+
     // Delegated remove for ar-ing-row items (new-style, including pre-rendered EditRecipe rows)
     const ingredientList = document.getElementById('ingredientList');
     if (ingredientList) {
@@ -169,7 +183,6 @@ function createInput() {
         const qty  = ingQty  ? ingQty.value.trim()  : '';
         const unit = ingUnit ? ingUnit.value : '';
         const name = ingName.value.trim();
-        if (!name) return;
 
         const parts = [];
         if (qty)  parts.push(qty);

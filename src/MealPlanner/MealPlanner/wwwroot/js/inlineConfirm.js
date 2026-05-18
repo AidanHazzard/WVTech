@@ -5,6 +5,9 @@ document.addEventListener('DOMContentLoaded', function () {
         if (!btn) return;
         e.preventDefault();
 
+        // If the form contains an .inline-confirm element, let it handle the confirmation
+        if (btn.closest('form') && btn.closest('form').querySelector('.inline-confirm')) return;
+
         showDeleteModal('Delete this meal?', function () {
             btn.closest('form').submit();
         });

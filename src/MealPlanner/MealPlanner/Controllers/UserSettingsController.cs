@@ -33,7 +33,7 @@ namespace MealPlanner.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> Index(string section = "profile")
+        public async Task<IActionResult> Index(string section = "food")
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (string.IsNullOrEmpty(userId)) return Challenge();
@@ -52,7 +52,7 @@ namespace MealPlanner.Controllers
 
             return View(new SettingsViewModel
             {
-                CurrentFoodPrefs  = currentPrefs,
+                CurrentPreferences = currentPrefs,
                 AvailableTags     = availableTags,
                 CalorieTarget     = nutritionPref?.CalorieTarget,
                 ProteinTarget     = nutritionPref?.ProteinTarget,
@@ -82,8 +82,8 @@ namespace MealPlanner.Controllers
                 await _foodPrefRepository.AddFoodPreferencesAsync(userId, vm.NewPreferences);
 
             _db.SaveChanges();
-            TempData["Message"] = "Food preferences saved.";
-            return RedirectToAction(nameof(Index), new { section = "food" });
+            if (TempData is not null) TempData["Message"] = "Food preferences saved.";
+            return RedirectToAction(nameof(Index));
         }
 
         [HttpPost]
@@ -95,7 +95,7 @@ namespace MealPlanner.Controllers
 
             await _foodPrefRepository.RemoveFoodPreferenceAsync(userId, tagName);
             _db.SaveChanges();
-            return RedirectToAction(nameof(Index), new { section = "food" });
+            return RedirectToAction(nameof(Index));
         }
 
         [HttpGet]

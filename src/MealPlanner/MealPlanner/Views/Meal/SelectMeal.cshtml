@@ -19,6 +19,7 @@
         <p class="sm-page-subtitle">Choose a meal type to add for this day.</p>
     </div>
 
+    <div id="selectMealList">
     @if (Model == null || Model.Meals == null || Model.Meals.Count == 0)
     {
         <div class="sm-empty">
@@ -47,7 +48,7 @@
 
                     @if (hasRecipes)
                     {
-                        <button type="submit" class="sm-card sm-card--has-meal">
+                        <button type="submit" class="sm-card sm-card--has-meal selectMealRow">
                             <span class="sm-card-img-area">
                                 <span class="sm-card-icon-box">
                                     <i class="ti ti-tools-kitchen-2"></i>
@@ -68,18 +69,18 @@
                                 </span>
                             </span>
                             <span class="sm-card-text-footer">
-                                <span class="sm-card-name">@meal.Title</span>
+                                <span class="sm-card-name selectMealName">@meal.Title</span>
                                 <span class="sm-card-sub">@subLabel</span>
                             </span>
                         </button>
                     }
                     else
                     {
-                        <button type="submit" class="sm-card">
+                        <button type="submit" class="sm-card selectMealRow">
                             <span class="sm-card-icon-box">
                                 <i class="ti @icon"></i>
                             </span>
-                            <span class="sm-card-name">@meal.Title</span>
+                            <span class="sm-card-name selectMealName">@meal.Title</span>
                             <span class="sm-card-sub">@subLabel</span>
                         </button>
                     }
@@ -87,6 +88,7 @@
             }
         </div>
     }
+    </div>
 
     <div class="sm-action-row">
         <form asp-controller="Meal" asp-action="NewMeal" method="get" style="margin:0">

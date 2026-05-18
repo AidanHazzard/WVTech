@@ -286,9 +286,9 @@ function updateTodaysMacros() {
 
     rows.forEach(({ key, actual, goal, unit }) => {
         const pct   = goal > 0 ? Math.min((actual / goal) * 100, 100) : 0;
-        const valEl = document.getElementById(`tm-${key}-value`);
+        const valEl = document.getElementById(`${key}Fraction`);
         const barEl = document.getElementById(`tm-${key}-bar`);
-        if (valEl) valEl.textContent = `${Math.round(actual)} / ${goal}${unit}`;
+        if (valEl) valEl.textContent = `${Math.round(actual)} / ${goal}`;
         if (barEl) barEl.style.width = `${pct}%`;
     });
 }

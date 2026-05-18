@@ -38,7 +38,7 @@
                 <label class="auth-label" asp-for="Password">Password</label>
                 <div class="auth-input-wrap">
                     <input asp-for="Password" class="auth-input" type="password"
-                           placeholder="••••••••" autocomplete="current-password" id="loginPassword" />
+                           placeholder="••••••••" autocomplete="current-password" id="Password" />
                     <button type="button" class="auth-eye-btn" id="togglePassword" tabindex="-1"
                             aria-label="Toggle password visibility">
                         <i class="ti ti-eye" id="eyeIcon"></i>
@@ -85,7 +85,7 @@
 
 @section Scripts {
     <script>
-        const pwd   = document.getElementById('loginPassword');
+        const pwd   = document.getElementById('Password');
         const btn   = document.getElementById('togglePassword');
         const icon  = document.getElementById('eyeIcon');
         if (btn && pwd && icon) {

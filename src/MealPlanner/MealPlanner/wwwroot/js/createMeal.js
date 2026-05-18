@@ -10,7 +10,7 @@ $(document).ready(() => {
 
 function updateSelectedCard() {
     const $card = $("#selectedRecipesCard");
-    const hasItems = $("#selectedRecipesList .nm-recipe-row").length > 0;
+    const hasItems = $("#createMealList .nm-recipe-row").length > 0;
     $card.toggleClass("open", hasItems);
 }
 
@@ -34,44 +34,51 @@ async function toggleRecipe() {
 
     if (!recipeId) return;
 
-    const alreadySelected = $row.hasClass("selected");
-
-    if (alreadySelected) {
-        // Deselect: remove hidden input and card row
-        $row.removeClass("selected");
-        $(`#createMealForm input[name="RecipeIds"][value="${recipeId}"]`).remove();
-        $(`#selectedRecipesList .nm-recipe-row[data-id="${recipeId}"]`).remove();
-    } else {
-        // Select: add hidden input and card row
-        $row.addClass("selected");
-        const $hidden = $(`<input type="hidden" name="RecipeIds" value="${recipeId}" />`);
-        $("#createMealForm").append($hidden);
-        addToSelectedCard(recipeId, recipeName);
+    if ($(`#createMealList .nm-recipe-row[data-id="${recipeId}"]`).length > 0) {
+        alert("This recipe is already in the meal.");
+        return;
     }
 
+    // Select: add hidden input and card row
+    $row.addClass("selected");
+    const $hidden = $(`<input type="hidden" name="RecipeIds" value="${recipeId}" />`);
+    $("#createMealForm").append($hidden);
+    addToSelectedCard(recipeId, recipeName);
     updateSelectedCard();
 }
 
 function addToSelectedCard(recipeId, recipeName) {
-    const $row = $(`<div class="nm-recipe-row" data-id="${recipeId}">`)
-        .append(`<span class="nm-recipe-name">${$("<span>").text(recipeName).html()}</span>`)
-        .append(`<button type="button" class="nm-recipe-remove-btn" data-id="${recipeId}" title="Remove recipe"><i class="ti ti-x"></i></button>`);
-    $("#selectedRecipesList").append($row);
+    const $row = $(`<div class="nm-recipe-row mealRecipeItem" data-id="${recipeId}">`)
+        .append(`<h4 class="nm-recipe-name">${$("<span>").text(recipeName).html()}</h4>`)
+        .append(`<button type="button" class="nm-recipe-remove-btn delete-recipe-btn" data-id="${recipeId}" title="Remove recipe"><i class="ti ti-x"></i></button>`);
+    $("#createMealList").append($row);
 }
 
 function removeSelectedRecipe() {
     const recipeId = $(this).data("id");
-    // Remove card row
-    $(this).closest(".nm-recipe-row").remove();
-    // Remove hidden form input
-    $(`#createMealForm input[name="RecipeIds"][value="${recipeId}"]`).remove();
-    // Uncheck in search results
-    $(`.recipeSearchRow`).each(function () {
-        if (Number($(".recipeId", this).text()) === recipeId) {
-            $(this).removeClass("selected");
-        }
-    });
-    updateSelectedCard();
+    const $btn = $(this);
+
+    if (typeof showDeleteModal === "function") {
+        showDeleteModal("Remove this recipe?", function () {
+            $btn.closest(".nm-recipe-row").remove();
+            $(`#createMealForm input[name="RecipeIds"][value="${recipeId}"]`).remove();
+            $(`.recipeSearchRow`).each(function () {
+                if (Number($(".recipeId", this).text()) === recipeId) {
+                    $(this).removeClass("selected");
+                }
+            });
+            updateSelectedCard();
+        });
+    } else {
+        $btn.closest(".nm-recipe-row").remove();
+        $(`#createMealForm input[name="RecipeIds"][value="${recipeId}"]`).remove();
+        $(`.recipeSearchRow`).each(function () {
+            if (Number($(".recipeId", this).text()) === recipeId) {
+                $(this).removeClass("selected");
+            }
+        });
+        updateSelectedCard();
+    }
 }
 
 // ── Tag filter dropdown ───────────────────────────────────────

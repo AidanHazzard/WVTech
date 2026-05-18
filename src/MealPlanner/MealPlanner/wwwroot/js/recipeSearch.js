@@ -110,7 +110,10 @@ async function loadTags()
 async function recipeSearchHandler(event)
 {
     const search = $("#searchText").val();
-    const tags   = window.activeTagFilters || [];
+    const tagVal = ($("#tagFilter").val() || "").trim();
+    const tags   = (window.activeTagFilters && window.activeTagFilters.length > 0)
+        ? window.activeTagFilters
+        : (tagVal ? [tagVal] : []);
 
     if (search.length < 3 && tags.length === 0)
     {
