@@ -12,6 +12,7 @@ public class MealRecommendationService : IMealRecommendationService
     private IUserNutritionPreferenceRepository _nutrionRepository;
     private IUserDietaryRestrictionRepository _dietaryRestrictionRepository;
     private IUserFoodPreferenceRepository _foodPreferenceRepository;
+    private IMealRepository _mealRepository;
     private IReadOnlyList<IRecommendationStream> _streams;
     private IPantryService? _pantryService;
 
@@ -20,6 +21,7 @@ public class MealRecommendationService : IMealRecommendationService
         IUserNutritionPreferenceRepository nutritionRepository,
         IUserDietaryRestrictionRepository dietaryRestrictionRepository,
         IUserFoodPreferenceRepository foodPreferenceRepository,
+        IMealRepository mealRepository,
         IEnumerable<IRecommendationStream> streams,
         IPantryService? pantryService = null)
     {
@@ -27,6 +29,7 @@ public class MealRecommendationService : IMealRecommendationService
         _nutrionRepository = nutritionRepository;
         _dietaryRestrictionRepository = dietaryRestrictionRepository;
         _foodPreferenceRepository = foodPreferenceRepository;
+        _mealRepository = mealRepository;
         _streams = streams.ToList();
         _pantryService = pantryService;
     }
@@ -50,7 +53,7 @@ public class MealRecommendationService : IMealRecommendationService
         var pantryNames      = _pantryService?.GetPantryItems(userId)
             .Select(i => IngredientNameNormalizer.NormalizeKey(i.IngredientBase.Name))
             .ToHashSet() ?? [];
-        return new UserRecommendationContext(restrictionNames, userVotes, votePercentages, upvoted, preferredTagIds, pantryNames);
+        return new UserRecommendationContext(restrictionNames, userVotes, votePercentages, upvoted, preferredTagIds, pantryNames, []);
     }
 
     private async Task<List<Recipe>> FetchSlotCandidatesAsync(RecommendationContext ctx)

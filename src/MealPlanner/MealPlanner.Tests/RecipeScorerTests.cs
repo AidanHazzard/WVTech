@@ -14,6 +14,7 @@ public class RecipeScorerTests
         List<Recipe>? upvoted = null,
         HashSet<int>? userPreferredTagIds = null,
         HashSet<string>? pantryIngredientNames = null,
+        Dictionary<int, List<int>>? recentRecipeDayOffsets = null,
         int? calorieTarget = null,
         int? proteinTarget = null,
         int? carbTarget = null,
@@ -27,7 +28,8 @@ public class RecipeScorerTests
                 percentages ?? [],
                 upvoted ?? [],
                 userPreferredTagIds ?? [],
-                pantryIngredientNames ?? []),
+                pantryIngredientNames ?? [],
+                recentRecipeDayOffsets ?? []),
             new MealRecommendationContext(
                 calorieTarget,
                 proteinTarget,
@@ -643,5 +645,74 @@ public class RecipeScorerTests
         var filter = new ExcludedRecipeFilter();
 
         Assert.That(filter.Allow(recipe, ctx), Is.False);
+    }
+
+    // --- VarietyScorer ---
+
+    [Test]
+    public void VarietyScorer_RecipeNotEatenRecently_ReturnsOne()
+    {
+        var recipe = new Recipe { Id = 1, Tags = [] };
+        var ctx = EmptyContext();
+        var scorer = new VarietyScorer();
+
+        Assert.That(scorer.Score(recipe, ctx), Is.EqualTo(1f));
+    }
+
+    [Test]
+    public void VarietyScorer_RecipeNotInHistory_ReturnsOne()
+    {
+        // A different recipe was planned nearby, but not this one.
+        var recipe = new Recipe { Id = 1, Tags = [] };
+        var ctx = EmptyContext(recentRecipeDayOffsets: new() { [99] = [1] });
+        var scorer = new VarietyScorer();
+
+        Assert.That(scorer.Score(recipe, ctx), Is.EqualTo(1f));
+    }
+
+    [Test]
+    public void VarietyScorer_RecipeEatenOnAdjacentDay_ReturnsZero()
+    {
+        // An occurrence one day away carries the full staleness weight.
+        var recipe = new Recipe { Id = 1, Tags = [] };
+        var ctx = EmptyContext(recentRecipeDayOffsets: new() { [1] = [1] });
+        var scorer = new VarietyScorer();
+
+        Assert.That(scorer.Score(recipe, ctx), Is.EqualTo(0f));
+    }
+
+    [Test]
+    public void VarietyScorer_RecipeEatenAtWindowEdge_StaysAlmostFresh()
+    {
+        var recipe = new Recipe { Id = 1, Tags = [] };
+        var ctx = EmptyContext(recentRecipeDayOffsets:
+            new() { [1] = [VarietyScorer.VarietyWindowDays] });
+        var scorer = new VarietyScorer();
+
+        var score = scorer.Score(recipe, ctx);
+        Assert.That(score, Is.GreaterThan(0f));
+        Assert.That(score, Is.LessThan(1f));
+    }
+
+    [Test]
+    public void VarietyScorer_MoreRecentOccurrenceScoresLower()
+    {
+        var recipe = new Recipe { Id = 1, Tags = [] };
+        var scorer = new VarietyScorer();
+        var recent = EmptyContext(recentRecipeDayOffsets: new() { [1] = [2] });
+        var older  = EmptyContext(recentRecipeDayOffsets: new() { [1] = [10] });
+
+        Assert.That(scorer.Score(recipe, recent), Is.LessThan(scorer.Score(recipe, older)));
+    }
+
+    [Test]
+    public void VarietyScorer_MoreOccurrencesScoreLower()
+    {
+        var recipe = new Recipe { Id = 1, Tags = [] };
+        var scorer = new VarietyScorer();
+        var once  = EmptyContext(recentRecipeDayOffsets: new() { [1] = [7] });
+        var twice = EmptyContext(recentRecipeDayOffsets: new() { [1] = [7, 7] });
+
+        Assert.That(scorer.Score(recipe, twice), Is.LessThan(scorer.Score(recipe, once)));
     }
 }

@@ -17,6 +17,7 @@ public class MealRecommendationServiceTests
     private Mock<IUserDietaryRestrictionRepository> _dietaryRestrictionRepoMock;
     private Mock<IUserFoodPreferenceRepository> _foodPrefRepoMock;
     private Mock<IPantryService> _pantryServiceMock;
+    private Mock<IMealRepository> _mealRepoMock;
     private MealRecommendationService _service;
 
     private readonly User _user = new() { Id = "user-1" };
@@ -33,6 +34,7 @@ public class MealRecommendationServiceTests
         _dietaryRestrictionRepoMock = new Mock<IUserDietaryRestrictionRepository>();
         _foodPrefRepoMock = new Mock<IUserFoodPreferenceRepository>();
         _pantryServiceMock = new Mock<IPantryService>();
+        _mealRepoMock = new Mock<IMealRepository>();
 
         _streamMock.Setup(s => s.GetRankedCandidatesAsync(It.IsAny<RecommendationContext>()))
                    .ReturnsAsync(Enumerable.Empty<Recipe>());
@@ -64,12 +66,16 @@ public class MealRecommendationServiceTests
         _pantryServiceMock
             .Setup(p => p.GetPantryItems(It.IsAny<string>()))
             .Returns(new List<Ingredient>());
+        _mealRepoMock
+            .Setup(r => r.GetUserMealsByDateRangeAsync(It.IsAny<User>(), It.IsAny<DateTime>(), It.IsAny<DateTime>()))
+            .ReturnsAsync([]);
 
         _service = new MealRecommendationService(
             _userRecipeRepoMock.Object,
             _nutritionRepoMock.Object,
             _dietaryRestrictionRepoMock.Object,
             _foodPrefRepoMock.Object,
+            _mealRepoMock.Object,
             [_streamMock.Object],
             _pantryServiceMock.Object);
     }
@@ -570,6 +576,34 @@ public class MealRecommendationServiceTests
         await _service.GetRecommendedMealsForUser(_user, DateTime.Today, SingleMealConfig());
 
         Assert.That(captured!.User.PantryIngredientNames, Is.EquivalentTo(new[] { "egg", "flour" }));
+    }
+
+    [Test]
+    public async Task BuildContext_PopulatesRecentRecipeDayOffsetsFromMealHistory()
+    {
+        // A meal three days before the planned date should surface its recipe
+        // at day-offset 3.
+        var historicRecipe = new Recipe { Id = 5, Name = "Tuesday Dinner", Tags = [] };
+        var pastMeal = new Meal
+        {
+            Id = 1,
+            UserId = _user.Id,
+            StartTime = DateTime.Today.AddDays(-3),
+            Recipes = [historicRecipe]
+        };
+        _mealRepoMock
+            .Setup(r => r.GetUserMealsByDateRangeAsync(It.IsAny<User>(), It.IsAny<DateTime>(), It.IsAny<DateTime>()))
+            .ReturnsAsync([pastMeal]);
+
+        RecommendationContext? captured = null;
+        _streamMock.Setup(s => s.GetRankedCandidatesAsync(It.IsAny<RecommendationContext>()))
+                   .Callback<RecommendationContext>(c => captured = c)
+                   .ReturnsAsync([]);
+
+        await _service.GetRecommendedMealsForUser(_user, DateTime.Today, SingleMealConfig());
+
+        Assert.That(captured!.User.RecentRecipeDayOffsets.ContainsKey(5), Is.True);
+        Assert.That(captured.User.RecentRecipeDayOffsets[5], Does.Contain(3));
     }
 
     // --- Ranking trust tests (service trusts stream order) ---

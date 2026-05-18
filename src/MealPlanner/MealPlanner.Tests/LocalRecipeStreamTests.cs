@@ -28,6 +28,7 @@ public class LocalRecipeStreamTests
                 percentages ?? [],
                 upvoted ?? [],
                 userPreferredTagIds ?? [],
+                [],
                 []),
             new MealRecommendationContext(
                 calorieTarget,

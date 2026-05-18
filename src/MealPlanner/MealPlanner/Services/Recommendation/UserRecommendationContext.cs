@@ -5,7 +5,8 @@ namespace MealPlanner.Services.Recommendation;
 /// <summary>
 /// Per-user recommendation inputs assembled once per request. Carries the user's
 /// dietary restrictions, vote history, upvoted recipes, standing food-tag
-/// preferences, and the normalized names of ingredients in their pantry.
+/// preferences, the normalized names of ingredients in their pantry, and the
+/// day-offsets at which each recipe appears on nearby planned meals.
 /// Streams and scorers read from this for personalisation.
 /// </summary>
 public sealed record UserRecommendationContext(
@@ -14,4 +15,5 @@ public sealed record UserRecommendationContext(
     Dictionary<int, float> VotePercentages,
     List<Recipe> Upvoted,
     HashSet<int> PreferredTagIds,
-    HashSet<string> PantryIngredientNames);
+    HashSet<string> PantryIngredientNames,
+    Dictionary<int, List<int>> RecentRecipeDayOffsets);
