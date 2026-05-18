@@ -19,6 +19,13 @@
 
 <link rel="stylesheet" href="~/css/viewMeal.css" asp-append-version="true" />
 
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert-success" style="margin-bottom:12px; padding:10px 14px; border-radius:6px; background:rgba(46,201,154,0.12); border:0.5px solid rgba(46,201,154,0.4); color:#2EC99A; font-size:13px;">
+        @TempData["SuccessMessage"]
+    </div>
+}
+
 <!-- Back link -->
 <a href="@Url.Action("Index", "Home", new { id = Model.Id })" class="vm-back-link">
     <i class="ti ti-arrow-left"></i>
@@ -31,7 +38,7 @@
         <i class="ti @mealIcon"></i>
     </div>
     <div>
-        <h1 class="vm-meal-name">@title</h1>
+        <h1 class="vm-meal-name" id="mealTitle">@title</h1>
         <div class="vm-meal-date">
             @dateLabel
             @if (!string.IsNullOrWhiteSpace(Model.RepeatRule))
@@ -60,7 +67,7 @@
             <div class="vm-recipe-row mealRecipeItem"
                  data-recipe-id="@recipe.Id"
                  data-meal-id="@Model.Id">
-                <span class="vm-recipe-name">@recipe.Name</span>
+                <h4 class="vm-recipe-name mb-0">@recipe.Name</h4>
                 <div class="vm-recipe-actions">
                     @if (Model.Recipes.Count > 1)
                     {
@@ -106,10 +113,13 @@
         <i class="ti ti-arrow-left"></i>
         Back
     </a>
-    <a href="@Url.Action("EditMeal", "Meal", new { id = Model.Id })" class="vm-action-edit">
-        <i class="ti ti-edit"></i>
-        Edit Meal
-    </a>
+    <form asp-controller="Meal" asp-action="EditMeal" method="get" style="display:inline">
+        <input type="hidden" name="id" value="@Model.Id" />
+        <button type="submit" class="vm-action-edit">
+            <i class="ti ti-edit"></i>
+            Edit Meal
+        </button>
+    </form>
 </div>
 
 @section Scripts {

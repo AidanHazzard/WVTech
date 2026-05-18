@@ -28,7 +28,6 @@ public class MealRepository : Repository<Meal>, IMealRepository
             .Include(m => m.Recipes)
             .Where(m => m.UserId == user.Id && m.StartTime != null)
             .Where(m => m.RepeatRule == "Weekly")
-            .Where(m => m.StartTime!.Value.Date <= date.Date)
             .ToListAsync();
 
         weeklyRepeatMeals = weeklyRepeatMeals
@@ -76,7 +75,6 @@ public class MealRepository : Repository<Meal>, IMealRepository
                 .ThenInclude(r => r.Ingredients)
             .Where(m => m.UserId == user.Id && m.StartTime != null)
             .Where(m => m.RepeatRule == "Weekly")
-            .Where(m => m.StartTime!.Value.Date <= date.Date)
             .ToListAsync();
 
         weeklyRepeatMeals = weeklyRepeatMeals

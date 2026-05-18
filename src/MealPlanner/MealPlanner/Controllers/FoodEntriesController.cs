@@ -102,7 +102,9 @@ public class FoodEntriesController : Controller
         {
             userRecipes = await _userRecipeRepository.GetUserOwnedRecipesByUserIdAsync(user.Id);
         }
-        IEnumerable<RecipeViewModel> userRecipeVMs = userRecipes.Select(ViewModelService.RecipeToRecipeVM);
+        var seededRecipes = (_recipeRepository.ReadAll() ?? []).Where(r => r.Id < 0);
+        var allRecipes = userRecipes.Concat(seededRecipes).DistinctBy(r => r.Id);
+        IEnumerable<RecipeViewModel> userRecipeVMs = allRecipes.Select(ViewModelService.RecipeToRecipeVM);
         foreach (RecipeViewModel vm in userRecipeVMs)
         {
             if (vm.Id == null) continue;
@@ -166,6 +168,13 @@ public class FoodEntriesController : Controller
         //error checking
         if (!ModelState.IsValid)
         {
+            newRecipeViewModel.AvailableTags = await _tagRepository.GetTagNamesAsync();
+            return View("AddNewRecipe", newRecipeViewModel);
+        }
+
+        if (newRecipeViewModel.Ingredients.Any(i => string.IsNullOrWhiteSpace(i)))
+        {
+            ModelState.AddModelError("Ingredients", "Ingredient names cannot be blank.");
             newRecipeViewModel.AvailableTags = await _tagRepository.GetTagNamesAsync();
             return View("AddNewRecipe", newRecipeViewModel);
         }

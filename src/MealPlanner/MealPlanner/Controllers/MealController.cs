@@ -482,7 +482,8 @@ public class MealController : Controller
 
         Response.Cookies.Delete("ShoppingListSynced");
 
-        return RedirectToAction("ViewMeal", new { id = model.Id });
+        TempData["SuccessMessage"] = "Meal updated successfully";
+        return RedirectToAction("EditMeal", new { id = model.Id });
     }
 
     [HttpPost]

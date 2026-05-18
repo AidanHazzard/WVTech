@@ -11,6 +11,13 @@
     </a>
 </div>
 
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert-success" style="margin-bottom:12px; padding:10px 14px; border-radius:6px; background:rgba(46,201,154,0.12); border:0.5px solid rgba(46,201,154,0.4); color:#2EC99A; font-size:13px;">
+        @TempData["SuccessMessage"]
+    </div>
+}
+
 <!-- Page heading -->
 <div class="em-page-heading">
     <div class="em-page-title">Edit meal</div>
