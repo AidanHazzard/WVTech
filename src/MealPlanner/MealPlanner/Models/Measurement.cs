@@ -17,7 +17,7 @@ public class Measurement
 
     public override int GetHashCode()
     {
-        return this.Name.GetHashCode();
+        return this.Name?.GetHashCode() ?? 0;
     }
     
     public override bool Equals(object? obj)

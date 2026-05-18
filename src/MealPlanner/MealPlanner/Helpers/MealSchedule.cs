@@ -46,6 +46,7 @@ public static class MealSchedule
 
         var weekly = meals
             .Where(m => m.StartTime != null)
+            .Where(m => m.StartTime!.Value.Date <= d)
             .Where(m => RepeatMatchesDay(m, d.DayOfWeek));
 
         return exact

@@ -22,4 +22,4 @@ public record MacroTotals(
     int Fat
 );
 
-public record DailyNutritionDto(DateOnly Day, int Calories, int Protein, int Carbs, int Fat);
+public record DailyNutritionDto(DateOnly Day, int Calories, int Protein, int Carbs, int Fat, int CheckedMealsCount = 0);

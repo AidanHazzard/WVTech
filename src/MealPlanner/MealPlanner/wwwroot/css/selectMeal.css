@@ -1,0 +1,256 @@
+/* ── Theme tokens ────────────────────────────────────────────── */
+.sm-page {
+    --sm-page-bg:           #242424;
+    --sm-card-bg:           #1a1a1a;
+    --sm-card-border:       rgba(255, 255, 255, 0.08);
+    --sm-icon-bg:           #0d2e22;
+    --sm-selected-bg:       #0d2e22;
+    --sm-text1:             #f0f0f0;
+    --sm-text2:             #a0a0a0;
+    --sm-text3:             #555;
+    --sm-teal:              #2EC99A;
+    --sm-teal-bg:           #0d2e22;
+    --sm-macro-card-bg:     #1a1a1a;
+    --sm-macro-card-border: rgba(255, 255, 255, 0.08);
+    --sm-macro-label:       #a0a0a0;
+    --sm-macro-value:       #f0f0f0;
+    --sm-macro-divider:     rgba(255, 255, 255, 0.06);
+}
+
+[data-theme="light"] .sm-page {
+    --sm-page-bg:           #f5f5f5;
+    --sm-card-bg:           #ffffff;
+    --sm-card-border:       #e0e0e0;
+    --sm-icon-bg:           #e1f5ee;
+    --sm-selected-bg:       #e1f5ee;
+    --sm-text1:             #1a1a1a;
+    --sm-text2:             #666666;
+    --sm-text3:             #999999;
+    --sm-macro-card-bg:     #ffffff;
+    --sm-macro-card-border: #e0e0e0;
+    --sm-macro-label:       #a0a0a0;
+    --sm-macro-value:       #1a1a1a;
+    --sm-macro-divider:     #f0f0f0;
+}
+
+/* ── Page ────────────────────────────────────────────────────── */
+.sm-page {
+    background: var(--sm-page-bg);
+    padding: 1.5rem;
+    max-width: 700px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+/* ── Page header ─────────────────────────────────────────────── */
+.sm-page-title {
+    font-size: 18px;
+    font-weight: 500;
+    color: var(--sm-text1);
+    margin: 0 0 4px;
+}
+
+.sm-page-subtitle {
+    font-size: 13px;
+    color: var(--sm-text3);
+    margin: 0;
+}
+
+/* ── Cards grid ──────────────────────────────────────────────── */
+.sm-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+}
+
+/* Each form fills its grid cell */
+.sm-card-form {
+    margin: 0;
+    display: contents;
+}
+
+/* ── Card ────────────────────────────────────────────────────── */
+.sm-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    background: var(--sm-card-bg);
+    border: 0.5px solid var(--sm-card-border);
+    border-radius: 12px;
+    padding: 1.25rem 1rem;
+    cursor: pointer;
+    transition: border-color 0.15s, background-color 0.15s;
+    text-align: center;
+}
+
+.sm-card:hover {
+    border-color: var(--sm-teal);
+}
+
+.sm-card--selected {
+    border: 1.5px solid var(--sm-teal) !important;
+    background-color: var(--sm-selected-bg) !important;
+}
+
+/* ── Card icon ───────────────────────────────────────────────── */
+.sm-card-icon-box {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: var(--sm-icon-bg);
+    color: var(--sm-teal);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 20px;
+    line-height: 1;
+}
+
+/* ── Card text ───────────────────────────────────────────────── */
+.sm-card-name {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--sm-text1);
+    line-height: 1.2;
+}
+
+.sm-card-sub {
+    font-size: 12px;
+    color: var(--sm-text2);
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
+
+/* ── Empty state ─────────────────────────────────────────────── */
+.sm-empty {
+    background: var(--sm-card-bg);
+    border: 0.5px solid var(--sm-card-border);
+    border-radius: 12px;
+    padding: 2rem;
+    text-align: center;
+}
+
+.sm-empty-text {
+    font-size: 13px;
+    color: var(--sm-text2);
+    margin: 0;
+}
+
+/* ── Action row ──────────────────────────────────────────────── */
+.sm-action-row {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.sm-new-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: #2EC99A;
+    color: #0d2e22;
+    border: none;
+    border-radius: 12px;
+    padding: 12px 28px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.15s;
+}
+
+.sm-new-btn:hover {
+    background: #26b389;
+}
+
+/* ── Assigned-meal card — structural overrides ───────────────── */
+.sm-card--has-meal {
+    padding: 0;
+    gap: 0;
+    overflow: hidden;
+}
+
+/* Image / icon area (top of card) */
+.sm-card-img-area {
+    position: relative;
+    overflow: hidden;
+    width: 100%;
+    height: 84px;
+    border-radius: 12px 12px 0 0;
+    background: var(--sm-icon-bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+/* Macro overlay — transparent fade wrapper */
+.sm-macro-overlay {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: opacity 0.18s ease;
+    pointer-events: none;
+}
+
+.sm-macro-overlay--visible {
+    opacity: 1;
+}
+
+@media (hover: hover) {
+    .sm-card--has-meal:hover .sm-macro-overlay {
+        opacity: 1;
+    }
+}
+
+/* Corner macro pills */
+.sm-macro-pill {
+    position: absolute;
+    background: rgba(255, 255, 255, 0.92);
+    border-radius: 20px;
+    padding: 3px 8px;
+    font-size: 11px;
+    font-weight: 500;
+    color: #1a1a1a;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+    white-space: nowrap;
+}
+
+.sm-macro-pill--tl { top: 8px;    left: 8px;  }
+.sm-macro-pill--tr { top: 8px;    right: 8px; }
+.sm-macro-pill--bl { bottom: 8px; left: 8px;  }
+.sm-macro-pill--br { bottom: 8px; right: 8px; }
+
+.sm-macro-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+/* Text footer (below image area on assigned cards) */
+.sm-card-text-footer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 10px 12px;
+    width: 100%;
+    text-align: center;
+}
+
+/* ── Responsive ──────────────────────────────────────────────── */
+@media (max-width: 480px) {
+    .sm-cards-grid {
+        grid-template-columns: 1fr;
+    }
+}
