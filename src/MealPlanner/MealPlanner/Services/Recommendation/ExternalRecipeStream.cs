@@ -70,13 +70,14 @@ public sealed class ExternalRecipeStream : IRecommendationStream
     }
 
     /// <summary>
-    /// Edamam results arrive without our local context — no database Id, tags,
-    /// or vote history. When a result is already cached locally (a Recipe row
-    /// was persisted with the same ExternalUri, e.g. because it was favorited
-    /// or voted on), swap in that local row so the downvote filter and the
-    /// upvote/variety scorers can treat it like any other local recipe — and
-    /// so the service's merge can de-duplicate it against the local stream's
-    /// copy of the same recipe (both then key on id:, not uri:).
+    /// Edamam results arrive with no database Id, so the downvote filter and the
+    /// upvote/variety scorers — which key on recipe Id — cannot act on them.
+    /// When a result is already cached locally (a Recipe row exists with the
+    /// same ExternalUri), stamp that local row's Id onto the Edamam recipe,
+    /// leaving the recipe's own data (ingredients, macros) intact. The vote and
+    /// variety logic can then treat it like any local recipe, and the service's
+    /// merge can de-duplicate it against the local stream's copy of the same
+    /// recipe (both then key on id:, not uri:).
     /// </summary>
     private async Task<List<Recipe>> ReconcileWithLocalAsync(IEnumerable<Recipe> externalRecipes)
     {
@@ -89,16 +90,20 @@ public sealed class ExternalRecipeStream : IRecommendationStream
             .ToList();
         if (uris.Count == 0) return recipes;
 
-        var localByUri = (await _recipeRepository.GetRecipesByExternalUrisAsync(uris))
+        var localIdByUri = (await _recipeRepository.GetRecipesByExternalUrisAsync(uris))
             .Where(r => r.ExternalUri != null)
             .GroupBy(r => r.ExternalUri!)
-            .ToDictionary(g => g.Key, g => g.First());
+            .ToDictionary(g => g.Key, g => g.First().Id);
 
-        return recipes
-            .Select(r => r.ExternalUri != null && localByUri.TryGetValue(r.ExternalUri, out var local)
-                ? local
-                : r)
-            .ToList();
+        foreach (var recipe in recipes)
+        {
+            if (recipe.ExternalUri != null
+                && localIdByUri.TryGetValue(recipe.ExternalUri, out var localId))
+            {
+                recipe.Id = localId;
+            }
+        }
+        return recipes;
     }
 
     private async Task<ExternalSearchQuery> BuildQueryAsync(RecommendationContext ctx)
