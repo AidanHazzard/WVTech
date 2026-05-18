@@ -51,10 +51,44 @@ public sealed class ExternalRecipeStream : IRecommendationStream
             return [];
         }
 
-        return recipes
+        var reconciled = await ReconcileWithLocalAsync(recipes);
+
+        return reconciled
             .Where(r => _filters.All(f => f.Allow(r, ctx)))
             .Select(r => new ScoredRecipe(r, _scorers.Sum(s => s.Score(r, ctx))))
             .OrderByDescending(x => x.Score)
+            .ToList();
+    }
+
+    /// <summary>
+    /// Edamam results arrive without our local context — no database Id, tags,
+    /// or vote history. When a result is already cached locally (a Recipe row
+    /// was persisted with the same ExternalUri, e.g. because it was favorited
+    /// or voted on), swap in that local row so the downvote filter and the
+    /// upvote/variety scorers can treat it like any other local recipe — and
+    /// so the service's merge can de-duplicate it against the local stream's
+    /// copy of the same recipe (both then key on id:, not uri:).
+    /// </summary>
+    private async Task<List<Recipe>> ReconcileWithLocalAsync(IEnumerable<Recipe> externalRecipes)
+    {
+        var recipes = externalRecipes.ToList();
+        var uris = recipes
+            .Select(r => r.ExternalUri)
+            .Where(u => !string.IsNullOrEmpty(u))
+            .Select(u => u!)
+            .Distinct()
+            .ToList();
+        if (uris.Count == 0) return recipes;
+
+        var localByUri = (await _recipeRepository.GetRecipesByExternalUrisAsync(uris))
+            .Where(r => r.ExternalUri != null)
+            .GroupBy(r => r.ExternalUri!)
+            .ToDictionary(g => g.Key, g => g.First());
+
+        return recipes
+            .Select(r => r.ExternalUri != null && localByUri.TryGetValue(r.ExternalUri, out var local)
+                ? local
+                : r)
             .ToList();
     }
 

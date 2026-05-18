@@ -141,10 +141,16 @@ public class RecipeRepository : Repository<Recipe>, IRecipeRepository
         return _dbset.FirstOrDefault(r => r.ExternalUri == uri);
     }
 
-    public Task<List<Recipe>> GetRecipesByExternalUrisAsync(IEnumerable<string> uris)
+    public async Task<List<Recipe>> GetRecipesByExternalUrisAsync(IEnumerable<string> uris)
     {
-        // Stub — implemented in the GREEN step.
-        return Task.FromResult(new List<Recipe>());
+        var uriList = uris.Distinct().ToList();
+        if (uriList.Count == 0) return [];
+
+        return await _dbset
+            .Include(r => r.Tags)
+            .Include(r => r.Ingredients)
+            .Where(r => r.ExternalUri != null && uriList.Contains(r.ExternalUri))
+            .ToListAsync();
     }
 
     public List<Recipe> GetRecipesByNameAndRestrictions(string name, IEnumerable<string> restrictionTagNames)
