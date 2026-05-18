@@ -116,4 +116,84 @@ public class MealRepositoryTests
         Assert.That(result.Count, Is.EqualTo(1));
         Assert.That(result[0].Id, Is.EqualTo(idA));
     }
+
+    [Test]
+    public void CreateOrUpdate_NewExternalRecipe_CachesUriShellWithoutIngredients()
+    {
+        using var context = CreateContext();
+        var repo = new MealRepository(context);
+
+        var edamamRecipe = new Recipe
+        {
+            Name = "Edamam Curry",
+            Directions = "from edamam",
+            ExternalUri = "http://edamam/curry",
+            Calories = 500,
+            Ingredients =
+            [
+                new Ingredient
+                {
+                    DisplayName = "Lentils",
+                    IngredientBase = new IngredientBase { Name = "zzz-lentil" },
+                    Measurement = new Measurement { Name = "zzz-cup" }
+                }
+            ]
+        };
+        var meal = new Meal
+        {
+            Title = "Curry Night", UserId = "user-1",
+            StartTime = DateTime.Today, Recipes = [edamamRecipe]
+        };
+
+        repo.CreateOrUpdate(meal);
+        context.SaveChanges();
+
+        using var verify = CreateContext();
+        var cached = verify.Set<Recipe>()
+            .Include(r => r.Ingredients)
+            .Single(r => r.ExternalUri == "http://edamam/curry");
+        Assert.That(cached.Ingredients, Is.Empty, "external recipe is cached as a URI-only shell");
+        Assert.That(cached.Name, Is.EqualTo("Edamam Curry"));
+
+        var savedMeal = verify.Set<Meal>().Include(m => m.Recipes)
+            .Single(m => m.Title == "Curry Night");
+        Assert.That(savedMeal.Recipes.Select(r => r.ExternalUri), Does.Contain("http://edamam/curry"));
+    }
+
+    [Test]
+    public void CreateOrUpdate_AlreadyCachedExternalRecipe_ReusesRowWithoutDuplicating()
+    {
+        using (var seed = CreateContext())
+        {
+            seed.Set<Recipe>().Add(new Recipe
+            {
+                Name = "Cached Tacos", Directions = "", ExternalUri = "http://edamam/tacos"
+            });
+            seed.SaveChanges();
+        }
+
+        using var context = CreateContext();
+        var repo = new MealRepository(context);
+
+        var edamamRecipe = new Recipe
+        {
+            Name = "Tacos (fresh from edamam)", Directions = "x",
+            ExternalUri = "http://edamam/tacos"
+        };
+        var meal = new Meal
+        {
+            Title = "Taco Tuesday", UserId = "user-1",
+            StartTime = DateTime.Today, Recipes = [edamamRecipe]
+        };
+
+        repo.CreateOrUpdate(meal);
+        Assert.DoesNotThrow(() => context.SaveChanges(),
+            "re-selecting an already-cached external recipe must not violate the ExternalUri unique index");
+
+        using var verify = CreateContext();
+        Assert.That(verify.Set<Recipe>().Count(r => r.ExternalUri == "http://edamam/tacos"),
+            Is.EqualTo(1), "the cached recipe row is reused, not duplicated");
+        var row = verify.Set<Recipe>().Single(r => r.ExternalUri == "http://edamam/tacos");
+        Assert.That(row.Name, Is.EqualTo("Cached Tacos"), "the cached row's data is left untouched");
+    }
 }
