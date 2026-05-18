@@ -53,25 +53,21 @@ public class MealRecommendationService : IMealRecommendationService
         return new UserRecommendationContext(restrictionNames, userVotes, votePercentages, upvoted, preferredTagIds, pantryNames);
     }
 
-    private static string RecipeKey(Recipe r) =>
-        r.Id != 0 ? $"id:{r.Id}" : $"uri:{r.ExternalUri ?? string.Empty}";
-
-    private async Task<List<Recipe>> FetchSlotCandidatesAsync(
-        RecommendationContext ctx,
-        HashSet<string> usedKeys)
+    private async Task<List<Recipe>> FetchSlotCandidatesAsync(RecommendationContext ctx)
     {
         var streamResults = _streams.Select(s => s.GetRankedCandidatesAsync(ctx).Result).ToList();
 
+        // Streams have already dropped recipes excluded for this slot via the
+        // ExcludedRecipeFilter; here we only de-duplicate across streams.
         var seenKeys = new HashSet<string>();
         var candidates = new List<Recipe>();
         foreach (var streamResult in streamResults)
         {
             foreach (var r in streamResult)
             {
-                var key = RecipeKey(r);
+                var key = RecipeKey.For(r);
                 if (key == "uri:") continue;
                 if (!seenKeys.Add(key)) continue;
-                if (usedKeys.Contains(key)) continue;
                 candidates.Add(r);
             }
         }
@@ -81,13 +77,11 @@ public class MealRecommendationService : IMealRecommendationService
     public async Task<Recipe?> GetOneRecipeRecommendation(User user, DateTime date, IEnumerable<int> excludeRecipeIds)
     {
         var userCtx = await BuildUserContextAsync(user.Id);
-        var mealCtx = new MealRecommendationContext(null, null, null, null, [], []);
+        var excludeKeys = excludeRecipeIds.Select(id => $"id:{id}").ToHashSet();
+        var mealCtx = new MealRecommendationContext(null, null, null, null, [], excludeKeys);
         var ctx = new RecommendationContext(userCtx, mealCtx);
 
-        var excludeIds = new HashSet<int>(excludeRecipeIds);
-        var excludeKeys = excludeIds.Select(id => $"id:{id}").ToHashSet();
-
-        var candidates = await FetchSlotCandidatesAsync(ctx, excludeKeys);
+        var candidates = await FetchSlotCandidatesAsync(ctx);
         return candidates.FirstOrDefault();
     }
 
@@ -128,14 +122,14 @@ public class MealRecommendationService : IMealRecommendationService
                 carbTarget,
                 fatTarget,
                 pref.TagIds.ToHashSet(),
-                []);
+                new HashSet<string>(usedKeys));
             var ctx = new RecommendationContext(userCtx, mealCtx);
 
-            var candidates = await FetchSlotCandidatesAsync(ctx, usedKeys);
+            var candidates = await FetchSlotCandidatesAsync(ctx);
 
             var recipes = MealComposer.Compose(
                 candidates, calorieTarget, _MAX_RECIPES, proteinTarget, carbTarget, fatTarget);
-            foreach (var r in recipes) usedKeys.Add(RecipeKey(r));
+            foreach (var r in recipes) usedKeys.Add(RecipeKey.For(r));
 
             result.Add(new Meal
             {

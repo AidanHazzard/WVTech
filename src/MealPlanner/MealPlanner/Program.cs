@@ -139,6 +139,7 @@ builder.Services.AddScoped<IRecipeScorer, PantryOverlapScorer>();
 builder.Services.AddScoped<IRecipeFilter, DownVoteFilter>();
 builder.Services.AddScoped<IRecipeFilter, DietaryRestrictionFilter>();
 builder.Services.AddScoped<IRecipeFilter, PreferredTagFilter>();
+builder.Services.AddScoped<IRecipeFilter, ExcludedRecipeFilter>();
 builder.Services.AddScoped<ThemeFilter>();
 builder.Services.AddScoped<ShoppingListService>();
 builder.Services.AddScoped<IShoppingListService>(sp => sp.GetRequiredService<ShoppingListService>());

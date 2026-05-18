@@ -9,5 +9,6 @@ namespace MealPlanner.Services.Recommendation;
 /// </summary>
 public sealed class ExcludedRecipeFilter : IRecipeFilter
 {
-    public bool Allow(Recipe recipe, RecommendationContext ctx) => true;
+    public bool Allow(Recipe recipe, RecommendationContext ctx) =>
+        !ctx.Meal.ExcludedRecipeKeys.Contains(RecipeKey.For(recipe));
 }
