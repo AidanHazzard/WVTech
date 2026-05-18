@@ -13,6 +13,51 @@ public class MealRepository : Repository<Meal>, IMealRepository
         _context = context;
     }
 
+    public override Meal CreateOrUpdate(Meal meal)
+    {
+        ResolveExternalRecipes(meal);
+        return base.CreateOrUpdate(meal);
+    }
+
+    // External recipes selected into a meal are persisted as a bare URI cache
+    // row: the Edamam payload (ingredients, tags) is dropped, and an already
+    // cached row is reused untouched. Persisting the Edamam ingredient graph
+    // would collide with the IngredientBase/Measurement unique indexes, and a
+    // second row for an already-cached ExternalUri violates the ExternalUri
+    // unique index — either failure aborts the whole meal save.
+    private void ResolveExternalRecipes(Meal meal)
+    {
+        var recipeSet = _context.Set<Recipe>();
+        for (int i = 0; i < meal.Recipes.Count; i++)
+        {
+            var recipe = meal.Recipes[i];
+            if (string.IsNullOrEmpty(recipe.ExternalUri)) continue;
+
+            string uri = recipe.ExternalUri;
+            var cached = recipeSet.Local.FirstOrDefault(r => r.ExternalUri == uri)
+                         ?? recipeSet.FirstOrDefault(r => r.ExternalUri == uri);
+            if (cached != null)
+            {
+                meal.Recipes[i] = cached;
+                continue;
+            }
+
+            var shell = new Recipe
+            {
+                Name = recipe.Name,
+                Directions = string.Empty,
+                ExternalUri = uri,
+                ImageUrl = recipe.ImageUrl,
+                Calories = recipe.Calories,
+                Protein = recipe.Protein,
+                Carbs = recipe.Carbs,
+                Fat = recipe.Fat
+            };
+            recipeSet.Add(shell);
+            meal.Recipes[i] = shell;
+        }
+    }
+
     public async Task<List<Meal>> GetUserMealsByDateAsync(User user, DateTime date)
     {
         var start = date;
