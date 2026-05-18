@@ -12,15 +12,20 @@ public class ExternalRecipeStreamTests
 {
     private Mock<IExternalRecipeService> _externalServiceMock;
     private Mock<ITagRepository> _tagRepoMock;
+    private Mock<IRecipeRepository> _recipeRepoMock;
 
     [SetUp]
     public void SetUp()
     {
         _externalServiceMock = new Mock<IExternalRecipeService>();
         _tagRepoMock = new Mock<ITagRepository>();
+        _recipeRepoMock = new Mock<IRecipeRepository>();
         _tagRepoMock
             .Setup(r => r.GetTagsByIdsAsync(It.IsAny<IEnumerable<int>>()))
             .ReturnsAsync(new List<Tag>());
+        _recipeRepoMock
+            .Setup(r => r.GetRecipesByExternalUrisAsync(It.IsAny<IEnumerable<string>>()))
+            .ReturnsAsync([]);
         _externalServiceMock
             .Setup(s => s.SearchByContextAsync(It.IsAny<ExternalSearchQuery>()))
             .ReturnsAsync(Enumerable.Empty<Recipe>());
@@ -59,6 +64,7 @@ public class ExternalRecipeStreamTests
         bool withExternal = true) =>
         new(
             _tagRepoMock.Object,
+            _recipeRepoMock.Object,
             scorers ?? [],
             filters ?? [],
             withExternal ? _externalServiceMock.Object : null);
@@ -268,5 +274,77 @@ public class ExternalRecipeStreamTests
         var result = await stream.GetRankedCandidatesAsync(BuildContext(calorieTarget: 500));
 
         Assert.That(result, Is.Empty);
+    }
+
+    [Test]
+    public async Task GetRankedCandidatesAsync_SwapsLocallyCachedRecipeForLocalRow()
+    {
+        // An Edamam result that already exists locally (matched by ExternalUri)
+        // is replaced by the local row, so it carries its real Id and tags
+        // instead of the contextless Id-0, tagless recipe Edamam returns.
+        var fromEdamam = new Recipe { Id = 0, ExternalUri = "u1", Name = "Soup", Tags = [] };
+        _externalServiceMock
+            .Setup(s => s.SearchByContextAsync(It.IsAny<ExternalSearchQuery>()))
+            .ReturnsAsync([fromEdamam]);
+        var localRow = new Recipe
+        {
+            Id = 7, ExternalUri = "u1", Name = "Soup",
+            Tags = [new Tag { Id = 3, Name = "Lunch" }]
+        };
+        _recipeRepoMock
+            .Setup(r => r.GetRecipesByExternalUrisAsync(It.IsAny<IEnumerable<string>>()))
+            .ReturnsAsync([localRow]);
+
+        var stream = BuildStream();
+        var result = (await stream.GetRankedCandidatesAsync(BuildContext(calorieTarget: 500)))
+            .Select(s => s.Recipe).ToList();
+
+        Assert.That(result, Has.Count.EqualTo(1));
+        Assert.That(result[0].Id, Is.EqualTo(7));
+        Assert.That(result[0].Tags.Select(t => t.Name), Does.Contain("Lunch"));
+    }
+
+    [Test]
+    public async Task GetRankedCandidatesAsync_LocallyCachedDownvotedRecipeIsFilteredOut()
+    {
+        // Matching a cached recipe to its local row lets the downvote filter
+        // act on it — the raw Edamam result has Id 0 and would slip past.
+        var fromEdamam = new Recipe { Id = 0, ExternalUri = "u1", Name = "Soup", Tags = [] };
+        _externalServiceMock
+            .Setup(s => s.SearchByContextAsync(It.IsAny<ExternalSearchQuery>()))
+            .ReturnsAsync([fromEdamam]);
+        var localRow = new Recipe { Id = 7, ExternalUri = "u1", Name = "Soup", Tags = [] };
+        _recipeRepoMock
+            .Setup(r => r.GetRecipesByExternalUrisAsync(It.IsAny<IEnumerable<string>>()))
+            .ReturnsAsync([localRow]);
+
+        var ctx = BuildContext(
+            votes: new Dictionary<int, UserVoteType> { [7] = UserVoteType.DownVote },
+            calorieTarget: 500);
+        var stream = BuildStream(filters: [new DownVoteFilter()]);
+
+        var result = await stream.GetRankedCandidatesAsync(ctx);
+
+        Assert.That(result, Is.Empty);
+    }
+
+    [Test]
+    public async Task GetRankedCandidatesAsync_UnmatchedExternalRecipeIsKept()
+    {
+        // A genuinely new Edamam result with no local row is kept as-is.
+        var fromEdamam = new Recipe { Id = 0, ExternalUri = "u-new", Name = "Novel Dish", Tags = [] };
+        _externalServiceMock
+            .Setup(s => s.SearchByContextAsync(It.IsAny<ExternalSearchQuery>()))
+            .ReturnsAsync([fromEdamam]);
+        _recipeRepoMock
+            .Setup(r => r.GetRecipesByExternalUrisAsync(It.IsAny<IEnumerable<string>>()))
+            .ReturnsAsync([]);
+
+        var stream = BuildStream();
+        var result = (await stream.GetRankedCandidatesAsync(BuildContext(calorieTarget: 500)))
+            .Select(s => s.Recipe).ToList();
+
+        Assert.That(result, Has.Count.EqualTo(1));
+        Assert.That(result[0].ExternalUri, Is.EqualTo("u-new"));
     }
 }

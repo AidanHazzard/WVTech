@@ -16,16 +16,19 @@ public sealed class ExternalRecipeStream : IRecommendationStream
 {
     private readonly IExternalRecipeService? _externalRecipeService;
     private readonly ITagRepository _tagRepository;
+    private readonly IRecipeRepository _recipeRepository;
     private readonly IReadOnlyList<IRecipeScorer> _scorers;
     private readonly IReadOnlyList<IRecipeFilter> _filters;
 
     public ExternalRecipeStream(
         ITagRepository tagRepository,
+        IRecipeRepository recipeRepository,
         IEnumerable<IRecipeScorer> scorers,
         IEnumerable<IRecipeFilter> filters,
         IExternalRecipeService? externalRecipeService = null)
     {
         _tagRepository = tagRepository;
+        _recipeRepository = recipeRepository;
         _scorers = scorers.ToList();
         _filters = filters.ToList();
         _externalRecipeService = externalRecipeService;

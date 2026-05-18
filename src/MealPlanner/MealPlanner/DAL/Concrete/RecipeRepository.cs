@@ -141,6 +141,12 @@ public class RecipeRepository : Repository<Recipe>, IRecipeRepository
         return _dbset.FirstOrDefault(r => r.ExternalUri == uri);
     }
 
+    public Task<List<Recipe>> GetRecipesByExternalUrisAsync(IEnumerable<string> uris)
+    {
+        // Stub — implemented in the GREEN step.
+        return Task.FromResult(new List<Recipe>());
+    }
+
     public List<Recipe> GetRecipesByNameAndRestrictions(string name, IEnumerable<string> restrictionTagNames)
     {
         var required = restrictionTagNames.Select(n => n.ToLower()).ToList();
