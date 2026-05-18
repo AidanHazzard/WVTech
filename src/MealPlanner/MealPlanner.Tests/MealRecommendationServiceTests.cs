@@ -198,6 +198,22 @@ public class MealRecommendationServiceTests
     }
 
     [Test]
+    public async Task GetRecommendedMealsForUser_SeedsExcludedRecipeIdsIntoFirstSlot()
+    {
+        // Recipes the caller already placed elsewhere (e.g. sibling meals on
+        // the day) are excluded from the very first slot.
+        RecommendationContext? captured = null;
+        _streamMock.Setup(s => s.GetRankedCandidatesAsync(It.IsAny<RecommendationContext>()))
+                   .Callback<RecommendationContext>(c => captured ??= c)
+                   .ReturnsAsync([]);
+
+        await _service.GetRecommendedMealsForUser(
+            _user, DateTime.Today, SingleMealConfig(), excludeRecipeIds: [7, 8]);
+
+        Assert.That(captured!.Meal.ExcludedRecipeKeys, Is.SupersetOf(new[] { "id:7", "id:8" }));
+    }
+
+    [Test]
     public async Task GetRecommendedMealsForUser_WithMultipleRestrictions_RequiresAllTagsToMatch()
     {
         // Restriction filtering is the stream's responsibility; mock it returning only the fully-matching recipe.
@@ -465,6 +481,29 @@ public class MealRecommendationServiceTests
         Assert.That(captured.Meal.FatTarget, Is.Null);
         Assert.That(captured.Meal.PreferredTagIds, Is.Empty);
         Assert.That(captured.Meal.ExcludedRecipeKeys, Is.Empty);
+    }
+
+    [Test]
+    public async Task GetOneRecipeRecommendation_WithSlotTemplate_PassesMacroAndTagContext()
+    {
+        // Regenerating a recipe should fit the meal: the replaced recipe's
+        // macros become the slot's macro targets and its tags the slot tags.
+        var slotTemplate = new Recipe
+        {
+            Id = 10, Name = "Replaced", Protein = 40, Carbs = 50, Fat = 15,
+            Tags = [new Tag { Id = 3, Name = "Italian" }]
+        };
+        RecommendationContext? captured = null;
+        _streamMock.Setup(s => s.GetRankedCandidatesAsync(It.IsAny<RecommendationContext>()))
+                   .Callback<RecommendationContext>(c => captured = c)
+                   .ReturnsAsync([]);
+
+        await _service.GetOneRecipeRecommendation(_user, DateTime.Today, [], slotTemplate);
+
+        Assert.That(captured!.Meal.ProteinTarget, Is.EqualTo(40));
+        Assert.That(captured.Meal.CarbTarget, Is.EqualTo(50));
+        Assert.That(captured.Meal.FatTarget, Is.EqualTo(15));
+        Assert.That(captured.Meal.PreferredTagIds, Does.Contain(3));
     }
 
     // --- Context construction ---

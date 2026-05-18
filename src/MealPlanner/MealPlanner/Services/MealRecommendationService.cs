@@ -123,7 +123,7 @@ public class MealRecommendationService : IMealRecommendationService
         return candidates;
     }
 
-    public async Task<Recipe?> GetOneRecipeRecommendation(User user, DateTime date, IEnumerable<int> excludeRecipeIds)
+    public async Task<Recipe?> GetOneRecipeRecommendation(User user, DateTime date, IEnumerable<int> excludeRecipeIds, Recipe? slotTemplate = null)
     {
         var userCtx = await BuildUserContextAsync(user, date);
         var excludeKeys = excludeRecipeIds.Select(id => $"id:{id}").ToHashSet();
@@ -134,7 +134,7 @@ public class MealRecommendationService : IMealRecommendationService
         return candidates.FirstOrDefault();
     }
 
-    public async Task<List<Meal>> GetRecommendedMealsForUser(User user, DateTime mealDate, DayPlanConfigViewModel config)
+    public async Task<List<Meal>> GetRecommendedMealsForUser(User user, DateTime mealDate, DayPlanConfigViewModel config, IEnumerable<int>? excludeRecipeIds = null)
     {
         var result = new List<Meal>();
         var preferences = config.MealPreferences.Any()
