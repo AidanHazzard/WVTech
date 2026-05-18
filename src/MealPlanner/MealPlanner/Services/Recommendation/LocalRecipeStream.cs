@@ -1,15 +1,16 @@
 using MealPlanner.DAL.Abstract;
-using MealPlanner.Models;
 
 namespace MealPlanner.Services.Recommendation;
 
+/// <summary>
+/// Recommendation stream backed by the user's local recipe database. It scores
+/// every recipe that passes the slot filters and returns them ranked. Weak
+/// recipes are not pruned here — the service merges this stream's output with
+/// the others by score, so a low-scoring local recipe simply sorts below a
+/// stronger candidate (local or external) rather than being dropped outright.
+/// </summary>
 public sealed class LocalRecipeStream : IRecommendationStream
 {
-    // A non-upvoted local recipe whose score normalizes below this fraction of
-    // the candidate score range is dropped, so on-context external recipes can
-    // take its place. Tunable.
-    private const float LocalScoreFloor = 0.25f;
-
     private readonly IRecipeRepository _recipeRepository;
     private readonly IReadOnlyList<IRecipeScorer> _scorers;
     private readonly IReadOnlyList<IRecipeFilter> _filters;
@@ -27,39 +28,11 @@ public sealed class LocalRecipeStream : IRecommendationStream
     public async Task<IReadOnlyList<ScoredRecipe>> GetRankedCandidatesAsync(RecommendationContext ctx)
     {
         var recipes = await _recipeRepository.GetAllWithTagsAndIngredientsAsync();
-        var upvotedIds = ctx.User.Upvoted.Select(r => r.Id).ToHashSet();
 
-        var scored = recipes
+        return recipes
             .Where(r => _filters.All(f => f.Allow(r, ctx)))
-            .Select(r => (Recipe: r, Score: _scorers.Sum(s => s.Score(r, ctx))))
-            .ToList();
-
-        return ApplyScoreFloor(scored, upvotedIds)
+            .Select(r => new ScoredRecipe(r, _scorers.Sum(s => s.Score(r, ctx))))
             .OrderByDescending(x => x.Score)
-            .Select(x => new ScoredRecipe(x.Recipe, x.Score))
             .ToList();
-    }
-
-    // Drops weak non-upvoted recipes: scores are min-max normalized across the
-    // non-upvoted candidates and anything below the floor is removed. Upvoted
-    // recipes are kept regardless. When every score is equal there is no range
-    // to normalize against, so nothing is dropped.
-    private static IEnumerable<(Recipe Recipe, float Score)> ApplyScoreFloor(
-        List<(Recipe Recipe, float Score)> scored,
-        HashSet<int> upvotedIds)
-    {
-        var nonUpvotedScores = scored
-            .Where(x => !upvotedIds.Contains(x.Recipe.Id))
-            .Select(x => x.Score)
-            .ToList();
-        if (nonUpvotedScores.Count == 0) return scored;
-
-        float min = nonUpvotedScores.Min();
-        float max = nonUpvotedScores.Max();
-        if (max <= min) return scored;
-
-        return scored.Where(x =>
-            upvotedIds.Contains(x.Recipe.Id)
-            || (x.Score - min) / (max - min) >= LocalScoreFloor);
     }
 }

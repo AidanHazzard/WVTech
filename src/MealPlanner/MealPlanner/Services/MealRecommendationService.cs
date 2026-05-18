@@ -106,10 +106,14 @@ public class MealRecommendationService : IMealRecommendationService
     {
         var streamResults = _streams.Select(s => s.GetRankedCandidatesAsync(ctx).Result).ToList();
 
-        // Streams have already dropped recipes excluded for this slot via the
-        // ExcludedRecipeFilter; here we only de-duplicate across streams.
+        // Merge every stream's candidates into one pool ranked by score, so a
+        // strongly-scored external recipe can outrank a weak local one instead
+        // of always sorting behind it. Streams have already applied the
+        // per-slot filters (including the ExcludedRecipeFilter); here we
+        // de-duplicate across streams and re-sort by score. OrderByDescending
+        // is stable, so equal scores keep their stream order (local first).
         var seenKeys = new HashSet<string>();
-        var candidates = new List<Recipe>();
+        var merged = new List<ScoredRecipe>();
         foreach (var streamResult in streamResults)
         {
             foreach (var scored in streamResult)
@@ -117,10 +121,14 @@ public class MealRecommendationService : IMealRecommendationService
                 var key = RecipeKey.For(scored.Recipe);
                 if (key == "uri:") continue;
                 if (!seenKeys.Add(key)) continue;
-                candidates.Add(scored.Recipe);
+                merged.Add(scored);
             }
         }
-        return candidates;
+
+        return merged
+            .OrderByDescending(x => x.Score)
+            .Select(x => x.Recipe)
+            .ToList();
     }
 
     public async Task<Recipe?> GetOneRecipeRecommendation(User user, DateTime date, IEnumerable<int> excludeRecipeIds, Recipe? slotTemplate = null)
