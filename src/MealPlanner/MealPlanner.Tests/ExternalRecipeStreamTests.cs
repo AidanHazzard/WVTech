@@ -277,20 +277,20 @@ public class ExternalRecipeStreamTests
     }
 
     [Test]
-    public async Task GetRankedCandidatesAsync_SwapsLocallyCachedRecipeForLocalRow()
+    public async Task GetRankedCandidatesAsync_StampsLocalRecipeIdOntoCachedExternalRecipe()
     {
-        // An Edamam result that already exists locally (matched by ExternalUri)
-        // is replaced by the local row, so it carries its real Id and tags
-        // instead of the contextless Id-0, tagless recipe Edamam returns.
-        var fromEdamam = new Recipe { Id = 0, ExternalUri = "u1", Name = "Soup", Tags = [] };
+        // An Edamam result already cached locally (matched by ExternalUri) keeps
+        // its own data but is stamped with the local row's Id, so the vote and
+        // variety scorers — which key on recipe Id — can act on it.
+        var fromEdamam = new Recipe
+        {
+            Id = 0, ExternalUri = "u1", Name = "Soup", Tags = [],
+            Ingredients = [new Ingredient { DisplayName = "Carrot" }]
+        };
         _externalServiceMock
             .Setup(s => s.SearchByContextAsync(It.IsAny<ExternalSearchQuery>()))
             .ReturnsAsync([fromEdamam]);
-        var localRow = new Recipe
-        {
-            Id = 7, ExternalUri = "u1", Name = "Soup",
-            Tags = [new Tag { Id = 3, Name = "Lunch" }]
-        };
+        var localRow = new Recipe { Id = 7, ExternalUri = "u1", Name = "Soup (cached)", Tags = [] };
         _recipeRepoMock
             .Setup(r => r.GetRecipesByExternalUrisAsync(It.IsAny<IEnumerable<string>>()))
             .ReturnsAsync([localRow]);
@@ -300,8 +300,10 @@ public class ExternalRecipeStreamTests
             .Select(s => s.Recipe).ToList();
 
         Assert.That(result, Has.Count.EqualTo(1));
-        Assert.That(result[0].Id, Is.EqualTo(7));
-        Assert.That(result[0].Tags.Select(t => t.Name), Does.Contain("Lunch"));
+        Assert.That(result[0].Id, Is.EqualTo(7), "local row's Id is stamped on");
+        Assert.That(result[0].Name, Is.EqualTo("Soup"), "the Edamam recipe is kept, not replaced");
+        Assert.That(result[0].Ingredients.Select(i => i.DisplayName), Does.Contain("Carrot"),
+            "the Edamam recipe's own ingredients are preserved");
     }
 
     [Test]
