@@ -8,4 +8,5 @@ public interface IExternalRecipeService
     public Task<IEnumerable<RecipeDTO>> SearchExternalRecipesByName(string recipeName);
     public Task<Recipe?> GetExternalRecipeByURI(string URI);
     public Task<IEnumerable<Recipe>> GetExternalRecipesByURIs(IEnumerable<string> uris);
+    public Task<IEnumerable<Recipe>> SearchByContextAsync(ExternalSearchQuery query);
 }

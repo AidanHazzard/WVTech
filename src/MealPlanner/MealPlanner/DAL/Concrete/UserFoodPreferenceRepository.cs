@@ -20,6 +20,13 @@ public class UserFoodPreferenceRepository : Repository<UserFoodPreference>, IUse
             .Select(p => p.Tag.Name)
             .ToListAsync();
 
+    public async Task<HashSet<int>> GetFoodPreferenceTagIdsAsync(string userId)
+        => (await _dbset
+            .Where(p => p.UserId == userId)
+            .Select(p => p.TagId)
+            .ToListAsync())
+            .ToHashSet();
+
     public async Task AddFoodPreferencesAsync(string userId, List<string> tagNames)
     {
         var existingTagIds = await _dbset
