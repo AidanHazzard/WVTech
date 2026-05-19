@@ -21,7 +21,9 @@ public class ShoppingListService : IShoppingListService
     public async Task SyncFromDateRangeAsync(string userId, User user, DateTime dateFrom, DateTime dateTo)
     {
         var meals = await _mealRepository.GetUserMealsByDateRangeWithIngredientsAsync(user, dateFrom, dateTo);
-        var ingredients = meals.SelectMany(m => m.Recipes).SelectMany(r => r.Ingredients).ToList();
+        var ingredients = meals
+            .SelectMany(m => m.Recipes.DistinctBy(r => r.Id).SelectMany(r => r.Ingredients))
+            .ToList();
         SyncFromMeals(userId, ingredients);
     }
 
@@ -32,7 +34,7 @@ public class ShoppingListService : IShoppingListService
         var manualItems = _shoppingListRepository.GetByUserId(userId).ToList();
 
         var grouped = ingredients
-            .GroupBy(i => (i.IngredientBase.Id, i.Measurement.Id))
+            .GroupBy(i => (IngredientNameNormalizer.NormalizeKey(i.IngredientBase.Name), i.Measurement.Id))
             .Select(g => new ShoppingListItem
             {
                 UserId = userId,
@@ -44,8 +46,12 @@ public class ShoppingListService : IShoppingListService
 
         foreach (var item in grouped)
         {
+            var normalizedName = IngredientNameNormalizer.NormalizeKey(item.IngredientBase.Name);
             var alreadyCovered = manualItems.Any(m =>
-                m.IngredientBaseId == item.IngredientBase.Id &&
+                string.Equals(
+                    IngredientNameNormalizer.NormalizeKey(m.IngredientBase.Name),
+                    normalizedName,
+                    StringComparison.OrdinalIgnoreCase) &&
                 m.MeasurementId == item.Measurement.Id);
             if (!alreadyCovered)
                 _shoppingListRepository.Add(item);
@@ -59,9 +65,12 @@ public class ShoppingListService : IShoppingListService
 
         var ingredientBase = _ingredientBaseRepo.FindOrCreateByName(itemName);
 
-        var measurementEntity = _measurementRepo.FindOrCreate(
-            m => m.Name.ToLower() == measurement.Trim().ToLower(),
-            () => new Measurement { Name = measurement.Trim() });
+        var trimmed = measurement.Trim();
+        var measurementEntity = _measurementRepo.ReadAll()
+            .FirstOrDefault(m => m.Name.ToLower() == trimmed.ToLower()
+                              || m.Abbreviation.ToLower() == trimmed.ToLower());
+        if (measurementEntity == null)
+            throw new ArgumentException($"Unknown measurement '{trimmed}'.");
 
         var item = new ShoppingListItem
         {

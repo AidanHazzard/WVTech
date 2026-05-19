@@ -116,7 +116,7 @@ public class WVT177Steps
             ?? ctx.Set<IngredientBase>().Add(new IngredientBase { Name = normalizedName }).Entity;
 
         var measurementEntity = ctx.Set<Measurement>().FirstOrDefault(m => m.Name == measurement)
-            ?? ctx.Set<Measurement>().Add(new Measurement { Name = measurement }).Entity;
+            ?? ctx.Set<Measurement>().Add(new Measurement { Name = measurement, Abbreviation = measurement }).Entity;
 
         ctx.SaveChanges();
 
@@ -140,12 +140,17 @@ public class WVT177Steps
     [Then("{string} displays with amount {string} on the shopping list")]
     public void ThenIngredientDisplaysWithAmountOnShoppingList(string ingredientName, string expectedAmount)
     {
-        var items = _wait.Until(d => d.FindElements(By.CssSelector(".item-display")));
-        var matchingItem = items?.FirstOrDefault(i =>
-            i.Text.Contains(ingredientName, StringComparison.OrdinalIgnoreCase));
+        var matchingItem = _wait.Until(d =>
+        {
+            try
+            {
+                return d.FindElements(By.CssSelector(".item-display"))
+                    .FirstOrDefault(i => i.Text.Contains(ingredientName, StringComparison.OrdinalIgnoreCase));
+            }
+            catch (StaleElementReferenceException) { return null; }
+        });
         Assert.That(matchingItem, Is.Not.Null, $"Item '{ingredientName}' not found on shopping list");
-        var row = matchingItem!.FindElement(By.XPath("../.."));
-        var qtyInput = row.FindElement(By.CssSelector("input[name='newAmount']"));
+        var qtyInput = matchingItem!.FindElement(By.XPath("../preceding-sibling::div[2]//input[@name='newAmount']"));
         Assert.That(qtyInput.GetAttribute("value"), Does.Contain(expectedAmount),
             $"Expected amount '{expectedAmount}' not found in qty input for '{ingredientName}'");
     }
@@ -159,5 +164,58 @@ public class WVT177Steps
             catch (NoSuchElementException) { return false; }
             catch (StaleElementReferenceException) { return false; }
         });
+    }
+
+    [When("{string} updates the measurement of {string} to {string}")]
+    public void WhenUserUpdatesMeasurementOf(string username, string ingredientName, string newMeasurement)
+    {
+        var span = _wait.Until(d =>
+        {
+            try
+            {
+                return d.FindElements(By.CssSelector(".item-display[data-name]"))
+                    .FirstOrDefault(s => s.GetAttribute("data-name")
+                        .Contains(ingredientName, StringComparison.OrdinalIgnoreCase));
+            }
+            catch (StaleElementReferenceException) { return null; }
+        });
+        Assert.That(span, Is.Not.Null, $"Shopping list item '{ingredientName}' not found");
+
+        var measurementDiv = span!.FindElement(By.XPath("../preceding-sibling::div[1]"));
+        var input = measurementDiv.FindElement(By.CssSelector(".measurement-inline-input"));
+
+        var currentOriginal = input.GetAttribute("data-original");
+        ((IJavaScriptExecutor)_driver).ExecuteScript(
+            "arguments[0].focus(); arguments[0].value = arguments[1]; arguments[0].blur();",
+            input, newMeasurement);
+
+        if (!string.Equals(currentOriginal, newMeasurement, StringComparison.OrdinalIgnoreCase))
+        {
+            _wait.Until(d =>
+            {
+                try { return string.Equals(input.GetAttribute("data-original"), newMeasurement, StringComparison.OrdinalIgnoreCase); }
+                catch (StaleElementReferenceException) { return false; }
+            });
+        }
+    }
+
+    [Then("the measurement of {string} on the shopping list shows {string}")]
+    public void ThenMeasurementOfItemOnShoppingListShows(string ingredientName, string expectedMeasurement)
+    {
+        var span = _wait.Until(d =>
+        {
+            try
+            {
+                return d.FindElements(By.CssSelector(".item-display[data-name]"))
+                    .FirstOrDefault(s => s.GetAttribute("data-name")
+                        .Contains(ingredientName, StringComparison.OrdinalIgnoreCase));
+            }
+            catch (StaleElementReferenceException) { return null; }
+        });
+        Assert.That(span, Is.Not.Null, $"Shopping list item '{ingredientName}' not found");
+
+        var measurementDiv = span!.FindElement(By.XPath("../preceding-sibling::div[1]"));
+        var input = measurementDiv.FindElement(By.CssSelector(".measurement-inline-input"));
+        Assert.That(input.GetAttribute("value"), Is.EqualTo(expectedMeasurement).IgnoreCase);
     }
 }

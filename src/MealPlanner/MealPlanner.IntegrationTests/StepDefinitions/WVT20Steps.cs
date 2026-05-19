@@ -51,7 +51,7 @@ public class WVT20Steps
         var measurement = ctx.Set<Measurement>().FirstOrDefault(m => m.Name == "Count");
         if (measurement == null)
         {
-            measurement = new Measurement { Name = "Count" };
+            measurement = new Measurement { Name = "Count", Abbreviation = "Count" };
             ctx.Set<Measurement>().Add(measurement);
             ctx.SaveChanges();
         }
@@ -184,7 +184,7 @@ public class WVT20Steps
         var measurement = ctx.Set<Measurement>().FirstOrDefault(m => m.Name == "Count");
         if (measurement == null)
         {
-            measurement = new Measurement { Name = "Count" };
+            measurement = new Measurement { Name = "Count", Abbreviation = "Count" };
             ctx.Set<Measurement>().Add(measurement);
             ctx.SaveChanges();
         }
@@ -245,7 +245,7 @@ public class WVT20Steps
         var measurement = ctx.Set<Measurement>().FirstOrDefault(m => m.Name == "Count");
         if (measurement == null)
         {
-            measurement = new Measurement { Name = "Count" };
+            measurement = new Measurement { Name = "Count", Abbreviation = "Count" };
             ctx.Set<Measurement>().Add(measurement);
             ctx.SaveChanges();
         }
@@ -315,7 +315,7 @@ public class WVT20Steps
         var measurement = ctx.Set<Measurement>().FirstOrDefault(m => m.Name == "Count");
         if (measurement == null)
         {
-            measurement = new Measurement { Name = "Count" };
+            measurement = new Measurement { Name = "Count", Abbreviation = "Count" };
             ctx.Set<Measurement>().Add(measurement);
             ctx.SaveChanges();
         }
@@ -363,7 +363,7 @@ public class WVT20Steps
         var measurement = ctx.Set<Measurement>().FirstOrDefault(m => m.Name == "Count");
         if (measurement == null)
         {
-            measurement = new Measurement { Name = "Count" };
+            measurement = new Measurement { Name = "Count", Abbreviation = "Count" };
             ctx.Set<Measurement>().Add(measurement);
             ctx.SaveChanges();
         }
@@ -396,7 +396,6 @@ public class WVT20Steps
 
         var amountStr = newAmount.ToString(System.Globalization.CultureInfo.InvariantCulture);
 
-        // Find the item span by data-name, then navigate to its parent row
         var span = _wait.Until(d =>
         {
             try
@@ -409,13 +408,12 @@ public class WVT20Steps
         });
         Assert.That(span, Is.Not.Null, $"Shopping list item '{itemName}' not found");
 
-        var row = span!.FindElement(By.XPath("../.."));
-        var input = row.FindElement(By.CssSelector("input[name='newAmount']"));
+        var input = span!.FindElement(By.XPath("../preceding-sibling::div[2]//input[@name='newAmount']"));
 
-        // Use JS to set the value and trigger blur to auto-submit
+        // Use JS to set the value and trigger focusout to auto-submit (the handler listens for focusout, not blur)
         ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].value = arguments[1]", input, amountStr);
         ((IJavaScriptExecutor)_driver).ExecuteScript(
-            "arguments[0].dispatchEvent(new Event('blur', {bubbles:true}))", input);
+            "arguments[0].dispatchEvent(new Event('focusout', {bubbles:true}))", input);
 
         _wait.Until(d => ((IJavaScriptExecutor)d)
             .ExecuteScript("return document.readyState").ToString() == "complete");
@@ -435,8 +433,7 @@ public class WVT20Steps
                     .FirstOrDefault(s => s.GetAttribute("data-name")
                         .Contains(itemName, StringComparison.OrdinalIgnoreCase));
                 if (span == null) return null;
-                var row = span.FindElement(By.XPath("../.."));
-                return row.FindElement(By.CssSelector("input[name='newAmount']"));
+                return span.FindElement(By.XPath("../preceding-sibling::div[2]//input[@name='newAmount']"));
             }
             catch (StaleElementReferenceException) { return null; }
         });
@@ -446,6 +443,49 @@ public class WVT20Steps
             input!.GetAttribute("value") ?? "0",
             System.Globalization.CultureInfo.InvariantCulture);
         Assert.That(displayedAmount, Is.EqualTo(expectedAmount));
+    }
+
+    [When("{string} sets the quantity display of {string} to {string}")]
+    public void WhenUserSetsQuantityDisplayOf(string username, string ingredientName, string displayValue)
+    {
+        var span = _wait.Until(d =>
+        {
+            try
+            {
+                return d.FindElements(By.CssSelector(".item-display[data-name]"))
+                    .FirstOrDefault(s => s.GetAttribute("data-name")
+                        .Contains(ingredientName, StringComparison.OrdinalIgnoreCase));
+            }
+            catch (StaleElementReferenceException) { return null; }
+        });
+        Assert.That(span, Is.Not.Null, $"Shopping list item '{ingredientName}' not found");
+
+        var input = span!.FindElement(By.XPath("../preceding-sibling::div[2]//input[@name='newAmount']"));
+        ((IJavaScriptExecutor)_driver).ExecuteScript(
+            "arguments[0].value = arguments[1]; arguments[0].dataset.original = arguments[1];",
+            input, displayValue);
+    }
+
+    [When("{string} clicks increment on {string}")]
+    public void WhenUserClicksIncrementOn(string username, string ingredientName)
+    {
+        var span = _wait.Until(d =>
+        {
+            try
+            {
+                return d.FindElements(By.CssSelector(".item-display[data-name]"))
+                    .FirstOrDefault(s => s.GetAttribute("data-name")
+                        .Contains(ingredientName, StringComparison.OrdinalIgnoreCase));
+            }
+            catch (StaleElementReferenceException) { return null; }
+        });
+        Assert.That(span, Is.Not.Null, $"Shopping list item '{ingredientName}' not found");
+
+        var btn = span!.FindElement(By.XPath("../preceding-sibling::div[2]//button[contains(@class,'qty-increment')]"));
+        ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].click()", btn);
+
+        _wait.Until(d => ((IJavaScriptExecutor)d)
+            .ExecuteScript("return document.readyState").ToString() == "complete");
     }
 
     [Then("the associated shopping list items are removed from the database")]
@@ -458,5 +498,99 @@ public class WVT20Steps
             .Where(i => i.UserId == userId && i.IsAutoAdded)
             .ToList();
         Assert.That(items.Any(i => i.IngredientBase.Name.ToLower() == _testIngredientName.ToLower()), Is.False);
+    }
+
+    private void NavigateToShoppingListForDate(DateTime date)
+    {
+        _driver.Manage().Cookies.DeleteCookieNamed("ShoppingListSynced");
+        _driver.Manage().Cookies.DeleteCookieNamed("ShoppingListDateFrom");
+        _driver.Manage().Cookies.DeleteCookieNamed("ShoppingListDateTo");
+        var dateStr = date.ToString("yyyy-MM-dd");
+        _driver.Manage().Cookies.AddCookie(new Cookie("ShoppingListDateFrom", dateStr));
+        _driver.Manage().Cookies.AddCookie(new Cookie("ShoppingListDateTo", dateStr));
+        _driver.Navigate().GoToUrl($"{_baseUrl}/Shopping/Index");
+        _wait.Until(d => d.Url.Contains("/Shopping/Index") &&
+            ((IJavaScriptExecutor)d).ExecuteScript("return document.readyState").ToString() == "complete");
+    }
+
+    private void CreateMealWithIngredientOnDate(string ingredientName, DateTime startTime)
+    {
+        var normalizedName = IngredientNameNormalizer.NormalizeKey(ingredientName);
+        using var ctx = BDDSetup.CreateContext();
+        var userId = GetAliceId(ctx);
+
+        var staleMeals = ctx.Meals
+            .Where(m => m.UserId == userId && m.Title == $"{ingredientName}_RangeMeal")
+            .ToList();
+        ctx.Meals.RemoveRange(staleMeals);
+        ctx.SaveChanges();
+
+        var ingredientBase = ctx.Set<IngredientBase>().FirstOrDefault(ib => ib.Name == normalizedName)
+            ?? ctx.Set<IngredientBase>().Add(new IngredientBase { Name = normalizedName }).Entity;
+        ctx.SaveChanges();
+
+        var measurement = ctx.Set<Measurement>().FirstOrDefault(m => m.Name == "Count")
+            ?? ctx.Set<Measurement>().Add(new Measurement { Name = "Count", Abbreviation = "Count" }).Entity;
+        ctx.SaveChanges();
+
+        var recipe = new Recipe
+        {
+            Name = $"Recipe_{ingredientName}",
+            Directions = "Test",
+            Calories = 100, Protein = 5, Carbs = 10, Fat = 3,
+            Ingredients = new List<Ingredient>
+            {
+                new Ingredient { DisplayName = ingredientName, IngredientBase = ingredientBase, Measurement = measurement, Amount = 1 }
+            }
+        };
+        ctx.Recipes.Add(recipe);
+
+        var meal = new Meal
+        {
+            UserId = userId,
+            Title = $"{ingredientName}_RangeMeal",
+            StartTime = startTime
+        };
+        meal.Recipes.Add(recipe);
+        ctx.Meals.Add(meal);
+        ctx.SaveChanges();
+    }
+
+    [Given("'{string}' has a meal with ingredient '{string}' scheduled on today")]
+    public void GivenUserHasMealWithIngredientScheduledToday(string username, string ingredientName)
+    {
+        CreateMealWithIngredientOnDate(ingredientName, DateTime.Today.AddHours(12));
+    }
+
+    [Given("'{string}' has a meal with ingredient '{string}' scheduled {int} days from now")]
+    public void GivenUserHasMealWithIngredientScheduledDaysFromNow(string username, string ingredientName, int days)
+    {
+        CreateMealWithIngredientOnDate(ingredientName, DateTime.Today.AddDays(days).AddHours(12));
+    }
+
+    [When("'{string}' views the shopping list for today's date")]
+    public void WhenUserViewsShoppingListForToday(string username)
+    {
+        NavigateToShoppingListForDate(DateTime.Today);
+    }
+
+    [When("'{string}' views the shopping list for {int} days from now")]
+    public void WhenUserViewsShoppingListForDaysFromNow(string username, int days)
+    {
+        NavigateToShoppingListForDate(DateTime.Today.AddDays(days));
+    }
+
+    [Then("the shopping list contains {string}")]
+    public void ThenShoppingListContains(string ingredientName)
+    {
+        _wait.Until(d => d.PageSource.Contains(ingredientName, StringComparison.OrdinalIgnoreCase));
+        Assert.That(_driver.PageSource, Does.Contain(ingredientName).IgnoreCase);
+    }
+
+    [Then("the shopping list does not contain {string}")]
+    public void ThenShoppingListDoesNotContain(string ingredientName)
+    {
+        _wait.Until(d => d.Url.Contains("/Shopping/Index"));
+        Assert.That(_driver.PageSource, Does.Not.Contain(ingredientName).IgnoreCase);
     }
 }

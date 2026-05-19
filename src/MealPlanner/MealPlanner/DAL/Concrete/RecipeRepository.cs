@@ -96,6 +96,9 @@ public class RecipeRepository : Repository<Recipe>, IRecipeRepository
                 }
                 catch (InvalidOperationException)
                 {
+                    if (string.IsNullOrEmpty(i.Measurement.Abbreviation))
+                        i.Measurement.Abbreviation = i.Measurement.Name;
+
                     var duplicate = !newMeasurements.Add(i.Measurement);
                     if (duplicate)
                     {
@@ -161,6 +164,8 @@ public class RecipeRepository : Repository<Recipe>, IRecipeRepository
 
     public async Task<List<Recipe>> GetAllWithTagsAsync()
     {
-        return await _dbset.Include(r => r.Tags).ToListAsync();
+        return await _dbset
+            .Include(r => r.Tags)
+            .ToListAsync();
     }
 }

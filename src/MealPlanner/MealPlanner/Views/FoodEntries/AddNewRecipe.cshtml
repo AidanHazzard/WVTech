@@ -17,7 +17,8 @@
             </h2>
 
 
-            <div class="back2 backHasButton" id="AppendHere">
+            <div class="back2 backHasButton" id="AppendHere"
+                 data-measurements="@System.Text.Json.JsonSerializer.Serialize(Model.Measurements.Select(m => new { value = m.Name, label = m.Abbreviation }))">
                 <h2 class="back1Title">Ingredients</h2>
                 <button class="buttonGreen" id="buttonAppend">
                     <h2 class="buttonText">Add Ingredient</h2>

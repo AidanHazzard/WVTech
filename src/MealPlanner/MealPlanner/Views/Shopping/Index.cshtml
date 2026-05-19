@@ -49,85 +49,30 @@
     <form asp-action="AddItem" method="post" class="mb-4">
         @Html.AntiForgeryToken()
         <div class="d-flex align-items-center flex-wrap gap-1">
-            <input type="text" class="back2-textbox-partial" name="amount" placeholder="e.g. 1/2" style="min-width: 70px; width: 70px; flex-shrink: 0;" />
-            <select class="back2-textbox-partial" name="measurement" style="min-width: 110px; flex-shrink: 0;">
-                <option value="" selected>Select</option>
-                <option value="Count">Count</option>
-                <option value="Teaspoon">tsp</option>
-                <option value="Tablespoon">tbsp</option>
-                <option value="Fluid Ounce">fl oz</option>
-                <option value="Cup">cup</option>
-                <option value="Pint">pt</option>
-                <option value="Quart">qt</option>
-                <option value="Gallon">gal</option>
-                <option value="Milliliter">mL</option>
-                <option value="Liter">L</option>
-                <option value="Ounce">oz</option>
-                <option value="Pound">lb</option>
-                <option value="Gram">g</option>
+            <input type="text" class="back2-textbox-partial shopping-add-amount" name="amount" placeholder="e.g. 1/2" required />
+            <select class="back2-textbox-partial shopping-add-unit" name="measurement" required>
+                <option value="" selected disabled>Select</option>
+                @foreach (var m in Model.Measurements)
+                {
+                    <option value="@m.Name">@m.Abbreviation</option>
+                }
             </select>
-            <input type="text" class="back2-textbox-partial" name="itemName" placeholder="Enter Ingredient" required style="min-width: 150px; flex: 1 1 150px;" />
-            <button type="submit" class="buttonGreenInline" style="flex-shrink: 0;">
+            <input type="text" class="back2-textbox-partial shopping-add-name" name="itemName" placeholder="Enter Ingredient" required />
+            <button type="submit" class="buttonGreenInline flex-shrink-0">
                 <h4 class="buttonText">Add Item</h4>
             </button>
         </div>
     </form>
 
     <div class="back2">
-        @if (Model.Items.Any())
+        @if (TempData["KrogerSuccess"] != null)
         {
-            <div class="shopping-list-grid">
-                <h6 class="back1Title shopping-grid-header">Quantity</h6>
-                <h6 class="back1Title shopping-grid-header">Measurement</h6>
-                <h6 class="back1Title shopping-grid-header">Ingredient</h6>
-                <h6 class="back1Title shopping-grid-header">Delete</h6>
+            <p class="text-center fs-5 mb-2">@TempData["KrogerSuccess"]</p>
+        }
 
-                @foreach (var item in Model.Items)
-                {
-                    <div>
-                        <form asp-action="UpdateItemAmount" method="post" class="m-0">
-                            @Html.AntiForgeryToken()
-                            <input type="hidden" name="ingredientBaseId" value="@item.IngredientBase.Id" />
-                            <div class="qty-controls">
-                                <button type="button" class="qty-btn qty-decrement">&#8722;</button>
-                                <input type="text"
-                                       name="newAmount"
-                                       value="@MealPlanner.Services.FractionParser.FormatAmount(item.Amount)"
-                                       class="qty-input qty-pill-input"
-                                       data-original="@MealPlanner.Services.FractionParser.FormatAmount(item.Amount)" />
-                                <button type="button" class="qty-btn qty-increment">&#43;</button>
-                            </div>
-                        </form>
-                    </div>
-                    <div>
-                        <span class="fs-5">@MealPlanner.Services.FractionParser.AbbreviateMeasurement(item.Measurement.Name)</span>
-                    </div>
-                    <div>
-                        <span class="fs-5 item-display"
-                              data-measurement="@item.Measurement.Name"
-                              data-name="@item.IngredientBase.Name">@item.IngredientBase.Display()</span>
-                    </div>
-                    <div>
-                        <form asp-action="RemoveItem" method="post" class="m-0">
-                            @Html.AntiForgeryToken()
-                            <input type="hidden" name="itemId" value="@item.Id" />
-                            <button type="submit" class="btn btn-danger delete-recipe-btn">X</button>
-                        </form>
-                    </div>
-                }
-            </div>
-        }
-        else
-        {
-            @if (TempData["KrogerSuccess"] != null)
-            {
-                <p class="text-center fs-5 mb-0">@TempData["KrogerSuccess"]</p>
-            }
-            else
-            {
-                <p class="text-center fs-5 mb-0">No items in your shopping list yet.</p>
-            }
-        }
+        <div id="shopping-items-container">
+            @await Html.PartialAsync("_ShoppingListItems", Model)
+        </div>
 
         <hr class="kroger-divider" />
 
@@ -137,6 +82,9 @@
             {
                 <span class="kroger-connected-badge">&#10003; Connected</span>
             }
+            <button type="button" id="previousExportsBtn" class="buttonBlueInline kroger-header-btn">
+                <h4 class="buttonText">Previous Exports</h4>
+            </button>
         </div>
 
         @if (!Model.Items.Any())
@@ -157,9 +105,6 @@
                     <button type="button" id="findKrogerStores" class="buttonBlueInline kroger-header-btn">
                         <h4 class="buttonText">Find Stores</h4>
                     </button>
-                    <button type="button" id="previousExportsBtn" class="buttonBlueInline kroger-header-btn">
-                        <h4 class="buttonText">Previous Exports</h4>
-                    </button>
                 </div>
                 <div class="radius-slider-row">
                     <span class="kroger-field-label">Radius</span>
@@ -178,7 +123,6 @@
                             <button type="submit" id="exportToKroger" class="buttonBlueInline">
                                 <h4 class="buttonText">Export to Kroger Cart</h4>
                             </button>
-                            <span id="exportSpinner" style="display:none;" class="back1Title">Exporting...</span>
                         </div>
                     </form>
                 </div>
@@ -237,6 +181,13 @@
 <template id="tmpl-store-option">
     <option></option>
 </template>
+
+<datalist id="measurement-options">
+    @foreach (var m in Model.Measurements)
+    {
+        <option value="@m.Abbreviation"></option>
+    }
+</datalist>
 
 <script>
     window.krogerLastStoreId = '@Model.LastStoreId';

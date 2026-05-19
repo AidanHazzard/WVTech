@@ -55,7 +55,18 @@ document.addEventListener("click", async function (e) {
   const newVal = btn.classList.contains("qty-increment")
     ? val + step
     : Math.max(0, val - step);
-  const newDisplay = den > 1 ? formatWithDenominator(newVal, den) : formatAmountStr(newVal);
+  const isDecimal = input.value.trim().includes('.') && !input.value.includes('/');
+  let newDisplay;
+  if (isDecimal) {
+    if (newVal <= 0) {
+      newDisplay = '0';
+    } else {
+      const decimals = (input.value.trim().split('.')[1] || '').length;
+      newDisplay = newVal.toFixed(decimals);
+    }
+  } else {
+    newDisplay = den > 1 ? formatWithDenominator(newVal, den) : formatAmountStr(newVal);
+  }
 
   input.value = newDisplay;
   input.dataset.original = newDisplay;
@@ -67,17 +78,80 @@ document.addEventListener("click", async function (e) {
   }).catch(() => {});
 });
 
-document.querySelectorAll(".qty-input").forEach((input) => {
-  input.addEventListener("blur", function () {
-    if (input.value.trim() !== input.dataset.original.trim()) {
-      input.closest("form").submit();
-    }
-  });
+document.addEventListener("focusout", function (e) {
+  if (!e.target.matches(".qty-input")) return;
+  const input = e.target;
+  if (input.value.trim() !== input.dataset.original.trim()) {
+    input.closest("form").submit();
+  }
 });
+
+document.addEventListener("focusout", async function (e) {
+  if (!e.target.matches(".measurement-inline-input")) return;
+  const input = e.target;
+  const newVal = input.value.trim();
+  if (!newVal || newVal === input.dataset.original) return;
+
+  const itemId = parseInt(input.dataset.itemId);
+  const resp = await fetch("/Shopping/UpdateItemMeasurementJson", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ itemId, measurement: newVal })
+  }).catch(() => null);
+
+  if (resp && resp.ok) {
+    const data = await resp.json();
+    input.value = data.abbreviation;
+    input.dataset.original = data.abbreviation;
+  } else {
+    input.value = input.dataset.original;
+  }
+});
+
+let _dateRangeTimer = null;
+let _dateRangeController = null;
 
 document.querySelectorAll(".date-range-input").forEach((input) => {
   input.addEventListener("change", function () {
-    document.getElementById("dateRangeForm").submit();
+    clearTimeout(_dateRangeTimer);
+    if (_dateRangeController) {
+      _dateRangeController.abort();
+      _dateRangeController = null;
+    }
+
+    const dateFrom = document.querySelector('[name="dateFrom"]').value;
+    const dateTo = document.querySelector('[name="dateTo"]').value;
+    if (!dateFrom || !dateTo) return;
+
+    _dateRangeTimer = setTimeout(async () => {
+      _dateRangeController = new AbortController();
+      const container = document.getElementById("shopping-items-container");
+      if (!container) return;
+
+      container.style.opacity = "0.5";
+      container.style.pointerEvents = "none";
+
+      let ok = false;
+      try {
+        const resp = await fetch(
+          `/Shopping/GetItemsPartial?dateFrom=${encodeURIComponent(dateFrom)}&dateTo=${encodeURIComponent(dateTo)}&_=${Date.now()}`,
+          { credentials: "same-origin", signal: _dateRangeController.signal }
+        );
+        if (resp.ok) {
+          container.innerHTML = await resp.text();
+          ok = true;
+        }
+      } catch (err) {
+        if (err.name === "AbortError") return;
+      } finally {
+        container.style.opacity = "";
+        container.style.pointerEvents = "";
+      }
+
+      if (!ok) {
+        document.getElementById("dateRangeForm").submit();
+      }
+    }, 300);
   });
 });
 
@@ -179,12 +253,15 @@ if (findStoresBtn) {
 }
 
 const exportForm = document.getElementById("krogerExportForm");
-if (exportForm) {
-  exportForm.addEventListener("submit", function () {
-    const btn = document.getElementById("exportToKroger");
-    const spinner = document.getElementById("exportSpinner");
-    btn.disabled = true;
-    btn.textContent = "Exporting...";
-    if (spinner) spinner.style.display = "inline";
+const exportBtn = document.getElementById("exportToKroger");
+if (exportForm && exportBtn) {
+  exportForm.addEventListener("submit", function (e) {
+    if (!e.submitter || e.submitter !== exportBtn) {
+      e.preventDefault();
+      return;
+    }
+    const btnText = exportBtn.querySelector(".buttonText");
+    if (btnText) btnText.textContent = "Exporting...";
+    exportBtn.disabled = true;
   });
 }

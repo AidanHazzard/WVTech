@@ -61,6 +61,7 @@ public class RecipeViewModel
     public int Fat { get; set; }
     public List<string> Tags { get; set; } = [];
     public List<string> AvailableTags { get; set; } = [];
+    public List<Measurement> Measurements { get; set; } = [];
     public bool IsOwned { get; set;} = false;
     public UserVoteType UserVote { get; set; } = UserVoteType.NoVote;
     public float? VotePercentage { get; set; }

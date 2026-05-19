@@ -79,6 +79,18 @@ public class KrogerController : Controller
         var user = await _userManager.GetUserAsync(User);
         if (user == null) return Challenge();
 
+        var badItems = _shoppingListService.GetItemsForUser(user.Id)
+            .Where(i => string.IsNullOrEmpty(i.Measurement.Abbreviation))
+            .Select(i => i.IngredientBase.Name)
+            .Distinct()
+            .ToList();
+
+        if (badItems.Any())
+        {
+            TempData["KrogerError"] = $"Cannot export — the following items have unrecognized measurements: {string.Join(", ", badItems)}. Edit the recipe and set valid measurements before exporting.";
+            return RedirectToAction("Index", "Shopping");
+        }
+
         await _userSettingsRepo.SaveZipCodeAsync(user.Id, zipCode);
         HttpContext.Session.SetString(SessionStoreId, storeId);
 

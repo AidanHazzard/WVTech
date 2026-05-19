@@ -83,3 +83,15 @@ Feature: WVT-177 Fraction and decimal ingredient amounts with expanded measureme
     Given 'Alex' has 'milk' with amount '0.5' and measurement 'Cup' on the shopping list
     When 'Alex' navigates to the shopping list
     Then 'milk' displays with amount '1/2' on the shopping list
+
+  Scenario: User can update the measurement of an existing shopping list item
+    Given 'Alex' has 'wvt177sugar' with amount '1' and measurement 'Count' on the shopping list
+    When 'Alex' navigates to the shopping list
+    And 'Alex' updates the measurement of 'wvt177sugar' to 'Cup'
+    Then the measurement of 'wvt177sugar' on the shopping list shows 'Cup'
+
+  Scenario: User can set a custom measurement word on a shopping list item
+    Given 'Alex' has 'wvt177salt' with amount '1' and measurement 'Count' on the shopping list
+    When 'Alex' navigates to the shopping list
+    And 'Alex' updates the measurement of 'wvt177salt' to 'a pinch'
+    Then the measurement of 'wvt177salt' on the shopping list shows 'a pinch'

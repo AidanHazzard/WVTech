@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using MealPlanner.ViewModels;
 using MealPlanner.Models;
@@ -9,6 +9,7 @@ using System.Security.Claims;
 using Microsoft.IdentityModel.Tokens;
 using Azure.Storage.Blobs;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.EntityFrameworkCore;
 
 namespace MealPlanner.Controllers;
 
@@ -150,7 +151,11 @@ public class FoodEntriesController : Controller
 
     public async Task<IActionResult> AddNewRecipe()
     {
-        return View(new RecipeViewModel { AvailableTags = await _tagRepository.GetTagNamesAsync() });
+        return View(new RecipeViewModel
+        {
+            AvailableTags = await _tagRepository.GetTagNamesAsync(),
+            Measurements = await _context.Set<Measurement>().Where(m => m.Abbreviation != "").OrderBy(m => m.SortOrder).ToListAsync()
+        });
     }
 
     [HttpPost]
@@ -172,6 +177,7 @@ public class FoodEntriesController : Controller
         if (!ModelState.IsValid)
         {
             newRecipeViewModel.AvailableTags = await _tagRepository.GetTagNamesAsync();
+            newRecipeViewModel.Measurements = await _context.Set<Measurement>().Where(m => m.Abbreviation != "").OrderBy(m => m.SortOrder).ToListAsync();
             return View("AddNewRecipe", newRecipeViewModel);
         }
 
@@ -219,6 +225,7 @@ public class FoodEntriesController : Controller
 
         RecipeViewModel viewModel = ViewModelService.RecipeToRecipeVM(recipe);
         viewModel.AvailableTags = await _tagRepository.GetTagNamesAsync();
+        viewModel.Measurements = await _context.Set<Measurement>().Where(m => m.Abbreviation != "").OrderBy(m => m.SortOrder).ToListAsync();
         return View("EditRecipe", viewModel);
     }
 
@@ -229,6 +236,7 @@ public class FoodEntriesController : Controller
         if (!ModelState.IsValid)
         {
             editedRecipeViewModel.AvailableTags = await _tagRepository.GetTagNamesAsync();
+            editedRecipeViewModel.Measurements = await _context.Set<Measurement>().Where(m => m.Abbreviation != "").OrderBy(m => m.SortOrder).ToListAsync();
             return View("EditRecipe", editedRecipeViewModel);
         }
 

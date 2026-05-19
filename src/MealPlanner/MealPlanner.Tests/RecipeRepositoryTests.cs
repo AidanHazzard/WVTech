@@ -30,7 +30,7 @@ public class RecipeRepositoryTests
             Ingredient ingredient = new Ingredient
             {
                 IngredientBase = new IngredientBase { Name="test" },
-                Measurement = new Measurement { Name="Test" },
+                Measurement = new Measurement { Name="Test", Abbreviation="Test" },
                 Amount = 0
             };
             context.Add( new Recipe

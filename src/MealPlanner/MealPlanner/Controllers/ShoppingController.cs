@@ -5,6 +5,7 @@ using MealPlanner.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 
 namespace MealPlanner.Controllers;
@@ -62,6 +63,7 @@ public class ShoppingController : Controller
 
         var items = _shoppingListService.GetItemsForUser(user.Id);
         var profile = await _userSettingsRepo.GetByUserIdAsync(user.Id);
+        var measurements = await _context.Set<Measurement>().Where(m => m.Abbreviation != "").OrderBy(m => m.SortOrder).ToListAsync();
 
         return View(new ShoppingListViewModel
         {
@@ -70,7 +72,8 @@ public class ShoppingController : Controller
             DateTo = dateTo,
             ZipCode = profile?.ZipCode,
             LastStoreId = HttpContext.Session.GetString(KrogerController.SessionStoreId),
-            KrogerConnected = !string.IsNullOrEmpty(HttpContext.Session.GetString("KrogerAccessToken"))
+            KrogerConnected = !string.IsNullOrEmpty(HttpContext.Session.GetString("KrogerAccessToken")),
+            Measurements = measurements
         });
     }
 
@@ -90,12 +93,64 @@ public class ShoppingController : Controller
         return RedirectToAction(nameof(Index));
     }
 
+    [HttpGet]
+    public async Task<IActionResult> GetItemsPartial(string dateFrom, string dateTo)
+    {
+        User? user = await _userManager.GetUserAsync(User);
+        if (user == null) return Unauthorized();
+
+        if (!DateTime.TryParse(dateFrom, out var from)) from = DateTime.Today;
+        if (!DateTime.TryParse(dateTo, out var to)) to = DateTime.Today;
+        if (from > to) to = from;
+
+        var rangeOptions = new CookieOptions { Expires = to.AddDays(1), HttpOnly = true };
+        Response.Cookies.Append("ShoppingListDateFrom", from.ToString("yyyy-MM-dd"), rangeOptions);
+        Response.Cookies.Append("ShoppingListDateTo", to.ToString("yyyy-MM-dd"), rangeOptions);
+        Response.Cookies.Delete("ShoppingListSynced");
+
+        await _shoppingListService.SyncFromDateRangeAsync(user.Id, user, from, to);
+
+        var items = _shoppingListService.GetItemsForUser(user.Id);
+        var measurements = await _context.Set<Measurement>()
+            .Where(m => m.Abbreviation != "")
+            .OrderBy(m => m.SortOrder)
+            .ToListAsync();
+
+        Response.Headers["Cache-Control"] = "no-store";
+
+        return PartialView("_ShoppingListItems", new ShoppingListViewModel
+        {
+            Items = items,
+            DateFrom = from,
+            DateTo = to,
+            Measurements = measurements
+        });
+    }
+
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> AddItem(string itemName, string amount, string measurement)
     {
         User? user = await _userManager.GetUserAsync(User);
         if (user == null) return Challenge();
+
+        if (string.IsNullOrWhiteSpace(itemName))
+        {
+            TempData["ShoppingListError"] = "Ingredient name is required.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        if (string.IsNullOrWhiteSpace(amount))
+        {
+            TempData["ShoppingListError"] = "Quantity is required.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        if (string.IsNullOrWhiteSpace(measurement))
+        {
+            TempData["ShoppingListError"] = "Unit of measurement is required.";
+            return RedirectToAction(nameof(Index));
+        }
 
         float? parsedAmount = FractionParser.ParseAmount(amount);
         if (parsedAmount == null)
@@ -149,6 +204,41 @@ public class ShoppingController : Controller
     }
 
     public record UpdateAmountRequest(int IngredientBaseId, string NewAmount);
+
+    [HttpPost]
+    [IgnoreAntiforgeryToken]
+    public async Task<IActionResult> UpdateItemMeasurementJson([FromBody] UpdateMeasurementRequest request)
+    {
+        User? user = await _userManager.GetUserAsync(User);
+        if (user == null) return Unauthorized();
+
+        if (string.IsNullOrWhiteSpace(request.Measurement))
+            return BadRequest("Measurement cannot be empty.");
+
+        var trimmed = request.Measurement.Trim();
+        var measurement = await _context.Set<Measurement>()
+            .FirstOrDefaultAsync(m =>
+                m.Abbreviation.ToLower() == trimmed.ToLower() ||
+                m.Name.ToLower() == trimmed.ToLower());
+
+        if (measurement == null)
+        {
+            measurement = new Measurement { Name = trimmed, Abbreviation = trimmed };
+            _context.Set<Measurement>().Add(measurement);
+            await _context.SaveChangesAsync();
+        }
+
+        var item = await _context.ShoppingListItems.FindAsync(request.ItemId);
+        if (item == null || item.UserId != user.Id)
+            return NotFound();
+
+        item.MeasurementId = measurement.Id;
+        await _context.SaveChangesAsync();
+
+        return Ok(new { abbreviation = measurement.Abbreviation });
+    }
+
+    public record UpdateMeasurementRequest(int ItemId, string Measurement);
 
     [HttpPost]
     [ValidateAntiForgeryToken]

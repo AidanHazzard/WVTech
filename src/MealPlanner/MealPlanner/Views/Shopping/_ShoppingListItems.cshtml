@@ -1,0 +1,56 @@
+@model MealPlanner.ViewModels.ShoppingListViewModel
+
+@if (Model.Items.Any())
+{
+    <div class="shopping-list-grid">
+        <h6 class="back1Title shopping-grid-header">Quantity</h6>
+        <h6 class="back1Title shopping-grid-header">Measurement</h6>
+        <h6 class="back1Title shopping-grid-header">Ingredient</h6>
+        <h6 class="back1Title shopping-grid-header">Delete</h6>
+
+        @foreach (var item in Model.Items)
+        {
+            <div>
+                <form asp-action="UpdateItemAmount" method="post" class="m-0">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="ingredientBaseId" value="@item.IngredientBase.Id" />
+                    <div class="qty-controls">
+                        <button type="button" class="qty-btn qty-decrement">&#8722;</button>
+                        <input type="text"
+                               name="newAmount"
+                               value="@MealPlanner.Services.FractionParser.FormatAmount(item.Amount)"
+                               class="qty-input qty-pill-input"
+                               data-original="@MealPlanner.Services.FractionParser.FormatAmount(item.Amount)" />
+                        <button type="button" class="qty-btn qty-increment">&#43;</button>
+                    </div>
+                </form>
+            </div>
+            <div>
+                @{ string abbrev = string.IsNullOrEmpty(item.Measurement.Abbreviation) ? "Count" : item.Measurement.Abbreviation; }
+                <input type="text"
+                       class="measurement-inline-input"
+                       value="@abbrev"
+                       data-original="@abbrev"
+                       data-item-id="@item.Id"
+                       list="measurement-options"
+                       required />
+            </div>
+            <div>
+                <span class="fs-5 item-display"
+                      data-measurement="@item.Measurement.Name"
+                      data-name="@item.IngredientBase.Name">@item.IngredientBase.Display()</span>
+            </div>
+            <div>
+                <form asp-action="RemoveItem" method="post" class="m-0">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="itemId" value="@item.Id" />
+                    <button type="submit" class="btn btn-danger delete-recipe-btn">X</button>
+                </form>
+            </div>
+        }
+    </div>
+}
+else
+{
+    <p class="text-center fs-5 mb-0">No items in your shopping list yet.</p>
+}

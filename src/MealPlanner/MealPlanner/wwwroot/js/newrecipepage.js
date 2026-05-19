@@ -20,30 +20,33 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 });
 
+function getMeasurements() {
+    const container = document.querySelector('#AppendHere');
+    try {
+        return JSON.parse(container?.dataset?.measurements || '[]');
+    } catch {
+        return [];
+    }
+}
+
+function buildMeasurementOptions() {
+    const measurements = getMeasurements();
+    const options = ['<option value="">Select</option>'];
+    for (const m of measurements) {
+        options.push(`<option value="${m.value}">${m.label}</option>`);
+    }
+    return options.join('');
+}
+
 function createInput() {
     const container = document.querySelector('#AppendHere');
-    //adds a wrapper that will wrap all of our stuff in it so the button can be inline and
-    //so we can delete things later
     const inputWrapper = document.createElement('div');
     inputWrapper.className = 'row input-wrapper';
     inputWrapper.innerHTML = `
             <div class="row">
                 <input type="text" class="col-1 back2-textbox-partial mx-1" name="IngredientAmounts" placeholder="e.g. 1/2">
                 <select class="col-2 back2-textbox-partial mx-1" name="IngredientMeasurements">
-                    <option selected>Select</option>
-                    <option value="Count">Count</option>
-                    <option value="Teaspoon">tsp</option>
-                    <option value="Tablespoon">tbsp</option>
-                    <option value="Fluid Ounce">fl oz</option>
-                    <option value="Cup">cup</option>
-                    <option value="Pint">pt</option>
-                    <option value="Quart">qt</option>
-                    <option value="Gallon">gal</option>
-                    <option value="Milliliter">mL</option>
-                    <option value="Liter">L</option>
-                    <option value="Ounce">oz</option>
-                    <option value="Pound">lb</option>
-                    <option value="Gram">g</option>
+                    ${buildMeasurementOptions()}
                 </select>
                 <input type="text" class="col back2-textbox-partial mx-1" placeholder="Enter Ingredient" name="Ingredients" required>
             </div>

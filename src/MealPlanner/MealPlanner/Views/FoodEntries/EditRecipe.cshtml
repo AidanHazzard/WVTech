@@ -14,7 +14,8 @@
             </h2>
 
 
-            <div class="back2 backHasButton" id="AppendHere">
+            <div class="back2 backHasButton" id="AppendHere"
+                 data-measurements="@System.Text.Json.JsonSerializer.Serialize(Model.Measurements.Select(m => new { value = m.Name, label = m.Abbreviation }))">
                 <h2 class="back1Title">Ingredients</h2>
                 @for (int i = 0; i < Model.Ingredients.Count; i++)
                 {
@@ -22,20 +23,11 @@
                         <div class="row">
                             <input type="text" class="col-1 back2-textbox-partial mx-1" name="IngredientAmounts" placeholder="e.g. 1/2" value="@Model.IngredientAmounts[i]">
                             <select class="col-2 back2-textbox-partial mx-1" name="IngredientMeasurements">
-                                <option>Select</option>
-                                <option value="Count"        selected="@(Model.IngredientMeasurements[i] == "Count"        ? "selected" : null)">Count</option>
-                                <option value="Teaspoon"     selected="@(Model.IngredientMeasurements[i] == "Teaspoon"     ? "selected" : null)">tsp</option>
-                                <option value="Tablespoon"   selected="@(Model.IngredientMeasurements[i] == "Tablespoon"   ? "selected" : null)">tbsp</option>
-                                <option value="Fluid Ounce"  selected="@(Model.IngredientMeasurements[i] == "Fluid Ounce"  ? "selected" : null)">fl oz</option>
-                                <option value="Cup"          selected="@(Model.IngredientMeasurements[i] == "Cup"          ? "selected" : null)">cup</option>
-                                <option value="Pint"         selected="@(Model.IngredientMeasurements[i] == "Pint"         ? "selected" : null)">pt</option>
-                                <option value="Quart"        selected="@(Model.IngredientMeasurements[i] == "Quart"        ? "selected" : null)">qt</option>
-                                <option value="Gallon"       selected="@(Model.IngredientMeasurements[i] == "Gallon"       ? "selected" : null)">gal</option>
-                                <option value="Milliliter"   selected="@(Model.IngredientMeasurements[i] == "Milliliter"   ? "selected" : null)">mL</option>
-                                <option value="Liter"        selected="@(Model.IngredientMeasurements[i] == "Liter"        ? "selected" : null)">L</option>
-                                <option value="Ounce"        selected="@(Model.IngredientMeasurements[i] == "Ounce"        ? "selected" : null)">oz</option>
-                                <option value="Pound"        selected="@(Model.IngredientMeasurements[i] == "Pound"        ? "selected" : null)">lb</option>
-                                <option value="Gram"         selected="@(Model.IngredientMeasurements[i] == "Gram"         ? "selected" : null)">g</option>
+                                <option value="">Select</option>
+                                @foreach (var m in Model.Measurements)
+                                {
+                                    <option value="@m.Name" selected="@(Model.IngredientMeasurements[i] == m.Name ? "selected" : null)">@m.Abbreviation</option>
+                                }
                             </select>
                             <input type="text" class="col back2-textbox-partial mx-1" placeholder="Enter Ingredient" name="Ingredients" value="@Model.Ingredients[i]" required>
                         </div>
@@ -45,7 +37,6 @@
                     </div>
                 }
 
-                
                 <button class="buttonGreen" id="buttonAppend">
                     <h2 class="buttonText">Add Ingredient</h2>
                 </button>

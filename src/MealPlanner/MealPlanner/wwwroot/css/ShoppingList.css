@@ -1,3 +1,43 @@
+.measurement-inline-input {
+    background: var(--textbox-bg, #e0e0e0);
+    color: var(--text-primary, #333);
+    border: 1.5px solid rgba(128, 128, 128, 0.35);
+    border-radius: 50px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+    font-size: 1.1rem;
+    text-align: center;
+    width: 100px;
+    padding: 6px 14px;
+    outline: none;
+    cursor: text;
+    transition: border-color 0.15s;
+}
+
+.measurement-inline-input:hover {
+    border-color: rgba(128, 128, 128, 0.6);
+}
+
+.measurement-inline-input:focus {
+    border-color: var(--button-green-bg, #4caf50);
+    box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.25);
+}
+
+.shopping-add-amount {
+    min-width: 70px;
+    width: 70px;
+    flex-shrink: 0;
+}
+
+.shopping-add-unit {
+    min-width: 110px;
+    flex-shrink: 0;
+}
+
+.shopping-add-name {
+    min-width: 150px;
+    flex: 1 1 150px;
+}
+
 .btn-inline-sm {
     flex: 0 !important;
     padding: 8px 20px !important;

@@ -56,23 +56,6 @@ public static class FractionParser
         return whole > 0 ? $"{whole} {fractionStr}" : fractionStr;
     }
 
-    public static string AbbreviateMeasurement(string name) => name.ToLowerInvariant() switch
-    {
-        "teaspoon"    => "tsp",
-        "tablespoon"  => "tbsp",
-        "fluid ounce" => "fl oz",
-        "cup"         => "cup",
-        "pint"        => "pt",
-        "quart"       => "qt",
-        "gallon"      => "gal",
-        "milliliter"  => "mL",
-        "liter"       => "L",
-        "ounce"       => "oz",
-        "pound"       => "lb",
-        "gram"        => "g",
-        _             => name
-    };
-
     private static float? ParseFraction(string input)
     {
         int slashIdx = input.IndexOf('/');
