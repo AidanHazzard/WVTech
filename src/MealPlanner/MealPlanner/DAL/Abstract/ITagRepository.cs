@@ -7,4 +7,5 @@ public interface ITagRepository : IRepository<Tag>
     Task<List<string>> GetTagNamesAsync();
     Task<List<Tag>> GetTagsByPopularityAsync();
     Task<Tag?> FindByNameAsync(string name);
+    Task<List<Tag>> GetTagsByIdsAsync(IEnumerable<int> ids);
 }

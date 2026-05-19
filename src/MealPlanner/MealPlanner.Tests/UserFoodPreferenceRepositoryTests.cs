@@ -84,6 +84,57 @@ public class UserFoodPreferenceRepositoryTests
         Assert.That(names, Is.Empty);
     }
 
+    // ── GetFoodPreferenceTagIdsAsync ─────────────────────────────────────────
+
+    [Test]
+    public async Task GetFoodPreferenceTagIdsAsync_ReturnsTagIdsForUser()
+    {
+        using var ctx = CreateContext();
+        var user = SeedUser(ctx);
+        var italian = SeedTag(ctx, "Italian");
+        var cheap = SeedTag(ctx, "Cheap");
+        ctx.UserFoodPreferences.AddRange(
+            new UserFoodPreference { UserId = user.Id, TagId = italian.Id },
+            new UserFoodPreference { UserId = user.Id, TagId = cheap.Id });
+        ctx.SaveChanges();
+
+        var (repo, _) = CreateRepo();
+        var ids = await repo.GetFoodPreferenceTagIdsAsync("user-1");
+
+        Assert.That(ids, Is.EquivalentTo(new[] { italian.Id, cheap.Id }));
+    }
+
+    [Test]
+    public async Task GetFoodPreferenceTagIdsAsync_ReturnsEmptySetWhenNoPreferences()
+    {
+        using var ctx = CreateContext();
+        SeedUser(ctx);
+
+        var (repo, _) = CreateRepo();
+        var ids = await repo.GetFoodPreferenceTagIdsAsync("user-1");
+
+        Assert.That(ids, Is.Empty);
+    }
+
+    [Test]
+    public async Task GetFoodPreferenceTagIdsAsync_OnlyReturnsTagsForRequestedUser()
+    {
+        using var ctx = CreateContext();
+        var u1 = SeedUser(ctx, "user-1");
+        var u2 = SeedUser(ctx, "user-2");
+        var tag = SeedTag(ctx, "Italian");
+        ctx.UserFoodPreferences.AddRange(
+            new UserFoodPreference { UserId = u1.Id, TagId = tag.Id },
+            new UserFoodPreference { UserId = u2.Id, TagId = tag.Id });
+        ctx.SaveChanges();
+
+        var (repo, _) = CreateRepo();
+        var ids = await repo.GetFoodPreferenceTagIdsAsync("user-1");
+
+        Assert.That(ids, Has.Count.EqualTo(1));
+        Assert.That(ids, Contains.Item(tag.Id));
+    }
+
     // ── AddFoodPreferencesAsync ──────────────────────────────────────────────
 
     [Test]

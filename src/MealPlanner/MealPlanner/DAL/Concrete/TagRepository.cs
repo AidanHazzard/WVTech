@@ -31,4 +31,13 @@ public class TagRepository : Repository<Tag>, ITagRepository
         return await _dbset
             .FirstOrDefaultAsync(t => t.Name == name);
     }
+
+    public async Task<List<Tag>> GetTagsByIdsAsync(IEnumerable<int> ids)
+    {
+        var idSet = ids.ToHashSet();
+        if (idSet.Count == 0) return [];
+        return await _dbset
+            .Where(t => idSet.Contains(t.Id))
+            .ToListAsync();
+    }
 }
