@@ -1,38 +1,150 @@
 @model MealPlanner.ViewModels.SelectMealViewModel
 
-<div class="back1 backHasButton">
-    <h2 class="back1Title">Select A Meal</h2>
+<link rel="stylesheet" href="~/css/selectMeal.css" asp-append-version="true" />
 
-    <div id="selectMealList" class="d-flex flex-column gap-2">
-        @if (Model == null || Model.Meals == null || Model.Meals.Count == 0)
-        {
-            <div class="back2">
-                <h4 class="baseText">You have not created any meals yet.</h4>
-            </div>
-        }
-        else
-        {
-            @foreach (var meal in Model.Meals)
-            {
-                <form asp-action="AddMealToDay" method="post">
-                    @Html.AntiForgeryToken()
-                    <input type="hidden" name="mealId" value="@meal.Id" />
-                    <input type="hidden" name="date" value="@Model.SelectedDate.ToString("yyyy-MM-dd")" />
-                    <button type="submit"
-                            class="back2 d-flex align-items-center gap-2 back2-textbox selectMealRow w-100 text-start"
-                            style="cursor:pointer;"
-                            data-meal-id="@meal.Id">
-                        <h4 class="mb-0 flex-grow-1 selectMealName">@meal.Title</h4>
-                    </button>
-                </form>
-            }
-        }
+<a href="javascript:history.back()" class="page-back-link">
+    <i class="ti ti-arrow-left"></i>
+    Back
+</a>
+
+@{
+    string[] icons  = { "ti-sun", "ti-sun-high", "ti-moon" };
+    string[] labels = { "Breakfast", "Lunch", "Dinner" };
+}
+
+<div class="sm-page">
+
+    <div class="sm-page-header">
+        <h1 class="sm-page-title">Select A Meal</h1>
+        <p class="sm-page-subtitle">Choose a meal type to add for this day.</p>
     </div>
 
-    <form asp-controller="Meal" asp-action="NewMeal" method="get">
-        <input type="hidden" name="date" value="@Model.SelectedDate.ToString("yyyy-MM-dd")" />
-        <button class="buttonBlue">
-            <h2 class="buttonText">Add A Meal</h2>
-        </button>
-    </form>
+    <div id="selectMealList">
+    @if (Model == null || Model.Meals == null || Model.Meals.Count == 0)
+    {
+        <div class="sm-empty">
+            <p class="sm-empty-text">You have not created any meals yet.</p>
+        </div>
+    }
+    else
+    {
+        <div class="sm-cards-grid">
+            @for (int i = 0; i < Model.Meals.Count; i++)
+            {
+                var meal       = Model.Meals[i];
+                var icon       = i < icons.Length ? icons[i] : "ti-bowl-chopsticks";
+                bool hasRecipes = meal.Recipes != null && meal.Recipes.Any();
+                var subLabel   = hasRecipes ? meal.Recipes.First().Name : "No meal set";
+
+                int totalCals    = hasRecipes ? meal.Recipes.Sum(r => r.Calories) : 0;
+                int totalProtein = hasRecipes ? meal.Recipes.Sum(r => r.Protein)  : 0;
+                int totalCarbs   = hasRecipes ? meal.Recipes.Sum(r => r.Carbs)    : 0;
+                int totalFat     = hasRecipes ? meal.Recipes.Sum(r => r.Fat)      : 0;
+
+                <div class="sm-card-slot">
+                    <form asp-action="AddMealToDay" method="post" class="sm-card-form">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="mealId" value="@meal.Id" />
+                        <input type="hidden" name="date"   value="@Model.SelectedDate.ToString("yyyy-MM-dd")" />
+
+                        @if (hasRecipes)
+                        {
+                            <button type="submit" class="sm-card sm-card--has-meal selectMealRow">
+                                <span class="sm-card-img-area">
+                                    <span class="sm-card-icon-box">
+                                        <i class="ti ti-tools-kitchen-2"></i>
+                                    </span>
+                                    <span class="sm-macro-overlay" aria-hidden="true">
+                                        <span class="sm-macro-pill sm-macro-pill--tl">
+                                            <span class="sm-macro-dot" style="background:#3B82F6"></span>@totalCals kcal
+                                        </span>
+                                        <span class="sm-macro-pill sm-macro-pill--tr">
+                                            <span class="sm-macro-dot" style="background:#92400E"></span>@totalProtein g
+                                        </span>
+                                        <span class="sm-macro-pill sm-macro-pill--bl">
+                                            <span class="sm-macro-dot" style="background:#8B5CF6"></span>@totalCarbs g
+                                        </span>
+                                        <span class="sm-macro-pill sm-macro-pill--br">
+                                            <span class="sm-macro-dot" style="background:#F97316"></span>@totalFat g
+                                        </span>
+                                    </span>
+                                </span>
+                                <span class="sm-card-text-footer">
+                                    <span class="sm-card-name selectMealName">@meal.Title</span>
+                                    <span class="sm-card-sub">@subLabel</span>
+                                </span>
+                            </button>
+                        }
+                        else
+                        {
+                            <button type="submit" class="sm-card selectMealRow">
+                                <span class="sm-card-icon-box">
+                                    <i class="ti @icon"></i>
+                                </span>
+                                <span class="sm-card-name selectMealName">@meal.Title</span>
+                                <span class="sm-card-sub">@subLabel</span>
+                            </button>
+                        }
+                    </form>
+                    <form asp-action="RemoveMealTemplate" method="post" class="sm-delete-form">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="mealId" value="@meal.Id" />
+                        <input type="hidden" name="date" value="@Model.SelectedDate.ToString("yyyy-MM-dd")" />
+                        <button type="submit" class="sm-delete-btn" title="Remove meal">✕</button>
+                    </form>
+                </div>
+            }
+        </div>
+    }
+    </div>
+
+    <div class="sm-action-row">
+        <form asp-controller="Meal" asp-action="NewMeal" method="get" style="margin:0">
+            <input type="hidden" name="date" value="@Model?.SelectedDate.ToString("yyyy-MM-dd")" />
+            <button type="submit" class="sm-new-btn">
+                <i class="ti ti-plus"></i>
+                Create a new meal
+            </button>
+        </form>
+    </div>
+
 </div>
+
+@section Scripts {
+<script>
+    // Selection highlight on click
+    document.querySelectorAll('.sm-card').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            document.querySelectorAll('.sm-card').forEach(b => b.classList.remove('sm-card--selected'));
+            btn.classList.add('sm-card--selected');
+        });
+    });
+
+    // Mobile tap: first tap reveals macro overlay; second tap submits
+    var isTouchOnly = !window.matchMedia('(hover: hover)').matches;
+    if (isTouchOnly) {
+        document.querySelectorAll('.sm-card--has-meal').forEach(function (btn) {
+            btn.addEventListener('click', function (e) {
+                var overlay = btn.querySelector('.sm-macro-overlay');
+                if (!overlay) return;
+                if (!overlay.classList.contains('sm-macro-overlay--visible')) {
+                    e.preventDefault();
+                    document.querySelectorAll('.sm-macro-overlay--visible').forEach(function (o) {
+                        o.classList.remove('sm-macro-overlay--visible');
+                    });
+                    overlay.classList.add('sm-macro-overlay--visible');
+                }
+            });
+        });
+
+        // Dismiss overlay when tapping outside a card
+        document.addEventListener('click', function (e) {
+            if (!e.target.closest('.sm-card--has-meal')) {
+                document.querySelectorAll('.sm-macro-overlay--visible').forEach(function (o) {
+                    o.classList.remove('sm-macro-overlay--visible');
+                });
+            }
+        });
+    }
+</script>
+}

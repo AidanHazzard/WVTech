@@ -1,109 +1,440 @@
-@model MealPlanner.ViewModels.FoodPreferenceViewModel
-
+@model MealPlanner.ViewModels.SettingsViewModel
+@using Microsoft.AspNetCore.Identity
+@inject SignInManager<MealPlanner.Models.User> SignInManager
 @{
-    ViewData["Title"] = "User Settings";
-}
+    ViewData["Title"] = "Settings";
+    var userName      = User.Identity?.Name ?? "";
+    var email         = User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value ?? userName;
+    // Priority: username → full name → email
+    var displayName = !string.IsNullOrWhiteSpace(Model.DisplayHandle)
+        ? Model.DisplayHandle
+        : !string.IsNullOrWhiteSpace(Model.FullName)
+            ? Model.FullName
+            : email;
+    var profilePhoto  = Model.ProfilePictureUrl ?? "";
 
-<div class="back1">
-    <h2 class="back1Title">User Settings</h2>
-
-    <div class="list-group mt-3" style="border-radius: 20px 20px 0 0;">
-        <a class="list-group-item list-group-item-action linkListBack"
-            asp-controller="UserSettings" asp-action="Dietary">
-            <h5 class="baseText">Dietary Restrictions</h5>
-        </a>
-
-        <a class="list-group-item list-group-item-action linkListBack"
-        asp-controller="UserSettings" asp-action="Nutrition">
-            <h5 class="baseText">Nutrition Goals</h5>
-        </a>
-
-        <div class="list-group-item linkListBack d-flex justify-content-between align-items-center">
-            <h5 class="baseText mb-0">Toggle Dark Mode</h5>
-            <div class="form-check form-switch">
-                <input class="form-check-input" type="checkbox" id="themeToggle"
-                       style="cursor:pointer; width:3em; height:1.5em;">
-            </div>
-        </div>
-
-        @if (User.IsInRole("Admin"))
-            {
-                <a class="list-group-item list-group-item-action linkListBack"
-                asp-controller="Home" asp-action="Admin">
-                    <h5 class="baseText">Admin</h5>
-                </a>
-            }
-            else if (User.IsInRole("User"))
-            {
-                <a class="list-group-item list-group-item-action linkListBack"
-                asp-controller="Favorites" asp-action="Index">
-                    <h5 class="baseText">Favorites</h5>
-                </a>
-            }
-
-        <a class="list-group-item list-group-item-action linkListBack"
-        asp-controller="UserSettings" asp-action="ResetPassword">
-            <h5 class="baseText">Reset Password</h5>
-        </a>
-        <partial name="_LoginPartial" />
-    </div>
-</div>
-
-<div class="back1 mt-3">
-    <h2 class="back1Title">Food Preferences</h2>
-
-    @if (Model.CurrentPreferences.Count > 0)
+    // Derive initials: from FullName if set, else from userName
+    string initials;
+    if (!string.IsNullOrWhiteSpace(Model.FullName))
     {
-        <div class="back2">
-            <h2 class="back1Title">Your Saved Preferences</h2>
-            <div class="d-flex flex-wrap gap-1">
-                @foreach (var pref in Model.CurrentPreferences)
-                {
-                    <form asp-action="RemoveFoodPreference" method="post" class="d-inline">
-                        @Html.AntiForgeryToken()
-                        <input type="hidden" name="tagName" value="@pref" />
-                        <button type="submit" class="food-pref-item tag-pill badge rounded-pill recipe-tag food-pref-remove-btn"
-                                data-tag-name="@pref" title="Remove @pref">
-                            @pref
-                        </button>
-                    </form>
-                }
-            </div>
-        </div>
+        var parts = Model.FullName.Trim().Split(' ', System.StringSplitOptions.RemoveEmptyEntries);
+        initials = parts.Length >= 2
+            ? $"{char.ToUpper(parts[0][0])}{char.ToUpper(parts[^1][0])}"
+            : char.ToUpper(parts[0][0]).ToString();
+    }
+    else
+    {
+        var emailLocal = email.Contains('@') ? email.Split('@')[0] : email;
+        initials = emailLocal.Length >= 2 ? emailLocal[..2].ToUpper() : emailLocal.ToUpper();
     }
 
-    <form asp-action="SaveFoodPreferences" method="post" id="food-pref-form">
-        @Html.AntiForgeryToken()
+    var activeSection = Model.ActiveSection;
+    var successMsg    = TempData["Message"] as string ?? "";
+}
 
-        <div class="back2 backHasButton">
-            <h2 class="back1Title">Add Preferences</h2>
+<link rel="stylesheet" href="~/css/settings.css" asp-append-version="true" />
 
-            <select id="food-pref-select" class="back2-textbox mb-2">
-                <option value="">-- Select a Preference --</option>
-                @foreach (var tag in Model.AvailableTags)
-                {
-                    <option value="@tag">@tag</option>
-                }
-            </select>
+<a href="javascript:history.back()" class="page-back-link">
+    <i class="ti ti-arrow-left"></i>
+    Back
+</a>
 
-            <div class="tag-input-wrapper mb-2">
-                <input type="text" id="food-pref-custom-input" class="back2-textbox"
-                       placeholder="Or type a custom preference..." />
-                <button type="button" id="food-pref-add-btn" class="add-tag-btn buttonGreenInline">
-                    <h4 class="buttonText">Add</h4>
+<div class="settings-layout" data-active-section="@activeSection">
+
+    <!-- ── Sidebar ────────────────────────────────────────── -->
+    <aside class="settings-sidebar">
+
+        <button type="button" class="settings-nav-item" data-section="profile">
+            <svg class="settings-nav-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                <circle cx="12" cy="7" r="4"/>
+            </svg>
+            Profile
+        </button>
+
+        <button type="button" class="settings-nav-item" data-section="nutrition">
+            <svg class="settings-nav-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M18 8h1a4 4 0 0 1 0 8h-1"/>
+                <path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/>
+                <line x1="6" y1="1" x2="6" y2="4"/>
+                <line x1="10" y1="1" x2="10" y2="4"/>
+                <line x1="14" y1="1" x2="14" y2="4"/>
+            </svg>
+            Nutrition Goals
+        </button>
+
+        <button type="button" class="settings-nav-item" data-section="dietary">
+            <svg class="settings-nav-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            </svg>
+            Dietary Restrictions
+        </button>
+
+        <button type="button" class="settings-nav-item" data-section="food">
+            <svg class="settings-nav-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 11l19-9-9 19-2-8-8-2z"/>
+            </svg>
+            Food Preferences
+        </button>
+
+        <button type="button" class="settings-nav-item" data-section="appearance">
+            <svg class="settings-nav-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="5"/>
+                <line x1="12" y1="1" x2="12" y2="3"/>
+                <line x1="12" y1="21" x2="12" y2="23"/>
+                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+                <line x1="1" y1="12" x2="3" y2="12"/>
+                <line x1="21" y1="12" x2="23" y2="12"/>
+                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+            </svg>
+            Appearance
+        </button>
+
+        <div class="settings-nav-divider"></div>
+
+        <a class="settings-nav-item" asp-controller="UserSettings" asp-action="ResetPassword">
+            <svg class="settings-nav-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+            Reset Password
+        </a>
+
+        @if (SignInManager.IsSignedIn(User))
+        {
+            <form method="post" asp-area="" asp-controller="Login" asp-action="Logout">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="settings-nav-item logout">
+                    <svg class="settings-nav-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+                         fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                        <polyline points="16 17 21 12 16 7"/>
+                        <line x1="21" y1="12" x2="9" y2="12"/>
+                    </svg>
+                    Logout
                 </button>
+            </form>
+        }
+    </aside>
+
+    <!-- ── Content area ───────────────────────────────────── -->
+    <main class="settings-content" id="settingsContent">
+
+        <!-- ── Profile panel ──────────────────────────────── -->
+        <div class="settings-panel" id="panel-profile">
+            <div class="settings-card">
+                <div class="settings-card-header">
+                    <div class="settings-card-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                             fill="none" stroke="currentColor" stroke-width="2"
+                             stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                            <circle cx="12" cy="7" r="4"/>
+                        </svg>
+                    </div>
+                    <span class="settings-card-title">Profile</span>
+                </div>
+                <div class="settings-card-body">
+                    <div class="profile-row">
+                        <div class="profile-avatar @(!string.IsNullOrEmpty(profilePhoto) ? "has-photo" : "")" id="settingsAvatar">
+                            <span id="settingsAvatarInitials">@initials</span>
+                            <img id="settingsAvatarPhoto" src="@profilePhoto" alt="" style="@(string.IsNullOrEmpty(profilePhoto) ? "display:none" : "")" />
+                        </div>
+                        <div class="profile-info">
+                            <p class="profile-name" id="settingsProfileName">@displayName</p>
+                            <p class="profile-email">@email</p>
+                        </div>
+                        <button type="button" class="profile-edit-btn" id="openEditProfileInline">Edit profile</button>
+                    </div>
+                    <div class="ep-inline" id="epInline"
+                         data-full-name="@(Model.FullName ?? "")"
+                         data-handle="@(Model.DisplayHandle ?? "")"
+                         data-initials="@initials">
+                        <div class="ep-inline-inner">
+                            <div class="ep-avatar-wrap">
+                                <div class="ep-avatar-circle" id="epAvatarCircle">
+                                    <span id="epAvatarInitials"></span>
+                                    <img id="epAvatarPhoto" src="" alt="" style="display:none" />
+                                </div>
+                                <button type="button" class="ep-change-photo-btn" id="epChangePhoto">
+                                    <i class="ti ti-camera"></i> Change photo
+                                </button>
+                                <button type="button" class="ep-remove-photo-link" id="epRemovePhoto" style="display:none">Remove photo</button>
+                            </div>
+                            <div class="ep-fields">
+                                <div class="ep-field">
+                                    <label class="ep-label" for="epFullName">Full name</label>
+                                    <input type="text" id="epFullName" class="ep-input" placeholder="e.g. Tan Disney" autocomplete="off" />
+                                </div>
+                                <div class="ep-field">
+                                    <label class="ep-label" for="epUsername">Username (optional)</label>
+                                    <input type="text" id="epUsername" class="ep-input" placeholder="e.g. @@tandisney" autocomplete="off" />
+                                </div>
+                            </div>
+                            <div class="ep-btn-row">
+                                <button type="button" class="ep-btn-cancel" id="epCancelInline">Cancel</button>
+                                <button type="button" class="ep-btn-save" id="epSaveInline">
+                                    <i class="ti ti-check"></i> Save changes
+                                </button>
+                            </div>
+                            @Html.AntiForgeryToken()
+                            <input type="file" id="epFileInput" accept="image/*" style="display:none" />
+                        </div>
+                    </div>
+                </div>
             </div>
-
-            <div id="food-pref-pending-container" class="d-flex flex-wrap gap-1 mb-2"></div>
-
-            <button type="submit" id="food-pref-save-btn" class="buttonGreen">
-                <h2 class="buttonText">Save Preferences</h2>
-            </button>
         </div>
-    </form>
+
+        <!-- ── Nutrition panel ────────────────────────────── -->
+        <div class="settings-panel" id="panel-nutrition">
+            @if (!string.IsNullOrEmpty(successMsg) && activeSection == "nutrition")
+            {
+                <div class="settings-success">@successMsg</div>
+            }
+            <div class="settings-card">
+                <div class="settings-card-header">
+                    <div class="settings-card-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                             fill="none" stroke="currentColor" stroke-width="2"
+                             stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M18 8h1a4 4 0 0 1 0 8h-1"/>
+                            <path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/>
+                            <line x1="6" y1="1" x2="6" y2="4"/>
+                            <line x1="10" y1="1" x2="10" y2="4"/>
+                            <line x1="14" y1="1" x2="14" y2="4"/>
+                        </svg>
+                    </div>
+                    <span class="settings-card-title">Nutrition Goals</span>
+                </div>
+                <div class="settings-card-body">
+                    <form asp-action="Nutrition" method="post" id="form-nutrition">
+                        @Html.AntiForgeryToken()
+                        <div class="macro-grid">
+                            <div>
+                                <div class="macro-field-label">Calories</div>
+                                <div class="macro-input-group">
+                                    <input id="CalorieTarget" name="CalorieTarget" type="number" class="macro-input-field"
+                                           placeholder="0" min="0" max="32767" step="1"
+                                           value="@Model.CalorieTarget" />
+                                    <span class="macro-unit">kcal</span>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="macro-field-label">Protein</div>
+                                <div class="macro-input-group">
+                                    <input id="ProteinTarget" name="ProteinTarget" type="number" class="macro-input-field"
+                                           placeholder="0" min="0" max="32767" step="1"
+                                           value="@Model.ProteinTarget" />
+                                    <span class="macro-unit">g</span>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="macro-field-label">Carbohydrates</div>
+                                <div class="macro-input-group">
+                                    <input id="CarbTarget" name="CarbTarget" type="number" class="macro-input-field"
+                                           placeholder="0" min="0" max="32767" step="1"
+                                           value="@Model.CarbTarget" />
+                                    <span class="macro-unit">g</span>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="macro-field-label">Fat</div>
+                                <div class="macro-input-group">
+                                    <input id="FatTarget" name="FatTarget" type="number" class="macro-input-field"
+                                           placeholder="0" min="0" max="32767" step="1"
+                                           value="@Model.FatTarget" />
+                                    <span class="macro-unit">g</span>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Dietary restrictions panel ─────────────────── -->
+        <div class="settings-panel" id="panel-dietary">
+            @if (!string.IsNullOrEmpty(successMsg) && activeSection == "dietary")
+            {
+                <div class="settings-success">@successMsg</div>
+            }
+            <div class="settings-card">
+                <div class="settings-card-header">
+                    <div class="settings-card-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                             fill="none" stroke="currentColor" stroke-width="2"
+                             stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                        </svg>
+                    </div>
+                    <span class="settings-card-title">Dietary Restrictions</span>
+                </div>
+                <div class="settings-card-body">
+                    <form asp-action="Dietary" method="post" id="form-dietary">
+                        @Html.AntiForgeryToken()
+                        <div class="settings-chips-row">
+                            @for (int i = 0; i < Model.Restrictions.Count; i++)
+                            {
+                                <label class="settings-chip restriction-chip @(Model.Restrictions[i].IsSelected ? "active" : "")">
+                                    <svg class="chip-check-icon" xmlns="http://www.w3.org/2000/svg"
+                                         viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                         stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                                        <polyline points="20 6 9 17 4 12"/>
+                                    </svg>
+                                    <span>@Model.Restrictions[i].Name</span>
+                                    <input type="hidden" name="Restrictions[@i].DietaryRestrictionId"
+                                           value="@Model.Restrictions[i].DietaryRestrictionId" />
+                                    <input type="hidden" name="Restrictions[@i].Name"
+                                           value="@Model.Restrictions[i].Name" />
+                                    <input type="checkbox" name="Restrictions[@i].IsSelected"
+                                           value="true"
+                                           @(Model.Restrictions[i].IsSelected ? "checked" : "")
+                                           style="display:none" />
+                                </label>
+                            }
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Food preferences panel ─────────────────────── -->
+        <div class="settings-panel" id="panel-food">
+            @if (!string.IsNullOrEmpty(successMsg) && activeSection == "food")
+            {
+                <div class="settings-success">@successMsg</div>
+            }
+            <div class="settings-card">
+                <div class="settings-card-header">
+                    <div class="settings-card-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                             fill="none" stroke="currentColor" stroke-width="2"
+                             stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M3 11l19-9-9 19-2-8-8-2z"/>
+                        </svg>
+                    </div>
+                    <span class="settings-card-title">Food Preferences</span>
+                </div>
+                <div class="settings-card-body">
+                    @if (Model.CurrentPreferences.Count > 0)
+                    {
+                        <div class="food-pref-section-label">Saved preferences</div>
+                        <div class="settings-chips-row">
+                            @foreach (var pref in Model.CurrentPreferences)
+                            {
+                                <form asp-action="RemoveFoodPreference" method="post" class="d-inline">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="tagName" value="@pref" />
+                                    <button type="submit" class="settings-chip removable active food-pref-remove-btn food-pref-item" data-tag-name="@pref">
+                                        <svg class="chip-check-icon" xmlns="http://www.w3.org/2000/svg"
+                                             viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                             stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                                            <polyline points="20 6 9 17 4 12"/>
+                                        </svg>
+                                        <span>@pref</span>
+                                        <svg class="chip-remove-icon" xmlns="http://www.w3.org/2000/svg"
+                                             viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                             stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                            <line x1="18" y1="6" x2="6" y2="18"/>
+                                            <line x1="6" y1="6" x2="18" y2="18"/>
+                                        </svg>
+                                    </button>
+                                </form>
+                            }
+                        </div>
+                        <div class="food-pref-divider"></div>
+                    }
+
+                    <div class="food-pref-section-label">Add new preferences</div>
+
+                    <!-- Pending chips (added by JS, not yet saved) -->
+                    <div class="settings-chips-row" id="food-pref-pending-container" style="margin-bottom:10px; min-height:0"></div>
+
+                    <form asp-action="SaveFoodPreferences" method="post" id="form-food">
+                        @Html.AntiForgeryToken()
+
+                        <div class="food-pref-add-row">
+                            <select id="food-pref-select" class="food-pref-input" style="cursor:pointer">
+                                <option value="">Select a cuisine type…</option>
+                                @foreach (var tag in Model.AvailableTags)
+                                {
+                                    <option value="@tag">@tag</option>
+                                }
+                            </select>
+                        </div>
+
+                        <div class="food-pref-add-row" style="margin-top:8px">
+                            <input type="text" id="food-pref-custom-input" class="food-pref-input"
+                                   placeholder="Or type a custom preference…" autocomplete="off" />
+                            <button type="button" id="food-pref-add-btn" class="food-pref-add-btn">Add</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Appearance panel ───────────────────────────── -->
+        <div class="settings-panel" id="panel-appearance">
+            <div class="settings-card">
+                <div class="settings-card-header">
+                    <div class="settings-card-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                             fill="none" stroke="currentColor" stroke-width="2"
+                             stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="5"/>
+                            <line x1="12" y1="1" x2="12" y2="3"/>
+                            <line x1="12" y1="21" x2="12" y2="23"/>
+                            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+                            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+                            <line x1="1" y1="12" x2="3" y2="12"/>
+                            <line x1="21" y1="12" x2="23" y2="12"/>
+                            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+                            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+                        </svg>
+                    </div>
+                    <span class="settings-card-title">Appearance</span>
+                </div>
+                <div class="settings-card-body">
+                    <div class="appearance-row">
+                        <div class="appearance-row-label">
+                            <div class="appearance-row-title">Dark mode</div>
+                            <div class="appearance-row-sub">Use dark background across the app</div>
+                        </div>
+                        <div class="custom-toggle" id="themeToggle-panel" role="switch" tabindex="0"
+                             aria-label="Toggle dark mode">
+                            <div class="custom-toggle-knob"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── Save changes button (hidden for profile/appearance) ── -->
+        <button type="submit" class="settings-save-btn buttonBlue" id="food-pref-save-btn">
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24"
+                 fill="none" stroke="currentColor" stroke-width="2.5"
+                 stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"/>
+            </svg>
+            Save changes
+        </button>
+
+    </main>
 </div>
 
+
 @section Scripts {
-    <script src="~/js/themeToggle.js"></script>
-    <script src="~/js/foodPreference.js"></script>
+    <script src="~/js/settings.js" asp-append-version="true"></script>
+    <script>
+        // Pass the server-determined active section to JS
+        document.body.dataset.activeSection = '@Html.Raw(activeSection)';
+    </script>
 }

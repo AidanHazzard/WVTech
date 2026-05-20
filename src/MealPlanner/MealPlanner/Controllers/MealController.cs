@@ -391,7 +391,7 @@ public class MealController : Controller
     }
 
     [HttpGet]
-    public async Task<IActionResult> EditMeal(int id)
+    public async Task<IActionResult> EditMeal(int id, string? returnUrl = null)
     {
         var user = await _registrationService.FindUserByClaimAsync(User);
         if (user == null)
@@ -406,6 +406,8 @@ public class MealController : Controller
         }
 
         await _mealRepo.LoadRecipesAsync(meal);
+
+        ViewBag.ReturnUrl = returnUrl;
 
         var viewModel = new EditMealViewModel
         {
@@ -479,9 +481,9 @@ public class MealController : Controller
         await _context.SaveChangesAsync();
 
         Response.Cookies.Delete("ShoppingListSynced");
-        TempData["Success"] = "Meal updated successfully";
 
-        return RedirectToAction("EditMeal", new { id = meal.Id });
+        TempData["SuccessMessage"] = "Meal updated successfully";
+        return RedirectToAction("EditMeal", new { id = model.Id });
     }
 
     [HttpPost]
@@ -500,7 +502,7 @@ public class MealController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> DeleteMeal(int id, string? date, string? source)
+    public async Task<IActionResult> DeleteMeal(int id, string? date, string? source, bool deleteAll = false)
     {
         var user = await _registrationService.FindUserByClaimAsync(User);
         if (user == null)
@@ -521,7 +523,7 @@ public class MealController : Controller
             return Forbid();
         }
 
-        if (meal.RepeatRule == "Weekly")
+        if (meal.RepeatRule == "Weekly" && !deleteAll)
         {
             var exclusionDate = DateTime.TryParse(date, out var pd) ? pd.Date : DateTime.Today;
             var alreadyExcluded = await _context.MealExclusions
@@ -542,6 +544,21 @@ public class MealController : Controller
         return source == "home"
             ? RedirectToAction("Index", "Home", new { date })
             : RedirectToAction("PlannerHome", "Meal", new { date });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> RemoveMealTemplate(int mealId, string? date)
+    {
+        var user = await _registrationService.FindUserByClaimAsync(User);
+        if (user == null) return Challenge();
+
+        var meal = await _mealRepo.ReadAsync(mealId);
+        if (meal == null || meal.UserId != user.Id) return NotFound();
+
+        await _mealRepo.RemoveAllMealsWithSameTitleAsync(user.Id, meal.Title ?? "");
+
+        return RedirectToAction("SelectMeal", new { date });
     }
 
     [HttpPost]

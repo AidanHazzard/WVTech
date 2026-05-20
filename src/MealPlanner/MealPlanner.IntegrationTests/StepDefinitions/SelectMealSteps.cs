@@ -154,6 +154,30 @@ public class SelectMealSteps
         Assert.That(names, Does.Contain(mealTitle));
     }
 
+    [When("{string} clicks the remove button for the meal named {string}")]
+    public void WhenUserClicksRemoveButtonForMealNamed(string username, string mealTitle)
+    {
+        var slot = _driver.FindElements(By.CssSelector(".sm-card-slot"))
+            .First(s => s.FindElements(By.CssSelector(".selectMealName"))
+                .Any(e => e.Text.Trim() == mealTitle));
+
+        var removeBtn = slot.FindElement(By.CssSelector(".sm-delete-btn"));
+        ((IJavaScriptExecutor)_driver).ExecuteScript(
+            "arguments[0].scrollIntoView({block:'center',behavior:'instant'});", removeBtn);
+        try
+        {
+            removeBtn.Click();
+        }
+        catch (ElementClickInterceptedException)
+        {
+            ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].click();", removeBtn);
+        }
+
+        new WebDriverWait(_driver, TimeSpan.FromSeconds(10)).Until(driver =>
+            ((IJavaScriptExecutor)driver)
+                .ExecuteScript("return document.readyState").ToString() == "complete");
+    }
+
     [When("{string} clicks the meal named {string}")]
     public void WhenUserClicksMealNamed(string username, string mealTitle)
     {

@@ -21,6 +21,19 @@ public class UserDietaryRestrictionRepository : IUserDietaryRestrictionRepositor
             .ToListAsync();
     }
 
+    public async Task<List<DietaryRestriction>> GetAllAsync()
+    {
+        return await _context.DietaryRestrictions.OrderBy(d => d.Name).ToListAsync();
+    }
+
+    public async Task<List<int>> GetSelectedIdsByUserIdAsync(string userId)
+    {
+        return await _context.UserDietaryRestrictions
+            .Where(x => x.UserId == userId)
+            .Select(x => x.DietaryRestrictionId)
+            .ToListAsync();
+    }
+
     public async Task SetForUserAsync(string userId, IEnumerable<int> dietaryRestrictionIds)
     {
         var existing = await _context.UserDietaryRestrictions

@@ -88,6 +88,8 @@ public class RecipeRepository : Repository<Recipe>, IRecipeRepository
 
             if (i.Measurement.Id == 0)
             {
+                if (string.IsNullOrEmpty(i.Measurement.Name)) continue;
+
                 // Use existing db entry for Measurement if it exits, ensuring Unique constraint
                 try
                 {
