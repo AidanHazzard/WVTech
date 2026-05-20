@@ -85,6 +85,12 @@
                         </button>
                     }
                 </form>
+                <form asp-action="RemoveMealTemplate" method="post" class="m-0 p-0 flex-shrink-0">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="mealId" value="@meal.Id" />
+                    <input type="hidden" name="date" value="@Model.SelectedDate.ToString("yyyy-MM-dd")" />
+                    <button type="submit" class="mealDeleteButton mealRemoveButton" title="Remove meal">✕</button>
+                </form>
             }
         </div>
     }

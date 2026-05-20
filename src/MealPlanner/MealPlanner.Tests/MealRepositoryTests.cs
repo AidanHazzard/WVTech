@@ -116,4 +116,59 @@ public class MealRepositoryTests
         Assert.That(result.Count, Is.EqualTo(1));
         Assert.That(result[0].Id, Is.EqualTo(idA));
     }
+
+    [Test]
+    public async Task RemoveAllMealsWithSameTitleAsync_DeletesAllMatchingMeals()
+    {
+        using var seedCtx = CreateContext();
+        seedCtx.Meals.Add(new Meal { Title = "Meal A", UserId = "user-1", StartTime = DateTime.Today.AddDays(1) });
+        await seedCtx.SaveChangesAsync();
+
+        using var context = CreateContext();
+        var repo = new MealRepository(context);
+
+        await repo.RemoveAllMealsWithSameTitleAsync("user-1", "Meal A");
+
+        using var verify = CreateContext();
+        Assert.That(verify.Meals.Any(m => m.Title == "Meal A" && m.UserId == "user-1"), Is.False);
+    }
+
+    [Test]
+    public async Task RemoveAllMealsWithSameTitleAsync_DoesNotDeleteOtherTitles()
+    {
+        using var context = CreateContext();
+        var repo = new MealRepository(context);
+
+        await repo.RemoveAllMealsWithSameTitleAsync("user-1", "Meal A");
+
+        using var verify = CreateContext();
+        Assert.That(verify.Meals.Any(m => m.Title == "Meal B" && m.UserId == "user-1"), Is.True);
+        Assert.That(verify.Meals.Any(m => m.Title == "Meal C" && m.UserId == "user-1"), Is.True);
+    }
+
+    [Test]
+    public async Task RemoveAllMealsWithSameTitleAsync_DoesNotDeleteOtherUsersMatchingTitle()
+    {
+        using var seedCtx = CreateContext();
+        seedCtx.Users.Add(new User { Id = "user-2", UserName = "user-2", NormalizedUserName = "USER-2", Email = "u2@test.com", NormalizedEmail = "U2@TEST.COM", SecurityStamp = "stamp2" });
+        seedCtx.Meals.Add(new Meal { Title = "Meal A", UserId = "user-2", StartTime = DateTime.Today });
+        await seedCtx.SaveChangesAsync();
+
+        using var context = CreateContext();
+        var repo = new MealRepository(context);
+
+        await repo.RemoveAllMealsWithSameTitleAsync("user-1", "Meal A");
+
+        using var verify = CreateContext();
+        Assert.That(verify.Meals.Any(m => m.Title == "Meal A" && m.UserId == "user-2"), Is.True);
+    }
+
+    [Test]
+    public async Task RemoveAllMealsWithSameTitleAsync_NoMatchingTitle_DoesNotThrow()
+    {
+        using var context = CreateContext();
+        var repo = new MealRepository(context);
+
+        Assert.DoesNotThrowAsync(() => repo.RemoveAllMealsWithSameTitleAsync("user-1", "Nonexistent Meal"));
+    }
 }
