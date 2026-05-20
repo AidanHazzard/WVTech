@@ -1,3 +1,4 @@
+using MealPlanner.Models;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Support.UI;
 using Reqnroll;
@@ -10,6 +11,93 @@ public class NutritionBarSteps
     IWebDriver _driver;
     string _baseUrl;
     DateTime? _mealDate;
+
+    [Given("{string} has no meals")]
+    public void GivenUserHasNoMeals(string username)
+    {
+        using var ctx = BDDSetup.CreateContext();
+        var userId = SharedSteps.Users[username].Id;
+
+        var mealIds = ctx.Set<Meal>().Where(m => m.UserId == userId).Select(m => m.Id).ToList();
+        if (mealIds.Count == 0) return;
+
+        ctx.Set<MealCompletion>().RemoveRange(
+            ctx.Set<MealCompletion>().Where(mc => mealIds.Contains(mc.MealId)));
+        ctx.Set<Meal>().RemoveRange(
+            ctx.Set<Meal>().Where(m => mealIds.Contains(m.Id)));
+        ctx.SaveChanges();
+    }
+
+    [Given("{string} has a recipe {string} with {int} calories, {int} protein, {int} fat, {int} carbs")]
+    public void GivenUserHasRecipeWithMacros(
+        string username, string recipeName, int calories, int protein, int fat, int carbs)
+    {
+        using var ctx = BDDSetup.CreateContext();
+        ctx.Set<Recipe>().Add(new Recipe
+        {
+            Name = recipeName,
+            Directions = "Test directions",
+            Calories = calories,
+            Protein = protein,
+            Fat = fat,
+            Carbs = carbs
+        });
+        ctx.SaveChanges();
+    }
+
+    [Given("{string} has a completed meal {string} today with recipe {string}")]
+    public void GivenUserHasCompletedMealToday(string username, string mealTitle, string recipeName)
+    {
+        using var ctx = BDDSetup.CreateContext();
+        var userId = SharedSteps.Users[username].Id;
+        var recipe = ctx.Set<Recipe>().Single(r => r.Name == recipeName);
+        var today = DateTime.Today;
+
+        var meal = new Meal
+        {
+            UserId = userId,
+            Title = mealTitle,
+            StartTime = today,
+            Recipes = { recipe }
+        };
+        ctx.Set<Meal>().Add(meal);
+        ctx.SaveChanges();
+
+        ctx.Set<MealCompletion>().Add(new MealCompletion
+        {
+            MealId = meal.Id,
+            CompletionDate = today
+        });
+        ctx.SaveChanges();
+    }
+
+    [Given("{string} has nutrition targets of {int} calories, {int} protein, {int} fat, {int} carbs")]
+    public void GivenUserHasNutritionTargets(
+        string username, int calories, int protein, int fat, int carbs)
+    {
+        using var ctx = BDDSetup.CreateContext();
+        var userId = SharedSteps.Users[username].Id;
+        var existing = ctx.Set<UserNutritionPreference>().FirstOrDefault(p => p.UserId == userId);
+        if (existing == null)
+        {
+            ctx.Set<UserNutritionPreference>().Add(new UserNutritionPreference
+            {
+                UserId = userId,
+                CalorieTarget = calories,
+                ProteinTarget = protein,
+                FatTarget = fat,
+                CarbTarget = carbs
+            });
+        }
+        else
+        {
+            existing.CalorieTarget = calories;
+            existing.ProteinTarget = protein;
+            existing.FatTarget = fat;
+            existing.CarbTarget = carbs;
+        }
+        ctx.SaveChanges();
+    }
 
     [BeforeScenario]
     public void SetUp()
