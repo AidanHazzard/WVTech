@@ -554,12 +554,7 @@ public class MealController : Controller
         var meal = await _mealRepo.ReadAsync(mealId);
         if (meal == null || meal.UserId != user.Id) return NotFound();
 
-        var allWithTitle = await _context.Meals
-            .Where(m => m.UserId == user.Id && m.Title == meal.Title)
-            .ToListAsync();
-
-        _context.Meals.RemoveRange(allWithTitle);
-        await _context.SaveChangesAsync();
+        await _mealRepo.RemoveAllMealsWithSameTitleAsync(user.Id, meal.Title ?? "");
 
         return RedirectToAction("SelectMeal", new { date });
     }
