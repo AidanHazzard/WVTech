@@ -160,7 +160,7 @@ public class MealRecommendationService : IMealRecommendationService
             excludeKeys);
     }
 
-    public async Task<List<Meal>> GetRecommendedMealsForUser(User user, DateTime mealDate, DayPlanConfigViewModel config, IEnumerable<int>? excludeRecipeIds = null)
+    public async Task<List<Meal>> GetRecommendedMealsForUser(User user, DateTime mealDate, DayPlanConfigViewModel config, int? excludeMealId = null)
     {
         var result = new List<Meal>();
         var preferences = config.MealPreferences.Any()
@@ -173,22 +173,48 @@ public class MealRecommendationService : IMealRecommendationService
         var nutritionPrefs = await _nutrionRepository.GetUsersNutritionPreferenceAsync(user.Id);
         var totalWeight = preferences.Sum(p => p.Size.Weight());
 
-        var usedKeys = (excludeRecipeIds ?? []).Select(id => $"id:{id}").ToHashSet();
+        // Meals already planned for the day eat into the daily macro budget
+        // and lock their recipes out of new slots. RegenerateMeal opts its
+        // target meal out via excludeMealId so the slot being regenerated
+        // recovers its own budget and recipes.
+        var plannedMeals = await _mealRepository.GetUserMealsByDateAsync(user, mealDate);
+        var keptMeals = excludeMealId == null
+            ? plannedMeals
+            : plannedMeals.Where(m => m.Id != excludeMealId).ToList();
+        var plannedRecipes = keptMeals.SelectMany(m => m.Recipes).ToList();
+        int consumedCalories = plannedRecipes.Sum(r => r.Calories);
+        int consumedProtein  = plannedRecipes.Sum(r => r.Protein);
+        int consumedCarbs    = plannedRecipes.Sum(r => r.Carbs);
+        int consumedFat      = plannedRecipes.Sum(r => r.Fat);
+
+        int? remainingCalorieTarget = nutritionPrefs?.CalorieTarget is int cal
+            ? Math.Max(0, cal - consumedCalories) : null;
+        int? remainingProteinTarget = nutritionPrefs?.ProteinTarget is int p
+            ? Math.Max(0, p - consumedProtein) : null;
+        int? remainingCarbTarget = nutritionPrefs?.CarbTarget is int c
+            ? Math.Max(0, c - consumedCarbs) : null;
+        int? remainingFatTarget = nutritionPrefs?.FatTarget is int f
+            ? Math.Max(0, f - consumedFat) : null;
+
+        var usedKeys = plannedRecipes
+            .Select(r => RecipeKey.For(r))
+            .Where(k => k != "uri:")
+            .ToHashSet();
         int mealIndex = 0;
         foreach (var pref in preferences)
         {
             double weight = pref.Size.Weight() / totalWeight;
-            var calorieTarget = nutritionPrefs?.CalorieTarget.HasValue == true
-                ? (int)Math.Round(weight * nutritionPrefs.CalorieTarget.Value)
+            var calorieTarget = remainingCalorieTarget.HasValue
+                ? (int)Math.Round(weight * remainingCalorieTarget.Value)
                 : pref.Size.Calories();
-            var proteinTarget = nutritionPrefs?.ProteinTarget.HasValue == true
-                ? (int)Math.Round(weight * nutritionPrefs.ProteinTarget.Value)
+            var proteinTarget = remainingProteinTarget.HasValue
+                ? (int)Math.Round(weight * remainingProteinTarget.Value)
                 : (int?)null;
-            var carbTarget = nutritionPrefs?.CarbTarget.HasValue == true
-                ? (int)Math.Round(weight * nutritionPrefs.CarbTarget.Value)
+            var carbTarget = remainingCarbTarget.HasValue
+                ? (int)Math.Round(weight * remainingCarbTarget.Value)
                 : (int?)null;
-            var fatTarget = nutritionPrefs?.FatTarget.HasValue == true
-                ? (int)Math.Round(weight * nutritionPrefs.FatTarget.Value)
+            var fatTarget = remainingFatTarget.HasValue
+                ? (int)Math.Round(weight * remainingFatTarget.Value)
                 : (int?)null;
 
             var mealCtx = new MealRecommendationContext(

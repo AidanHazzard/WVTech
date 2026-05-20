@@ -62,6 +62,9 @@ public class MealControllerTests
         _mealRepoMock
             .Setup(r => r.GetUserMealsByDateAsync(It.IsAny<User>(), It.IsAny<DateTime>()))
             .ReturnsAsync([]);
+        _mealRepoMock
+            .Setup(r => r.GetUserRecipeIdsForDateAsync(It.IsAny<User>(), It.IsAny<DateTime>(), It.IsAny<int?>()))
+            .ReturnsAsync([]);
         _reccServiceMock = new Mock<IMealRecommendationService>();
         _tagRepoMock = new Mock<ITagRepository>();
         _tagRepoMock.Setup(r => r.GetTagsByPopularityAsync()).ReturnsAsync([]);
@@ -689,30 +692,25 @@ public class MealControllerTests
     // RegenerateMeal
 
     [Test]
-    public async Task RegenerateMeal_ExcludesOtherDayMealsRecipesFromRecommendation()
+    public async Task RegenerateMeal_PassesMealIdToExcludeItFromTheRecommendation()
     {
+        // The service owns the load-the-day-and-exclude-other-meals logic;
+        // the controller just tells it which meal is being regenerated.
         var meal = new Meal { Id = 1, UserId = "user-1", StartTime = DateTime.Today, Recipes = [] };
-        var siblingMeal = new Meal
-        {
-            Id = 2, UserId = "user-1", StartTime = DateTime.Today,
-            Recipes = [new Recipe { Id = 99, Name = "Sibling Recipe" }]
-        };
         _mealRepoMock.Setup(r => r.ReadAsync(1)).ReturnsAsync(meal);
-        _mealRepoMock.Setup(r => r.GetUserMealsByDateAsync(It.IsAny<User>(), It.IsAny<DateTime>()))
-            .ReturnsAsync([meal, siblingMeal]);
         _mealRepoMock.Setup(r => r.LoadRecipesAsync(It.IsAny<Meal>())).Returns(Task.CompletedTask);
         _mealRepoMock.Setup(r => r.CreateOrUpdate(It.IsAny<Meal>())).Returns(meal);
         _reccServiceMock
             .Setup(s => s.GetRecommendedMealsForUser(
                 It.IsAny<User>(), It.IsAny<DateTime>(), It.IsAny<DayPlanConfigViewModel>(),
-                It.IsAny<IEnumerable<int>>()))
+                It.IsAny<int?>()))
             .ReturnsAsync([]);
 
         await _controller.RegenerateMeal(1, new MealPreferenceViewModel { Size = MealSize.Average });
 
         _reccServiceMock.Verify(s => s.GetRecommendedMealsForUser(
             It.IsAny<User>(), It.IsAny<DateTime>(), It.IsAny<DayPlanConfigViewModel>(),
-            It.Is<IEnumerable<int>>(ids => ids != null && ids.Contains(99))),
+            1),
             Times.Once);
     }
 
