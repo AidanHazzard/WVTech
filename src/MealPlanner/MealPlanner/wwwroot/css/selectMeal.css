@@ -65,10 +65,48 @@
     gap: 1rem;
 }
 
-/* Each form fills its grid cell */
+/* Wrapper is the actual grid item; delete button is anchored inside */
+.sm-card-slot {
+    position: relative;
+}
+
+/* Form fills the slot */
 .sm-card-form {
     margin: 0;
-    display: contents;
+    display: block;
+    height: 100%;
+}
+
+/* Delete button — absolutely positioned bottom-right of the card */
+.sm-delete-form {
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+    margin: 0;
+    padding: 0;
+    z-index: 5;
+}
+
+.sm-delete-btn {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: rgba(220, 50, 50, 0.12);
+    border: 1px solid rgba(220, 50, 50, 0.35);
+    color: #ef4444;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    transition: background 0.15s, border-color 0.15s;
+}
+
+.sm-delete-btn:hover {
+    background: rgba(220, 50, 50, 0.28);
+    border-color: rgba(220, 50, 50, 0.65);
 }
 
 /* ── Card ────────────────────────────────────────────────────── */
@@ -78,6 +116,7 @@
     align-items: center;
     gap: 10px;
     width: 100%;
+    height: 100%;
     background: var(--sm-card-bg);
     border: 0.5px solid var(--sm-card-border);
     border-radius: 12px;

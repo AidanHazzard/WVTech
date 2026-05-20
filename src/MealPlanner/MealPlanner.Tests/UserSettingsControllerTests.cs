@@ -48,12 +48,19 @@ public class UserSettingsControllerTests
     {
         var userManagerMock = new Mock<UserManager<User>>(
             Mock.Of<IUserStore<User>>(), null!, null!, null!, null!, null!, null!, null!, null!);
+        var nutritionRepoMock = new Mock<IUserNutritionPreferenceRepository>();
+        nutritionRepoMock.Setup(r => r.GetUsersNutritionPreferenceAsync(It.IsAny<string>())).ReturnsAsync((UserNutritionPreference?)null);
+        var dietaryRepoMock = new Mock<IUserDietaryRestrictionRepository>();
+        dietaryRepoMock.Setup(r => r.GetAllAsync()).ReturnsAsync([]);
+        dietaryRepoMock.Setup(r => r.GetSelectedIdsByUserIdAsync(It.IsAny<string>())).ReturnsAsync([]);
         var controller = new UserSettingsController(
             CreateContext(),
             new Mock<IUserSettingsRepository>().Object,
             new Mock<IUserSettingsService>().Object,
             _tagRepoMock.Object,
             _foodPrefRepoMock.Object,
+            nutritionRepoMock.Object,
+            dietaryRepoMock.Object,
             userManagerMock.Object);
 
         controller.ControllerContext = new ControllerContext

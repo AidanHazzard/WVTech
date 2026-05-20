@@ -41,50 +41,58 @@
                 int totalCarbs   = hasRecipes ? meal.Recipes.Sum(r => r.Carbs)    : 0;
                 int totalFat     = hasRecipes ? meal.Recipes.Sum(r => r.Fat)      : 0;
 
-                <form asp-action="AddMealToDay" method="post" class="sm-card-form">
-                    @Html.AntiForgeryToken()
-                    <input type="hidden" name="mealId" value="@meal.Id" />
-                    <input type="hidden" name="date"   value="@Model.SelectedDate.ToString("yyyy-MM-dd")" />
+                <div class="sm-card-slot">
+                    <form asp-action="AddMealToDay" method="post" class="sm-card-form">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="mealId" value="@meal.Id" />
+                        <input type="hidden" name="date"   value="@Model.SelectedDate.ToString("yyyy-MM-dd")" />
 
-                    @if (hasRecipes)
-                    {
-                        <button type="submit" class="sm-card sm-card--has-meal selectMealRow">
-                            <span class="sm-card-img-area">
+                        @if (hasRecipes)
+                        {
+                            <button type="submit" class="sm-card sm-card--has-meal selectMealRow">
+                                <span class="sm-card-img-area">
+                                    <span class="sm-card-icon-box">
+                                        <i class="ti ti-tools-kitchen-2"></i>
+                                    </span>
+                                    <span class="sm-macro-overlay" aria-hidden="true">
+                                        <span class="sm-macro-pill sm-macro-pill--tl">
+                                            <span class="sm-macro-dot" style="background:#3B82F6"></span>@totalCals kcal
+                                        </span>
+                                        <span class="sm-macro-pill sm-macro-pill--tr">
+                                            <span class="sm-macro-dot" style="background:#92400E"></span>@totalProtein g
+                                        </span>
+                                        <span class="sm-macro-pill sm-macro-pill--bl">
+                                            <span class="sm-macro-dot" style="background:#8B5CF6"></span>@totalCarbs g
+                                        </span>
+                                        <span class="sm-macro-pill sm-macro-pill--br">
+                                            <span class="sm-macro-dot" style="background:#F97316"></span>@totalFat g
+                                        </span>
+                                    </span>
+                                </span>
+                                <span class="sm-card-text-footer">
+                                    <span class="sm-card-name selectMealName">@meal.Title</span>
+                                    <span class="sm-card-sub">@subLabel</span>
+                                </span>
+                            </button>
+                        }
+                        else
+                        {
+                            <button type="submit" class="sm-card selectMealRow">
                                 <span class="sm-card-icon-box">
-                                    <i class="ti ti-tools-kitchen-2"></i>
+                                    <i class="ti @icon"></i>
                                 </span>
-                                <span class="sm-macro-overlay" aria-hidden="true">
-                                    <span class="sm-macro-pill sm-macro-pill--tl">
-                                        <span class="sm-macro-dot" style="background:#3B82F6"></span>@totalCals kcal
-                                    </span>
-                                    <span class="sm-macro-pill sm-macro-pill--tr">
-                                        <span class="sm-macro-dot" style="background:#92400E"></span>@totalProtein g
-                                    </span>
-                                    <span class="sm-macro-pill sm-macro-pill--bl">
-                                        <span class="sm-macro-dot" style="background:#8B5CF6"></span>@totalCarbs g
-                                    </span>
-                                    <span class="sm-macro-pill sm-macro-pill--br">
-                                        <span class="sm-macro-dot" style="background:#F97316"></span>@totalFat g
-                                    </span>
-                                </span>
-                            </span>
-                            <span class="sm-card-text-footer">
                                 <span class="sm-card-name selectMealName">@meal.Title</span>
                                 <span class="sm-card-sub">@subLabel</span>
-                            </span>
-                        </button>
-                    }
-                    else
-                    {
-                        <button type="submit" class="sm-card selectMealRow">
-                            <span class="sm-card-icon-box">
-                                <i class="ti @icon"></i>
-                            </span>
-                            <span class="sm-card-name selectMealName">@meal.Title</span>
-                            <span class="sm-card-sub">@subLabel</span>
-                        </button>
-                    }
-                </form>
+                            </button>
+                        }
+                    </form>
+                    <form asp-action="RemoveMealTemplate" method="post" class="sm-delete-form">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="mealId" value="@meal.Id" />
+                        <input type="hidden" name="date" value="@Model.SelectedDate.ToString("yyyy-MM-dd")" />
+                        <button type="submit" class="sm-delete-btn" title="Remove meal">✕</button>
+                    </form>
+                </div>
             }
         </div>
     }

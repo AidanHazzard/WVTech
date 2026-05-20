@@ -547,6 +547,21 @@ public class MealController : Controller
     }
 
     [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> RemoveMealTemplate(int mealId, string? date)
+    {
+        var user = await _registrationService.FindUserByClaimAsync(User);
+        if (user == null) return Challenge();
+
+        var meal = await _mealRepo.ReadAsync(mealId);
+        if (meal == null || meal.UserId != user.Id) return NotFound();
+
+        await _mealRepo.RemoveAllMealsWithSameTitleAsync(user.Id, meal.Title ?? "");
+
+        return RedirectToAction("SelectMeal", new { date });
+    }
+
+    [HttpPost]
     public async Task<IActionResult> DeleteRecipeFromMeal(int mealId, int recipeId)
     {
         var user = await _registrationService.FindUserByClaimAsync(User);

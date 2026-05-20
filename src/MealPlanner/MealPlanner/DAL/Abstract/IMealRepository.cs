@@ -14,4 +14,5 @@ public interface IMealRepository : IRepository<Meal>
     Task<List<Meal>> GetMealsByIdsAsync(IEnumerable<int> ids);
     Task LoadRecipesAsync(Meal meal);
     Task UpdateMealAsync(Meal meal, Meal updatedData, IEnumerable<int> recipeIds);
+    Task RemoveAllMealsWithSameTitleAsync(string userId, string title);
 }
