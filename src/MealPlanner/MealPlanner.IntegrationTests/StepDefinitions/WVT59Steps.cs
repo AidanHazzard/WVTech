@@ -73,6 +73,7 @@ public class WVT59Steps
     [Given("{string} has no other meals")]
     public void GivenHasNoOtherMeals(string userName)
     {
+        _context.ChangeTracker.Clear();
         User user = SharedSteps.Users[userName];
         var userMeals = _context.Meals.Where(m => m.UserId == user.Id);
         _context.RemoveRange(userMeals);
@@ -122,12 +123,15 @@ public class WVT59Steps
     public void GivenHasADailyCalorieLimitOfCalories(string userName, int calorieLimit)
     {
         User user = SharedSteps.Users[userName];
-        UserNutritionPreference prefs = new UserNutritionPreference()
+        var existing = _context.Set<UserNutritionPreference>().FirstOrDefault(p => p.UserId == user.Id);
+        if (existing != null)
         {
-            User = user,
-            CalorieTarget = calorieLimit
-        };
-        _context.Update(prefs);
+            existing.CalorieTarget = calorieLimit;
+        }
+        else
+        {
+            _context.Add(new UserNutritionPreference { UserId = user.Id, CalorieTarget = calorieLimit });
+        }
         _context.SaveChanges();
     }
 
@@ -204,7 +208,7 @@ public class WVT59Steps
         Meal meal = new Meal()
         {
             Title = "Big",
-            User = user,
+            UserId = user.Id,
             StartTime = DateTime.UtcNow
         };
         meal.Recipes = _context.Recipes.Where(r => r.Name != recipeName).ToList();
@@ -252,14 +256,15 @@ public class WVT59Steps
     public void GivenHasNoDailyCalorieLimit(string userName)
     {
         User user = SharedSteps.Users[userName];
-        UserNutritionPreference prefs = _context.Set<UserNutritionPreference>()
-            .Where(p => p.UserId == user.Id)
-            .FirstOrDefault() ?? new UserNutritionPreference()
-            {
-                User = user
-            };
-        prefs.CalorieTarget = int.MaxValue;
-        _context.Update(prefs);
+        var prefs = _context.Set<UserNutritionPreference>().FirstOrDefault(p => p.UserId == user.Id);
+        if (prefs != null)
+        {
+            prefs.CalorieTarget = int.MaxValue;
+        }
+        else
+        {
+            _context.Add(new UserNutritionPreference { UserId = user.Id, CalorieTarget = int.MaxValue });
+        }
         _context.SaveChanges();
     }
 
