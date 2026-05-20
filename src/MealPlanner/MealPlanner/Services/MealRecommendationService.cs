@@ -14,6 +14,7 @@ public class MealRecommendationService : IMealRecommendationService
     private IUserDietaryRestrictionRepository _dietaryRestrictionRepository;
     private IUserFoodPreferenceRepository _foodPreferenceRepository;
     private IMealRepository _mealRepository;
+    private ITagRepository _tagRepository;
     private IReadOnlyList<IRecommendationStream> _streams;
     private IPantryService? _pantryService;
 
@@ -23,6 +24,7 @@ public class MealRecommendationService : IMealRecommendationService
         IUserDietaryRestrictionRepository dietaryRestrictionRepository,
         IUserFoodPreferenceRepository foodPreferenceRepository,
         IMealRepository mealRepository,
+        ITagRepository tagRepository,
         IEnumerable<IRecommendationStream> streams,
         IPantryService? pantryService = null)
     {
@@ -31,6 +33,7 @@ public class MealRecommendationService : IMealRecommendationService
         _dietaryRestrictionRepository = dietaryRestrictionRepository;
         _foodPreferenceRepository = foodPreferenceRepository;
         _mealRepository = mealRepository;
+        _tagRepository = tagRepository;
         _streams = streams.ToList();
         _pantryService = pantryService;
     }
@@ -55,8 +58,10 @@ public class MealRecommendationService : IMealRecommendationService
             .Select(i => IngredientNameNormalizer.NormalizeKey(i.IngredientBase.Name))
             .ToHashSet() ?? [];
         var recentOffsets    = await BuildRecentRecipeOffsetsAsync(user, date);
+        var tagRarityWeights = await _tagRepository.GetTagRarityWeightsAsync();
         return new UserRecommendationContext(
-            restrictionNames, userVotes, votePercentages, upvoted, preferredTagIds, pantryNames, recentOffsets);
+            restrictionNames, userVotes, votePercentages, upvoted, preferredTagIds, pantryNames,
+            recentOffsets, tagRarityWeights);
     }
 
     // Maps each recipe id to the day-distances at which it appears on the

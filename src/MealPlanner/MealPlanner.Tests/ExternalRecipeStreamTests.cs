@@ -52,6 +52,7 @@ public class ExternalRecipeStreamTests
                 upvoted ?? [],
                 userTags ?? [],
                 [],
+                [],
                 []),
             new MealRecommendationContext(
                 calorieTarget,

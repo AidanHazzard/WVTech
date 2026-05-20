@@ -20,7 +20,8 @@ public class RecipeScorerTests
         int? carbTarget = null,
         int? fatTarget = null,
         HashSet<int>? mealPreferredTagIds = null,
-        HashSet<string>? excludedRecipeKeys = null) =>
+        HashSet<string>? excludedRecipeKeys = null,
+        Dictionary<int, float>? tagRarityWeights = null) =>
         new(
             new UserRecommendationContext(
                 restrictions ?? [],
@@ -29,7 +30,8 @@ public class RecipeScorerTests
                 upvoted ?? [],
                 userPreferredTagIds ?? [],
                 pantryIngredientNames ?? [],
-                recentRecipeDayOffsets ?? []),
+                recentRecipeDayOffsets ?? [],
+                tagRarityWeights ?? []),
             new MealRecommendationContext(
                 calorieTarget,
                 proteinTarget,
