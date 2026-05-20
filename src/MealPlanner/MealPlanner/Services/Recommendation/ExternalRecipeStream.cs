@@ -29,14 +29,17 @@ public sealed class ExternalRecipeStream : IRecommendationStream
     {
         _tagRepository = tagRepository;
         _recipeRepository = recipeRepository;
-        // External recipes carry no Tag entities. The meal-slot tag filter
-        // would hard-drop every one of them, and the tag scorers can only ever
-        // return zero for them — so this stream is exempt from both. The
-        // Phase 10 facet query already applies the slot's tag intent to the
-        // Edamam search.
-        _scorers = scorers
-            .Where(s => s is not (UserPreferredTagScorer or MealPreferredTagScorer or TagSimilarityScorer))
-            .ToList();
+        // Tag scorers are NO LONGER exempt — AttachInferredTagsAsync below
+        // reverse-classifies Edamam's recipe categorization (dietLabels /
+        // healthLabels / cuisineType / mealType / dishType) into local Tag
+        // entities, so external recipes can earn the same tag-based score
+        // boosts as local ones.
+        //
+        // PreferredTagFilter IS still exempt: Edamam's categorization is
+        // incomplete (some recipes come back without dishType at all) and the
+        // Phase 10 facet query already steered the search toward slot intent.
+        // We boost via the scorers rather than hard-rejecting.
+        _scorers = scorers.ToList();
         _filters = filters
             .Where(f => f is not PreferredTagFilter)
             .ToList();
@@ -61,12 +64,36 @@ public sealed class ExternalRecipeStream : IRecommendationStream
         }
 
         var reconciled = await ReconcileWithLocalAsync(recipes);
+        await AttachInferredTagsAsync(reconciled);
 
         return reconciled
             .Where(r => _filters.All(f => f.Allow(r, ctx)))
             .Select(r => new ScoredRecipe(r, _scorers.Sum(s => s.Score(r, ctx))))
             .OrderByDescending(x => x.Score)
             .ToList();
+    }
+
+    /// <summary>
+    /// Inverse-classifies each recipe's Edamam categorization strings into
+    /// local Tag entities and attaches them to <see cref="Recipe.Tags"/>, so
+    /// the tag-based scorers can act on otherwise-tagless external recipes.
+    /// Tag entities are reused from the local DB (not synthesised), so their
+    /// Ids match those the scorers compare against. No-ops when no recipe
+    /// carries categorization or when the local Tag table is empty.
+    /// </summary>
+    private async Task AttachInferredTagsAsync(List<Recipe> recipes)
+    {
+        if (!recipes.Any(r => r.ExternalCategorization.Count > 0)) return;
+        var localTags = await _tagRepository.GetTagsByPopularityAsync();
+        if (localTags.Count == 0) return;
+
+        foreach (var recipe in recipes)
+        {
+            if (recipe.ExternalCategorization.Count == 0) continue;
+            var resolved = EdamamTagClassifier.ResolveLocalTags(recipe.ExternalCategorization, localTags);
+            foreach (var tag in resolved)
+                if (!recipe.Tags.Contains(tag)) recipe.Tags.Add(tag);
+        }
     }
 
     /// <summary>
