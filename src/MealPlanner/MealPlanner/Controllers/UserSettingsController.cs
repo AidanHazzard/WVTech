@@ -20,15 +20,19 @@ namespace MealPlanner.Controllers
         private readonly IUserSettingsService _userSettingsService;
         private readonly ITagRepository _tagRepository;
         private readonly IUserFoodPreferenceRepository _foodPrefRepository;
+        private readonly IUserNutritionPreferenceRepository _nutritionRepo;
+        private readonly IUserDietaryRestrictionRepository _dietaryRepo;
         private readonly UserManager<User> _userManager;
 
-        public UserSettingsController(MealPlannerDBContext db, IUserSettingsRepository userSettings, IUserSettingsService userSettingsService, ITagRepository tagRepository, IUserFoodPreferenceRepository foodPrefRepository, UserManager<User> userManager)
+        public UserSettingsController(MealPlannerDBContext db, IUserSettingsRepository userSettings, IUserSettingsService userSettingsService, ITagRepository tagRepository, IUserFoodPreferenceRepository foodPrefRepository, IUserNutritionPreferenceRepository nutritionRepo, IUserDietaryRestrictionRepository dietaryRepo, UserManager<User> userManager)
         {
             _db = db;
             _userSettings = userSettings;
             _userSettingsService = userSettingsService;
             _tagRepository = tagRepository;
             _foodPrefRepository = foodPrefRepository;
+            _nutritionRepo = nutritionRepo;
+            _dietaryRepo = dietaryRepo;
             _userManager = userManager;
         }
 
@@ -40,12 +44,9 @@ namespace MealPlanner.Controllers
 
             var currentPrefs   = await _foodPrefRepository.GetFoodPreferenceNamesAsync(userId);
             var availableTags  = await _tagRepository.GetTagNamesAsync();
-            var nutritionPref  = await _db.UserNutritionPreferences.FirstOrDefaultAsync(x => x.UserId == userId);
-            var allRestrictions = await _db.DietaryRestrictions.OrderBy(d => d.Name).ToListAsync();
-            var selectedIds    = await _db.UserDietaryRestrictions
-                .Where(x => x.UserId == userId)
-                .Select(x => x.DietaryRestrictionId)
-                .ToListAsync();
+            var nutritionPref   = await _nutritionRepo.GetUsersNutritionPreferenceAsync(userId);
+            var allRestrictions = await _dietaryRepo.GetAllAsync();
+            var selectedIds     = await _dietaryRepo.GetSelectedIdsByUserIdAsync(userId);
 
             var user = await _userManager.FindByIdAsync(userId);
             var profile = await _userSettings.GetByUserIdAsync(userId);
@@ -137,12 +138,7 @@ namespace MealPlanner.Controllers
             user.FullName = model.FullName.Trim();
             await _userManager.UpdateAsync(user);
 
-            var profile = await _db.UserProfiles.FirstOrDefaultAsync(p => p.UserId == userId);
-            if (profile == null)
-            {
-                profile = new UserProfile { UserId = userId };
-                _db.UserProfiles.Add(profile);
-            }
+            var profile = await _userSettings.FindOrCreateAsync(userId);
 
             profile.DisplayHandle = string.IsNullOrWhiteSpace(model.DisplayHandle)
                 ? null
@@ -185,23 +181,7 @@ namespace MealPlanner.Controllers
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (string.IsNullOrEmpty(userId)) return Json(new { success = false });
 
-            var existing = await _db.UserDietaryRestrictions
-                .Where(x => x.UserId == userId)
-                .ToListAsync();
-
-            _db.UserDietaryRestrictions.RemoveRange(existing);
-
-            if (selectedIds?.Count > 0)
-            {
-                var newRows = selectedIds.Select(id => new UserDietaryRestriction
-                {
-                    UserId = userId,
-                    DietaryRestrictionId = id
-                });
-                await _db.UserDietaryRestrictions.AddRangeAsync(newRows);
-            }
-
-            await _db.SaveChangesAsync();
+            await _dietaryRepo.SetForUserAsync(userId, selectedIds ?? []);
             return Json(new { success = true });
         }
 
