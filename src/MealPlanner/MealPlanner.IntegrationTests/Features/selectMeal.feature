@@ -43,3 +43,10 @@ Feature: selectMeal
     And 'bob' has a meal named 'RepeatedMeal' scheduled on 3 different past dates
     And 'bob' is on the select meal page
     Then 'bob' sees exactly 1 meal named 'RepeatedMeal' in the select meal list
+
+  Scenario: 'bob' removes a meal from the select meal page and it disappears from the list
+    Given 'bob' has no previously created meals
+    And 'bob' has a previously created meal named 'ToBeRemoved'
+    And 'bob' is on the select meal page
+    When 'bob' clicks the remove button for the meal named 'ToBeRemoved'
+    Then 'bob' does not see a meal named 'ToBeRemoved' in the select meal list
