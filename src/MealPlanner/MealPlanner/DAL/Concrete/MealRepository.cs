@@ -54,6 +54,21 @@ public class MealRepository : Repository<Meal>, IMealRepository
         }
     }
 
+    // Returns the distinct set of recipe ids planned for a user on a given
+    // date — sharing the same exact-date + weekly-repeat + exclusion logic as
+    // GetUserMealsByDateAsync. `excludeMealId` skips a single meal (the
+    // RegenerateMeal flow uses this so the meal being regenerated does not
+    // suppress its own replacements).
+    public async Task<HashSet<int>> GetUserRecipeIdsForDateAsync(User user, DateTime date, int? excludeMealId = null)
+    {
+        var meals = await GetUserMealsByDateAsync(user, date);
+        return meals
+            .Where(m => excludeMealId == null || m.Id != excludeMealId)
+            .SelectMany(m => m.Recipes.Select(r => r.Id))
+            .Where(id => id != 0)
+            .ToHashSet();
+    }
+
     public async Task<List<Meal>> GetUserMealsByDateAsync(User user, DateTime date)
     {
         var start = date;
