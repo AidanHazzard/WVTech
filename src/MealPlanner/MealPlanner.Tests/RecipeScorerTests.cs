@@ -202,6 +202,43 @@ public class RecipeScorerTests
         Assert.That(scorer.Score(recipe, ctx), Is.EqualTo(0f));
     }
 
+    [Test]
+    public void MealPreferredTagScorer_RareTagMatchOutweighsCommonTagMatch()
+    {
+        // Two recipes each match exactly one of the slot's two preferred tags.
+        // The one matching the rarer tag (higher rarity weight) must score
+        // strictly more — otherwise the scorer treats "Italian" the same as
+        // "Breakfast" even though one is much more discriminating.
+        var common = new Tag { Id = 1, Name = "Common" };
+        var rare = new Tag { Id = 2, Name = "Rare" };
+        var commonRecipe = new Recipe { Id = 1, Tags = [common] };
+        var rareRecipe = new Recipe { Id = 2, Tags = [rare] };
+
+        var ctx = EmptyContext(
+            mealPreferredTagIds: [1, 2],
+            tagRarityWeights: new Dictionary<int, float> { [1] = 0.5f, [2] = 2.0f });
+        var scorer = new MealPreferredTagScorer();
+
+        Assert.That(scorer.Score(rareRecipe, ctx), Is.GreaterThan(scorer.Score(commonRecipe, ctx)),
+            "matching a rare-weighted tag must score above matching a common-weighted one");
+    }
+
+    [Test]
+    public void MealPreferredTagScorer_FullMatchScoresOne_RegardlessOfRarityWeights()
+    {
+        // A recipe matching every preferred tag still scores 1.0 — the
+        // denominator normalises by the sum of weights.
+        var a = new Tag { Id = 1, Name = "A" };
+        var b = new Tag { Id = 2, Name = "B" };
+        var recipe = new Recipe { Id = 1, Tags = [a, b] };
+        var ctx = EmptyContext(
+            mealPreferredTagIds: [1, 2],
+            tagRarityWeights: new Dictionary<int, float> { [1] = 0.1f, [2] = 5.0f });
+        var scorer = new MealPreferredTagScorer();
+
+        Assert.That(scorer.Score(recipe, ctx), Is.EqualTo(1f).Within(0.001f));
+    }
+
     // --- UserPreferredTagScorer ---
 
     [Test]
@@ -243,6 +280,36 @@ public class RecipeScorerTests
         var scorer = new UserPreferredTagScorer();
 
         Assert.That(scorer.Score(recipe, ctx), Is.EqualTo(0f));
+    }
+
+    [Test]
+    public void UserPreferredTagScorer_RareTagMatchOutweighsCommonTagMatch()
+    {
+        var common = new Tag { Id = 1, Name = "Common" };
+        var rare = new Tag { Id = 2, Name = "Rare" };
+        var commonRecipe = new Recipe { Id = 1, Tags = [common] };
+        var rareRecipe = new Recipe { Id = 2, Tags = [rare] };
+
+        var ctx = EmptyContext(
+            userPreferredTagIds: [1, 2],
+            tagRarityWeights: new Dictionary<int, float> { [1] = 0.5f, [2] = 2.0f });
+        var scorer = new UserPreferredTagScorer();
+
+        Assert.That(scorer.Score(rareRecipe, ctx), Is.GreaterThan(scorer.Score(commonRecipe, ctx)));
+    }
+
+    [Test]
+    public void UserPreferredTagScorer_FullMatchScoresOne_RegardlessOfRarityWeights()
+    {
+        var a = new Tag { Id = 1, Name = "A" };
+        var b = new Tag { Id = 2, Name = "B" };
+        var recipe = new Recipe { Id = 1, Tags = [a, b] };
+        var ctx = EmptyContext(
+            userPreferredTagIds: [1, 2],
+            tagRarityWeights: new Dictionary<int, float> { [1] = 0.1f, [2] = 5.0f });
+        var scorer = new UserPreferredTagScorer();
+
+        Assert.That(scorer.Score(recipe, ctx), Is.EqualTo(1f).Within(0.001f));
     }
 
     // --- PreferredTagFilter ---
