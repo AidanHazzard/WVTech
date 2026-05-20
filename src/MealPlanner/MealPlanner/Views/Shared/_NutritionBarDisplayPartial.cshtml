@@ -1,13 +1,13 @@
 @model NutritionBarInfoViewModel
 <div>
     <div class="nutrition-bar-row">
-        <span class="nutrition-bar-label">Calories:</span>
+        <span class="nutrition-bar-label" style="color: var(--macro-calories);">Calories:</span>
         <div id="caloriesBar" class="progress nutrition-bar-progress">
             <div class="progress-bar" role="progressbar"
                 aria-valuenow="@Model.CaloriesCurrent"
                 aria-valuemin="0"
                 aria-valuemax="@Model.CaloriesMax"
-                style="width: @Model.CaloriesAverage%; background-color: #ffd121ff; @(Model.CaloriesCurrent > Model.CaloriesMax ? "background-color: #FF0000;" : "")">
+                style="width: @Model.CaloriesAverage%; background-color: @(Model.CaloriesCurrent > Model.CaloriesMax ? "#FF0000" : "var(--macro-calories)");">
             </div>
         </div>
         <span id="caloriesFraction" class="nutrition-bar-fraction">
@@ -15,13 +15,13 @@
         </span>
     </div>
     <div class="nutrition-bar-row">
-        <span class="nutrition-bar-label">Protein:</span>
+        <span class="nutrition-bar-label" style="color: var(--macro-protein);">Protein:</span>
         <div id="proteinBar" class="progress nutrition-bar-progress">
             <div class="progress-bar" role="progressbar"
                 aria-valuenow="@Model.ProteinCurrent"
                 aria-valuemin="0"
                 aria-valuemax="@Model.ProteinMax"
-                style="width: @Model.ProteinAverage%; background-color: #5eff9b; @(Model.ProteinCurrent > Model.ProteinMax ? "background-color: #FF0000;" : "")">
+                style="width: @Model.ProteinAverage%; background-color: @(Model.ProteinCurrent > Model.ProteinMax ? "#FF0000" : "var(--macro-protein)");">
             </div>
         </div>
         <span id="proteinFraction" class="nutrition-bar-fraction">
@@ -29,13 +29,13 @@
         </span>
     </div>
     <div class="nutrition-bar-row">
-        <span class="nutrition-bar-label">Fats:</span>
+        <span class="nutrition-bar-label" style="color: var(--macro-fats);">Fats:</span>
         <div id="fatBar" class="progress nutrition-bar-progress">
             <div class="progress-bar" role="progressbar"
                 aria-valuenow="@Model.FatsCurrent"
                 aria-valuemin="0"
                 aria-valuemax="@Model.FatsMax"
-                style="width: @Model.FatsAverage%; background-color: #ff98ffff; @(Model.FatsCurrent > Model.FatsMax ? "background-color: #FF0000;" : "")">
+                style="width: @Model.FatsAverage%; background-color: @(Model.FatsCurrent > Model.FatsMax ? "#FF0000" : "var(--macro-fats)");">
             </div>
         </div>
         <span id="fatFraction" class="nutrition-bar-fraction">
@@ -43,13 +43,13 @@
         </span>
     </div>
     <div class="nutrition-bar-row">
-        <span class="nutrition-bar-label">Carbs:</span>
+        <span class="nutrition-bar-label" style="color: var(--macro-carbs);">Carbs:</span>
         <div id="carbsBar" class="progress nutrition-bar-progress">
             <div class="progress-bar" role="progressbar"
                 aria-valuenow="@Model.CarbsCurrent"
                 aria-valuemin="0"
                 aria-valuemax="@Model.CarbsMax"
-                style="width: @Model.CarbsAverage%; background-color: #00ffffff; @(Model.CarbsCurrent > Model.CarbsMax ? "background-color: #FF0000;" : "")">
+                style="width: @Model.CarbsAverage%; background-color: @(Model.CarbsCurrent > Model.CarbsMax ? "#FF0000" : "var(--macro-carbs)");">
             </div>
         </div>
         <span id="carbsFraction" class="nutrition-bar-fraction">

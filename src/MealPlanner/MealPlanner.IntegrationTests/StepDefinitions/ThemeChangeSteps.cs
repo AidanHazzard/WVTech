@@ -22,11 +22,19 @@ public class ThemeChangeSteps
     [When("{string} clicks the change theme button")]
     public void WhenUserClicksChangeThemeButton(string username)
     {
+        // Navigate to the Appearance panel where the toggle lives
+        var appearanceBtn = new WebDriverWait(_driver, TimeSpan.FromSeconds(10)).Until(driver =>
+        {
+            try { return driver.FindElement(By.CssSelector(".settings-nav-item[data-section='appearance']")); }
+            catch (NoSuchElementException) { return null; }
+        })!;
+        appearanceBtn.Click();
+
         var toggle = new WebDriverWait(_driver, TimeSpan.FromSeconds(10)).Until(driver =>
         {
             try
             {
-                var el = driver.FindElement(By.Id("themeToggle"));
+                var el = driver.FindElement(By.Id("themeToggle-panel"));
                 return el.Displayed ? el : null;
             }
             catch (NoSuchElementException) { return null; }

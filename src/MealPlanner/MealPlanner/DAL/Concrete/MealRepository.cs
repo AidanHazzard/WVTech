@@ -122,6 +122,7 @@ public class MealRepository : Repository<Meal>, IMealRepository
         var weeklyMeals = await _dbset
             .Include(m => m.Recipes)
             .Where(m => m.UserId == user.Id && m.RepeatRule == "Weekly" && m.StartTime != null)
+            .Where(m => m.StartTime!.Value.Date <= end.Date)
             .ToListAsync();
 
         weeklyMeals = weeklyMeals
@@ -155,6 +156,7 @@ public class MealRepository : Repository<Meal>, IMealRepository
             .Include(m => m.Recipes)
                 .ThenInclude(r => r.Ingredients)
             .Where(m => m.UserId == user.Id && m.RepeatRule == "Weekly" && m.StartTime != null)
+            .Where(m => m.StartTime!.Value.Date <= end.Date)
             .ToListAsync();
 
         weeklyMeals = weeklyMeals

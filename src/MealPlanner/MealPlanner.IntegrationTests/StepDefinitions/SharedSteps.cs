@@ -72,7 +72,7 @@ public class SharedSteps
         _driver.Navigate().GoToUrl($"{_baseUrl}/Login");
         _driver.FindElement(By.Id("Email")).SendKeys($"{userName}{_emailBase}");
         _driver.FindElement(By.Id("Password")).SendKeys(_userPassword);
-        _driver.FindElement(By.ClassName("btn")).Click();
+        _driver.FindElement(By.CssSelector("button[type='submit']")).Click();
         new WebDriverWait(_driver, TimeSpan.FromSeconds(10))
             .Until(d => !d.Url.Contains("/Login", StringComparison.OrdinalIgnoreCase));
     }
