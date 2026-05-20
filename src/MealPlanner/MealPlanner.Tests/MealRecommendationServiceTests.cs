@@ -18,6 +18,7 @@ public class MealRecommendationServiceTests
     private Mock<IUserFoodPreferenceRepository> _foodPrefRepoMock;
     private Mock<IPantryService> _pantryServiceMock;
     private Mock<IMealRepository> _mealRepoMock;
+    private Mock<ITagRepository> _tagRepoMock;
     private MealRecommendationService _service;
 
     private readonly User _user = new() { Id = "user-1" };
@@ -41,6 +42,9 @@ public class MealRecommendationServiceTests
         _foodPrefRepoMock = new Mock<IUserFoodPreferenceRepository>();
         _pantryServiceMock = new Mock<IPantryService>();
         _mealRepoMock = new Mock<IMealRepository>();
+        _tagRepoMock = new Mock<ITagRepository>();
+        _tagRepoMock.Setup(r => r.GetTagRarityWeightsAsync())
+                    .ReturnsAsync(new Dictionary<int, float>());
 
         _streamMock.Setup(s => s.GetRankedCandidatesAsync(It.IsAny<RecommendationContext>()))
                    .ReturnsAsync([]);
@@ -85,6 +89,7 @@ public class MealRecommendationServiceTests
             _dietaryRestrictionRepoMock.Object,
             _foodPrefRepoMock.Object,
             _mealRepoMock.Object,
+            _tagRepoMock.Object,
             [_streamMock.Object],
             _pantryServiceMock.Object);
     }
@@ -680,6 +685,7 @@ public class MealRecommendationServiceTests
             _dietaryRestrictionRepoMock.Object,
             _foodPrefRepoMock.Object,
             _mealRepoMock.Object,
+            _tagRepoMock.Object,
             [localStream.Object, externalStream.Object],
             _pantryServiceMock.Object);
 
@@ -691,6 +697,24 @@ public class MealRecommendationServiceTests
     }
 
     // --- Context construction ---
+
+    [Test]
+    public async Task BuildContext_PopulatesTagRarityWeightsFromRepository()
+    {
+        var weights = new Dictionary<int, float> { [1] = 2.3f, [2] = 0.4f };
+        _tagRepoMock
+            .Setup(r => r.GetTagRarityWeightsAsync())
+            .ReturnsAsync(weights);
+
+        RecommendationContext? captured = null;
+        _streamMock.Setup(s => s.GetRankedCandidatesAsync(It.IsAny<RecommendationContext>()))
+                   .Callback<RecommendationContext>(c => captured = c)
+                   .ReturnsAsync([]);
+
+        await _service.GetRecommendedMealsForUser(_user, DateTime.Today, SingleMealConfig());
+
+        Assert.That(captured!.User.TagRarityWeights, Is.EqualTo(weights));
+    }
 
     [Test]
     public async Task BuildContext_PopulatesUserPreferredTagIdsFromRepository()
