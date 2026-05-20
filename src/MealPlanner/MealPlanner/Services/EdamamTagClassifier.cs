@@ -1,3 +1,5 @@
+using MealPlanner.Models;
+
 namespace MealPlanner.Services;
 
 /// <summary>
@@ -65,6 +67,36 @@ public static class EdamamTagClassifier
     private static readonly Dictionary<string, string> _cuisineLookup = BuildLookup(_cuisineTypes);
     private static readonly Dictionary<string, string> _mealLookup = BuildLookup(_mealTypes);
     private static readonly Dictionary<string, string> _dishLookup = BuildLookup(_dishTypes, _dishAliases);
+
+    // Inverse of Classify: given a list of canonical Edamam category strings
+    // (a recipe's dishType / cuisineType / mealType / dietLabels / healthLabels
+    // values), returns the distinct local Tag entities whose Name would
+    // forward-classify to any of those values. Used by ExternalRecipeStream
+    // to attach local Tags onto otherwise-tagless Edamam recipes so the
+    // tag-based scorers can act on them. A local Tag whose name falls through
+    // to free text in the forward direction (no facet match) can never be
+    // resolved here.
+    public static List<Tag> ResolveLocalTags(IEnumerable<string> edamamCategories, IEnumerable<Tag> localTags)
+    {
+        var targets = edamamCategories
+            .Where(c => !string.IsNullOrWhiteSpace(c))
+            .Select(c => c.Trim())
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        if (targets.Count == 0) return [];
+
+        var matched = new List<Tag>();
+        foreach (var tag in localTags)
+        {
+            var facets = Classify([tag.Name]);
+            bool hit = facets.Diets.Any(v => targets.Contains(v))
+                    || facets.HealthLabels.Any(v => targets.Contains(v))
+                    || facets.CuisineTypes.Any(v => targets.Contains(v))
+                    || facets.MealTypes.Any(v => targets.Contains(v))
+                    || facets.DishTypes.Any(v => targets.Contains(v));
+            if (hit && !matched.Contains(tag)) matched.Add(tag);
+        }
+        return matched;
+    }
 
     public static EdamamFacetSelection Classify(IEnumerable<string> tagNames)
     {
