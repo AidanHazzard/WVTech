@@ -238,9 +238,17 @@ public class NutritionBarSteps
     [Given("{string} submits the meal form")]
     public void GivenUserSubmitsMealForm(string username)
     {
-        var btn = _driver.FindElement(By.CssSelector("button[form='createMealForm']"));
+        var btn = new WebDriverWait(_driver, TimeSpan.FromSeconds(10)).Until(d => {
+            try
+            {
+                var el = d.FindElement(By.CssSelector("button[form='createMealForm']"));
+                return (el.Displayed && el.Enabled) ? el : null;
+            }
+            catch (NoSuchElementException) { return null; }
+        })!;
         ((IJavaScriptExecutor)_driver).ExecuteScript(
             "arguments[0].scrollIntoView({block:'center',behavior:'instant'});", btn);
+        var urlBefore = _driver.Url;
         try
         {
             btn.Click();
@@ -249,9 +257,11 @@ public class NutritionBarSteps
         {
             ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].click();", btn);
         }
-        new WebDriverWait(_driver, TimeSpan.FromSeconds(10)).Until(driver =>
-            ((IJavaScriptExecutor)driver)
-                .ExecuteScript("return document.readyState").ToString() == "complete");
+        // Wait for the POST to navigate away from NewMeal before declaring done —
+        // readyState alone catches the pre-navigation "complete" state too early.
+        new WebDriverWait(_driver, TimeSpan.FromSeconds(15)).Until(d => d.Url != urlBefore);
+        new WebDriverWait(_driver, TimeSpan.FromSeconds(10)).Until(d =>
+            ((IJavaScriptExecutor)d).ExecuteScript("return document.readyState").ToString() == "complete");
     }
 
     [Given("'(.*)' marks the meal as completed")]
