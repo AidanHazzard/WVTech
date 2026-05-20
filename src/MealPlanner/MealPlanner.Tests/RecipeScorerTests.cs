@@ -84,13 +84,13 @@ public class RecipeScorerTests
     }
 
     [Test]
-    public void VotePercentageScorer_RecipeNotInDictionary_ReturnsZero()
+    public void VotePercentageScorer_RecipeNotInDictionary_ReturnsHalf()
     {
         var recipe = new Recipe { Id = 99, Tags = [] };
         var ctx = EmptyContext(percentages: []);
         var scorer = new VotePercentageScorer();
 
-        Assert.That(scorer.Score(recipe, ctx), Is.EqualTo(0f));
+        Assert.That(scorer.Score(recipe, ctx), Is.EqualTo(0.5f).Within(0.001f));
     }
 
     // --- DownVoteFilter ---
