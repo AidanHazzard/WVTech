@@ -335,6 +335,15 @@ public class MealControllerTests
         _mealRepoMock.Setup(r => r.ReadAsync(10))
             .ReturnsAsync(new Meal { Id = 10, UserId = "user-1", Title = "Breakfast" });
 
+        _mealRepoMock.Setup(r => r.RemoveAllMealsWithSameTitleAsync("user-1", "Breakfast"))
+            .Callback<string, string>((uid, title) =>
+            {
+                var toRemove = _context.Meals.Where(m => m.UserId == uid && m.Title == title).ToList();
+                _context.Meals.RemoveRange(toRemove);
+                _context.SaveChanges();
+            })
+            .Returns(Task.CompletedTask);
+
         var result = await _controller.RemoveMealTemplate(10, null);
 
         Assert.That(result, Is.TypeOf<RedirectToActionResult>());
