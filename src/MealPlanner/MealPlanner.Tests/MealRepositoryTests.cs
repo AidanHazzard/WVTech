@@ -118,6 +118,118 @@ public class MealRepositoryTests
     }
 
     [Test]
+    public async Task GetUserRecipeIdsForDateAsync_ReturnsRecipeIdsForUsersMealsOnDate()
+    {
+        using var context = CreateContext();
+        var repo = new MealRepository(context);
+        var user = context.Users.Single();
+        var expected = context.Recipes.Where(r => r.Name == "R1" || r.Name == "R2").Select(r => r.Id).ToList();
+
+        var result = await repo.GetUserRecipeIdsForDateAsync(user, DateTime.Today);
+
+        Assert.That(result, Is.EquivalentTo(expected));
+    }
+
+    [Test]
+    public async Task GetUserRecipeIdsForDateAsync_ExcludesMealsOnOtherDates()
+    {
+        using var context = CreateContext();
+        var repo = new MealRepository(context);
+        var user = context.Users.Single();
+
+        var result = await repo.GetUserRecipeIdsForDateAsync(user, DateTime.Today.AddDays(1));
+
+        Assert.That(result, Is.Empty);
+    }
+
+    [Test]
+    public async Task GetUserRecipeIdsForDateAsync_ExcludesOtherUsersMeals()
+    {
+        using var context = CreateContext();
+        context.Users.Add(new User
+        {
+            Id = "user-2", UserName = "user-2", NormalizedUserName = "USER-2",
+            Email = "u2@test.com", NormalizedEmail = "U2@TEST.COM", SecurityStamp = "stamp2"
+        });
+        var otherRecipe = new Recipe { Name = "OtherUserRecipe", Directions = "" };
+        context.Add(otherRecipe);
+        context.SaveChanges();
+        context.Add(new Meal { Title = "Other user meal", UserId = "user-2", StartTime = DateTime.Today, Recipes = [otherRecipe] });
+        context.SaveChanges();
+        var repo = new MealRepository(context);
+        var jack = context.Users.Single(u => u.Id == "user-1");
+
+        var result = await repo.GetUserRecipeIdsForDateAsync(jack, DateTime.Today);
+
+        Assert.That(result, Does.Not.Contain(otherRecipe.Id));
+    }
+
+    [Test]
+    public async Task GetUserRecipeIdsForDateAsync_ExcludesGivenMealIdWhenProvided()
+    {
+        using var context = CreateContext();
+        var repo = new MealRepository(context);
+        var user = context.Users.Single();
+        var mealAId = IdOf(context, "Meal A");
+        var r2Id = context.Recipes.Single(r => r.Name == "R2").Id;
+
+        var result = await repo.GetUserRecipeIdsForDateAsync(user, DateTime.Today, excludeMealId: mealAId);
+
+        Assert.That(result, Does.Not.Contain(context.Recipes.Single(r => r.Name == "R1").Id),
+            "Meal A's recipes must be omitted when its id is excluded");
+        Assert.That(result, Does.Contain(r2Id),
+            "Other meals' recipes remain in the result");
+    }
+
+    [Test]
+    public async Task GetUserRecipeIdsForDateAsync_ReturnsDistinctIdsWhenRecipeAppearsInMultipleMeals()
+    {
+        using var context = CreateContext();
+        var sharedRecipe = context.Recipes.Single(r => r.Name == "R1");
+        context.Add(new Meal
+        {
+            Title = "Extra meal sharing R1",
+            UserId = "user-1",
+            StartTime = DateTime.Today,
+            Recipes = [sharedRecipe]
+        });
+        context.SaveChanges();
+        var repo = new MealRepository(context);
+        var user = context.Users.Single();
+
+        var result = await repo.GetUserRecipeIdsForDateAsync(user, DateTime.Today);
+
+        Assert.That(result.Count(id => id == sharedRecipe.Id), Is.EqualTo(1),
+            "a HashSet must collapse the duplicate appearances of the same recipe id");
+    }
+
+    [Test]
+    public async Task GetUserRecipeIdsForDateAsync_IncludesWeeklyRepeatMealsMatchingDayOfWeek()
+    {
+        using var context = CreateContext();
+        var weeklyRecipe = new Recipe { Name = "Sunday Roast", Directions = "" };
+        context.Add(weeklyRecipe);
+        context.SaveChanges();
+        var anchor = DateTime.Today.AddDays(-21); // three weeks back, same day-of-week as today
+        context.Add(new Meal
+        {
+            Title = "Weekly",
+            UserId = "user-1",
+            StartTime = anchor,
+            RepeatRule = "Weekly",
+            Recipes = [weeklyRecipe]
+        });
+        context.SaveChanges();
+        var repo = new MealRepository(context);
+        var user = context.Users.Single();
+
+        var result = await repo.GetUserRecipeIdsForDateAsync(user, DateTime.Today);
+
+        Assert.That(result, Does.Contain(weeklyRecipe.Id),
+            "weekly meals matching the queried date's day-of-week must contribute their recipe ids");
+    }
+
+    [Test]
     public void CreateOrUpdate_NewExternalRecipe_CachesUriOnlyShell()
     {
         using var context = CreateContext();
