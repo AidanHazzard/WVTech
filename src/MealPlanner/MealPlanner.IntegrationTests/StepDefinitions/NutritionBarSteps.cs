@@ -11,6 +11,7 @@ public class NutritionBarSteps
     IWebDriver _driver;
     string _baseUrl;
     DateTime? _mealDate;
+    readonly Dictionary<(string user, string recipe), int> _recipeIds = [];
 
     [Given("{string} has no meals")]
     public void GivenUserHasNoMeals(string username)
@@ -33,7 +34,7 @@ public class NutritionBarSteps
         string username, string recipeName, int calories, int protein, int fat, int carbs)
     {
         using var ctx = BDDSetup.CreateContext();
-        ctx.Set<Recipe>().Add(new Recipe
+        var recipe = new Recipe
         {
             Name = recipeName,
             Directions = "Test directions",
@@ -41,8 +42,10 @@ public class NutritionBarSteps
             Protein = protein,
             Fat = fat,
             Carbs = carbs
-        });
+        };
+        ctx.Set<Recipe>().Add(recipe);
         ctx.SaveChanges();
+        _recipeIds[(username, recipeName)] = recipe.Id;
     }
 
     [Given("{string} has a completed meal {string} today with recipe {string}")]
@@ -50,7 +53,8 @@ public class NutritionBarSteps
     {
         using var ctx = BDDSetup.CreateContext();
         var userId = SharedSteps.Users[username].Id;
-        var recipe = ctx.Set<Recipe>().Single(r => r.Name == recipeName);
+        var recipeId = _recipeIds[(username, recipeName)];
+        var recipe = ctx.Set<Recipe>().Single(r => r.Id == recipeId);
         var today = DateTime.Today;
 
         var meal = new Meal
