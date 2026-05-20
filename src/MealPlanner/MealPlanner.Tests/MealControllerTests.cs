@@ -310,6 +310,63 @@ public class MealControllerTests
         Assert.That(result, Is.TypeOf<NotFoundResult>());
     }
 
+    // RemoveMealTemplate
+
+    [Test]
+    public async Task RemoveMealTemplate_WhenMealBelongsToUser_DeletesAllMealsWithSameTitle_AndRedirectsToSelectMeal()
+    {
+        _context.Users.Add(new User
+        {
+            Id = "user-1",
+            UserName = "testuser",
+            NormalizedUserName = "TESTUSER",
+            Email = "test@test.com",
+            NormalizedEmail = "TEST@TEST.COM",
+            ConcurrencyStamp = "stamp",
+            SecurityStamp = "sec-stamp"
+        });
+        _context.Meals.AddRange(
+            new Meal { Id = 10, UserId = "user-1", Title = "Breakfast" },
+            new Meal { Id = 11, UserId = "user-1", Title = "Breakfast" },
+            new Meal { Id = 12, UserId = "user-1", Title = "Lunch" }
+        );
+        _context.SaveChanges();
+
+        _mealRepoMock.Setup(r => r.ReadAsync(10))
+            .ReturnsAsync(new Meal { Id = 10, UserId = "user-1", Title = "Breakfast" });
+
+        var result = await _controller.RemoveMealTemplate(10, null);
+
+        Assert.That(result, Is.TypeOf<RedirectToActionResult>());
+        var redirect = (RedirectToActionResult)result;
+        Assert.That(redirect.ActionName, Is.EqualTo("SelectMeal"));
+
+        var remaining = _context.Meals.ToList();
+        Assert.That(remaining.Count, Is.EqualTo(1));
+        Assert.That(remaining[0].Title, Is.EqualTo("Lunch"));
+    }
+
+    [Test]
+    public async Task RemoveMealTemplate_WhenMealNotFound_ReturnsNotFound()
+    {
+        _mealRepoMock.Setup(r => r.ReadAsync(999)).ReturnsAsync((Meal)null!);
+
+        var result = await _controller.RemoveMealTemplate(999, null);
+
+        Assert.That(result, Is.TypeOf<NotFoundResult>());
+    }
+
+    [Test]
+    public async Task RemoveMealTemplate_WhenMealBelongsToDifferentUser_ReturnsNotFound()
+    {
+        var otherMeal = new Meal { Id = 20, UserId = "other-user", Title = "Stolen" };
+        _mealRepoMock.Setup(r => r.ReadAsync(20)).ReturnsAsync(otherMeal);
+
+        var result = await _controller.RemoveMealTemplate(20, null);
+
+        Assert.That(result, Is.TypeOf<NotFoundResult>());
+    }
+
     // MealSize enum
 
     [Test]
