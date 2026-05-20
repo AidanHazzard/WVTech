@@ -256,16 +256,20 @@ public class NutritionBarSteps
     public void GivenUserMarksTheMealAsCompleted(string user)
     {
         var today = DateTime.Today.ToString("yyyy-MM-dd");
-        _driver.Navigate().GoToUrl($"{_baseUrl}/Meal/PlannerHome?date={today}");
+        _driver.Navigate().GoToUrl($"{_baseUrl}/?date={today}");
         new WebDriverWait(_driver, TimeSpan.FromSeconds(10)).Until(d =>
             ((IJavaScriptExecutor)d).ExecuteScript("return document.readyState").ToString() == "complete");
 
+        // The new Home/Index UI renders the checkbox with appearance:none overlaid on a button
         var checkbox = new WebDriverWait(_driver, TimeSpan.FromSeconds(5))
-            .Until(d => d.FindElement(By.CssSelector("input[type='checkbox'][name='isCompleted']")));
+            .Until(d => {
+                try { return d.FindElement(By.CssSelector(".MealCheckBox")); }
+                catch (NoSuchElementException) { return null; }
+            });
 
-        checkbox.Click();
+        ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].click();", checkbox);
 
-        // Wait for readyState to leave "complete" (form submit navigation started)
+        // Wait for navigation to start (form.submit()), then complete
         try
         {
             new WebDriverWait(_driver, TimeSpan.FromSeconds(3))
@@ -273,10 +277,9 @@ public class NutritionBarSteps
         }
         catch (WebDriverTimeoutException) { }
 
-        // Wait for the POST + redirect to fully complete back on PlannerHome
         new WebDriverWait(_driver, TimeSpan.FromSeconds(10)).Until(d =>
             ((IJavaScriptExecutor)d).ExecuteScript("return document.readyState").ToString() == "complete"
-            && d.FindElements(By.CssSelector("input[type='checkbox'][name='isCompleted']")).Count > 0);
+            && d.FindElements(By.CssSelector(".MealCheckBox")).Count > 0);
     }
 
     [Then("Meal Bars callories are at {int}\\/{int}")]

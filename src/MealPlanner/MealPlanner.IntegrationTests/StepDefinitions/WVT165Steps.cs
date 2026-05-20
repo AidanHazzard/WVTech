@@ -250,7 +250,14 @@ public class WVT165Steps
     [When("'Frank' clicks cancel on the in-app confirmation")]
     public void WhenFrankClicksCancelOnConfirmation()
     {
-        var cancelBtn = _wait.Until(d => d.FindElement(By.CssSelector(".inline-confirm-no")));
+        var cancelBtn = _wait.Until(d => {
+            try
+            {
+                var el = d.FindElement(By.CssSelector(".inline-confirm-no"));
+                return el.Displayed ? el : null;
+            }
+            catch (NoSuchElementException) { return null; }
+        });
         cancelBtn.Click();
     }
 

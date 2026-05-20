@@ -110,17 +110,9 @@ public class FoodEntriesController : Controller
             vm.VotePercentage = await _userRecipeRepository.GetRecipeVotePercentage(vm.Id ?? 0);
         }
 
-        var recentIds = GetRecentRecipeIds();
-        var recentVMs = recentIds
-            .Select(id => recipeVMs.FirstOrDefault(r => r.Id == id))
-            .Where(r => r != null)
-            .Cast<RecipeViewModel>()
-            .ToList();
-
         return View(new RecipesAndShoppingViewModel
         {
             Recipes = recipeVMs,
-            RecentRecipes = recentVMs,
         });
     }
 
@@ -161,32 +153,7 @@ public class FoodEntriesController : Controller
             viewModel.IsOwned = ownedRecipes.Any(r => r.Id == id);
         }
         
-        var recentIds = GetRecentRecipeIds();
-        recentIds = recentIds.Where(x => x != id).Prepend(id).Take(5).ToList();
-        SetRecentRecipeIds(recentIds);
-
         return View("SingleRecipe", viewModel);
-    }
-
-    private const string RecentsCookieKey = "RecentRecipes";
-
-    private List<int> GetRecentRecipeIds()
-    {
-        var cookie = Request.Cookies[RecentsCookieKey] ?? "";
-        return cookie.Split(',', StringSplitOptions.RemoveEmptyEntries)
-            .Select(s => int.TryParse(s, out var n) ? n : 0)
-            .Where(n => n > 0)
-            .ToList();
-    }
-
-    private void SetRecentRecipeIds(List<int> ids)
-    {
-        Response.Cookies.Append(RecentsCookieKey, string.Join(",", ids), new Microsoft.AspNetCore.Http.CookieOptions
-        {
-            Expires = DateTimeOffset.UtcNow.AddDays(30),
-            HttpOnly = true,
-            SameSite = Microsoft.AspNetCore.Http.SameSiteMode.Strict
-        });
     }
 
     public async Task<IActionResult> AddNewRecipe()
