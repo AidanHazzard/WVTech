@@ -36,6 +36,20 @@ public class WVT62Steps
         }
     }
 
+    // The settings page defaults to the profile section; WVT62 scenarios all need the food
+    // section. After any step that lands on /UserSettings without ?section=food, redirect there.
+    [AfterStep]
+    public void EnsureFoodSectionActive()
+    {
+        if (_driver == null) return;
+        if (_driver.Url.Contains("/UserSettings") && !_driver.Url.Contains("section=food"))
+        {
+            _driver.Navigate().GoToUrl($"{_baseUrl}/UserSettings?section=food");
+            new WebDriverWait(_driver, TimeSpan.FromSeconds(5)).Until(d =>
+                ((IJavaScriptExecutor)d).ExecuteScript("return document.readyState").ToString() == "complete");
+        }
+    }
+
     [Given("Onebite has at least 2 tags")]
     public void GivenOnebiteHasAtLeast2Tags()
     {
