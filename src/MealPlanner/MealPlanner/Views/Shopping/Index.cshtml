@@ -4,45 +4,56 @@
     ViewData["Title"] = "Shopping List";
 }
 
-<div class="back1">
-    <h1 class="back1Title">Shopping List</h1>
+<link rel="stylesheet" href="~/css/shopping-shared.css" asp-append-version="true" />
+<link rel="stylesheet" href="~/css/shopping.css" asp-append-version="true" />
 
+<a href="/" class="page-back-link">
+    <i class="ti ti-arrow-left"></i>
+    Back
+</a>
+
+<div class="sl-page">
+
+    <!-- Header -->
+    <div class="sl-header">
+        <h1 class="sl-title">Shopping List</h1>
+        <span class="sl-date-label">@DateTime.Today.ToString("MMM d, yyyy")</span>
+    </div>
+
+    <!-- Alerts -->
     @if (TempData["ShoppingListError"] != null)
     {
-        <div class="alert alert-danger text-center">
-            @TempData["ShoppingListError"]
-        </div>
+        <div class="sl-alert sl-alert-danger">@TempData["ShoppingListError"]</div>
     }
-
     @if (TempData["KrogerError"] != null)
     {
-        <div class="alert alert-danger text-center">
-            @TempData["KrogerError"]
-        </div>
+        <div class="sl-alert sl-alert-danger">@TempData["KrogerError"]</div>
     }
-
     @if (TempData["KrogerInfo"] != null)
     {
-        <div class="alert alert-info text-center">
-            @TempData["KrogerInfo"]
-        </div>
+        <div class="sl-alert sl-alert-info">@TempData["KrogerInfo"]</div>
     }
 
-    <form asp-action="SetDateRange" method="post" class="mb-4" id="dateRangeForm">
+    <!-- Date range -->
+    <form asp-action="SetDateRange" method="post" class="sl-date-row" id="dateRangeForm">
         @Html.AntiForgeryToken()
-        <div class="d-flex gap-3 align-items-center flex-wrap">
-            <input type="date" name="dateFrom" value="@Model.DateFrom.ToString("yyyy-MM-dd")" class="back2-textbox date-range-input" />
-            <span>to</span>
-            <input type="date" name="dateTo" value="@Model.DateTo.ToString("yyyy-MM-dd")" class="back2-textbox date-range-input" />
-        </div>
+        <input type="date" name="dateFrom"
+               value="@Model.DateFrom.ToString("yyyy-MM-dd")"
+               class="sl-date-input date-range-input" />
+        <span class="sl-date-sep">to</span>
+        <input type="date" name="dateTo"
+               value="@Model.DateTo.ToString("yyyy-MM-dd")"
+               class="sl-date-input date-range-input" />
     </form>
 
-    <form asp-action="AddItem" method="post" class="mb-4">
-        @Html.AntiForgeryToken()
-        <div class="d-flex align-items-center flex-wrap gap-1">
-            <input type="number" class="back2-textbox-partial" name="amount" placeholder="0" min="0" step="any" style="min-width: 70px; width: 70px; flex-shrink: 0;" />
-            <select class="back2-textbox-partial" name="measurement" style="min-width: 110px; flex-shrink: 0;">
-                <option value="" selected>Select</option>
+    <!-- Add item -->
+    <div class="sl-card sl-add-card">
+        <form asp-action="AddItem" method="post" class="sl-add-row">
+            @Html.AntiForgeryToken()
+            <input type="number" name="amount" class="sl-input sl-qty-field"
+                   placeholder="0" min="0" step="any" />
+            <select name="measurement" class="sl-input sl-unit-select">
+                <option value="Unit">Unit</option>
                 <option value="Count">Count</option>
                 <option value="Cup(s)">Cup(s)</option>
                 <option value="Ounce(s)">Ounce(s)</option>
@@ -50,40 +61,53 @@
                 <option value="L">L</option>
                 <option value="KG">KG</option>
             </select>
-            <input type="text" class="back2-textbox-partial" name="itemName" placeholder="Enter Ingredient" required style="min-width: 150px; flex: 1 1 150px;" />
-            <button type="submit" class="btn btn-success rounded-4 px-4" style="flex-shrink: 0;">Add Item</button>
-        </div>
-    </form>
+            <input type="text" name="itemName" class="sl-input sl-name-field"
+                   placeholder="Ingredient name" required />
+            <button type="submit" class="sl-add-btn">Add item</button>
+        </form>
+    </div>
 
-    <div class="back2">
+    <!-- Items list card -->
+    <div class="sl-card back2">
         @if (Model.Items.Any())
         {
-            <div class="d-flex flex-column gap-3">
+            <div id="shoppingItems">
                 @foreach (var item in Model.Items)
                 {
-                    <div class="d-flex justify-content-between align-items-center gap-2">
-                        <span class="fs-5 item-display flex-grow-1"
+                    <div class="sl-item-row d-flex gap-2">
+                        <span class="item-display sl-item-name"
                               data-amount="@item.Amount.ToString(System.Globalization.CultureInfo.InvariantCulture)"
                               data-measurement="@item.Measurement.Name"
-                              data-name="@item.IngredientBase.Name">@($"{item.Amount:G} {item.Measurement.Name} of {item.IngredientBase.Display()}")</span>
-                        <form asp-action="UpdateItemAmount" method="post" class="d-flex align-items-center gap-2 m-0">
-                            @Html.AntiForgeryToken()
-                            <input type="hidden" name="ingredientBaseId" value="@item.IngredientBase.Id" />
-                            <input type="number"
-                                   name="newAmount"
-                                   value="@item.Amount.ToString(System.Globalization.CultureInfo.InvariantCulture)"
-                                   min="0"
-                                   step="any"
-                                   class="back2-textbox-partial qty-input"
-                                   style="width: 80px"
-                                   data-original="@item.Amount.ToString(System.Globalization.CultureInfo.InvariantCulture)" />
-                            <button type="submit" class="btn btn-primary btn-sm rounded-4 px-3 qty-save" style="display:none">Save</button>
-                        </form>
-                        <form asp-action="RemoveItem" method="post" class="m-0">
-                            @Html.AntiForgeryToken()
-                            <input type="hidden" name="itemId" value="@item.Id" />
-                            <button type="submit" class="btn btn-danger delete-recipe-btn">X</button>
-                        </form>
+                              data-name="@item.IngredientBase.Name">
+                            @item.IngredientBase.Display()
+                        </span>
+                        <div class="sl-item-right">
+                            <form asp-action="UpdateItemAmount" method="post" class="sl-qty-form">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="ingredientBaseId" value="@item.IngredientBase.Id" />
+                                <input type="number"
+                                       name="newAmount"
+                                       value="@item.Amount.ToString(System.Globalization.CultureInfo.InvariantCulture)"
+                                       min="0"
+                                       step="any"
+                                       class="qty-input sl-qty-pill-input"
+                                       data-original="@item.Amount.ToString(System.Globalization.CultureInfo.InvariantCulture)" />
+                                <span class="sl-qty-unit">@item.Measurement.Name</span>
+                                <button type="submit" class="qty-save sl-qty-save-btn" style="display:none">Save</button>
+                            </form>
+                            <form asp-action="RemoveItem" method="post" class="sl-remove-form">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="itemId" value="@item.Id" />
+                                <button type="submit" class="sl-remove-btn" title="Remove item">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24"
+                                         fill="none" stroke="currentColor" stroke-width="2.5"
+                                         stroke-linecap="round" stroke-linejoin="round">
+                                        <line x1="18" y1="6" x2="6" y2="18"/>
+                                        <line x1="6" y1="6" x2="18" y2="18"/>
+                                    </svg>
+                                </button>
+                            </form>
+                        </div>
                     </div>
                 }
             </div>
@@ -92,84 +116,83 @@
         {
             @if (TempData["KrogerSuccess"] != null)
             {
-                <p class="text-center fs-5 mb-0">@TempData["KrogerSuccess"]</p>
+                <p class="sl-empty">@TempData["KrogerSuccess"]</p>
             }
             else
             {
-                <p class="text-center fs-5 mb-0">No items in your shopping list yet.</p>
+                <p class="sl-empty">No items in your shopping list yet.</p>
             }
         }
     </div>
-</div>
 
-    <div class="back2 mt-4 p-3">
-        <div class="d-flex justify-content-between align-items-center mb-3">
-            <h4 class="back1Title mb-0">Export to Kroger</h4>
-            <button type="button" id="previousExportsBtn" class="btn btn-primary rounded-4 px-3" style="font-size:0.9rem">
-                Previous Exports
-            </button>
+    <!-- Kroger export card -->
+    <div class="sl-card sl-kroger-card">
+        <div class="sl-kroger-header">
+            <span class="sl-kroger-title">Export to Kroger</span>
+            <button type="button" id="previousExportsBtn" class="sl-ghost-btn">Previous Exports</button>
         </div>
+        <div class="sl-kroger-body">
+            @if (Model.KrogerConnected)
+            {
+                <p class="sl-connected-badge">&#10003; Kroger account connected</p>
+            }
 
-        @if (Model.KrogerConnected)
-        {
-            <p class="mb-3">&#10003; Kroger account connected</p>
-        }
+            @if (!Model.Items.Any())
+            {
+                <p class="sl-kroger-empty">Add items to your shopping list to export to Kroger.</p>
+            }
+            else
+            {
+                <div class="sl-find-row">
+                    <input type="text" id="ZipCode" value="@Model.ZipCode"
+                           placeholder="Zip code" maxlength="10"
+                           class="sl-input sl-zip-input" />
+                    <button type="button" id="findKrogerStores" class="sl-find-btn">Find Stores</button>
+                </div>
 
-        @if (!Model.Items.Any())
-        {
-            <p class="text-muted fst-italic">Add items to your shopping list to export to Kroger.</p>
-        }
-        else
-        {
-            <div class="d-flex gap-2 align-items-center flex-wrap mb-3">
-                <input type="text"
-                       id="ZipCode"
-                       value="@Model.ZipCode"
-                       placeholder="Zip code"
-                       maxlength="10"
-                       class="back2-textbox-partial"
-                       style="width:130px" />
-                <button type="button" id="findKrogerStores" class="btn btn-primary rounded-4 px-3">
-                    Find Stores
-                </button>
-            </div>
-
-            <div id="krogerStoreSection" style="display:none">
-                <p id="krogerStoreMessage" class="mb-2 fw-semibold" style="display:none"></p>
-                <form asp-controller="Kroger" asp-action="Export" method="post" id="krogerExportForm">
-                    @Html.AntiForgeryToken()
-                    <input type="hidden" id="zipCodeHidden" name="zipCode" />
-                    <select id="krogerStoreSelect" name="storeId" class="back2-textbox-partial mb-3 rounded-4" style="width:100%;max-width:520px;padding:0.5rem 1rem;font-size:1rem;height:auto"></select>
-                    <div>
-                        <button type="submit" id="exportToKroger" class="btn btn-success rounded-4 px-4">
-                            Export to Kroger Cart
+                <div id="krogerStoreSection" style="display:none">
+                    <p id="krogerStoreMessage" class="sl-store-msg" style="display:none"></p>
+                    <form asp-controller="Kroger" asp-action="Export" method="post" id="krogerExportForm">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" id="zipCodeHidden" name="zipCode" />
+                        <select id="krogerStoreSelect" name="storeId"
+                                class="sl-input sl-store-select" style="margin-bottom:12px"></select>
+                        <button type="submit" id="exportToKroger" class="sl-export-btn">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                                 fill="none" stroke="currentColor" stroke-width="2"
+                                 stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                                <polyline points="9 22 9 12 15 12 15 22"/>
+                            </svg>
+                            Export to Kroger
                         </button>
-                        <span id="exportSpinner" style="display:none" class="text-muted fst-italic ms-2">Exporting...</span>
-                    </div>
-                </form>
-            </div>
-        }
+                        <span id="exportSpinner" style="display:none" class="sl-spinner">Exporting...</span>
+                    </form>
+                </div>
+            }
+        </div>
     </div>
+
 </div>
 
 <!-- Export History Modal -->
-<div id="exportHistoryModal" class="export-modal-overlay">
-    <div class="export-modal-panel back1 p-4 rounded-4">
-        <div class="export-modal-header d-flex justify-content-between align-items-center mb-3">
-            <h5 class="back1Title mb-0">Previous Exports</h5>
-            <button type="button" id="closeExportHistory" class="btn btn-sm rounded-4 px-3 export-grey-btn">&#10005;</button>
+<div id="exportHistoryModal" class="sl-modal-overlay">
+    <div class="sl-modal-panel">
+        <div class="sl-modal-header">
+            <h5 class="sl-modal-title">Previous Exports</h5>
+            <button type="button" id="closeExportHistory" class="sl-modal-close">&#10005;</button>
         </div>
-        <div id="exportHistoryBody" class="export-modal-body">
-            <p class="text-center text-muted fst-italic">Loading...</p>
+        <div id="exportHistoryBody" class="sl-modal-body">
+            <p class="sl-empty">Loading...</p>
         </div>
     </div>
 </div>
 
 <!-- Templates for export history (cloned by krogerHistory.js) -->
 <template id="tmpl-export-entry">
-    <div class="export-history-entry back2 p-3 mb-2 rounded-4">
+    <div class="export-history-entry">
         <div class="d-flex justify-content-between align-items-center">
-            <span class="fw-semibold fs-6 js-entry-label"></span>
+            <span class="fw-semibold fs-6 js-entry-label" style="font-size:13px;color:var(--text-primary)"></span>
             <span class="export-history-time js-entry-time"></span>
             <span class="export-history-chevron ms-2">&#9660;</span>
         </div>
@@ -179,21 +202,21 @@
 
 <template id="tmpl-export-controls">
     <div class="d-flex gap-2 mb-1">
-        <button type="button" class="btn btn-sm rounded-4 px-2 select-all-btn export-grey-btn export-ctrl-btn">Select All</button>
-        <button type="button" class="btn btn-sm rounded-4 px-2 deselect-all-btn export-grey-btn export-ctrl-btn">Deselect All</button>
+        <button type="button" class="select-all-btn export-ctrl-btn">Select All</button>
+        <button type="button" class="deselect-all-btn export-ctrl-btn">Deselect All</button>
     </div>
 </template>
 
 <template id="tmpl-export-item">
     <div class="d-flex align-items-center gap-2 py-1 export-item-row">
-        <input type="checkbox" class="form-check-input re-export-checkbox export-item-checkbox mt-0 flex-shrink-0" checked />
-        <span class="flex-grow-1 js-item-label"></span>
+        <input type="checkbox" class="re-export-checkbox export-item-checkbox mt-0 flex-shrink-0" checked />
+        <span class="flex-grow-1 js-item-label" style="font-size:13px;color:var(--text-primary)"></span>
     </div>
 </template>
 
 <template id="tmpl-export-footer">
     <div class="d-flex align-items-center gap-2 mt-2">
-        <button class="btn btn-sm rounded-4 px-3 add-to-list-btn export-grey-btn">Add to Shopping List</button>
+        <button class="add-to-list-btn">Add to Shopping List</button>
         <span class="add-to-list-status export-status-text"></span>
     </div>
 </template>
@@ -204,6 +227,12 @@
 
 <script>
     window.krogerLastStoreId = '@Model.LastStoreId';
+    document.addEventListener('DOMContentLoaded', function () {
+        document.getElementById('cartDropdown')?.classList.remove('open');
+    });
+    window.addEventListener('pageshow', function () {
+        document.getElementById('cartDropdown')?.classList.remove('open');
+    });
 </script>
 <script src="~/js/shoppingList.js"></script>
 <script src="~/js/krogerHistory.js"></script>

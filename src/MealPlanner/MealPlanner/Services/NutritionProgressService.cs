@@ -83,7 +83,8 @@ public class NutritionProgressService : INutritionProgressService
                 g.Sum(mc => mc.Meal.Recipes.Sum(r => r.Calories)),
                 g.Sum(mc => mc.Meal.Recipes.Sum(r => r.Protein)),
                 g.Sum(mc => mc.Meal.Recipes.Sum(r => r.Carbs)),
-                g.Sum(mc => mc.Meal.Recipes.Sum(r => r.Fat))
+                g.Sum(mc => mc.Meal.Recipes.Sum(r => r.Fat)),
+                g.Count()
             ));
 
         var result = new List<DailyNutritionDto>();

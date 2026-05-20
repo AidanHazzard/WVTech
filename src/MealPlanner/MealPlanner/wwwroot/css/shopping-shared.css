@@ -1,0 +1,241 @@
+/* ══════════════════════════════════════════════════════════════
+   Shared design tokens + components for Shopping & Pantry pages
+   ══════════════════════════════════════════════════════════════ */
+
+/* ── Design tokens (dark default) ───────────────────────────── */
+.sl-page,
+.pantry-page,
+.sl-modal-overlay {
+    --bg1:        #1a1a1a;
+    --bg2:        #242424;
+    --bg3:        #2e2e2e;
+    --bg-hover:   #3a3a3a;
+    --border:     rgba(255, 255, 255, 0.08);
+    --teal:       #2EC99A;
+    --teal-bg:    #0d2e22;
+    --teal-mid:   #1a5c40;
+    --teal-dim:   #26b389;
+    --text1:      #f0f0f0;
+    --text2:      #a0a0a0;
+    --text3:      #555;
+}
+
+/* ── Light mode overrides ────────────────────────────────────── */
+[data-theme="light"] .sl-page,
+[data-theme="light"] .pantry-page,
+[data-theme="light"] .sl-modal-overlay {
+    --bg1:        #ffffff;
+    --bg2:        #f0f0f0;
+    --bg3:        #f5f5f5;
+    --bg-hover:   #e8e8e8;
+    --border:     rgba(0, 0, 0, 0.1);
+    --text1:      #1a1a1a;
+    --text2:      #666666;
+    --text3:      #999999;
+}
+
+/* ── Cards ───────────────────────────────────────────────────── */
+.sl-card,
+.pantry-card {
+    background-color: var(--bg1);
+    border: 0.5px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+/* ── Inputs ──────────────────────────────────────────────────── */
+.sl-input,
+.sl-date-input,
+.pantry-input {
+    background-color: var(--bg3);
+    color: var(--text1);
+    border: 0.5px solid var(--border);
+    border-radius: 8px;
+    padding: 9px 12px;
+    font-size: 13px;
+    outline: none;
+    box-sizing: border-box;
+    transition: border-color 0.15s;
+}
+
+.sl-input:focus,
+.sl-date-input:focus,
+.pantry-input:focus {
+    border-color: var(--teal);
+}
+
+.sl-input::placeholder,
+.sl-date-input::placeholder,
+.pantry-input::placeholder {
+    color: var(--text2);
+}
+
+.sl-input option,
+.pantry-input option {
+    background-color: var(--bg3);
+    color: var(--text1);
+}
+
+/* ── Teal buttons ────────────────────────────────────────────── */
+.sl-add-btn,
+.sl-export-btn,
+.pantry-add-btn {
+    background-color: var(--teal);
+    color: var(--teal-bg);
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.15s;
+}
+
+.sl-add-btn:hover,
+.pantry-add-btn:hover {
+    background-color: var(--teal-dim);
+}
+
+.sl-qty-save-btn,
+.pantry-qty-save-btn {
+    background-color: var(--teal);
+    color: var(--teal-bg);
+    border: none;
+    border-radius: 6px;
+    font-size: 11px;
+    cursor: pointer;
+    transition: background-color 0.15s;
+}
+
+.sl-qty-save-btn:hover,
+.pantry-qty-save-btn:hover {
+    background-color: var(--teal-dim);
+}
+
+/* ── Ghost buttons ───────────────────────────────────────────── */
+.sl-ghost-btn,
+.sl-find-btn,
+.sl-modal-close,
+.export-ctrl-btn,
+.add-to-list-btn {
+    background-color: var(--bg3);
+    color: var(--text2);
+    border: 0.5px solid var(--border);
+    border-radius: 8px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: background-color 0.15s, color 0.15s;
+}
+
+.sl-ghost-btn:hover,
+.sl-find-btn:hover,
+.sl-modal-close:hover,
+.export-ctrl-btn:hover,
+.add-to-list-btn:hover {
+    background-color: var(--bg-hover);
+    color: var(--text1);
+}
+
+/* ── Remove buttons ──────────────────────────────────────────── */
+.sl-remove-btn,
+.pantry-remove-btn {
+    width: 22px;
+    height: 22px;
+    border-radius: 9999px;
+    border: none;
+    background-color: rgba(239, 68, 68, 0.15);
+    color: #f87171;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    padding: 0;
+    transition: background-color 0.15s;
+}
+
+.sl-remove-btn:hover,
+.pantry-remove-btn:hover {
+    background-color: rgba(239, 68, 68, 0.3);
+    color: #ef4444;
+}
+
+/* ── Qty pill inputs ─────────────────────────────────────────── */
+.sl-qty-pill-input {
+    width: 52px;
+    flex-shrink: 0;
+    background-color: var(--bg3);
+    border: 0.5px solid transparent;
+    border-radius: 6px;
+    color: var(--text2);
+    font-size: 13px;
+    padding: 3px 8px;
+    outline: none;
+    text-align: right;
+    box-sizing: border-box;
+    transition: border-color 0.15s;
+    -moz-appearance: textfield;
+}
+
+.pantry-qty-pill-input {
+    width: 52px;
+    background-color: var(--bg3);
+    border: 0.5px solid transparent;
+    border-radius: 6px;
+    color: var(--text2);
+    font-size: 13px;
+    padding: 3px 8px;
+    outline: none;
+    text-align: right;
+    box-sizing: border-box;
+    transition: border-color 0.15s;
+    -moz-appearance: textfield;
+}
+
+.sl-qty-pill-input::-webkit-inner-spin-button,
+.sl-qty-pill-input::-webkit-outer-spin-button,
+.pantry-qty-pill-input::-webkit-inner-spin-button,
+.pantry-qty-pill-input::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+}
+
+.sl-qty-pill-input:focus,
+.pantry-qty-pill-input:focus {
+    border-color: var(--teal);
+}
+
+/* ── Qty unit labels ─────────────────────────────────────────── */
+.sl-qty-unit {
+    width: 90px;
+    flex-shrink: 0;
+    font-size: 12px;
+    color: var(--text3);
+    padding-left: 8px;
+    text-align: left;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.pantry-qty-unit {
+    width: 90px;
+    flex-shrink: 0;
+    font-size: 12px;
+    color: var(--text3);
+    padding-left: 8px;
+    text-align: left;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* ── Item name text ──────────────────────────────────────────── */
+.sl-item-name,
+.pantry-item-name {
+    font-size: 13px;
+    color: var(--text1);
+    flex: 1;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}

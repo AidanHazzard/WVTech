@@ -1,11 +1,9 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using MealPlanner.Models;
 using MealPlanner.ViewModels;
 using MealPlanner.DAL.Abstract;
-using MealPlanner.DAL.Concrete;
 using MealPlanner.Services;
 using Microsoft.AspNetCore.Identity;
 
@@ -15,33 +13,61 @@ namespace MealPlanner.Controllers
     [Authorize]
     public class UserSettingsController : Controller
     {
-        private readonly MealPlannerDBContext _db;
         private readonly IUserSettingsRepository _userSettings;
         private readonly IUserSettingsService _userSettingsService;
         private readonly ITagRepository _tagRepository;
         private readonly IUserFoodPreferenceRepository _foodPrefRepository;
+        private readonly IUserNutritionPreferenceRepository _nutritionPrefRepository;
+        private readonly IUserDietaryRestrictionRepository _userDietaryRestrictionRepository;
+        private readonly UserManager<User> _userManager;
 
-        public UserSettingsController(MealPlannerDBContext db, IUserSettingsRepository userSettings, IUserSettingsService userSettingsService, ITagRepository tagRepository, IUserFoodPreferenceRepository foodPrefRepository)
+        public UserSettingsController(IUserSettingsRepository userSettings, IUserSettingsService userSettingsService, ITagRepository tagRepository, IUserFoodPreferenceRepository foodPrefRepository, IUserNutritionPreferenceRepository nutritionPrefRepository, IUserDietaryRestrictionRepository userDietaryRestrictionRepository, UserManager<User> userManager)
         {
-            _db = db;
             _userSettings = userSettings;
             _userSettingsService = userSettingsService;
             _tagRepository = tagRepository;
             _foodPrefRepository = foodPrefRepository;
+            _nutritionPrefRepository = nutritionPrefRepository;
+            _userDietaryRestrictionRepository = userDietaryRestrictionRepository;
+            _userManager = userManager;
         }
 
         [HttpGet]
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string section = "profile")
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (string.IsNullOrEmpty(userId)) return Challenge();
 
-            var vm = new FoodPreferenceViewModel
+            var currentPrefs   = await _foodPrefRepository.GetFoodPreferenceNamesAsync(userId);
+            var availableTags  = await _tagRepository.GetTagNamesAsync();
+            var nutritionPref    = await _nutritionPrefRepository.GetUsersNutritionPreferenceAsync(userId);
+            var allRestrictions  = await _userDietaryRestrictionRepository.GetAllDietaryRestrictionsAsync();
+            var selectedIds      = (await _userDietaryRestrictionRepository.GetByUserIdAsync(userId))
+                                       .Select(x => x.DietaryRestrictionId)
+                                       .ToList();
+
+            var user = await _userManager.FindByIdAsync(userId);
+            var profile = await _userSettings.GetByUserIdAsync(userId);
+
+            return View(new SettingsViewModel
             {
-                CurrentPreferences = await _foodPrefRepository.GetFoodPreferenceNamesAsync(userId),
-                AvailableTags = await _tagRepository.GetTagNamesAsync()
-            };
-            return View(vm);
+                CurrentPreferences = currentPrefs,
+                AvailableTags     = availableTags,
+                CalorieTarget     = nutritionPref?.CalorieTarget,
+                ProteinTarget     = nutritionPref?.ProteinTarget,
+                CarbTarget        = nutritionPref?.CarbTarget,
+                FatTarget         = nutritionPref?.FatTarget,
+                Restrictions      = allRestrictions.Select(r => new DietaryRestrictionOptionViewModel
+                {
+                    DietaryRestrictionId = r.Id,
+                    Name       = r.Name ?? "",
+                    IsSelected = selectedIds.Contains(r.Id)
+                }).ToList(),
+                ActiveSection     = section,
+                FullName          = user?.FullName ?? "",
+                ProfilePictureUrl = profile?.ProfilePictureUrl,
+                DisplayHandle     = profile?.DisplayHandle
+            });
         }
 
         [HttpPost]
@@ -54,7 +80,7 @@ namespace MealPlanner.Controllers
             if (vm.NewPreferences.Count > 0)
                 await _foodPrefRepository.AddFoodPreferencesAsync(userId, vm.NewPreferences);
 
-            _db.SaveChanges();
+            if (TempData is not null) TempData["Message"] = "Food preferences saved.";
             return RedirectToAction(nameof(Index));
         }
 
@@ -66,7 +92,6 @@ namespace MealPlanner.Controllers
             if (string.IsNullOrEmpty(userId)) return Challenge();
 
             await _foodPrefRepository.RemoveFoodPreferenceAsync(userId, tagName);
-            _db.SaveChanges();
             return RedirectToAction(nameof(Index));
         }
 
@@ -96,35 +121,54 @@ namespace MealPlanner.Controllers
             return Ok();
         }
 
-        [HttpGet]
-        public async Task<IActionResult> Dietary()
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileViewModel model)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (string.IsNullOrEmpty(userId))
+            if (string.IsNullOrEmpty(userId)) return Challenge();
+
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null) return NotFound();
+
+            user.FullName = model.FullName.Trim();
+            await _userManager.UpdateAsync(user);
+
+            await _userSettings.UpsertProfileAsync(userId, model.DisplayHandle, model.RemovePhoto, model.PhotoData);
+            var profile = await _userSettings.GetByUserIdAsync(userId);
+
+            var nameParts = user.FullName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            var initials = nameParts.Length >= 2
+                ? $"{char.ToUpper(nameParts[0][0])}{char.ToUpper(nameParts[^1][0])}"
+                : (nameParts.Length == 1 ? char.ToUpper(nameParts[0][0]).ToString() : "");
+
+            var effectiveDisplayName = !string.IsNullOrWhiteSpace(profile?.DisplayHandle)
+                ? profile.DisplayHandle
+                : user.FullName;
+
+            return Json(new
             {
-                return Challenge();
-            }
+                success = true,
+                initials,
+                photoUrl = profile?.ProfilePictureUrl ?? "",
+                fullName = user.FullName,
+                displayName = effectiveDisplayName,
+                handle = profile?.DisplayHandle ?? ""
+            });
+        }
 
-            var allRestrictions = await _db.DietaryRestrictions
-                .OrderBy(d => d.Name)
-                .ToListAsync();
+        [HttpGet]
+        public IActionResult Dietary() => RedirectToAction(nameof(Index), new { section = "dietary" });
 
-            var selectedIds = await _db.UserDietaryRestrictions
-                .Where(x => x.UserId == userId)
-                .Select(x => x.DietaryRestrictionId)
-                .ToListAsync();
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DietaryAutoSave([FromBody] List<int> selectedIds)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId)) return Json(new { success = false });
 
-            var vm = new DietarySettingsViewModel
-            {
-                Restrictions = allRestrictions.Select(r => new DietaryRestrictionOptionViewModel
-                {
-                    DietaryRestrictionId = r.Id,
-                    Name = r.Name ?? "",
-                    IsSelected = selectedIds.Contains(r.Id)
-                }).ToList()
-            };
-
-            return View(vm);
+            await _userDietaryRestrictionRepository.SetForUserAsync(userId, selectedIds ?? []);
+            return Json(new { success = true });
         }
 
         [HttpPost]
@@ -132,89 +176,32 @@ namespace MealPlanner.Controllers
         public async Task<IActionResult> Dietary(DietarySettingsViewModel vm)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (string.IsNullOrEmpty(userId))
-            {
-                return Challenge();
-            }
+            if (string.IsNullOrEmpty(userId)) return Challenge();
 
             var chosen = vm.Restrictions
                 .Where(x => x.IsSelected)
-                .Select(x => x.DietaryRestrictionId)
-                .ToHashSet();
+                .Select(x => x.DietaryRestrictionId);
 
-            var existing = await _db.UserDietaryRestrictions
-                .Where(x => x.UserId == userId)
-                .ToListAsync();
-
-            _db.UserDietaryRestrictions.RemoveRange(existing);
-
-            var newRows = chosen.Select(id => new UserDietaryRestriction
-            {
-                UserId = userId,
-                DietaryRestrictionId = id
-            });
-
-            await _db.UserDietaryRestrictions.AddRangeAsync(newRows);
-            await _db.SaveChangesAsync();
+            await _userDietaryRestrictionRepository.SetForUserAsync(userId, chosen);
 
             TempData["Message"] = "Dietary restrictions saved.";
-            return RedirectToAction(nameof(Dietary));
+            return RedirectToAction(nameof(Index), new { section = "dietary" });
         }
 
         [HttpGet]
-        public async Task<IActionResult> Nutrition()
-        {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (string.IsNullOrEmpty(userId))
-            {
-                return Challenge();
-            }
-
-            var pref = await _db.UserNutritionPreferences
-                .FirstOrDefaultAsync(x => x.UserId == userId);
-
-            var vm = new NutritionSettingsViewModel
-            {
-                CalorieTarget = pref?.CalorieTarget,
-                ProteinTarget = pref?.ProteinTarget,
-                CarbTarget = pref?.CarbTarget,
-                FatTarget = pref?.FatTarget
-            };
-
-            return View(vm);
-        }
+        public IActionResult Nutrition() => RedirectToAction(nameof(Index), new { section = "nutrition" });
 
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Nutrition(NutritionSettingsViewModel vm)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (string.IsNullOrEmpty(userId))
-            {
-                return Challenge();
-            }
+            if (string.IsNullOrEmpty(userId)) return Challenge();
 
-            var pref = await _db.UserNutritionPreferences
-                .FirstOrDefaultAsync(x => x.UserId == userId);
-
-            if (pref == null)
-            {
-                pref = new UserNutritionPreference
-                {
-                    UserId = userId
-                };
-                _db.UserNutritionPreferences.Add(pref);
-            }
-
-            pref.CalorieTarget = vm.CalorieTarget;
-            pref.ProteinTarget = vm.ProteinTarget;
-            pref.CarbTarget = vm.CarbTarget;
-            pref.FatTarget = vm.FatTarget;
-
-            await _db.SaveChangesAsync();
+            await _nutritionPrefRepository.SaveNutritionPreferenceAsync(userId, vm.CalorieTarget, vm.ProteinTarget, vm.CarbTarget, vm.FatTarget);
 
             TempData["Message"] = "Nutrition goals saved.";
-            return RedirectToAction(nameof(Nutrition));
+            return RedirectToAction(nameof(Index), new { section = "nutrition" });
         }
 
         [HttpGet]

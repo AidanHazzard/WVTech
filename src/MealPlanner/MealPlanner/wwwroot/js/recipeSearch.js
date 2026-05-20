@@ -20,20 +20,36 @@ $(document).ready(() => {
             const externalUri = $row.attr("externalUri");
 
             let recipeId = Number($row.find(".recipeId").text());
-
             recipeId = await resolveRecipeId(recipeId, recipeName, externalUri);
             if (!recipeId) return;
 
-             // Check for duplicate
-            const isDuplicate = $(`#mealRecipeList [data-id="${recipeId}"]`).length > 0;
-            if (isDuplicate) {
-                alert("This recipe is already in the meal.");
+            // Store resolved ID back on the row
+            $row.find(".recipeId").text(recipeId);
+            $row.find(".recipeIdInput").val(recipeId);
+
+            // Alert if already in the meal
+            if ($(`#mealRecipeList [data-id="${recipeId}"]`).length > 0) {
+                alert("This recipe is already in the meal");
                 return;
             }
 
+            // Toggle pending selection
+            $row.toggleClass("selected");
+            updateAddSelectedBtn();
+        });
 
+        $(document).on("click", "#addSelectedRecipesBtn", function () {
             const $mealForm = $("#editMealForm");
-            addRecipeToMealForm($mealForm, recipeId, recipeName);
+            $(".recipeSearchRow.selected").each(function () {
+                const $row = $(this);
+                const recipeId = Number($row.find(".recipeId").text());
+                const recipeName = $row.find(".recipeName").text();
+                if (!recipeId) return;
+                if ($(`#mealRecipeList [data-id="${recipeId}"]`).length > 0) return;
+                addRecipeToMealForm($mealForm, recipeId, recipeName);
+            });
+            $(".recipeSearchRow").removeClass("selected");
+            updateAddSelectedBtn();
         });
 
         $(document).on("click", ".delete-recipe-btn", function (e) {
@@ -41,7 +57,7 @@ $(document).ready(() => {
 
             const $row = $(this).closest(".mealRecipeItem");
 
-            showInlineConfirm(this, "Remove this recipe?", function () {
+            showDeleteModal("Remove this recipe?", function () {
                 $row.remove();
             });
         });
@@ -65,15 +81,27 @@ async function resolveRecipeId(recipeId, recipeName, externalUri) {
 }
 
 function addRecipeToMealForm($mealForm, recipeId, recipeName) {
-    const $rowWrapper = $(`
-        <div class="mealRecipeItem d-flex align-items-center justify-content-between mb-2 back2 back2-textbox" data-id="${recipeId}" style="cursor:pointer;">
-            <h4 class="buttonText mb-0">${recipeName}</h4>
-            <button type="button" class="btn btn-danger delete-recipe-btn" data-id="${recipeId}">X</button>
-            <input type="hidden" name="RecipeIds" value="${recipeId}" />
-        </div>
-    `);
+    const $row = $('<div class="em-recipe-row mealRecipeItem">').attr('data-id', recipeId);
+    const $name = $('<span class="em-recipe-name">').text(recipeName);
+    const $actions = $('<div class="em-recipe-actions">');
+    const $removeBtn = $('<button type="button" class="em-recipe-remove-btn delete-recipe-btn" title="Remove recipe">')
+        .attr('data-id', recipeId)
+        .html('<i class="ti ti-x"></i>');
+    const $hidden = $('<input type="hidden" name="RecipeIds">').val(recipeId);
 
-    $("#mealRecipeList").append($rowWrapper);
+    $actions.append($removeBtn);
+    $row.append($name, $actions, $hidden);
+    $("#mealRecipeList").append($row);
+}
+
+function updateAddSelectedBtn() {
+    const count = $(".recipeSearchRow.selected").length;
+    const $btn = $("#addSelectedRecipesBtn");
+    if (count > 0) {
+        $btn.show().text(`Add ${count} recipe${count === 1 ? "" : "s"}`);
+    } else {
+        $btn.hide();
+    }
 }
 
 // Throttle function from https://www.geeksforgeeks.org/javascript/javascript-throttling/
@@ -108,45 +136,88 @@ async function loadTags()
 async function recipeSearchHandler(event)
 {
     const search = $("#searchText").val();
-    const tag = $("#tagFilter").val();
+    const tagVal = ($("#tagFilter").val() || "").trim();
+    const tags   = (window.activeTagFilters && window.activeTagFilters.length > 0)
+        ? window.activeTagFilters
+        : (tagVal ? [tagVal] : []);
 
-    if (search.length < 3 && !tag)
+    if (search.length < 3 && tags.length === 0)
     {
         $("#recipeResults").text("");
         return;
     }
 
     $("#error").hide();
-
-    let url = `${API_ROUTE}search?name=${encodeURIComponent(search)}`;
-    if (tag) url += `&tag=${encodeURIComponent(tag)}`;
-
-    const response = await fetch(url);
-
     $("#recipeResults").text("");
-    if (response.status === 204)
+    updateAddSelectedBtn();
+
+    let recipes;
+
+    if (tags.length <= 1)
     {
-        $("#error").show();
-        $("#error").html(
-            "No recipes match your active dietary filters. " +
-            "<a href='/UserSettings/Dietary'>Adjust your dietary restrictions</a>."
+        let url = `${API_ROUTE}search?name=${encodeURIComponent(search)}`;
+        if (tags.length === 1) url += `&tag=${encodeURIComponent(tags[0])}`;
+        const response = await fetch(url);
+
+        if (response.status === 204)
+        {
+            showSearchError(
+                "No recipes match your active dietary filters. " +
+                "<a href='/UserSettings/Dietary'>Adjust your dietary restrictions</a>."
+            );
+            return;
+        }
+        if (!response.ok)
+        {
+            showSearchError("No recipes found, sorry!");
+            return;
+        }
+        recipes = await response.json();
+    }
+    else
+    {
+        // Parallel fetch per tag, then union results (OR logic)
+        const fetches = tags.map(tag =>
+            fetch(`${API_ROUTE}search?name=${encodeURIComponent(search)}&tag=${encodeURIComponent(tag)}`)
+                .then(r => (r.ok ? r.json() : []))
         );
-        return;
-    }
-    if (!response.ok)
-    {
-        $("#error").show();
-        $("#error").text("No recipes found, sorry!");
-        return;
+        const results = await Promise.all(fetches);
+
+        const seen = new Set();
+        recipes = [];
+        for (const set of results)
+        {
+            for (const r of set)
+            {
+                if (!seen.has(r.id))
+                {
+                    seen.add(r.id);
+                    recipes.push(r);
+                }
+            }
+        }
+
+        if (recipes.length === 0)
+        {
+            showSearchError("No recipes found, sorry!");
+            return;
+        }
     }
 
-    const recipes = await response.json();
+    renderRecipeRows(recipes);
+}
+
+function showSearchError(msg)
+{
+    $("#error").show().html(msg);
+}
+
+function renderRecipeRows(recipes)
+{
     const rowTemplate = $("#recipeResult");
-
-    for (const i in recipes)
+    for (const recipe of recipes)
     {
-        const recipe = recipes[i];
-        const row = rowTemplate.contents().clone(true);
+        const row    = rowTemplate.contents().clone(true);
         const rating = (recipe.votePercentage * 100).toFixed(0) + "%";
         $(row).attr("externalUri", recipe.externalUri);
         if (recipe.externalUri) $(".row-end", row).text("");
@@ -156,7 +227,7 @@ async function recipeSearchHandler(event)
         $(".recipeRating", row).text(rating);
         $(".recipeRating", row).attr("style", `color: color-mix(in oklch, ${LOW_RATING_COLOR}, ${HIGH_RATING_COLOR} ${rating});`);
 
-        const hasImage = recipe.imageUrl && recipe.imageUrl.length > 0;
+        const hasImage    = recipe.imageUrl && recipe.imageUrl.length > 0;
         const thumbnailSrc = hasImage ? recipe.imageUrl : "/images/placeholder/no-image.svg";
         $(".recipe-thumbnail", row)
             .attr("src", thumbnailSrc)
@@ -174,5 +245,4 @@ async function recipeSearchHandler(event)
 
         $("#recipeResults").append(row);
     }
-
 }

@@ -1,140 +1,690 @@
-.input-wrapper {
-    position: relative;
-    /* allows button to be positioned over input */
-    width: 100%;
-    margin: 5px 0;
+/* ── Theme tokens (dark default) ─────────────────────────────── */
+.ar-page {
+    --ar-page-bg:      #242424;
+    --ar-card-bg:      #1a1a1a;
+    --ar-input-bg:     #2e2e2e;
+    --ar-border:       rgba(255, 255, 255, 0.08);
+    --ar-divider:      rgba(255, 255, 255, 0.06);
+    --ar-text1:        #f0f0f0;
+    --ar-text2:        #a0a0a0;
+    --ar-text3:        #555;
+    --ar-unit-bg:      #383838;
+    --ar-ghost-bg:     #2e2e2e;
+    --ar-ghost-hover:  #3a3a3a;
 }
 
-/* Delete button styling */
-.deleteButton {
-    position: absolute;
-    top: 50%;
-    right: 0px;
-    transform: translateY(-50%);
+/* ── Light mode overrides ────────────────────────────────────── */
+[data-theme="light"] .ar-page {
+    --ar-page-bg:      #f0f0f0;
+    --ar-card-bg:      #ffffff;
+    --ar-input-bg:     #f5f5f5;
+    --ar-border:       rgba(0, 0, 0, 0.1);
+    --ar-divider:      rgba(0, 0, 0, 0.07);
+    --ar-text1:        #1a1a1a;
+    --ar-text2:        #666666;
+    --ar-text3:        #999999;
+    --ar-unit-bg:      #ebebeb;
+    --ar-ghost-bg:     #e8e8e8;
+    --ar-ghost-hover:  #d8d8d8;
+}
 
-    width: 65px;
-    height: 86.5%;
-    background-color: #ff4d4d;
-    border: none;
-    border-radius: 19px;
-    color: white;
-    font-size: 1.2rem;
-    cursor: pointer;
+/* ── Page ────────────────────────────────────────────────────── */
+.ar-page {
+    background: var(--ar-page-bg);
+    padding: 1.5rem;
+    max-width: 700px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
 
+/* ── Page header ─────────────────────────────────────────────── */
+.ar-page-header {
+    padding-bottom: 0.25rem;
+}
+
+.ar-page-title {
+    font-size: 18px;
+    font-weight: 500;
+    color: var(--ar-text1);
+    margin: 0 0 4px;
+}
+
+.ar-page-subtitle {
+    font-size: 13px;
+    color: var(--ar-text3);
+    margin: 0;
+}
+
+/* ── Card ────────────────────────────────────────────────────── */
+.ar-card {
+    background: var(--ar-card-bg);
+    border: 0.5px solid var(--ar-border);
+    border-radius: 12px;
+    padding: 1.25rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* ── Card title row ──────────────────────────────────────────── */
+.ar-card-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.ar-card-icon {
+    width: 28px;
+    height: 28px;
+    background: #0d2e22;
+    border-radius: 8px;
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 2;
-    transition: background-color 0.3s ease-in-out;
+    flex-shrink: 0;
+    color: #2EC99A;
+    font-size: 15px;
+    line-height: 1;
 }
 
-.deleteButton:hover {
-    background-color: #e60000;
+.ar-card-label {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--ar-text1);
 }
 
-.deleteImage {
-    display: block;
+/* ── Shared input ────────────────────────────────────────────── */
+.ar-input {
+    background: var(--ar-input-bg);
+    border: 0.5px solid var(--ar-border);
+    border-radius: 8px;
+    padding: 9px 12px;
+    font-size: 13px;
+    color: var(--ar-text1);
+    outline: none;
+    box-sizing: border-box;
+    transition: border-color 0.15s;
+    width: 100%;
+}
 
-    max-width: 80%;
-    max-height: 80%;
+.ar-input:focus {
+    border-color: #2EC99A;
+}
 
+.ar-input::placeholder {
+    color: var(--ar-text3);
+}
+
+.ar-input option {
+    background: var(--ar-input-bg);
+    color: var(--ar-text1);
+}
+
+/* ── Textarea ────────────────────────────────────────────────── */
+.ar-textarea {
+    min-height: 120px;
+    resize: vertical;
+}
+
+/* ── Ingredients: add row ────────────────────────────────────── */
+.ar-ing-add-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.ar-ing-qty {
+    width: 60px;
+    flex-shrink: 0;
+    -moz-appearance: textfield;
+}
+
+.ar-ing-qty::-webkit-inner-spin-button,
+.ar-ing-qty::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+}
+
+.ar-ing-unit {
+    width: 120px;
+    flex-shrink: 0;
+}
+
+.ar-ing-name {
+    flex: 1;
+    min-width: 0;
     width: auto;
-    height: auto;
-
-    margin: auto auto;
-
-    object-fit: contain;
-
-    transition: transform 0.3s ease-in-out;
 }
 
-.deleteButton:hover .deleteImage {
-  transform: scale(1.08);
+/* ── Teal button ─────────────────────────────────────────────── */
+.ar-teal-btn {
+    background: #2EC99A;
+    color: #0d2e22;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    white-space: nowrap;
+    flex-shrink: 0;
+    transition: background-color 0.15s;
 }
 
-.textStopAtButton{
-    padding-right: 130px;
+.ar-teal-btn:hover {
+    background: #26b389;
 }
 
-/* Keep the amount number input wide enough to read on small screens */
-.input-wrapper input[type="number"] {
-    min-width: 60px;
+/* ── Ingredient rows ─────────────────────────────────────────── */
+.ar-ing-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-top: 0.5px solid var(--ar-divider);
+    gap: 8px;
 }
 
-/* Keep the measurement dropdown wide enough to show its selected value */
-.input-wrapper select {
-    min-width: 110px;
+.ar-ing-row-name {
+    font-size: 13px;
+    color: var(--ar-text1);
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
-/* Keep the ingredient name input wide enough to be usable */
-.input-wrapper input[type="text"] {
+.ar-ing-row-right {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+.ar-ing-remove-btn {
+    width: 22px;
+    height: 22px;
+    border-radius: 9999px;
+    border: none;
+    background: rgba(239, 68, 68, 0.15);
+    color: #f87171;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    flex-shrink: 0;
+    transition: background-color 0.15s;
+}
+
+.ar-ing-remove-btn:hover {
+    background: rgba(239, 68, 68, 0.3);
+    color: #ef4444;
+}
+
+/* ── Step rows ───────────────────────────────────────────────── */
+.ar-step-add-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-top: 4px;
+}
+
+.ar-step-input {
+    flex: 1;
+    min-width: 0;
+}
+
+.ar-step-row {
+    display: flex;
+    align-items: flex-start;
+    padding: 8px 0;
+    border-top: 0.5px solid var(--ar-divider);
+    gap: 8px;
+}
+
+.ar-step-row:first-child {
+    border-top: none;
+}
+
+.ar-step-num {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--ar-muted);
+    flex-shrink: 0;
+    min-width: 20px;
+    padding-top: 1px;
+}
+
+.ar-step-text {
+    font-size: 13px;
+    color: var(--ar-text1);
+    flex: 1;
+    min-width: 0;
+    word-break: break-word;
+    line-height: 1.45;
+    cursor: text;
+    border-radius: 4px;
+    transition: background-color 0.12s;
+}
+
+.ar-step-text:hover {
+    text-decoration: underline dotted var(--ar-text2);
+    text-underline-offset: 3px;
+}
+
+.ar-step-inline-input {
+    flex: 1;
+    min-width: 0;
+    font-size: 13px;
+    color: var(--ar-text1);
+    background: var(--ar-input-bg);
+    border: 0.5px solid #2EC99A;
+    border-radius: 6px;
+    padding: 3px 7px;
+    outline: none;
+    line-height: 1.45;
+    box-sizing: border-box;
+}
+
+.ar-step-remove-btn {
+    width: 22px;
+    height: 22px;
+    border-radius: 9999px;
+    border: none;
+    background: rgba(239, 68, 68, 0.15);
+    color: #f87171;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    flex-shrink: 0;
+    margin-top: 1px;
+    transition: background-color 0.15s;
+}
+
+.ar-step-remove-btn:hover {
+    background: rgba(239, 68, 68, 0.3);
+    color: #ef4444;
+}
+
+.ar-step-validation-msg {
+    font-size: 12px;
+    color: #ef4444;
+    margin: 6px 0 0;
+}
+
+/* Edit button */
+.ar-ing-edit-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    background: rgba(46, 201, 154, 0.1);
+    border: 0.5px solid rgba(46, 201, 154, 0.25);
+    color: #2EC99A;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    padding: 0;
+    flex-shrink: 0;
+    transition: background-color 0.15s;
+}
+
+.ar-ing-edit-btn:hover {
+    background: rgba(46, 201, 154, 0.2);
+}
+
+/* Confirm button (teal check) */
+.ar-ing-confirm-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    background: rgba(46, 201, 154, 0.15);
+    border: 0.5px solid rgba(46, 201, 154, 0.3);
+    color: #2EC99A;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    padding: 0;
+    flex-shrink: 0;
+    transition: background-color 0.15s;
+}
+
+.ar-ing-confirm-btn:hover {
+    background: rgba(46, 201, 154, 0.25);
+}
+
+/* Cancel button (gray ×) */
+.ar-ing-cancel-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 0.5px solid rgba(255, 255, 255, 0.08);
+    color: #a0a0a0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    padding: 0;
+    flex-shrink: 0;
+    transition: background-color 0.15s, color 0.15s;
+}
+
+.ar-ing-cancel-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #f0f0f0;
+}
+
+/* Edit-mode field strip */
+.ar-ing-edit-fields {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex: 1;
+    min-width: 0;
+}
+
+.ar-ing-edit-qty {
+    width: 64px;
+    flex-shrink: 0;
+    padding: 6px 8px;
+}
+
+.ar-ing-edit-unit {
+    width: 110px;
+    flex-shrink: 0;
+    padding: 6px 8px;
+}
+
+.ar-ing-edit-name {
+    flex: 1;
+    min-width: 0;
+    padding: 6px 8px;
+}
+
+/* While editing: hide the name label and the edit+remove buttons */
+.ar-ing-row--editing .ar-ing-row-name,
+.ar-ing-row--editing .ar-ing-edit-btn,
+.ar-ing-row--editing .ar-ing-remove-btn {
+    display: none;
+}
+
+/* ── Nutrients 2×2 grid ──────────────────────────────────────── */
+.ar-nutrients-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.ar-nutrient-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.ar-nutrient-label {
+    font-size: 11px;
+    color: var(--ar-text3);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    font-weight: 600;
+    display: block;
+}
+
+.ar-input-group {
+    display: flex;
+    border: 0.5px solid var(--ar-border);
+    border-radius: 8px;
+    overflow: hidden;
+    transition: border-color 0.15s;
+}
+
+.ar-input-group:focus-within {
+    border-color: #2EC99A;
+}
+
+.ar-input-group .ar-input {
+    border: none;
+    border-radius: 0;
+    flex: 1;
+    width: auto;
+}
+
+.ar-input-group .ar-input:focus {
+    border-color: transparent;
+}
+
+.ar-input-unit {
+    background: var(--ar-unit-bg);
+    color: var(--ar-text3);
+    border-left: 0.5px solid var(--ar-border);
+    padding: 8px 10px;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+
+/* ── Tags ────────────────────────────────────────────────────── */
+.ar-tags-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    min-height: 0;
+}
+
+.ar-tags-container:empty {
+    display: none;
+}
+
+.ar-tag-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: #0d2e22;
+    border: 0.5px solid #1a5c40;
+    color: #2EC99A;
+    font-size: 12px;
+    padding: 4px 10px;
+    border-radius: 9999px;
+    cursor: pointer;
+    transition: background-color 0.15s;
+}
+
+.ar-tag-chip:hover {
+    background: #1a5c40;
+}
+
+.ar-tag-x {
+    font-size: 11px;
+    line-height: 1;
+    opacity: 0.7;
+}
+
+.ar-tags-add-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.ar-tags-select {
+    width: 180px;
+    flex-shrink: 0;
+}
+
+.ar-tags-custom-input {
+    flex: 1;
     min-width: 120px;
+    width: auto;
 }
 
-.instructionsBox{
-    height: 400px;
+/* ── Upload zone ─────────────────────────────────────────────── */
+.ar-upload-zone {
+    border: 1.5px dashed #5DCAA5;
+    border-radius: 8px;
+    background: rgba(46, 201, 154, 0.08);
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: background-color 0.15s, border-color 0.15s;
 }
 
-.left {
-  display: grid;
-  grid-template-columns: 120px 1fr;
-  align-items: center;
-  margin: 5px 0;
+.ar-upload-zone:hover,
+.ar-upload-zone.drag-over {
+    background: rgba(46, 201, 154, 0.15);
+    border-color: #2EC99A;
 }
 
-.left span {
-  text-align: right;
-  padding-right: 10px;
+.ar-upload-icon {
+    font-size: 24px;
+    color: #2EC99A;
+    line-height: 1;
 }
 
-.nutrientLableArea {
-  display: flex;
-  align-items: center;
-  margin: 5px 0;
+.ar-upload-text {
+    font-size: 13px;
+    color: var(--ar-text2);
 }
 
-.file-input-wrapper {
-  position: relative;
-  display: flex;
-  align-items: center;
-  padding: 0;
-  overflow: hidden;
+.ar-filename-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #0d2e22;
+    border: 0.5px solid #1a5c40;
+    color: #2EC99A;
+    font-size: 12px;
+    padding: 4px 10px;
+    border-radius: 9999px;
+    cursor: pointer;
+    align-self: flex-start;
+    margin-top: 4px;
+    transition: background-color 0.15s;
 }
 
-.file-browse-btn {
-  position: absolute;
-  left: 0;
-  top: 50%;
-  transform: translateY(-50%);
-  height: 105%;
-  width: 100px;
-  border-radius: 19px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.ar-filename-pill:hover {
+    background: #1a5c40;
 }
 
-.image-preview {
-  display: none;
-  max-width: 200px;
-  max-height: 150px;
-  object-fit: cover;
-  margin-top: 8px;
-  border-radius: 12px;
+.ar-image-preview {
+    display: none;
+    max-width: 200px;
+    max-height: 150px;
+    object-fit: cover;
+    margin-top: 8px;
+    border-radius: 12px;
 }
 
-.file-name-display {
-  padding-left: 112px;
-  padding-right: 68px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  flex: 1;
+/* ── Current image wrapper (EditRecipe) ─────────────────────── */
+.ar-current-img-wrap {
+    position: relative;
+    border: 1.5px dashed #5DCAA5;
+    border-radius: 8px;
+    background: rgba(46, 201, 154, 0.08);
+    overflow: hidden;
 }
 
-.file-remove-btn {
-  width: 56px;
-  height: 100%;
+.ar-current-img-preview {
+    width: 100%;
+    max-height: 220px;
+    object-fit: cover;
+    display: block;
 }
 
+.ar-remove-img-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: rgba(0, 0, 0, 0.55);
+    color: #f0f0f0;
+    border: none;
+    border-radius: 6px;
+    padding: 4px 10px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: background-color 0.15s;
+}
+
+.ar-remove-img-btn:hover {
+    background: rgba(0, 0, 0, 0.78);
+}
+
+/* ── Action row ──────────────────────────────────────────────── */
+.ar-action-row {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    padding-bottom: 2rem;
+}
+
+.ar-ghost-btn {
+    background: var(--ar-ghost-bg);
+    color: var(--ar-text2);
+    border: 0.5px solid var(--ar-border);
+    border-radius: 8px;
+    padding: 10px 20px;
+    font-size: 14px;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    transition: background-color 0.15s, color 0.15s;
+}
+
+.ar-ghost-btn:hover {
+    background: var(--ar-ghost-hover);
+    color: var(--ar-text1);
+    text-decoration: none;
+}
+
+.ar-submit-btn {
+    background: #2EC99A;
+    color: #0d2e22;
+    border: none;
+    border-radius: 12px;
+    padding: 12px 32px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: background-color 0.15s;
+}
+
+.ar-submit-btn:hover {
+    background: #26b389;
+}
+
+@media (max-width: 480px) {
+    .ar-nutrients-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .ar-ing-add-row {
+        flex-wrap: wrap;
+    }
+
+    .ar-ing-name {
+        width: 100%;
+    }
+}

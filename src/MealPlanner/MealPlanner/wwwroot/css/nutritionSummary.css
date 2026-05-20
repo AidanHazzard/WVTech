@@ -1,0 +1,335 @@
+/* ── Page Heading ───────────────────────────────────────────── */
+.report-heading {
+    margin: 20px 0 16px;
+}
+
+.report-title {
+    font-size: 18px;
+    font-weight: 500;
+    color: var(--text-primary);
+    margin: 0 0 4px;
+}
+
+.report-date-label {
+    font-size: 13px;
+    color: var(--muted-text);
+}
+
+/* ── Segmented Control ──────────────────────────────────────── */
+.segmented-wrap {
+    margin-bottom: 20px;
+}
+
+.segmented-control {
+    display: inline-flex;
+    background-color: var(--layer2-bg);
+    border-radius: 9999px;
+    padding: 3px;
+    gap: 2px;
+}
+
+.segmented-btn {
+    font-size: 14px;
+    font-weight: 500;
+    padding: 6px 22px;
+    border-radius: 9999px;
+    border: 0.5px solid transparent;
+    background: none;
+    color: var(--muted-text);
+    cursor: pointer;
+    transition: background-color 0.2s, color 0.2s, border-color 0.2s;
+    line-height: 1.4;
+}
+
+.segmented-btn.active {
+    background-color: var(--card-bg);
+    color: var(--teal);
+    border-color: var(--card-border);
+}
+
+/* ── Macro Grid ─────────────────────────────────────────────── */
+.macro-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.macro-card {
+    background-color: var(--card-bg);
+    border: 0.5px solid var(--card-border);
+    border-radius: 8px;
+    padding: 12px;
+    overflow: hidden;
+}
+
+.macro-card-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--muted-text);
+    margin-bottom: 6px;
+}
+
+.macro-card-value {
+    font-size: 22px;
+    font-weight: 500;
+    color: var(--text-primary);
+    line-height: 1;
+    margin-bottom: 3px;
+}
+
+.macro-card-goal {
+    font-size: 11px;
+    color: var(--muted-text);
+    margin-bottom: 10px;
+}
+
+.macro-card-bar-track {
+    height: 3px;
+    border-radius: 9999px;
+    background-color: var(--nutrition-bar-track);
+    overflow: hidden;
+}
+
+.macro-card-bar-fill {
+    height: 100%;
+    border-radius: 9999px;
+    transition: width 0.4s ease;
+}
+
+/* ── Chart Row (chart + sidebar) ────────────────────────────── */
+.chart-row {
+    display: flex;
+    gap: 1.25rem;
+    align-items: flex-start;
+    margin-bottom: 12px;
+}
+
+/* ── Chart Card ─────────────────────────────────────────────── */
+.chart-card {
+    flex: 1;
+    min-width: 0;
+    background-color: var(--card-bg);
+    border: 0.5px solid var(--card-border);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 0;
+}
+
+.chart-card-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: 14px;
+}
+
+.chart-legend {
+    display: flex;
+    gap: 16px;
+    margin-top: 14px;
+    flex-wrap: wrap;
+}
+
+.chart-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--muted-text);
+}
+
+.chart-legend-swatch {
+    width: 16px;
+    height: 10px;
+    border-radius: 2px;
+    flex: 0 0 auto;
+}
+
+.chart-legend-dash {
+    width: 20px;
+    height: 2px;
+    border-top: 2px dashed #f87171;
+    flex: 0 0 auto;
+}
+
+/* ── Today's Macros Sidebar Card ────────────────────────────── */
+.todays-macros-card {
+    width: 280px;
+    flex-shrink: 0;
+    background: var(--card-bg);
+    border: 0.5px solid var(--card-border);
+    border-radius: 12px;
+    padding: 1.25rem 1.5rem;
+}
+
+.tm-title {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: 1rem;
+}
+
+.tm-row {
+    margin-bottom: 10px;
+}
+
+.tm-row:last-child {
+    margin-bottom: 0;
+}
+
+.tm-row-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+}
+
+.tm-label,
+.tm-value {
+    font-size: 12px;
+    color: #a0a0a0;
+}
+
+.tm-bar-track {
+    height: 6px;
+    border-radius: 3px;
+    background: var(--layer2-bg);
+    overflow: hidden;
+}
+
+[data-theme="light"] .tm-bar-track {
+    background: #f0f0f0;
+}
+
+.tm-bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.4s ease;
+}
+
+/* ── Day Chips Row ──────────────────────────────────────────── */
+.day-chips-row {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.day-stat-chip {
+    position: relative;
+    border: 0.5px solid var(--card-border);
+    border-radius: 8px;
+    padding: 8px 4px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    transition: border-color 0.2s, background-color 0.2s;
+}
+
+/* Grey (no check-offs) — theme-aware */
+.day-stat-chip[data-state="grey"] {
+    background-color: #2e2e2e;
+    border-color: rgba(255, 255, 255, 0.08);
+}
+
+[data-theme="light"] .day-stat-chip[data-state="grey"] {
+    background-color: #f0f0f0;
+    border-color: #e0e0e0;
+}
+
+.day-stat-chip-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    line-height: 1;
+}
+
+.day-stat-chip-icon {
+    font-size: 14px;
+    line-height: 1;
+}
+
+/* ── Day Chip Tooltip ───────────────────────────────────────── */
+.day-chip-tooltip {
+    display: none;
+    position: absolute;
+    bottom: calc(100% + 6px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: #1a1a1a;
+    border: 0.5px solid rgba(255, 255, 255, 0.08);
+    border-radius: 6px;
+    padding: 5px 10px;
+    font-size: 11px;
+    color: #f0f0f0;
+    white-space: nowrap;
+    z-index: 50;
+    pointer-events: none;
+}
+
+[data-theme="light"] .day-chip-tooltip {
+    background: #1a1a1a;
+    border-color: rgba(0, 0, 0, 0.12);
+}
+
+.day-stat-chip:hover .day-chip-tooltip {
+    display: block;
+}
+
+/* ── Insight Cards ──────────────────────────────────────────── */
+.insight-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.insight-card {
+    background-color: var(--card-bg);
+    border: 0.5px solid var(--card-border);
+    border-radius: 12px;
+    padding: 14px 16px;
+}
+
+.insight-card p {
+    font-size: 13px;
+    color: var(--text-primary);
+    margin: 0;
+    line-height: 1.6;
+}
+
+/* ── Responsive ─────────────────────────────────────────────── */
+@media (max-width: 768px) {
+    .chart-row {
+        flex-direction: column;
+    }
+
+    .todays-macros-card {
+        width: 100%;
+    }
+
+    .macro-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .day-chips-row {
+        gap: 4px;
+    }
+
+    .day-stat-chip {
+        padding: 6px 2px;
+    }
+
+    .day-stat-chip-label {
+        font-size: 9px;
+    }
+}
+
+@media (max-width: 480px) {
+    .insight-grid {
+        grid-template-columns: 1fr;
+    }
+}

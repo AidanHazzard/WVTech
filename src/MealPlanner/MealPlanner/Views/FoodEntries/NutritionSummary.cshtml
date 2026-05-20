@@ -4,86 +4,138 @@
 @{
     ViewData["Title"] = "Nutrition Summary";
     var jsonOptions = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
-    var allDaysJson     = JsonSerializer.Serialize(Model.AllDays, jsonOptions);
-    var targetsJson     = JsonSerializer.Serialize(Model.DailyTargets, jsonOptions);
+    var allDaysJson  = JsonSerializer.Serialize(Model.AllDays, jsonOptions);
+    var targetsJson  = JsonSerializer.Serialize(Model.DailyTargets, jsonOptions);
 }
 
-<div class="back1">
-    <h1 class="back1Title">Nutrition Summary</h1>
+<link rel="stylesheet" href="~/css/nutritionSummary.css" asp-append-version="true" />
 
-    @* ── Toggle ── *@
-    <div class="d-flex justify-content-center mb-4">
-        <div class="btn-group" role="group" aria-label="Report period">
-            <button type="button"
-                    class="btn @(Model.ActiveTab == "weekly" ? "btn-primary active" : "btn-outline-primary")"
-                    id="tab-weekly">
-                Weekly
-            </button>
-            <button type="button"
-                    class="btn @(Model.ActiveTab == "monthly" ? "btn-primary active" : "btn-outline-primary")"
-                    id="tab-monthly">
-                Monthly
-            </button>
+<a href="javascript:history.back()" class="page-back-link">
+    <i class="ti ti-arrow-left"></i>
+    Back
+</a>
+
+<!-- Page Heading -->
+<div class="report-heading">
+    <h1 class="report-title">Nutrition summary</h1>
+    <span class="report-date-label" id="report-date-range">–</span>
+</div>
+
+<!-- Segmented Control -->
+<div class="segmented-wrap">
+    <div class="segmented-control">
+        <button type="button"
+                class="segmented-btn @(Model.ActiveTab == "weekly" ? "active" : "")"
+                id="tab-weekly">Weekly</button>
+        <button type="button"
+                class="segmented-btn @(Model.ActiveTab == "monthly" ? "active" : "")"
+                id="tab-monthly">Monthly</button>
+    </div>
+</div>
+
+<!-- Macro Summary Row -->
+<div class="macro-grid">
+    @foreach (var macro in new[] {
+        ("calories", "Calories", "kcal", "var(--macro-calories)"),
+        ("protein",  "Protein",  "g",    "var(--macro-protein)"),
+        ("carbs",    "Carbs",    "g",    "var(--macro-carbs)"),
+        ("fat",      "Fat",      "g",    "var(--macro-fats)")
+    })
+    {
+        <div class="macro-card">
+            <div class="macro-card-label" style="color: @macro.Item4;">@macro.Item2</div>
+            <div class="macro-card-value"><span id="card-@macro.Item1-actual">–</span></div>
+            <div class="macro-card-goal"><span id="card-@macro.Item1-goal">–</span></div>
+            <div class="macro-card-bar-track">
+                <div id="card-@macro.Item1-bar"
+                     class="macro-card-bar-fill"
+                     style="width: 0%; background-color: @macro.Item4;"></div>
+            </div>
+        </div>
+    }
+</div>
+
+<!-- Chart + Today's Macros row -->
+<div class="chart-row">
+
+    <!-- Bar Chart Card -->
+    <div class="chart-card">
+        <div class="chart-card-title">Daily calories vs goal</div>
+        <canvas id="barChart"></canvas>
+        <div class="chart-legend">
+            <div class="chart-legend-item">
+                <span class="chart-legend-dash"></span>
+                Goal
+            </div>
+            <div class="chart-legend-item">
+                <span class="chart-legend-swatch" style="background: var(--macro-calories);"></span>
+                Calories
+            </div>
+            <div class="chart-legend-item">
+                <span class="chart-legend-swatch" style="background: #E24B4A;"></span>
+                Exceeded
+            </div>
         </div>
     </div>
 
-    @* ── Metric cards ── *@
-    <div class="row mb-4 g-3">
-        @foreach (var macro in new[] {
-            ("calories", "Calories", "kcal"),
-            ("protein",  "Protein",  "g"),
-            ("carbs",    "Carbs",    "g"),
-            ("fat",      "Fat",      "g")
-        })
-        {
-            <div class="col-6 col-md-3">
-                <div class="back2 text-center p-3">
-                    <h5 class="back1Title">@macro.Item2</h5>
-                    <p class="back1Title mb-1" style="font-size:1.4rem; font-weight:700;">
-                        <span id="card-@macro.Item1-actual">–</span>
-                    </p>
-                    <p class="back1Title mb-2" style="font-size:0.85rem; opacity:0.7;">
-                        <span id="card-@macro.Item1-goal">–</span>
-                    </p>
-                    <div class="progress" style="height:8px; background:rgba(255,255,255,0.15);">
-                        <div id="card-@macro.Item1-bar"
-                             class="progress-bar"
-                             role="progressbar"
-                             style="width:0%; transition:width 0.4s ease;">
-                        </div>
-                    </div>
-                </div>
-            </div>
-        }
-    </div>
+    <!-- Today's Macros Card -->
+    <div class="todays-macros-card">
+        <div class="tm-title">Today's macros</div>
 
-    @* ── Charts ── *@
-    <div class="row mb-2 g-3">
-        <div class="col-md-8">
-            <div class="back2 p-3">
-                <canvas id="barChart"></canvas>
-                <div id="pills-container" class="d-flex flex-wrap mt-3"></div>
+        <div class="tm-row">
+            <div class="tm-row-header">
+                <span class="tm-label" style="color: var(--macro-calories);">Calories</span>
+                <span class="tm-value" id="caloriesFraction">– / –</span>
+            </div>
+            <div class="tm-bar-track" id="caloriesBar">
+                <div class="tm-bar-fill" id="tm-calories-bar" style="background: var(--macro-calories); width:0%;"></div>
             </div>
         </div>
-        <div class="col-md-4">
-            <div class="back2 p-3 h-100">
-                <h5 class="back1Title mb-4">Today's Macros</h5>
-                <partial name="_NutritionBarDisplayPartial" model="Model.TodayBar" />
+
+        <div class="tm-row">
+            <div class="tm-row-header">
+                <span class="tm-label" style="color: var(--macro-protein);">Protein</span>
+                <span class="tm-value" id="proteinFraction">– / –</span>
+            </div>
+            <div class="tm-bar-track" id="proteinBar">
+                <div class="tm-bar-fill" id="tm-protein-bar" style="background: var(--macro-protein); width:0%;"></div>
+            </div>
+        </div>
+
+        <div class="tm-row">
+            <div class="tm-row-header">
+                <span class="tm-label" style="color: var(--macro-fats);">Fats</span>
+                <span class="tm-value" id="fatFraction">– / –</span>
+            </div>
+            <div class="tm-bar-track" id="fatBar">
+                <div class="tm-bar-fill" id="tm-fat-bar" style="background: var(--macro-fats); width:0%;"></div>
+            </div>
+        </div>
+
+        <div class="tm-row">
+            <div class="tm-row-header">
+                <span class="tm-label" style="color: var(--macro-carbs);">Carbs</span>
+                <span class="tm-value" id="carbsFraction">– / –</span>
+            </div>
+            <div class="tm-bar-track" id="carbsBar">
+                <div class="tm-bar-fill" id="tm-carbs-bar" style="background: var(--macro-carbs); width:0%;"></div>
             </div>
         </div>
     </div>
 
-    @* ── Insights ── *@
-    <div class="row g-3 mt-1">
-        @foreach (var n in new[] { 1, 2 })
-        {
-            <div class="col-6">
-                <div class="back2 p-3">
-                    <p class="back1Title mb-0" id="insight-@n">–</p>
-                </div>
-            </div>
-        }
-    </div>
+</div>
+
+<!-- Day Chip Row (weekly only) -->
+<div class="day-chips-row" id="day-chips-row"></div>
+
+<!-- Insight Cards -->
+<div class="insight-grid">
+    @foreach (var n in new[] { 1, 2 })
+    {
+        <div class="insight-card">
+            <p id="insight-@n">–</p>
+        </div>
+    }
 </div>
 
 @section Scripts {
