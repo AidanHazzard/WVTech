@@ -1,144 +1,209 @@
 @model MealPlanner.ViewModels.EditMealViewModel
 
-<div class="back1 backHasButton">
+<link rel="stylesheet" href="~/css/newMeal.css" asp-append-version="true" />
+<link rel="stylesheet" href="~/css/editMeal.css" asp-append-version="true" />
 
-    <!-- Top bar: Back + Delete -->
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <a href="@Url.Action("ViewMeal", "Meal", new { id = Model.Id })" class="btn btn-outline-secondary back1Title">
-            &larr; Back
-        </a>
+<!-- Top bar: Back -->
+<div class="em-top-bar">
+    <a href="@(ViewBag.ReturnUrl ?? Url.Action("ViewMeal", "Meal", new { id = Model.Id }))" class="em-back-link">
+        <i class="ti ti-arrow-left"></i>
+        Back
+    </a>
+</div>
 
-        <form asp-action="DeleteMeal" asp-controller="Meal" method="post" class="m-0">
-            <input type="hidden" name="id" value="@Model.Id" />
-            <button type="button" class="btn btn-danger btn-delete-meal">Delete</button>
-        </form>
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert-success" style="margin-bottom:12px; padding:10px 14px; border-radius:6px; background:rgba(46,201,154,0.12); border:0.5px solid rgba(46,201,154,0.4); color:#2EC99A; font-size:13px;">
+        @TempData["SuccessMessage"]
     </div>
+}
 
-    <h2 class="back1Title">Edit Meal</h2>
-    @if (TempData["Success"] != null)
-    {
-        <div class="alert alert-success">
-            Meal updated successfully
+<!-- Page heading -->
+<div class="em-page-heading">
+    <div class="em-page-title">Edit meal</div>
+    <p class="em-page-subtitle">Update your meal details</p>
+</div>
+
+<!-- Meal details card -->
+<form id="editMealForm" asp-action="EditMeal" method="POST">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="Id" />
+
+    <div class="em-card">
+        <div class="em-card-title-row">
+            <div class="em-card-title-icon"><i class="ti ti-calendar"></i></div>
+            <span class="em-card-title-text">Meal details</span>
         </div>
-    }
-    <hr>
-    <!-- Form for the meal details only -->
-    <form id="editMealForm" class="mx-1" asp-action="EditMeal" method="POST">
 
-        <input type="hidden" asp-for="Id" />
-
-        <div class="row g-3 mb-3">
-            <div class="col-md-4">
-                <label asp-for="Title" class="form-label back1Title"></label>
-                <input asp-for="Title" id="mealTitle" class="form-control mealInput" placeholder="Meal title" />
-                <span asp-validation-for="Title" class="text-danger"></span>
+        <div class="em-form-grid">
+            <div class="em-field">
+                <label class="em-label" asp-for="Title">Title</label>
+                <input asp-for="Title" id="mealTitle" class="em-input" placeholder="e.g. Lunch" />
+                <span asp-validation-for="Title" class="text-danger" style="font-size:11px"></span>
             </div>
-
-            <div class="col-md-4">
-                <label asp-for="SelectedMonth" class="form-label back1Title">Month</label>
-                <select asp-for="SelectedMonth" class="form-control mealSelect">
-                    <option value="">Select month</option>
+            <div class="em-field">
+                <label class="em-label" asp-for="SelectedMonth">Month</label>
+                <select asp-for="SelectedMonth" class="em-input em-select">
+                    <option value="">Month</option>
                     @for (int i = 1; i <= 12; i++)
                     {
-                        <!option @(i==Model.SelectedMonth ? "selected" : "") value="@i">
+                        <!option @(i == Model.SelectedMonth ? "selected" : "") value="@i">
                             @System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(i)
                         </!option>
                     }
                 </select>
-                <span asp-validation-for="SelectedMonth" class="text-danger"></span>
+                <span asp-validation-for="SelectedMonth" class="text-danger" style="font-size:11px"></span>
             </div>
-
-            <div class="col-md-4">
-                <label asp-for="SelectedDay" class="form-label back1Title">Day</label>
-                <select asp-for="SelectedDay" class="form-control mealSelect">
-                    <option value="">Select day</option>
+            <div class="em-field">
+                <label class="em-label" asp-for="SelectedDay">Day</label>
+                <select asp-for="SelectedDay" class="em-input em-select">
+                    <option value="">Day</option>
                     @for (int i = 1; i <= 31; i++)
                     {
-                        <!option value="@i" @(i==Model.SelectedDay ? "selected" : "")>@i</!option>
+                        <!option value="@i" @(i == Model.SelectedDay ? "selected" : "")>@i</!option>
                     }
                 </select>
-                <span asp-validation-for="SelectedDay" class="text-danger"></span>
-            </div>
-
-            <div class="col-md-4 d-flex align-items-end">
-                <div class="form-check">
-                    <input asp-for="RepeatWeekly" id="repeatWeeklyToggle" class="form-check-input" />
-                    <label asp-for="RepeatWeekly" class="form-check-label back1Title">
-                        Repeat Weekly
-                    </label>
-                </div>
-            </div>
-
-            <div id="repeatDaysPanel" class="col-12 mt-2" style="@(Model.RepeatWeekly ? "" : "display:none;")">
-                <label class="form-label back1Title">Repeat on days</label>
-                <div class="d-flex flex-wrap gap-3">
-                    @foreach (DayOfWeek day in Enum.GetValues(typeof(DayOfWeek)))
-                    {
-                        <div class="form-check" data-day="@day">
-                            <input class="form-check-input repeat-day-checkbox"
-                                   type="checkbox"
-                                   name="RepeatDays"
-                                   value="@((int)day)"
-                                   id="repeatDay_@day"
-                                   @(Model.RepeatDays.Contains(day) ? "checked" : "") />
-                            <label class="form-check-label back1Title" for="repeatDay_@day">@day</label>
-                        </div>
-                    }
-                </div>
+                <span asp-validation-for="SelectedDay" class="text-danger" style="font-size:11px"></span>
             </div>
         </div>
 
-        <!-- Hidden inputs for model binding -->
-        @* <div id="recipe-id-container">
-            @foreach (var recipe in Model.Recipes)
-            {
-                <input type="hidden" name="RecipeIds" value="@recipe.Id" />
-            }
-        </div> *@
+        <!-- Repeat weekly toggle -->
+        <input asp-for="RepeatWeekly" id="repeatWeeklyToggle" type="checkbox" style="position:absolute; width:1px; height:1px; overflow:hidden;" />
+        <div class="em-toggle-row">
+            <span class="em-toggle-label">Repeat weekly</span>
+            <div class="em-toggle-switch @(Model.RepeatWeekly ? "on" : "")" id="emRepeatToggle">
+                <div class="em-toggle-knob"></div>
+            </div>
+        </div>
 
-        <!-- Visible recipe list -->
-        <div id="mealRecipeList" class="mb-3">
+        <!-- Repeat on days (slides open when toggle is on) -->
+        <div id="repeatDaysPanel" class="@(Model.RepeatWeekly ? "open" : "")">
+            <div class="em-days-row">
+                @foreach (DayOfWeek day in Enum.GetValues(typeof(DayOfWeek)))
+                {
+                    <label class="em-day-chip @(Model.RepeatDays.Contains(day) ? "on" : "")"
+                           data-day="@((int)day)"
+                           style="position:relative;">
+                        <input type="checkbox"
+                               id="repeatDay_@day"
+                               name="RepeatDays"
+                               value="@((int)day)"
+                               class="repeat-day-checkbox"
+                               @(Model.RepeatDays.Contains(day) ? "checked" : "")
+                               style="position:absolute; width:1px; height:1px; overflow:hidden;" />
+                        @day.ToString().Substring(0, 3)
+                    </label>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Current recipes card -->
+    <div class="em-card">
+        <div class="em-card-title-row">
+            <div class="em-card-title-icon"><i class="ti ti-bowl-chopsticks"></i></div>
+            <span class="em-card-title-text">Recipes in this meal</span>
+        </div>
+
+        <div id="mealRecipeList">
             @if (Model.Recipes != null && Model.Recipes.Any())
             {
                 @foreach (var recipe in Model.Recipes)
                 {
-                    <div class="mealRecipeItem d-flex align-items-center justify-content-between mb-2 back2 back2-textbox"
-                         data-id="@recipe.Id"
-                         style="cursor:pointer;">
-                        <h4 class="buttonText mb-0">@recipe.Name</h4>
-                        <button type="button" class="btn btn-danger delete-recipe-btn" data-id="@recipe.Id">
-                            X
-                        </button>
+                    <div class="em-recipe-row mealRecipeItem" data-id="@recipe.Id">
+                        <h4 class="em-recipe-name">@recipe.Name</h4>
+                        <div class="em-recipe-actions">
+                            <button type="button"
+                                    class="em-recipe-remove-btn delete-recipe-btn"
+                                    data-id="@recipe.Id"
+                                    title="Remove recipe">
+                                <i class="ti ti-x"></i>
+                            </button>
+                        </div>
                         <input type="hidden" name="RecipeIds" value="@recipe.Id" />
                     </div>
                 }
             }
             else
             {
-                <p class="text-muted mb-3">There are no recipes in this meal yet.</p>
+                <p class="em-empty-recipes">No recipes in this meal yet.</p>
             }
         </div>
-    </form>
-
-    <div class="back2 pe-5 mt-3">
-        <h3 class="back1Title">Search for Recipes to Add</h3>
-        @await Html.PartialAsync("_RecipeSearchPartial")
     </div>
 
-    <button id="saveMealBtn" type="submit" class="buttonBlue mt-3" form="editMealForm">
-        <h4 class="buttonText">Save Changes</h2>
+    <!-- Search card -->
+    <div class="em-card">
+        <div class="em-card-title-row">
+            <div class="em-card-title-icon"><i class="ti ti-search"></i></div>
+            <span class="em-card-title-text">Add recipes</span>
+        </div>
+
+        <!-- Search input -->
+        <div class="em-search-input-wrapper">
+            <i class="ti ti-search em-search-icon"></i>
+            <input id="searchText" class="em-search-input" type="text"
+                   placeholder="Search recipes…" autocomplete="off" />
+        </div>
+
+        <!-- Multi-select tag filter dropdown (populated by editMeal.js + recipeSearch.js) -->
+        <div id="tagFilterDropdown" class="tfd-container" style="margin-bottom:10px"></div>
+        <select id="tagFilter" style="display:none">
+            <option value="">All</option>
+        </select>
+
+        <div id="error" style="font-size:13px; color:var(--muted-text); min-height:0"></div>
+
+        <!-- Recipe results -->
+        <div id="recipeResults" style="display:flex; flex-direction:column; gap:6px; margin-top:4px"></div>
+
+        <!-- Recipe result template -->
+        <template id="recipeResult">
+            <div class="recipeSearchRow" externaluri="">
+                <img class="recipe-thumbnail" src="" alt="" />
+                <div class="recipe-row-info">
+                    <div class="recipeName"></div>
+                    <div class="recipeTags"></div>
+                    <div hidden class="recipeId"></div>
+                    <input type="hidden" class="recipeIdInput" value="" />
+                    <div class="recipeRating"></div>
+                </div>
+                <div class="em-add-indicator">
+                    <i class="ti ti-plus"></i>
+                </div>
+                <div class="row-end" style="display:none"></div>
+            </div>
+        </template>
+
+        <img src="~/images/icons/Edamam_Badge.svg" class="edamam-badge" width="200" height="100" />
+    </div>
+
+    <!-- Action bar save button (inside editMealForm so it submits it) -->
+    <div style="display:none">
+        <button type="submit" id="saveMealBtnInner"></button>
+    </div>
+
+</form>
+
+<!-- Action bar (outside editMealForm so delete form is not nested) -->
+<div class="em-action-bar">
+    <a href="@(ViewBag.ReturnUrl ?? Url.Action("ViewMeal", "Meal", new { id = Model.Id }))" class="em-action-cancel">Cancel</a>
+    <form asp-action="DeleteMeal" asp-controller="Meal" method="post" class="m-0">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="id" value="@Model.Id" />
+        <input type="hidden" name="source" value="home" />
+        <button type="button" class="em-delete-btn btn-delete-meal">
+            <i class="ti ti-trash"></i>
+            Delete meal
+        </button>
+    </form>
+    <button type="submit" class="em-action-save" id="saveMealBtn" form="editMealForm">
+        <i class="ti ti-check"></i>
+        Save changes
     </button>
 </div>
 
 @section Scripts {
-    <script src="~/js/recipeSearch.js"></script>
-    <script>
-        (function () {
-            const toggle = document.getElementById('repeatWeeklyToggle');
-            const panel  = document.getElementById('repeatDaysPanel');
-            function sync() { panel.style.display = toggle.checked ? '' : 'none'; }
-            toggle.addEventListener('change', sync);
-            sync();
-        })();
-    </script>
+    <partial name="_ValidationScriptsPartial" />
+    <script type="module" src="~/js/recipeSearch.js"></script>
+    <script type="module" src="~/js/editMeal.js"></script>
 }

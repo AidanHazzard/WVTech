@@ -13,7 +13,7 @@ $(document).on("click", ".delete-recipe-btn", function (e) {
     const recipeId = $row.data("recipe-id");
     const mealId = $row.data("meal-id");
 
-    showInlineConfirm(this, "Remove this recipe?", function () {
+    showDeleteModal("Remove this recipe?", function () {
         fetch("/Meal/DeleteRecipeFromMeal", {
             method: "POST",
             keepalive: true,
@@ -36,7 +36,7 @@ $(document).on("click", "[data-action='regenerate-recipe']", async function (e) 
     const recipeId = btn.dataset.recipeId;
     const mealId = btn.dataset.mealId;
     const $row = $(btn).closest(".mealRecipeItem");
-    const oldName = $row.find("h4").first().text().trim();
+    const oldName = $row.find(".vm-recipe-name").first().text().trim();
     const oldCalories = parseInt($row.find(".cal-display").text()) || 0;
 
     hideRegenFeedback();
@@ -58,7 +58,7 @@ $(document).on("click", "[data-action='regenerate-recipe']", async function (e) 
         // Update the row in place (server returns camelCase JSON)
         const newRecipe = data.newRecipe;
         $row.attr("data-recipe-id", newRecipe.id);
-        $row.find("h4").first().text(newRecipe.name);
+        $row.find(".vm-recipe-name").first().text(newRecipe.name);
         $row.find("[data-action='regenerate-recipe']").attr("data-recipe-id", newRecipe.id);
 
         // Store undo state and show toast
@@ -93,7 +93,7 @@ $(document).on("click", "[data-action='undo-regenerate-recipe']", async function
         // Restore the row
         const $row = $(`.mealRecipeItem[data-recipe-id='${removedRecipeId}']`);
         $row.attr("data-recipe-id", addBackRecipeId);
-        $row.find("h4").first().text(addBackName);
+        $row.find(".vm-recipe-name").first().text(addBackName);
         $row.find("[data-action='regenerate-recipe']").attr("data-recipe-id", addBackRecipeId);
 
         _undoState = null;

@@ -62,6 +62,9 @@ public class MealControllerTests
         _mealRepoMock
             .Setup(r => r.GetUserMealsByDateAsync(It.IsAny<User>(), It.IsAny<DateTime>()))
             .ReturnsAsync([]);
+        _mealRepoMock
+            .Setup(r => r.GetUserRecipeIdsForDateAsync(It.IsAny<User>(), It.IsAny<DateTime>(), It.IsAny<int?>()))
+            .ReturnsAsync([]);
         _reccServiceMock = new Mock<IMealRecommendationService>();
         _tagRepoMock = new Mock<ITagRepository>();
         _tagRepoMock.Setup(r => r.GetTagsByPopularityAsync()).ReturnsAsync([]);
@@ -306,6 +309,72 @@ public class MealControllerTests
         _mealRepoMock.Setup(r => r.ReadAsync(5)).ReturnsAsync(source);
 
         var result = await _controller.AddMealToDay(5);
+
+        Assert.That(result, Is.TypeOf<NotFoundResult>());
+    }
+
+    // RemoveMealTemplate
+
+    [Test]
+    public async Task RemoveMealTemplate_WhenMealBelongsToUser_DeletesAllMealsWithSameTitle_AndRedirectsToSelectMeal()
+    {
+        _context.Users.Add(new User
+        {
+            Id = "user-1",
+            UserName = "testuser",
+            NormalizedUserName = "TESTUSER",
+            Email = "test@test.com",
+            NormalizedEmail = "TEST@TEST.COM",
+            ConcurrencyStamp = "stamp",
+            SecurityStamp = "sec-stamp"
+        });
+        _context.Meals.AddRange(
+            new Meal { Id = 10, UserId = "user-1", Title = "Breakfast" },
+            new Meal { Id = 11, UserId = "user-1", Title = "Breakfast" },
+            new Meal { Id = 12, UserId = "user-1", Title = "Lunch" }
+        );
+        _context.SaveChanges();
+
+        _mealRepoMock.Setup(r => r.ReadAsync(10))
+            .ReturnsAsync(new Meal { Id = 10, UserId = "user-1", Title = "Breakfast" });
+
+        _mealRepoMock.Setup(r => r.RemoveAllMealsWithSameTitleAsync("user-1", "Breakfast"))
+            .Callback<string, string>((uid, title) =>
+            {
+                var toRemove = _context.Meals.Where(m => m.UserId == uid && m.Title == title).ToList();
+                _context.Meals.RemoveRange(toRemove);
+                _context.SaveChanges();
+            })
+            .Returns(Task.CompletedTask);
+
+        var result = await _controller.RemoveMealTemplate(10, null);
+
+        Assert.That(result, Is.TypeOf<RedirectToActionResult>());
+        var redirect = (RedirectToActionResult)result;
+        Assert.That(redirect.ActionName, Is.EqualTo("SelectMeal"));
+
+        var remaining = _context.Meals.ToList();
+        Assert.That(remaining.Count, Is.EqualTo(1));
+        Assert.That(remaining[0].Title, Is.EqualTo("Lunch"));
+    }
+
+    [Test]
+    public async Task RemoveMealTemplate_WhenMealNotFound_ReturnsNotFound()
+    {
+        _mealRepoMock.Setup(r => r.ReadAsync(999)).ReturnsAsync((Meal)null!);
+
+        var result = await _controller.RemoveMealTemplate(999, null);
+
+        Assert.That(result, Is.TypeOf<NotFoundResult>());
+    }
+
+    [Test]
+    public async Task RemoveMealTemplate_WhenMealBelongsToDifferentUser_ReturnsNotFound()
+    {
+        var otherMeal = new Meal { Id = 20, UserId = "other-user", Title = "Stolen" };
+        _mealRepoMock.Setup(r => r.ReadAsync(20)).ReturnsAsync(otherMeal);
+
+        var result = await _controller.RemoveMealTemplate(20, null);
 
         Assert.That(result, Is.TypeOf<NotFoundResult>());
     }
@@ -657,6 +726,57 @@ public class MealControllerTests
             It.IsAny<User>(),
             It.IsAny<DateTime>(),
             It.Is<IEnumerable<int>>(ids => ids.Contains(10) && ids.Contains(11))),
+            Times.Once);
+    }
+
+    [Test]
+    public async Task RegenerateRecipe_PassesReplacedRecipeAsSlotTemplate()
+    {
+        var oldRecipe = new Recipe { Id = 10, Name = "Old Recipe", Calories = 300 };
+        var meal = new Meal { Id = 1, UserId = "user-1", Recipes = [oldRecipe] };
+        var newRecipe = new Recipe { Id = 20, Name = "New Recipe", Calories = 400 };
+        var loadedTemplate = new Recipe { Id = 10, Name = "Old Recipe", Protein = 30 };
+
+        _mealRepoMock.Setup(r => r.ReadAsync(1)).ReturnsAsync(meal);
+        _mealRepoMock.Setup(r => r.LoadRecipesAsync(meal)).Returns(Task.CompletedTask);
+        _mealRepoMock.Setup(r => r.CreateOrUpdate(meal)).Returns(meal);
+        _recipeRepoMock.Setup(r => r.ReadRecipeWithIngredientsAsync(10)).ReturnsAsync(loadedTemplate);
+        _reccServiceMock
+            .Setup(s => s.GetOneRecipeRecommendation(
+                It.IsAny<User>(), It.IsAny<DateTime>(), It.IsAny<IEnumerable<int>>(),
+                It.IsAny<Recipe>()))
+            .ReturnsAsync(newRecipe);
+
+        await _controller.RegenerateRecipe(1, 10);
+
+        _reccServiceMock.Verify(s => s.GetOneRecipeRecommendation(
+            It.IsAny<User>(), It.IsAny<DateTime>(), It.IsAny<IEnumerable<int>>(),
+            It.Is<Recipe>(r => r != null && r.Id == 10)),
+            Times.Once);
+    }
+
+    // RegenerateMeal
+
+    [Test]
+    public async Task RegenerateMeal_PassesMealIdToExcludeItFromTheRecommendation()
+    {
+        // The service owns the load-the-day-and-exclude-other-meals logic;
+        // the controller just tells it which meal is being regenerated.
+        var meal = new Meal { Id = 1, UserId = "user-1", StartTime = DateTime.Today, Recipes = [] };
+        _mealRepoMock.Setup(r => r.ReadAsync(1)).ReturnsAsync(meal);
+        _mealRepoMock.Setup(r => r.LoadRecipesAsync(It.IsAny<Meal>())).Returns(Task.CompletedTask);
+        _mealRepoMock.Setup(r => r.CreateOrUpdate(It.IsAny<Meal>())).Returns(meal);
+        _reccServiceMock
+            .Setup(s => s.GetRecommendedMealsForUser(
+                It.IsAny<User>(), It.IsAny<DateTime>(), It.IsAny<DayPlanConfigViewModel>(),
+                It.IsAny<int?>()))
+            .ReturnsAsync([]);
+
+        await _controller.RegenerateMeal(1, new MealPreferenceViewModel { Size = MealSize.Average });
+
+        _reccServiceMock.Verify(s => s.GetRecommendedMealsForUser(
+            It.IsAny<User>(), It.IsAny<DateTime>(), It.IsAny<DayPlanConfigViewModel>(),
+            1),
             Times.Once);
     }
 

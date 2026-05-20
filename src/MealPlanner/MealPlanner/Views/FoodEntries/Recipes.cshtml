@@ -1,28 +1,139 @@
 @using MealPlanner.ViewModels
-@model IEnumerable<MealPlanner.ViewModels.RecipeViewModel>
-<div class="back1 backHasButton">
-    <h1 class="back1Title">Your Recipes</h1>
-    @foreach (RecipeViewModel r in Model)
-{
-    var location = @Url.Action(action: "Recipes");
-   <div class="mealRecipeItem d-flex align-items-center justify-content-between mb-2 back2 back2-textbox"
-     data-recipe-id="@r.Id"
-     style="cursor:pointer;">
-    <h4 class="buttonText mb-0">@r.Name</h4>
-    <button type="button" class="btn btn-danger delete-recipe-btn" data-id="@r.Id">X</button>
-</div>
+@model MealPlanner.ViewModels.RecipesAndShoppingViewModel
+
+<link rel="stylesheet" href="~/css/recipes.css" asp-append-version="true" />
+
+<a href="javascript:history.back()" class="page-back-link">
+    <i class="ti ti-arrow-left"></i>
+    Back
+</a>
+
+@{
+    var allTags = Model.Recipes
+        .SelectMany(r => r.Tags ?? [])
+        .Distinct()
+        .OrderBy(t => t)
+        .ToList();
 }
-    <form asp-controller="FoodEntries" asp-action="AddNewRecipe" method="get">
-        <button class="buttonBlue">
-            <h2 class="buttonText">Create a New Recipe</h2>
-        </button>
-    </form>
+
+<div class="recipes-page">
+
+    <div class="panel-card">
+        <div class="panel-header">
+            <div class="panel-header-left">
+                <span class="panel-header-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                         fill="none" stroke="currentColor" stroke-width="2"
+                         stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+                        <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+                    </svg>
+                </span>
+                <span class="panel-header-title">Your recipes</span>
+            </div>
+        </div>
+
+        <div class="panel-body">
+            <!-- Search -->
+            <input type="text" id="searchText" class="recipe-search-input"
+                   placeholder="Search recipes…" autocomplete="off" />
+            <div id="error" style="display:none; font-size:13px; color:var(--muted-text); margin-top:8px;"></div>
+
+            <!-- Filter chips -->
+            <div class="recipe-filter-chips" id="filterChips">
+                <button type="button" class="filter-chip active" data-tag="">All</button>
+                @foreach (var tag in allTags)
+                {
+                    <button type="button" class="filter-chip" data-tag="@tag">@tag</button>
+                }
+            </div>
+
+            <!-- Recipe rows -->
+            <div class="recipe-rows" id="recipeRows">
+                @if (!Model.Recipes.Any())
+                {
+                    <p class="panel-empty">No recipes yet.</p>
+                }
+                @foreach (var r in Model.Recipes)
+                {
+                    <div class="recipe-row recipeSearchRow mealRecipeItem"
+                         data-recipe-id="@r.Id"
+                         data-name="@r.Name.ToLower()"
+                         data-tags="@string.Join(",", r.Tags ?? [])">
+
+                        <!-- Thumb -->
+                        <div class="recipe-thumb">
+                            @if (!string.IsNullOrEmpty(r.ImageUrl))
+                            {
+                                <img src="@r.ImageUrl" alt="@r.Name" />
+                            }
+                            else
+                            {
+                                <i class="ti ti-tools-kitchen-2" style="font-size:18px"></i>
+                            }
+                        </div>
+
+                        <!-- Info -->
+                        <div class="recipe-row-info">
+                            <h4 class="recipe-row-name">@r.Name</h4>
+                            <div class="recipe-row-macros">
+                                @r.Calories kcal &bull; @r.Protein g P &bull; @r.Carbs g C &bull; @r.Fat g F
+                            </div>
+                        </div>
+
+                        <!-- Actions -->
+                        <div class="recipe-row-actions">
+                            @if (r.Id > 0)
+                            {
+                                <a href="@Url.Action("EditRecipe", "FoodEntries", new { id = r.Id })"
+                                   class="recipe-action-btn edit"
+                                   title="Edit recipe"
+                                   onclick="event.stopPropagation()">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                                         fill="none" stroke="currentColor" stroke-width="2"
+                                         stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                                    </svg>
+                                </a>
+                                <button type="button"
+                                        class="recipe-action-btn delete delete-recipe-btn"
+                                        data-id="@r.Id"
+                                        title="Delete recipe">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                                         fill="none" stroke="currentColor" stroke-width="2"
+                                         stroke-linecap="round" stroke-linejoin="round">
+                                        <polyline points="3 6 5 6 21 6"/>
+                                        <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+                                        <path d="M10 11v6"/>
+                                        <path d="M14 11v6"/>
+                                        <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+                                    </svg>
+                                </button>
+                            }
+                        </div>
+
+                    </div>
+                }
+            </div>
+
+            <!-- Create new recipe -->
+            <a href="@Url.Action("AddNewRecipe", "FoodEntries")" class="create-recipe-btn">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                     fill="none" stroke="currentColor" stroke-width="2.5"
+                     stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="12" y1="5" x2="12" y2="19"/>
+                    <line x1="5" y1="12" x2="19" y2="12"/>
+                </svg>
+                Create new recipe
+            </a>
+        </div>
+    </div>
+
+
 </div>
 
-@await Html.PartialAsync("_RecipeSearchPartial")
-
-@section Scripts{
-    <script type="module" src="~/js/recipeSearch.js"></script>
-    <script type="module" src="~/js/recipeSearchToView.js"></script>
+@section Scripts {
+    <script src="~/js/recipes.js" asp-append-version="true"></script>
     <script src="~/js/deleteRecipe.js"></script>
 }

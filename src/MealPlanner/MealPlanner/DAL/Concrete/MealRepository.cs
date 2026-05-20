@@ -13,6 +13,62 @@ public class MealRepository : Repository<Meal>, IMealRepository
         _context = context;
     }
 
+    public override Meal CreateOrUpdate(Meal meal)
+    {
+        ResolveExternalRecipes(meal);
+        return base.CreateOrUpdate(meal);
+    }
+
+    // An external recipe selected into a meal is persisted as a URI-only row:
+    // Edamam's TOS permits caching only the recipe URI, so no name, nutrition,
+    // image or ingredients are stored — display code re-fetches the recipe
+    // from Edamam by URI when needed. An already-cached row is reused
+    // untouched. (Persisting the Edamam ingredient graph would also collide
+    // with the IngredientBase/Measurement unique indexes, and a duplicate
+    // ExternalUri violates that unique index — either aborts the meal save.)
+    private void ResolveExternalRecipes(Meal meal)
+    {
+        var recipeSet = _context.Set<Recipe>();
+        for (int i = 0; i < meal.Recipes.Count; i++)
+        {
+            var recipe = meal.Recipes[i];
+            if (string.IsNullOrEmpty(recipe.ExternalUri)) continue;
+
+            string uri = recipe.ExternalUri;
+            var cached = recipeSet.Local.FirstOrDefault(r => r.ExternalUri == uri)
+                         ?? recipeSet.FirstOrDefault(r => r.ExternalUri == uri);
+            if (cached != null)
+            {
+                meal.Recipes[i] = cached;
+                continue;
+            }
+
+            var shell = new Recipe
+            {
+                Name = string.Empty,
+                Directions = string.Empty,
+                ExternalUri = uri
+            };
+            recipeSet.Add(shell);
+            meal.Recipes[i] = shell;
+        }
+    }
+
+    // Returns the distinct set of recipe ids planned for a user on a given
+    // date — sharing the same exact-date + weekly-repeat + exclusion logic as
+    // GetUserMealsByDateAsync. `excludeMealId` skips a single meal (the
+    // RegenerateMeal flow uses this so the meal being regenerated does not
+    // suppress its own replacements).
+    public async Task<HashSet<int>> GetUserRecipeIdsForDateAsync(User user, DateTime date, int? excludeMealId = null)
+    {
+        var meals = await GetUserMealsByDateAsync(user, date);
+        return meals
+            .Where(m => excludeMealId == null || m.Id != excludeMealId)
+            .SelectMany(m => m.Recipes.Select(r => r.Id))
+            .Where(id => id != 0)
+            .ToHashSet();
+    }
+
     public async Task<List<Meal>> GetUserMealsByDateAsync(User user, DateTime date)
     {
         var start = date;
@@ -122,6 +178,7 @@ public class MealRepository : Repository<Meal>, IMealRepository
         var weeklyMeals = await _dbset
             .Include(m => m.Recipes)
             .Where(m => m.UserId == user.Id && m.RepeatRule == "Weekly" && m.StartTime != null)
+            .Where(m => m.StartTime!.Value.Date <= end.Date)
             .ToListAsync();
 
         weeklyMeals = weeklyMeals
@@ -155,6 +212,7 @@ public class MealRepository : Repository<Meal>, IMealRepository
             .Include(m => m.Recipes)
                 .ThenInclude(r => r.Ingredients)
             .Where(m => m.UserId == user.Id && m.RepeatRule == "Weekly" && m.StartTime != null)
+            .Where(m => m.StartTime!.Value.Date <= end.Date)
             .ToListAsync();
 
         weeklyMeals = weeklyMeals
@@ -235,5 +293,14 @@ public class MealRepository : Repository<Meal>, IMealRepository
             .Include(m => m.Recipes)
             .Where(m => idSet.Contains(m.Id))
             .ToListAsync();
+    }
+
+    public async Task RemoveAllMealsWithSameTitleAsync(string userId, string title)
+    {
+        var meals = await _dbset
+            .Where(m => m.UserId == userId && m.Title == title)
+            .ToListAsync();
+        _dbset.RemoveRange(meals);
+        await _context.SaveChangesAsync();
     }
 }
