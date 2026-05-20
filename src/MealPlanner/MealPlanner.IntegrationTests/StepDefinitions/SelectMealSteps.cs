@@ -157,11 +157,11 @@ public class SelectMealSteps
     [When("{string} clicks the remove button for the meal named {string}")]
     public void WhenUserClicksRemoveButtonForMealNamed(string username, string mealTitle)
     {
-        var row = _driver.FindElements(By.CssSelector(".selectMealRow"))
-            .First(r => r.FindElements(By.CssSelector(".selectMealName"))
+        var slot = _driver.FindElements(By.CssSelector(".sm-card-slot"))
+            .First(s => s.FindElements(By.CssSelector(".selectMealName"))
                 .Any(e => e.Text.Trim() == mealTitle));
 
-        var removeBtn = row.FindElement(By.CssSelector(".mealRemoveButton"));
+        var removeBtn = slot.FindElement(By.CssSelector(".sm-delete-btn"));
         ((IJavaScriptExecutor)_driver).ExecuteScript(
             "arguments[0].scrollIntoView({block:'center',behavior:'instant'});", removeBtn);
         try
