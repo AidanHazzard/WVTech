@@ -69,9 +69,23 @@ public class EdamamService:IExternalRecipeService
                 Carbs = (int?) e.Recipe.TotalNutrients?["CHOCDF"]?.Quantity ?? 0,
                 Fat = (int?) e.Recipe.TotalNutrients?["FAT"]?.Quantity ?? 0,
                 ImageUrl = e.Recipe.Image,
-                Ingredients = ParseIngredientsFromResponse(e.Recipe.Ingredients ?? [])
+                Ingredients = ParseIngredientsFromResponse(e.Recipe.Ingredients ?? []),
+                ExternalCategorization = CollectCategorization(e.Recipe)
             }).FirstOrDefault();
     }
+
+    // Concatenates Edamam's five categorization arrays into one flat list,
+    // which EdamamTagClassifier.ResolveLocalTags then reverse-maps onto local
+    // Tag entities. All five vocabularies share the canonical string space the
+    // forward classifier already routes on, so the inverse direction doesn't
+    // need to know which facet a string came from.
+    private static List<string> CollectCategorization(EdamamRecipe r) =>
+        (r.DietLabels ?? [])
+            .Concat(r.HealthLabels ?? [])
+            .Concat(r.CuisineType ?? [])
+            .Concat(r.MealType ?? [])
+            .Concat(r.DishType ?? [])
+            .ToList();
 
     public async Task<IEnumerable<Recipe>> SearchByContextAsync(ExternalSearchQuery query)
     {
@@ -135,7 +149,8 @@ public class EdamamService:IExternalRecipeService
             Fat      = (int?) e.Recipe.TotalNutrients?["FAT"]?.Quantity ?? 0,
             ImageUrl = e.Recipe.Image,
             Tags = [],
-            Ingredients = ParseIngredientsFromResponse(e.Recipe.Ingredients ?? [])
+            Ingredients = ParseIngredientsFromResponse(e.Recipe.Ingredients ?? []),
+            ExternalCategorization = CollectCategorization(e.Recipe)
         }) ?? [];
     }
 
@@ -170,7 +185,8 @@ public class EdamamService:IExternalRecipeService
                     Carbs    = (int?) e.Recipe.TotalNutrients?["CHOCDF"]?.Quantity ?? 0,
                     Fat      = (int?) e.Recipe.TotalNutrients?["FAT"]?.Quantity ?? 0,
                     ImageUrl = e.Recipe.Image,
-                    Ingredients = ParseIngredientsFromResponse(e.Recipe.Ingredients ?? [])
+                    Ingredients = ParseIngredientsFromResponse(e.Recipe.Ingredients ?? []),
+                    ExternalCategorization = CollectCategorization(e.Recipe)
                 }));
         }
         return results;

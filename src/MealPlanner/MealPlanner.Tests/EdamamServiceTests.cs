@@ -647,7 +647,10 @@ public class EdamamServiceTests
                         "label": "Vegan Italian Salad",
                         "ingredients": [],
                         "totalNutrients": {
-                            "ENERC_KCAL": { "label": "Energy", "quantity": 200, "unit": "kcal" }
+                            "ENERC_KCAL": { "label": "Energy", "quantity": 200, "unit": "kcal" },
+                            "FAT":        { "label": "Fat",    "quantity": 5,   "unit": "g"    },
+                            "CHOCDF":     { "label": "Carbs",  "quantity": 25,  "unit": "g"    },
+                            "PROCNT":     { "label": "Protein","quantity": 8,   "unit": "g"    }
                         },
                         "dietLabels": ["high-protein"],
                         "healthLabels": ["vegan", "gluten-free"],
@@ -687,7 +690,10 @@ public class EdamamServiceTests
                         "label": "Plain Recipe",
                         "ingredients": [],
                         "totalNutrients": {
-                            "ENERC_KCAL": { "label": "Energy", "quantity": 200, "unit": "kcal" }
+                            "ENERC_KCAL": { "label": "Energy", "quantity": 200, "unit": "kcal" },
+                            "FAT":        { "label": "Fat",    "quantity": 5,   "unit": "g"    },
+                            "CHOCDF":     { "label": "Carbs",  "quantity": 25,  "unit": "g"    },
+                            "PROCNT":     { "label": "Protein","quantity": 8,   "unit": "g"    }
                         }
                     },
                     "_links": { "self": { "href": "https://api.test.com/api/y", "title": "Self" } }
@@ -716,7 +722,10 @@ public class EdamamServiceTests
                         "label": "Curry",
                         "ingredients": [],
                         "totalNutrients": {
-                            "ENERC_KCAL": { "label": "Energy", "quantity": 600, "unit": "kcal" }
+                            "ENERC_KCAL": { "label": "Energy", "quantity": 600, "unit": "kcal" },
+                            "FAT":        { "label": "Fat",    "quantity": 15,  "unit": "g"    },
+                            "CHOCDF":     { "label": "Carbs",  "quantity": 60,  "unit": "g"    },
+                            "PROCNT":     { "label": "Protein","quantity": 20,  "unit": "g"    }
                         },
                         "cuisineType": ["Indian"],
                         "mealType": ["Dinner"]
@@ -746,7 +755,10 @@ public class EdamamServiceTests
                         "label": "Pancakes",
                         "ingredients": [],
                         "totalNutrients": {
-                            "ENERC_KCAL": { "label": "Energy", "quantity": 400, "unit": "kcal" }
+                            "ENERC_KCAL": { "label": "Energy", "quantity": 400, "unit": "kcal" },
+                            "FAT":        { "label": "Fat",    "quantity": 12,  "unit": "g"    },
+                            "CHOCDF":     { "label": "Carbs",  "quantity": 50,  "unit": "g"    },
+                            "PROCNT":     { "label": "Protein","quantity": 10,  "unit": "g"    }
                         },
                         "dishType": ["Pancake"],
                         "mealType": ["Breakfast"]
