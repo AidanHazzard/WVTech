@@ -236,4 +236,13 @@ public class MealRepository : Repository<Meal>, IMealRepository
             .Where(m => idSet.Contains(m.Id))
             .ToListAsync();
     }
+
+    public async Task RemoveAllMealsWithSameTitleAsync(string userId, string title)
+    {
+        var meals = await _dbset
+            .Where(m => m.UserId == userId && m.Title == title)
+            .ToListAsync();
+        _dbset.RemoveRange(meals);
+        await _context.SaveChangesAsync();
+    }
 }
