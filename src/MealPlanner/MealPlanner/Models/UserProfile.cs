@@ -32,4 +32,6 @@ public class UserProfile
 
     [MaxLength(10)]
     public string? ZipCode { get; set; }
+
+    public string? DisplayHandle { get; set; }
 }

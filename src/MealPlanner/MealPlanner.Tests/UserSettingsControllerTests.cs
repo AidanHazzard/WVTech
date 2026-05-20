@@ -6,6 +6,7 @@ using MealPlanner.Models;
 using MealPlanner.Services;
 using MealPlanner.ViewModels;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
@@ -45,12 +46,22 @@ public class UserSettingsControllerTests
 
     private UserSettingsController CreateController(string userId = "user-1")
     {
+        var userManagerMock = new Mock<UserManager<User>>(
+            Mock.Of<IUserStore<User>>(), null!, null!, null!, null!, null!, null!, null!, null!);
+        var nutritionRepoMock = new Mock<IUserNutritionPreferenceRepository>();
+        nutritionRepoMock.Setup(r => r.GetUsersNutritionPreferenceAsync(It.IsAny<string>())).ReturnsAsync((UserNutritionPreference?)null);
+        var dietaryRepoMock = new Mock<IUserDietaryRestrictionRepository>();
+        dietaryRepoMock.Setup(r => r.GetAllAsync()).ReturnsAsync([]);
+        dietaryRepoMock.Setup(r => r.GetSelectedIdsByUserIdAsync(It.IsAny<string>())).ReturnsAsync([]);
         var controller = new UserSettingsController(
             CreateContext(),
             new Mock<IUserSettingsRepository>().Object,
             new Mock<IUserSettingsService>().Object,
             _tagRepoMock.Object,
-            _foodPrefRepoMock.Object);
+            _foodPrefRepoMock.Object,
+            nutritionRepoMock.Object,
+            dietaryRepoMock.Object,
+            userManagerMock.Object);
 
         controller.ControllerContext = new ControllerContext
         {

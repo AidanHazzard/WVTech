@@ -1,108 +1,152 @@
 @model MealPlanner.ViewModels.RecipeViewModel
+@using MealPlanner.Models
 
-<div id="recipe" class="back1 backHasButton row container-fluid" recipe-id="@Model.Id">
-<div class="backHasButton row container-fluid">
-    <div class="col-3 mx-1">
-        @if (Model.Tags.Any())
-        {
-            <div class="d-flex flex-wrap gap-1 mb-2">
-                @foreach (var tag in Model.Tags)
-                {
-                    <span class="badge rounded-pill recipe-tag">@tag</span>
-                }
-            </div>
-        }
-        
-        @{
-            bool hasImage = !string.IsNullOrEmpty(Model.ImageUrl);
-            string imgSrc = hasImage ? Model.ImageUrl! : "/images/placeholder/no-image.svg";
-            string imgClass = hasImage ? "recipe-image recipe-has-image" : "recipe-image recipe-no-image";
-        }
-        <img src="@imgSrc" alt="@Model.Name" class="@imgClass mb-3"
-             style="max-width:100%; max-height:300px; object-fit:cover; border-radius:6px;" />
+<link rel="stylesheet" href="~/css/singleRecipe.css" asp-append-version="true" />
 
-        <div class="back2">
-            <h3 class="back1Title">Nutrition</h3>
+<a href="javascript:history.back()" class="page-back-link">
+    <i class="ti ti-arrow-left"></i>
+    Back
+</a>
 
-            @{
-                bool hasNutrition =
-                    !(Model.Calories == 0 && Model.Protein == 0 && Model.Carbs == 0 && Model.Fat == 0);
-            }
+<div id="recipe" class="sr-page" recipe-id="@Model.Id">
 
-            @if (hasNutrition)
+    @if (Model.Tags.Any())
+    {
+        <div class="sr-tags">
+            @foreach (var tag in Model.Tags)
             {
-                <ul>
-                    <li><strong>Calories:</strong> @Model.Calories kcal</li>
-                    <li><strong>Protein:</strong> @Model.Protein g</li>
-                    <li><strong>Carbs:</strong> @Model.Carbs g</li>
-                    <li><strong>Fat:</strong> @Model.Fat g</li>
-                </ul>
+                <span class="sr-tag">@tag</span>
+            }
+        </div>
+    }
+
+    <div class="sr-grid">
+
+        <!-- ── Left column ─────────────────────────── -->
+        <div class="sr-left">
+
+            @if (!string.IsNullOrEmpty(Model.ImageUrl))
+            {
+                <img src="@Model.ImageUrl" alt="@Model.Name" class="sr-image recipe-image recipe-has-image" />
             }
             else
             {
-                <p>Nutrition information is not available for this recipe yet.</p>
+                <div class="sr-image-placeholder recipe-image recipe-no-image">
+                    <i class="ti ti-tools-kitchen-2"></i>
+                </div>
             }
-        </div>
 
-        <div class="back2">
-            <h3 class="back1Title">Ingredients</h3>
-            <ul>
+            <!-- Nutrition card -->
+            <div class="sr-card">
+                <div class="sr-card-title">
+                    <span class="sr-card-icon"><i class="ti ti-chart-bar"></i></span>
+                    <span class="sr-card-label">Nutrition</span>
+                </div>
                 @{
-                    for (int i = 0; i < Model.Ingredients.Count; i++)
-                    {
-                        <li class="back2-textbox">
-                            @Model.IngredientAmounts[i] @Model.IngredientMeasurements[i] of @Model.Ingredients[i]
-                        </li>
-                    }
+                    bool hasNutrition = !(Model.Calories == 0 && Model.Protein == 0 && Model.Carbs == 0 && Model.Fat == 0);
                 }
-            </ul>
-        </div>
-
-    </div>
-
-    <div class="col mx-1">
-        <div class="row mb-5">
-            <h1 class="back1Title col-8">@Model.Name</h1>
-            @{
-                string voterPercentage = Model.VotePercentage != null ? $"{(int)Model.VotePercentage * 100}%" : "0%";
-            }
-            <h4 id="votePercent" class="col-2" style="color: color-mix(in oklch, red, green @voterPercentage);">@voterPercentage</h4>
-            <div class="col-2">
-                
-                @if (Model.UserVote == UserVoteType.UpVote)
+                @if (hasNutrition)
                 {
-                    <img id="thumbs-up" src="~/images/icons/hand-thumbs-up-fill.svg" width="30" height="30" class="growOnHover vote" vote-type="NoVote" base-vote="UpVote">
+                    <div class="sr-nutrition-rows">
+                        <div class="sr-nutrition-row">
+                            <span class="sr-nut-label">Calories</span>
+                            <span class="sr-nut-value">@Model.Calories kcal</span>
+                        </div>
+                        <div class="sr-nutrition-row">
+                            <span class="sr-nut-label">Protein</span>
+                            <span class="sr-nut-value">@Model.Protein g</span>
+                        </div>
+                        <div class="sr-nutrition-row">
+                            <span class="sr-nut-label">Carbs</span>
+                            <span class="sr-nut-value">@Model.Carbs g</span>
+                        </div>
+                        <div class="sr-nutrition-row">
+                            <span class="sr-nut-label">Fat</span>
+                            <span class="sr-nut-value">@Model.Fat g</span>
+                        </div>
+                    </div>
                 }
                 else
                 {
-                    <img id="thumbs-up" src="~/images/icons/hand-thumbs-up.svg" width="30" height="30" class="growOnHover vote" vote-type="UpVote" base-vote="UpVote">
-                }
-                @if (Model.UserVote == UserVoteType.DownVote)
-                {
-                    <img id="thumbs-down" src="~/images/icons/hand-thumbs-down-fill.svg" width="30" height="30" class="growOnHover vote" vote-type="NoVote" base-vote="DownVote">
-                }
-                else
-                {
-                    <img id="thumbs-down" src="~/images/icons/hand-thumbs-down.svg" width="30" height="30" class="growOnHover vote" vote-type="DownVote" base-vote="DownVote">
+                    <p class="sr-empty-text">No nutrition information available.</p>
                 }
             </div>
+
+            <!-- Ingredients card -->
+            <div class="sr-card">
+                <div class="sr-card-title">
+                    <span class="sr-card-icon"><i class="ti ti-bowl-chopsticks"></i></span>
+                    <span class="sr-card-label">Ingredients</span>
+                </div>
+                <div class="sr-ingredient-rows">
+                    @for (int i = 0; i < Model.Ingredients.Count; i++)
+                    {
+                        <div class="sr-ingredient-row">
+                            <span class="sr-ing-name">@Model.Ingredients[i]</span>
+                            <span class="sr-ing-qty">@Model.IngredientAmounts[i] @Model.IngredientMeasurements[i]</span>
+                        </div>
+                    }
+                </div>
+            </div>
+
         </div>
 
-        <!-- Description -->
-        <!-- Add recipe description here if implemented in the future -->
-        <div class="back2">
+        <!-- ── Right column ────────────────────────── -->
+        <div class="sr-right">
 
-        <h3 class="back1Title">Instructions</h3>
-        <p class="back2-textbox">@Model.Directions</p>
+            <div class="sr-header">
+                <h1 class="sr-recipe-name">@Model.Name</h1>
+                <div class="sr-vote-row">
+                    @{
+                        string voterPercentage = Model.VotePercentage != null
+                            ? $"{(int)(Model.VotePercentage.Value * 100)}%"
+                            : "0%";
+                    }
+                    <span id="votePercent" class="sr-match-pct">@voterPercentage</span>
+                    <button id="thumbs-up"
+                            class="vote sr-vote-btn @(Model.UserVote == UserVoteType.UpVote ? "sr-active" : "")"
+                            vote-type="@(Model.UserVote == UserVoteType.UpVote ? "NoVote" : "UpVote")"
+                            base-vote="UpVote"
+                            type="button"
+                            aria-label="Thumbs up">
+                        <i class="ti ti-thumb-up"></i>
+                    </button>
+                    <button id="thumbs-down"
+                            class="vote sr-vote-btn @(Model.UserVote == UserVoteType.DownVote ? "sr-active" : "")"
+                            vote-type="@(Model.UserVote == UserVoteType.DownVote ? "NoVote" : "DownVote")"
+                            base-vote="DownVote"
+                            type="button"
+                            aria-label="Thumbs down">
+                        <i class="ti ti-thumb-down"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Instructions card -->
+            <div class="sr-card">
+                <div class="sr-card-title">
+                    <span class="sr-card-icon"><i class="ti ti-list"></i></span>
+                    <span class="sr-card-label">Instructions</span>
+                </div>
+                <p class="sr-instructions-text">@Model.Directions</p>
+            </div>
+
+            @if (Model.IsOwned)
+            {
+                <div class="sr-footer">
+                    <a href="/FoodEntries/EditRecipe/@Model.Id" class="sr-edit-btn">
+                        <i class="ti ti-edit"></i>
+                        Edit Recipe
+                    </a>
+                </div>
+            }
+
+        </div>
+
     </div>
-    @if (Model.IsOwned)
-    {
-    <button class="buttonBlue" type="button" onclick="window.location='/FoodEntries/EditRecipe/@Model.Id'">
-        <h2 class="buttonText">Edit Recipe</h2>
-    </button>
-    }
+
 </div>
 
-@section Scripts{
+@section Scripts {
     <script type="module" src="~/js/recipeVote.js"></script>
 }

@@ -18,6 +18,17 @@ public class UserSettingsRepository : Repository<UserProfile>, IUserSettingsRepo
         return await _dbset.FirstOrDefaultAsync(x => x.UserId == userId);
     }
 
+    public async Task<UserProfile> FindOrCreateAsync(string userId)
+    {
+        var profile = await GetByUserIdAsync(userId);
+        if (profile == null)
+        {
+            profile = new UserProfile { UserId = userId };
+            _context.Add(profile);
+        }
+        return profile;
+    }
+
     public async Task ToggleDarkThemeAsync(string userId)
     {
         var profile = await GetByUserIdAsync(userId);

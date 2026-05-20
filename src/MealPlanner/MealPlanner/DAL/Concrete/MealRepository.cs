@@ -178,6 +178,7 @@ public class MealRepository : Repository<Meal>, IMealRepository
         var weeklyMeals = await _dbset
             .Include(m => m.Recipes)
             .Where(m => m.UserId == user.Id && m.RepeatRule == "Weekly" && m.StartTime != null)
+            .Where(m => m.StartTime!.Value.Date <= end.Date)
             .ToListAsync();
 
         weeklyMeals = weeklyMeals
@@ -211,6 +212,7 @@ public class MealRepository : Repository<Meal>, IMealRepository
             .Include(m => m.Recipes)
                 .ThenInclude(r => r.Ingredients)
             .Where(m => m.UserId == user.Id && m.RepeatRule == "Weekly" && m.StartTime != null)
+            .Where(m => m.StartTime!.Value.Date <= end.Date)
             .ToListAsync();
 
         weeklyMeals = weeklyMeals
@@ -291,5 +293,14 @@ public class MealRepository : Repository<Meal>, IMealRepository
             .Include(m => m.Recipes)
             .Where(m => idSet.Contains(m.Id))
             .ToListAsync();
+    }
+
+    public async Task RemoveAllMealsWithSameTitleAsync(string userId, string title)
+    {
+        var meals = await _dbset
+            .Where(m => m.UserId == userId && m.Title == title)
+            .ToListAsync();
+        _dbset.RemoveRange(meals);
+        await _context.SaveChangesAsync();
     }
 }
