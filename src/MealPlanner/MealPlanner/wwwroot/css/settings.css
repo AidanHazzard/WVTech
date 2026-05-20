@@ -1,0 +1,802 @@
+/* ── Two-column settings layout ─────────────────────────── */
+.settings-layout {
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    gap: 1.25rem;
+    align-items: start;
+    margin: 20px 0 28px;
+}
+
+/* ── Sidebar ─────────────────────────────────────────────── */
+.settings-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    position: sticky;
+    top: 16px;
+}
+
+.settings-nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 10px;
+    border-radius: 8px;
+    font-size: 13px;
+    color: var(--muted-text);
+    background: none;
+    border: 0.5px solid transparent;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background-color 0.15s, color 0.15s, border-color 0.15s;
+    width: 100%;
+    text-align: left;
+}
+
+.settings-nav-item:hover {
+    background-color: var(--card-bg);
+    color: var(--text-primary);
+    text-decoration: none;
+}
+
+.settings-nav-item.active {
+    background-color: var(--card-bg);
+    color: var(--teal);
+    border-color: var(--card-border);
+}
+
+.settings-nav-item.active .settings-nav-icon {
+    color: var(--teal);
+}
+
+.settings-nav-item.logout {
+    color: #f87171;
+}
+
+.settings-nav-item.logout:hover {
+    background-color: rgba(248, 113, 113, 0.1);
+    color: #ef4444;
+}
+
+.settings-nav-icon {
+    width: 16px;
+    height: 16px;
+    flex: 0 0 auto;
+    color: var(--muted-text);
+}
+
+.settings-nav-item.active .settings-nav-icon,
+.settings-nav-item:hover .settings-nav-icon {
+    color: inherit;
+}
+
+.settings-nav-divider {
+    height: 0.5px;
+    background-color: var(--card-border);
+    margin: 6px 4px;
+}
+
+/* ── Content area ────────────────────────────────────────── */
+.settings-content {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+/* ── Shared settings card ────────────────────────────────── */
+.settings-card {
+    background-color: var(--card-bg);
+    border: 0.5px solid var(--card-border);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.settings-card-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    border-bottom: 0.5px solid var(--card-border);
+}
+
+.settings-card-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    background-color: var(--teal-light);
+    color: var(--teal);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+}
+
+.settings-card-title {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.settings-card-body {
+    padding: 16px;
+}
+
+/* ── Success / error banners ─────────────────────────────── */
+.settings-success {
+    font-size: 12px;
+    color: var(--teal);
+    background-color: var(--teal-light);
+    border: 0.5px solid rgba(20, 184, 166, 0.3);
+    border-radius: 6px;
+    padding: 8px 12px;
+    margin-bottom: 12px;
+    opacity: 1;
+    transition: opacity 0.4s ease;
+}
+
+.settings-error {
+    font-size: 12px;
+    color: #E24B4A;
+    background-color: rgba(226, 75, 74, 0.1);
+    border: 0.5px solid rgba(226, 75, 74, 0.3);
+    border-radius: 6px;
+    padding: 8px 12px;
+    margin-bottom: 12px;
+    opacity: 1;
+    transition: opacity 0.4s ease;
+}
+
+.fade-out {
+    opacity: 0 !important;
+}
+
+/* ── Profile card ────────────────────────────────────────── */
+.profile-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.profile-avatar {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background-color: var(--teal-light);
+    color: var(--teal);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    font-weight: 600;
+    flex: 0 0 auto;
+    border: 1.5px solid rgba(20, 184, 166, 0.3);
+    letter-spacing: 0.5px;
+}
+
+.profile-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.profile-name {
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--text-primary);
+    margin: 0 0 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.profile-email {
+    font-size: 12px;
+    color: var(--muted-text);
+    margin: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.profile-edit-btn {
+    flex: 0 0 auto;
+    padding: 7px 14px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-primary);
+    background: none;
+    border: 0.5px solid var(--card-border);
+    border-radius: 7px;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background-color 0.15s, border-color 0.15s;
+}
+
+.profile-edit-btn:hover {
+    background-color: var(--layer2-bg);
+    border-color: var(--chip-border);
+    text-decoration: none;
+}
+
+/* ── Nutrition goals card ────────────────────────────────── */
+.macro-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+}
+
+.macro-field-label {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--muted-text);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+}
+
+.macro-input-group {
+    display: flex;
+    align-items: stretch;
+    border: 0.5px solid var(--chip-border);
+    border-radius: 8px;
+    overflow: hidden;
+    transition: border-color 0.2s;
+}
+
+.macro-input-group:focus-within {
+    border-color: var(--teal);
+}
+
+.macro-input-field {
+    flex: 1;
+    padding: 9px 12px;
+    font-size: 13px;
+    background-color: var(--layer2-bg);
+    border: none;
+    color: var(--text-primary);
+    outline: none;
+    min-width: 0;
+}
+
+.macro-input-field::placeholder {
+    color: var(--muted-text);
+}
+
+.macro-unit {
+    padding: 9px 11px;
+    background-color: var(--card-bg);
+    border-left: 0.5px solid var(--chip-border);
+    color: var(--muted-text);
+    font-size: 12px;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    flex: 0 0 auto;
+}
+
+/* ── Restriction / food preference chips ────────────────── */
+.settings-chips-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.settings-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 6px 12px;
+    border-radius: 9999px;
+    border: 0.5px solid var(--chip-border);
+    background: none;
+    color: var(--muted-text);
+    font-size: 12px;
+    cursor: pointer;
+    transition: background-color 0.15s, border-color 0.15s, color 0.15s;
+    white-space: nowrap;
+    user-select: none;
+}
+
+.settings-chip:hover {
+    border-color: var(--teal);
+    color: var(--text-primary);
+}
+
+.settings-chip.active {
+    background-color: var(--teal-light);
+    border-color: var(--teal);
+    color: var(--teal);
+    font-weight: 500;
+}
+
+.chip-check-icon {
+    display: none;
+    width: 11px;
+    height: 11px;
+    flex: 0 0 auto;
+}
+
+.settings-chip.active .chip-check-icon {
+    display: block;
+}
+
+.chip-remove-icon {
+    width: 11px;
+    height: 11px;
+    flex: 0 0 auto;
+    opacity: 0.6;
+}
+
+.settings-chip.removable:hover .chip-remove-icon {
+    opacity: 1;
+    color: #ef4444;
+}
+
+/* ── Dietary restriction chips (orange accent) ───────────── */
+.restriction-chip {
+    background: #2e2e2e;
+    border: 0.5px solid rgba(255, 255, 255, 0.08);
+    color: #a0a0a0;
+}
+
+[data-theme="light"] .restriction-chip {
+    background: #f0f0f0;
+    border: 0.5px solid rgba(0, 0, 0, 0.1);
+    color: #a0a0a0;
+}
+
+.restriction-chip:hover {
+    border-color: rgba(239, 159, 39, 0.4);
+    color: #EF9F27;
+}
+
+.restriction-chip.active {
+    background: rgba(239, 159, 39, 0.15);
+    border: 0.5px solid rgba(239, 159, 39, 0.4);
+    color: #EF9F27;
+    font-weight: 500;
+}
+
+/* Food pref "empty" message */
+.settings-chips-empty {
+    font-size: 13px;
+    color: var(--muted-text);
+    font-style: italic;
+}
+
+/* Food pref add row */
+.food-pref-add-row {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+    align-items: center;
+}
+
+.food-pref-input {
+    flex: 1;
+    padding: 9px 12px;
+    font-size: 13px;
+    background-color: var(--layer2-bg);
+    border: 0.5px solid var(--chip-border);
+    border-radius: 8px;
+    color: var(--text-primary);
+    outline: none;
+    transition: border-color 0.2s;
+    min-width: 0;
+}
+
+.food-pref-input:focus {
+    border-color: var(--teal);
+}
+
+.food-pref-input::placeholder {
+    color: var(--muted-text);
+}
+
+.food-pref-add-btn {
+    padding: 9px 16px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #ffffff;
+    background-color: #22c55e;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background-color 0.15s;
+    flex: 0 0 auto;
+}
+
+.food-pref-add-btn:hover {
+    background-color: #16a34a;
+}
+
+.food-pref-section-label {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--muted-text);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 0 0 8px;
+}
+
+.food-pref-divider {
+    height: 0.5px;
+    background-color: var(--card-border);
+    margin: 14px 0;
+}
+
+/* ── Appearance card ─────────────────────────────────────── */
+.appearance-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.appearance-row-label {
+    flex: 1;
+}
+
+.appearance-row-title {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-primary);
+    margin: 0 0 2px;
+}
+
+.appearance-row-sub {
+    font-size: 11px;
+    color: var(--muted-text);
+}
+
+/* Custom toggle switch */
+.custom-toggle {
+    width: 38px;
+    height: 22px;
+    border-radius: 9999px;
+    background-color: var(--chip-border);
+    position: relative;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    flex: 0 0 auto;
+}
+
+.custom-toggle.on {
+    background-color: var(--teal);
+}
+
+.custom-toggle-knob {
+    width: 16px;
+    height: 16px;
+    background-color: #ffffff;
+    border-radius: 50%;
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    transition: transform 0.2s;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.custom-toggle.on .custom-toggle-knob {
+    transform: translateX(16px);
+}
+
+/* ── Save button ─────────────────────────────────────────── */
+.settings-save-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 13px 16px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #ffffff;
+    background-color: var(--teal);
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    box-sizing: border-box;
+}
+
+.settings-save-btn:hover {
+    background-color: var(--teal-hover);
+}
+
+/* ── Reset password page card ────────────────────────────── */
+.reset-pw-field {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    margin-bottom: 14px;
+}
+
+.reset-pw-label {
+    font-size: 12px;
+    color: var(--muted-text);
+}
+
+.reset-pw-input {
+    padding: 9px 12px;
+    font-size: 13px;
+    background-color: var(--layer2-bg);
+    border: 0.5px solid var(--chip-border);
+    border-radius: 8px;
+    color: var(--text-primary);
+    outline: none;
+    transition: border-color 0.2s;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.reset-pw-input:focus {
+    border-color: var(--teal);
+}
+
+/* ── Profile avatar photo support (settings card) ───────── */
+.profile-avatar {
+    position: relative;
+    overflow: hidden;
+}
+
+.profile-avatar img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+}
+
+.profile-avatar.has-photo span {
+    display: none;
+}
+
+/* ── Inline edit profile panel ───────────────────────────── */
+.ep-inline {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.32s ease;
+}
+
+.ep-inline.open {
+    max-height: 700px;
+}
+
+.ep-inline-inner {
+    border-top: 0.5px solid var(--card-border);
+    margin-top: 16px;
+    padding-top: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.profile-edit-btn.is-cancel {
+    background: none;
+    border-color: transparent;
+    color: var(--muted-text);
+}
+
+.profile-edit-btn.is-cancel:hover {
+    background: none;
+    border-color: transparent;
+    color: var(--text-primary);
+}
+
+/* ── Avatar section ──────────────────────────────────────── */
+.ep-avatar-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+.ep-avatar-circle {
+    position: relative;
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    background: #1a5c40;
+    color: #2EC99A;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    font-weight: 500;
+    overflow: hidden;
+    flex: 0 0 auto;
+}
+
+.ep-avatar-circle img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+}
+
+.ep-avatar-circle.has-photo span {
+    display: none;
+}
+
+.ep-change-photo-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+    color: #2EC99A;
+    background: #0d2e22;
+    border: 0.5px solid #1a5c40;
+    border-radius: 6px;
+    padding: 4px 12px;
+    cursor: pointer;
+    transition: background-color 0.15s;
+}
+
+.ep-change-photo-btn:hover {
+    background: #143d2d;
+}
+
+[data-theme="light"] .ep-change-photo-btn {
+    background: var(--teal-light);
+    border-color: rgba(20, 184, 166, 0.3);
+    color: var(--teal);
+}
+
+[data-theme="light"] .ep-change-photo-btn:hover {
+    background: #b2f5ea;
+}
+
+.ep-remove-photo-link {
+    font-size: 12px;
+    color: #E24B4A;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    text-align: center;
+    transition: color 0.15s;
+}
+
+.ep-remove-photo-link:hover {
+    text-decoration: underline;
+    color: #E24B4A;
+}
+
+/* ── Form fields ─────────────────────────────────────────── */
+.ep-fields {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.ep-field {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.ep-label {
+    font-size: 11px;
+    font-weight: 500;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+[data-theme="light"] .ep-label {
+    color: #888;
+}
+
+.ep-input {
+    background: #2e2e2e;
+    border: 0.5px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    padding: 9px 12px;
+    font-size: 13px;
+    color: #f0f0f0;
+    outline: none;
+    transition: border-color 0.2s;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.ep-input:focus {
+    border-color: #2EC99A;
+}
+
+.ep-input::placeholder {
+    color: #555;
+}
+
+[data-theme="light"] .ep-input {
+    background: #f5f5f5;
+    border-color: rgba(0, 0, 0, 0.1);
+    color: #1a1a1a;
+}
+
+[data-theme="light"] .ep-input::placeholder {
+    color: #aaa;
+}
+
+.ep-helper {
+    font-size: 11px;
+    color: #555;
+    margin: 0;
+}
+
+[data-theme="light"] .ep-helper {
+    color: #999;
+}
+
+/* ── Inline button row (right-aligned) ───────────────────── */
+.ep-btn-row {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.ep-btn-cancel {
+    background: none;
+    color: var(--muted-text);
+    border: none;
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: color 0.15s;
+}
+
+.ep-btn-cancel:hover {
+    color: var(--text-primary);
+}
+
+.ep-btn-save {
+    background: var(--teal);
+    color: #ffffff;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 18px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: background-color 0.15s;
+}
+
+.ep-btn-save:hover {
+    background: var(--teal-hover);
+}
+
+.ep-btn-save:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* ── Responsive ─────────────────────────────────────────── */
+@media (max-width: 768px) {
+    .settings-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .settings-sidebar {
+        flex-direction: row;
+        flex-wrap: wrap;
+        position: static;
+        gap: 4px;
+    }
+
+    .settings-nav-divider {
+        width: 100%;
+        height: 0.5px;
+    }
+
+    .macro-grid {
+        grid-template-columns: 1fr;
+    }
+}

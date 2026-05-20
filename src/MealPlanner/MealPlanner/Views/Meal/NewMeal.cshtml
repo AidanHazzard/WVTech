@@ -5,26 +5,27 @@
     var tags = (List<Tag>)(ViewBag.AvailableTags ?? new List<Tag>());
     var tagsJson = System.Text.Json.JsonSerializer.Serialize(
         tags.Select(t => new { id = t.Id, name = t.Name }));
+
+    var displayMonth = Model.SelectedMonth > 0 ? Model.SelectedMonth : today.Month;
+    var displayDay   = Model.SelectedDay   > 0 ? Model.SelectedDay   : today.Day;
+    var displayDate  = new DateTime(today.Year, displayMonth, Math.Min(displayDay, DateTime.DaysInMonth(today.Year, displayMonth)));
 }
 
-<div class="back1 backHasButton">
-    <h2 class="back1Title">Recommend Meal</h2>
-    <div class="buttonRow">
-        <button class="buttonBlueInline">
-            <h4 id="recommendMeal" class="buttonText" data-bs-toggle="modal" data-bs-target="#recommendMealModel">Recommend Meal</h4>
-        </button>
-        <button id="showDayPlanWizard" class="buttonBlueInline" type="button"
-                data-bs-toggle="modal" data-bs-target="#dayPlanModal">
-            <h4 class="buttonText">Generate Day Plan</h4>
-        </button>
-    </div>
-</div>
+<link rel="stylesheet" href="~/css/newMeal.css" asp-append-version="true" />
 
-<!-- Day Plan Wizard Modal -->
+<!-- ── Day Plan Wizard Modal ── -->
 <div class="modal fade" id="dayPlanModal" tabindex="-1" aria-labelledby="dayPlanModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
-        <div class="modal-content back1 backHasButton">
-            <h2 class="back1Title" id="dayPlanModalLabel">Generate Day Plan</h2>
+    <div class="modal-dialog modal-dialog-centered gdp-dialog">
+        <div class="modal-content gdp-content">
+
+            <button type="button" class="gdp-close" data-bs-dismiss="modal" aria-label="Close">
+                <i class="ti ti-x"></i>
+            </button>
+
+            <div class="gdp-title-row">
+                <span class="gdp-icon-box"><i class="ti ti-calendar-bolt"></i></span>
+                <span class="gdp-title" id="dayPlanModalLabel">Generate day plan</span>
+            </div>
 
             <form asp-action="GenerateDayPlan" method="POST" id="dayPlanForm" data-tags="@tagsJson">
                 @Html.AntiForgeryToken()
@@ -32,239 +33,363 @@
                 <input type="hidden" name="SelectedMonth" id="hiddenMonth" />
                 <input type="hidden" name="SelectedDay" id="hiddenDay" />
 
-                <!-- Step 1: date + meal count -->
                 <div id="step1">
-                    <div class="d-flex flex-column gap-3 mb-3">
-                        
-                        <label>Meal Date</label>
-                        <div>
-                            <select id="dayPlanMonth" class="back2-textbox">
+                    <div class="gdp-fields">
+
+                        <div class="gdp-field">
+                            <label class="gdp-label">Meal Date</label>
+                            <div class="gdp-date-grid">
+                                <select id="dayPlanMonth" class="gdp-input gdp-select">
+                                    @for (int i = 1; i <= 12; i++)
+                                    {
+                                        <!option value="@i" @(i == Model.SelectedMonth ? "selected" : "")>
+                                            @System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(i)
+                                        </!option>
+                                    }
+                                </select>
+                                <select id="dayPlanDay" class="gdp-input gdp-select">
+                                    @for (int i = 1; i <= 31; i++)
+                                    {
+                                        <!option value="@i" @(i == Model.SelectedDay ? "selected" : "")>@i</!option>
+                                    }
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="gdp-field">
+                            <label class="gdp-label" for="MealCount">Number of meals</label>
+                            <input id="MealCount" name="MealCount" type="number"
+                                   min="1" max="10" value="3" class="gdp-input" />
+                        </div>
+
+                    </div>
+
+                    <button type="button" data-action="next-step" class="gdp-next-btn">
+                        Next — Configure Meals
+                        <i class="ti ti-arrow-right"></i>
+                    </button>
+                </div>
+
+                <div id="step2" style="display:none">
+                    <div class="gdp-progress-area">
+                        <span id="mealStepLabel" class="gdp-step-label"></span>
+                        <div id="gdpProgressBar" class="gdp-progress-bar"></div>
+                    </div>
+                    <div id="mealPreferenceSections"></div>
+                    <div class="gdp-nav-row">
+                        <button type="button" id="btnPrevMeal" class="gdp-back-btn" style="display:none">← Back</button>
+                        <button type="button" id="btnNextMeal" class="gdp-nav-next-btn" style="display:none">
+                            Next <i class="ti ti-arrow-right"></i>
+                        </button>
+                        <button type="submit" id="btnGeneratePlan" class="gdp-nav-next-btn" style="display:none">
+                            Generate <i class="ti ti-sparkles"></i>
+                        </button>
+                    </div>
+                </div>
+            </form>
+
+        </div>
+    </div>
+</div>
+
+<!-- ── Recommend Meal Modal ── -->
+<div class="modal fade" id="recommendMealModel">
+    <div class="modal-dialog modal-dialog-centered rmo-dialog">
+        <div class="modal-content rmo-content">
+
+            <button type="button" class="rmo-close" data-bs-dismiss="modal" aria-label="Close">
+                <i class="ti ti-x"></i>
+            </button>
+
+            <div class="rmo-title-row">
+                <span class="rmo-icon-box"><i class="ti ti-sparkles"></i></span>
+                <span class="rmo-title">Recommend a meal</span>
+            </div>
+
+            <form asp-action="GenerateMeal" method="POST" id="recommendMealForm" data-tags="@tagsJson">
+                <div class="rmo-fields">
+
+                    <div class="rmo-field">
+                        <label class="rmo-label" for="recommendMealTitle">Meal Title</label>
+                        <input asp-for="Title" id="recommendMealTitle" class="rmo-input" placeholder="Lunch" />
+                    </div>
+
+                    <div class="rmo-field">
+                        <label class="rmo-label">Meal Date</label>
+                        <div class="rmo-date-grid">
+                            <select name="SelectedMonth" class="rmo-input rmo-select">
                                 @for (int i = 1; i <= 12; i++)
                                 {
-                                    <!option value="@i" @(i == Model.SelectedMonth ? "selected" : "")>
+                                    <!option @(i == Model.SelectedMonth ? "selected" : "") value="@i">
                                         @System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(i)
                                     </!option>
                                 }
                             </select>
-                        </div>
-                        <div>
-                            <select id="dayPlanDay" class="back2-textbox">
+                            <select name="SelectedDay" class="rmo-input rmo-select">
                                 @for (int i = 1; i <= 31; i++)
                                 {
                                     <!option value="@i" @(i == Model.SelectedDay ? "selected" : "")>@i</!option>
                                 }
                             </select>
                         </div>
-                        <div>
-                            <label for="MealCount" class="form-label">Number of meals</label>
-                            <input id="MealCount" name="MealCount" type="number"
-                                   min="1" max="10" value="3" class="back2-textbox" />
-                        </div>
                     </div>
 
-                    <button type="button" data-action="next-step" class="buttonBlue mt-2">
-                        <h4 class="buttonText">Next — Configure Meals</h4>
-                    </button>
-                </div>
-
-                <!-- Step 2: per-meal configuration (populated by JS) -->
-                <div id="step2" style="display:none">
-                    <p id="mealStepLabel" class="text-muted mb-2"></p>
-                    <div id="mealPreferenceSections"></div>
-
-                    <div class="d-flex gap-2 mt-3">
-                        <div class="buttonRow">
-                            <button type="button" id="btnPrevMeal" class="buttonGreyInline" style="display:none">
-                                <h4 class="buttonText">← Back</h4>
-                            </button>
-                            <button type="button" id="btnNextMeal" class="buttonBlueInline" style="display:none">
-                                <h4 class="buttonText">Next →</h4>
-                            </button>
-                            <button type="submit" id="btnGeneratePlan" class="buttonBlueInline" style="display:none">
-                                <h4 class="buttonText">Generate Day Plan</h4>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<div class="modal fade" id="recommendMealModel">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content back1 backHasButton">
-            <h1 class="back1Title">Recommend Meal</h1>
-            <hr />
-            <form asp-action="GenerateMeal" method="POST" id="recommendMealForm" data-tags="@tagsJson">
-                <div class="d-flex flex-column gap-3 mb-3">
-                    <div>
-                        <label for="recommendMealTitle">Meal Title</label>
-                        <input asp-for="Title" id="recommendMealTitle" class="back2-textbox" placeholder="Lunch"/>
-                    </div>
-
-                    <div>
-                        <label>Meal Date</label>
-                        <select name="SelectedMonth" class="back2-textbox">
-                            @for (int i = 1; i <= 12; i++)
-                            {
-                                <!option @(i==Model.SelectedMonth ? "selected" : "") value="@i">
-                                    @System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(i)
-                                </!option>
-                            }
-                        </select>
-                        <select name="SelectedDay" class="back2-textbox">
-                            @for (int i = 1; i <= 31; i++)
-                            {
-                                <!option value="@i" @(i==Model.SelectedDay ? "selected" : "")>@i</!option>
-                            }
-                        </select>
-                    </div>
-
-                    <div>
-                        <label for="recommendMealSize">Size</label>
-                        <select name="Size" id="recommendMealSize" class="back2-textbox">
+                    <div class="rmo-field">
+                        <label class="rmo-label" for="recommendMealSize">Size</label>
+                        <select name="Size" id="recommendMealSize" class="rmo-input rmo-select">
                             <option value="Small">Small</option>
                             <option value="Average" selected>Average</option>
                             <option value="Large">Large</option>
                         </select>
                     </div>
 
-                    <div>
-                        <label>Tags (optional)</label>
-                        <div id="recommendMealTagArea" class="mt-1">
-                            <div id="recommendMealTagPills" class="d-flex flex-wrap gap-1 mb-2"></div>
-                            <div class="d-flex align-items-center gap-2 flex-wrap">
-                                <select id="recommendMealTagSelect" class="back2-textbox">
-                                    <option value="">Select a tag...</option>
-                                    @foreach (var tag in tags)
-                                    {
-                                        <option value="@tag.Id">@tag.Name</option>
-                                    }
-                                </select>
-                                <div class="tag-input-wrapper">
-                                    <input type="text" id="recommendMealCustomTag" class="back2-textbox" placeholder="Or type a custom tag..." />
-                                    <button type="button" id="recommendMealAddTag" class="buttonGreenInline">
-                                        <h4 class="buttonText">Add</h4>
-                                    </button>
-                                </div>
-                            </div>
+                    <div class="rmo-field">
+                        <label class="rmo-label">Tags (optional)</label>
+                        <div id="recommendMealTagPills" class="rmo-tag-pills"></div>
+                        <div class="rmo-tag-add-row">
+                            <select id="recommendMealTagSelect" class="rmo-input rmo-select rmo-tag-select">
+                                <option value="">Select a tag...</option>
+                                @foreach (var tag in tags)
+                                {
+                                    <option value="@tag.Id">@tag.Name</option>
+                                }
+                            </select>
+                            <input type="text" id="recommendMealCustomTag" class="rmo-input rmo-tag-text" placeholder="Custom tag..." />
+                            <button type="button" id="recommendMealAddTag" class="rmo-add-tag-btn">Add</button>
                         </div>
                     </div>
+
                 </div>
 
-                <button class="buttonBlue" type="submit">
-                    <h4 id="finishRecommendMeal" class="buttonText">Generate Meal</h4>
+                <button class="rmo-generate-btn" type="submit">
+                    <i class="ti ti-sparkles"></i>
+                    <span id="finishRecommendMeal">Generate Meal</span>
                 </button>
             </form>
+
         </div>
     </div>
 </div>
 
-<div class="back1 backHasButton">
-    <h2 class="back1Title">Create a Meal</h2>
-    <hr>
+<!-- ── Page header ─────────────────────────────────────────────── -->
+<div class="new-meal-header">
+    <h1 class="new-meal-title">Add a meal</h1>
+    <div class="new-meal-subdate">@today.ToString("MMMM d, yyyy")</div>
+</div>
 
-    <div id="createMealList">
-        <template id="addRecipeRow">
-            <div class="back2 d-flex align-items-center gap-2 back2-textbox mealRecipeItem" style="cursor:pointer;">
-                <h4 id="recipeName" class="mb-0 flex-grow-1"></h4>
-                <input type="hidden" name="RecipeIds" class="recipeIdInput" />
-                <button type="button" class="btn btn-danger delete-recipe-btn" onclick="event.stopPropagation()">X</button>
-            </div>
-        </template>
+<!-- ── Segmented control ───────────────────────────────────────── -->
+<div class="meal-seg-control">
+    <button type="button" class="meal-seg-btn active" id="segSingle">Single meal</button>
+    <button type="button" class="meal-seg-btn" id="showDayPlanWizard"
+            data-bs-toggle="modal" data-bs-target="#dayPlanModal">Generate day plan</button>
+</div>
+
+<!-- ── Single meal pane ───────────────────────────────────────── -->
+<form id="createMealForm" asp-action="NewMeal" method="post">
+
+    <!-- AI recommendation banner -->
+    <div class="ai-banner" id="recommendMeal" data-bs-toggle="modal" data-bs-target="#recommendMealModel" role="button" tabindex="0">
+        <div class="ai-banner-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+                 fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+            </svg>
+        </div>
+        <div class="ai-banner-body">
+            <div class="ai-banner-title">OneBite Recommendation</div>
+            <div class="ai-banner-sub">Let us suggest a meal based on your nutrition goals</div>
+        </div>
+        <div class="ai-banner-arrow">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                 fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="9 18 15 12 9 6"/>
+            </svg>
+        </div>
     </div>
 
-    <div class="row align-items-center">
-        <div class="text-danger" asp-validation-summary="All"></div>
+    <!-- Meal details card -->
+    <div class="new-meal-card">
+        <div class="new-meal-card-header">
+            <div class="new-meal-card-header-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                     fill="none" stroke="currentColor" stroke-width="2"
+                     stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                    <line x1="16" y1="2" x2="16" y2="6"/>
+                    <line x1="8" y1="2" x2="8" y2="6"/>
+                    <line x1="3" y1="10" x2="21" y2="10"/>
+                </svg>
+            </div>
+            <span class="new-meal-card-header-title">Meal details</span>
+        </div>
+        <div class="new-meal-card-body">
+            <div class="text-danger" asp-validation-summary="ModelOnly" style="font-size:12px"></div>
 
-        <form id="createMealForm" class="col d-flex flex-column mx-1" asp-action="NewMeal" method="post">
-
-            <div class="row g-3 mb-3">
-                <div class="col-md-6">
-                    <label asp-for="Title" class="form-label"></label>
-                    <input asp-for="Title" class="form-control mealInput" />
-                    <span asp-validation-for="Title" class="text-danger"></span>
+            <!-- 3-col form: title / month / day -->
+            <div class="meal-form-grid">
+                <div>
+                    <label class="meal-label" asp-for="Title">Title</label>
+                    <input asp-for="Title" class="meal-input mealInput" placeholder="e.g. Lunch" />
+                    <span asp-validation-for="Title" class="text-danger" style="font-size:11px"></span>
                 </div>
-
-                <div class="col-md-3">
-                    <label asp-for="SelectedMonth" class="form-label">Month</label>
-                    <select asp-for="SelectedMonth" class="form-control mealSelect">
-                        <option value="">Select month</option>
+                <div>
+                    <label class="meal-label" asp-for="SelectedMonth">Month</label>
+                    <select asp-for="SelectedMonth" class="meal-input meal-select" id="SelectedMonth">
+                        <option value="">Month</option>
                         @for (int i = 1; i <= 12; i++)
                         {
-                            <!option @(i==Model.SelectedMonth ? "selected" : "") value="@i">
+                            <!option @(i == Model.SelectedMonth ? "selected" : "") value="@i">
                                 @System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat.GetMonthName(i)
                             </!option>
                         }
                     </select>
-                    <span asp-validation-for="SelectedMonth" class="text-danger"></span>
+                    <span asp-validation-for="SelectedMonth" class="text-danger" style="font-size:11px"></span>
                 </div>
-
-                <div class="col-md-3">
-                    <label asp-for="SelectedDay" class="form-label">Day</label>
-                    <select asp-for="SelectedDay" class="form-control mealSelect">
-                        <option value="">Select day</option>
+                <div>
+                    <label class="meal-label" asp-for="SelectedDay">Day</label>
+                    <select asp-for="SelectedDay" class="meal-input meal-select" id="SelectedDay">
+                        <option value="">Day</option>
                         @for (int i = 1; i <= 31; i++)
                         {
-                            <!option value="@i" @(i==Model.SelectedDay ? "selected" : "")>@i</!option>
+                            <!option value="@i" @(i == Model.SelectedDay ? "selected" : "")>@i</!option>
                         }
                     </select>
-                    <span asp-validation-for="SelectedDay" class="text-danger"></span>
+                    <span asp-validation-for="SelectedDay" class="text-danger" style="font-size:11px"></span>
                 </div>
             </div>
 
-            <div class="row g-3 mb-3">
-                <div class="col-md-4 d-flex align-items-end">
-                    <div class="form-check">
-                        <input asp-for="RepeatWeekly" id="repeatWeeklyToggle" class="form-check-input" />
-                        <label asp-for="RepeatWeekly" class="form-check-label">Repeat Weekly</label>
-                    </div>
+            <!-- Repeat weekly visual toggle -->
+            <div class="repeat-toggle-row">
+                <div class="toggle-switch" id="repeatToggleVisual" role="button" tabindex="0" aria-label="Toggle repeat weekly" style="position:relative; overflow:hidden;">
+                    <input asp-for="RepeatWeekly" id="repeatWeeklyToggle" type="checkbox"
+                           style="position:absolute; opacity:0; inset:0; width:100%; height:100%; cursor:pointer; margin:0;" />
+                    <div class="toggle-knob"></div>
                 </div>
+                <span class="toggle-label" id="repeatToggleLabel">Repeat weekly</span>
             </div>
 
-            <div id="repeatDaysPanel" class="row g-3 mb-3" style="display:none;">
-                <div class="col-12">
-                    <label class="form-label">Repeat on days</label>
-                    <div class="d-flex flex-wrap gap-3">
-                        @foreach (DayOfWeek day in Enum.GetValues(typeof(DayOfWeek)))
-                        {
-                            <div class="form-check" data-day="@day">
-                                <input class="form-check-input repeat-day-checkbox"
-                                       type="checkbox"
-                                       name="RepeatDays"
-                                       value="@((int)day)"
-                                       id="repeatDay_@day"
-                                       @(Model.RepeatDays.Contains(day) ? "checked" : "") />
-                                <label class="form-check-label" for="repeatDay_@day">@day</label>
-                            </div>
-                        }
-                    </div>
+            <!-- Repeat day chips (visible when repeat weekly is on) -->
+            <div id="repeatDaysPanel">
+                <div class="repeat-days-row">
+                    @foreach (DayOfWeek day in Enum.GetValues(typeof(DayOfWeek)))
+                    {
+                        <label class="repeat-day-chip @(Model.RepeatDays.Contains(day) ? "on" : "")"
+                               data-day="@((int)day)"
+                               style="position:relative;">
+                            <input type="checkbox"
+                                   id="repeatDay_@day"
+                                   name="RepeatDays"
+                                   value="@((int)day)"
+                                   class="repeat-day-checkbox"
+                                   @(Model.RepeatDays.Contains(day) ? "checked" : "")
+                                   style="position:absolute; width:1px; height:1px; overflow:hidden;" />
+                            @day.ToString().Substring(0, 3)
+                        </label>
+                    }
                 </div>
             </div>
-        </form>
+        </div>
     </div>
 
-    @await Html.PartialAsync("_RecipeSearchPartial")
+    <!-- Selected recipes card (hidden until at least one recipe is chosen) -->
+    <div class="new-meal-card nm-selected-card" id="selectedRecipesCard">
+        <div class="new-meal-card-header">
+            <div class="new-meal-card-header-icon">
+                <i class="ti ti-bowl-chopsticks" style="font-size:13px"></i>
+            </div>
+            <span class="new-meal-card-header-title">Recipes in this meal</span>
+        </div>
+        <div class="new-meal-card-body nm-selected-body" id="createMealList"></div>
+    </div>
 
-    <button id="createMeal" type="submit" form="createMealForm" class="buttonBlue">
-        <h4 class="buttonText">Create Meal</h4>
-    </button>
-</div>
+    <!-- Recipe search card -->
+    <div class="new-meal-card">
+        <div class="new-meal-card-header">
+            <div class="new-meal-card-header-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                     fill="none" stroke="currentColor" stroke-width="2"
+                     stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="11" cy="11" r="8"/>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                </svg>
+            </div>
+            <span class="new-meal-card-header-title">Add recipes</span>
+        </div>
+        <div class="new-meal-card-body">
 
-<!-- Tag selector template cloned by generateDayPlan.js for each meal section -->
+            <!-- Search input with leading icon -->
+            <div class="search-input-wrapper">
+                <svg class="search-input-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14"
+                     viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                     stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="11" cy="11" r="8"/>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                </svg>
+                <input id="searchText" class="meal-input" type="text"
+                       placeholder="Search recipes…" autocomplete="off" />
+            </div>
+
+            <!-- Tag filter — populated by loadTags() in recipeSearch.js -->
+            <select id="tagFilter" class="meal-input meal-select">
+                <option value="">All tags</option>
+            </select>
+
+            <div id="error" style="font-size:13px; color:var(--muted-text); text-align:center; min-height:0"></div>
+
+            <!-- Recipe results (populated by recipeSearch.js) -->
+            <div id="recipeResults"></div>
+
+            <!-- Recipe result template -->
+            <template id="recipeResult">
+                <div class="recipeSearchRow" externaluri="">
+                    <img class="recipe-thumbnail" src="" alt="" />
+                    <div class="recipe-row-info">
+                        <div class="recipeName"></div>
+                        <div class="recipeTags"></div>
+                        <div hidden class="recipeId"></div>
+                        <input type="hidden" class="recipeIdInput" value="" />
+                        <div class="recipeRating"></div>
+                    </div>
+                    <div class="recipe-select-check">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24"
+                             fill="none" stroke="currentColor" stroke-width="3"
+                             stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="20 6 9 17 4 12"/>
+                        </svg>
+                    </div>
+                </div>
+            </template>
+
+            <img src="~/images/icons/Edamam_Badge.svg" class="edamam-badge" width="200" height="100" />
+        </div>
+    </div>
+
+    <!-- Action bar -->
+    <div class="meal-action-bar">
+        <a href="@Url.Action("Index", "Home")" class="meal-action-cancel">Cancel</a>
+        <button type="submit" class="meal-action-submit" id="createMeal" form="createMealForm">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+                 fill="none" stroke="currentColor" stroke-width="2.5"
+                 stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="20 6 9 17 4 12"/>
+            </svg>
+            <span id="addMealBtnLabel">Add meal to @displayDate.ToString("MMM d")</span>
+        </button>
+    </div>
+
+</form>
+
+<!-- Tag selector template for generateDayPlan.js -->
 <template id="mealTagTemplate">
-    <div class="tags-container d-flex flex-wrap gap-1 mb-2"></div>
-    <div class="d-flex align-items-center gap-2 flex-wrap">
-        <select class="tag-select back2-textbox">
+    <div class="tags-container gdp-tag-pills"></div>
+    <div class="gdp-tag-add-row">
+        <select class="tag-select gdp-input gdp-select gdp-tag-select">
             <option value="">Select a tag...</option>
         </select>
-        <div class="tag-input-wrapper">
-            <input type="text" class="custom-tag-input back2-textbox" placeholder="Or type a custom tag..." />
-            <button type="button" class="add-tag-btn buttonGreenInline">
-                <h4 class="buttonText">Add</h4>
-            </button>
-        </div>
+        <input type="text" class="custom-tag-input gdp-input gdp-tag-text" placeholder="Custom tag..." />
+        <button type="button" class="add-tag-btn gdp-add-tag-btn">Add</button>
     </div>
 </template>
 
@@ -274,42 +399,121 @@
     <script type="module" src="~/js/createMeal.js"></script>
     <script src="~/js/generateDayPlan.js"></script>
     <script>
+        // ── Segmented control ─────────────────────────────────────
         (function () {
-            const toggle = document.getElementById('repeatWeeklyToggle');
-            const panel  = document.getElementById('repeatDaysPanel');
-            function sync() { panel.style.display = toggle.checked ? '' : 'none'; }
-            toggle.addEventListener('change', sync);
+            const segSingle  = document.getElementById('segSingle');
+            const showDayPlanWizard = document.getElementById('showDayPlanWizard');
+            const modal      = document.getElementById('dayPlanModal');
+            const aiBanner   = document.querySelector('.ai-banner');
+
+            function activate(btn) {
+                segSingle.classList.remove('active');
+                showDayPlanWizard.classList.remove('active');
+                btn.classList.add('active');
+                if (aiBanner) aiBanner.style.display = btn === segSingle ? '' : 'none';
+            }
+
+            segSingle.addEventListener('click', function () { activate(segSingle); });
+            showDayPlanWizard.addEventListener('click', function () { activate(showDayPlanWizard); });
+
+            // Revert to single-meal when modal closes
+            if (modal) {
+                modal.addEventListener('hidden.bs.modal', function () { activate(segSingle); });
+            }
+        })();
+
+        // ── Repeat weekly toggle ──────────────────────────────────
+        (function () {
+            const checkbox = document.getElementById('repeatWeeklyToggle');
+            const visual   = document.getElementById('repeatToggleVisual');
+            const panel    = document.getElementById('repeatDaysPanel');
+
+            function sync() {
+                visual.classList.toggle('on', checkbox.checked);
+                panel.classList.toggle('open', checkbox.checked);
+            }
+
+            visual.addEventListener('click', function () {
+                sync();
+            });
+
+            checkbox.addEventListener('change', sync);
+
+            visual.addEventListener('keydown', function (e) {
+                if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); checkbox.checked = !checkbox.checked; sync(); }
+            });
+
             sync();
         })();
 
+        // ── Repeat day chips ──────────────────────────────────────
         (function () {
-            const form = document.getElementById('recommendMealForm');
+            document.querySelectorAll('.repeat-day-chip').forEach(function (chip) {
+                chip.addEventListener('click', function (e) {
+                    const cb = this.querySelector('input[type="checkbox"]');
+                    if (!cb) return;
+                    if (e.target === cb) {
+                        // Selenium/direct checkbox click: checkbox already toggled, sync class
+                        this.classList.toggle('on', cb.checked);
+                    } else {
+                        // Click on label area: toggle manually
+                        e.preventDefault();
+                        cb.checked = !cb.checked;
+                        this.classList.toggle('on', cb.checked);
+                    }
+                });
+            });
+        })();
+
+        // ── Update "Add meal to …" label when date selects change ─
+        (function () {
+            const monthSel = document.getElementById('SelectedMonth');
+            const daySel   = document.getElementById('SelectedDay');
+            const label    = document.getElementById('addMealBtnLabel');
+
+            const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+            function updateLabel() {
+                const m = parseInt(monthSel.value, 10);
+                const d = parseInt(daySel.value, 10);
+                if (m && d) {
+                    label.textContent = 'Add meal to ' + monthNames[m - 1] + ' ' + d;
+                }
+            }
+
+            if (monthSel) monthSel.addEventListener('change', updateLabel);
+            if (daySel)   daySel.addEventListener('change', updateLabel);
+        })();
+
+        // ── Recommend meal tag pills ──────────────────────────────
+        (function () {
+            const form        = document.getElementById('recommendMealForm');
+            if (!form) return;
             const availableTags = JSON.parse(form.dataset.tags);
-            const pills = document.getElementById('recommendMealTagPills');
-            const select = document.getElementById('recommendMealTagSelect');
-            const customInput = document.getElementById('recommendMealCustomTag');
-            const addBtn = document.getElementById('recommendMealAddTag');
+            const pills         = document.getElementById('recommendMealTagPills');
+            const select        = document.getElementById('recommendMealTagSelect');
+            const customInput   = document.getElementById('recommendMealCustomTag');
+            const addBtn        = document.getElementById('recommendMealAddTag');
 
             function addTag(id, name, isCustom) {
                 if (id && form.querySelector(`input[name="TagIds"][value="${id}"]`)) { select.value = ''; return; }
 
-                const pill = document.createElement('button');
-                pill.type = 'button';
+                const pill   = document.createElement('button');
+                pill.type    = 'button';
                 pill.className = 'tag-pill badge rounded-pill recipe-tag recipe-tag-removable';
-                pill.title = `Remove ${name}`;
+                pill.title   = `Remove ${name}`;
 
                 const hidden = document.createElement('input');
-                hidden.type = 'hidden';
+                hidden.type  = 'hidden';
                 hidden.value = isCustom ? name : id;
-                hidden.name = isCustom ? 'CustomTagName' : 'TagIds';
+                hidden.name  = isCustom ? 'CustomTagName' : 'TagIds';
 
                 pill.textContent = name;
                 pill.appendChild(hidden);
-                pill.addEventListener('click', () => {
+                pill.addEventListener('click', function () {
                     if (!isCustom) {
                         const opt = document.createElement('option');
-                        opt.value = id;
-                        opt.textContent = name;
+                        opt.value = id; opt.textContent = name;
                         const opts = Array.from(select.options).slice(1);
                         const before = opts.find(o => o.textContent.toLowerCase() > name.toLowerCase());
                         if (before) select.insertBefore(opt, before); else select.appendChild(opt);
@@ -330,12 +534,12 @@
                 select.value = '';
             }
 
-            select.addEventListener('change', () => {
+            select.addEventListener('change', function () {
                 if (!select.value) return;
                 addTag(select.value, select.options[select.selectedIndex].textContent.trim(), false);
             });
 
-            addBtn.addEventListener('click', () => {
+            addBtn.addEventListener('click', function () {
                 const name = customInput.value.trim();
                 if (!name) return;
                 const match = availableTags.find(t => t.name.toLowerCase() === name.toLowerCase());
@@ -344,7 +548,7 @@
                 customInput.value = '';
             });
 
-            customInput.addEventListener('keydown', e => {
+            customInput.addEventListener('keydown', function (e) {
                 if (e.key !== 'Enter') return;
                 e.preventDefault();
                 addBtn.click();

@@ -1,6 +1,13 @@
-$(document).on("click", ".mealRecipeItem", function (e) {
+$(document).on("click", ".recipe-row", function (e) {
+    if ($(e.target).closest('.recipe-row-actions').length) return;
     const recipeId = $(this).data("recipe-id");
-    window.location.href = `/FoodEntries/Recipes/${recipeId}`;
+    if (recipeId) window.location.href = `/FoodEntries/Recipes/${recipeId}`;
+});
+
+// Fallback for any legacy .mealRecipeItem elements on other pages
+$(document).on("click", ".mealRecipeItem:not(.recipe-row)", function () {
+    const recipeId = $(this).data("recipe-id");
+    if (recipeId) window.location.href = `/FoodEntries/Recipes/${recipeId}`;
 });
 
 $(document).on("click", ".delete-recipe-btn", function (e) {
@@ -8,15 +15,12 @@ $(document).on("click", ".delete-recipe-btn", function (e) {
 
     const recipeId = $(this).data("id");
 
-    showInlineConfirm(this, "Delete this recipe?", function () {
-        window._deleteStatus = null;
-
+    showDeleteModal("Delete this recipe?", function () {
         fetch("/FoodEntries/DeleteRecipe", {
             method: "POST",
             headers: { "Content-Type": "application/x-www-form-urlencoded" },
             body: `id=${recipeId}`
         }).then(response => {
-            window._deleteStatus = response.status;
             if (response.ok) {
                 $(`[data-recipe-id="${recipeId}"]`).remove();
             } else {
