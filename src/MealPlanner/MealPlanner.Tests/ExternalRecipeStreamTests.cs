@@ -23,6 +23,9 @@ public class ExternalRecipeStreamTests
         _tagRepoMock
             .Setup(r => r.GetTagsByIdsAsync(It.IsAny<IEnumerable<int>>()))
             .ReturnsAsync(new List<Tag>());
+        _tagRepoMock
+            .Setup(r => r.GetTagsByPopularityAsync())
+            .ReturnsAsync(new List<Tag>());
         _recipeRepoMock
             .Setup(r => r.GetRecipesByExternalUrisAsync(It.IsAny<IEnumerable<string>>()))
             .ReturnsAsync([]);
@@ -348,6 +351,129 @@ public class ExternalRecipeStreamTests
 
         Assert.That(result, Has.Count.EqualTo(1));
         Assert.That(result[0].ExternalUri, Is.EqualTo("u-new"));
+    }
+
+    // --- Inverse tag classification (attach local Tags from Edamam categorization) ---
+
+    [Test]
+    public async Task GetRankedCandidatesAsync_AttachesInverseClassifiedLocalTagsToExternalRecipes()
+    {
+        // External recipe carries Edamam categorization "Italian" — the stream
+        // resolves it back to the local "Italian" Tag and attaches it so the
+        // tag-based scorers can act on this recipe.
+        var italian = new Tag { Id = 5, Name = "Italian" };
+        _tagRepoMock.Setup(r => r.GetTagsByPopularityAsync()).ReturnsAsync([italian]);
+        var fromEdamam = new Recipe
+        {
+            Id = 0, ExternalUri = "u1", Name = "Pasta", Tags = [],
+            ExternalCategorization = ["Italian"]
+        };
+        _externalServiceMock
+            .Setup(s => s.SearchByContextAsync(It.IsAny<ExternalSearchQuery>()))
+            .ReturnsAsync([fromEdamam]);
+
+        var stream = BuildStream();
+        var result = (await stream.GetRankedCandidatesAsync(BuildContext(calorieTarget: 500)))
+            .Select(s => s.Recipe).ToList();
+
+        Assert.That(result, Has.Count.EqualTo(1));
+        Assert.That(result[0].Tags, Does.Contain(italian),
+            "the resolved local Tag must be attached to the external recipe");
+    }
+
+    [Test]
+    public async Task GetRankedCandidatesAsync_UserPreferredTagScorerScoresInverseClassifiedExternalRecipe()
+    {
+        var italian = new Tag { Id = 5, Name = "Italian" };
+        _tagRepoMock.Setup(r => r.GetTagsByPopularityAsync()).ReturnsAsync([italian]);
+        var fromEdamam = new Recipe
+        {
+            Id = 0, ExternalUri = "u1", Name = "Pasta", Tags = [],
+            ExternalCategorization = ["Italian"]
+        };
+        _externalServiceMock
+            .Setup(s => s.SearchByContextAsync(It.IsAny<ExternalSearchQuery>()))
+            .ReturnsAsync([fromEdamam]);
+
+        var ctx = BuildContext(userTags: [5], calorieTarget: 500);
+        var stream = BuildStream(scorers: [new UserPreferredTagScorer()]);
+
+        var result = await stream.GetRankedCandidatesAsync(ctx);
+
+        Assert.That(result, Has.Count.EqualTo(1));
+        Assert.That(result[0].Score, Is.GreaterThan(0f),
+            "an Edamam recipe whose categorization matches a user-preferred tag must now score above zero");
+    }
+
+    [Test]
+    public async Task GetRankedCandidatesAsync_MealPreferredTagScorerScoresInverseClassifiedExternalRecipe()
+    {
+        var breakfast = new Tag { Id = 7, Name = "Breakfast" };
+        _tagRepoMock.Setup(r => r.GetTagsByPopularityAsync()).ReturnsAsync([breakfast]);
+        var fromEdamam = new Recipe
+        {
+            Id = 0, ExternalUri = "u1", Name = "Pancakes", Tags = [],
+            ExternalCategorization = ["Breakfast"]
+        };
+        _externalServiceMock
+            .Setup(s => s.SearchByContextAsync(It.IsAny<ExternalSearchQuery>()))
+            .ReturnsAsync([fromEdamam]);
+
+        var ctx = BuildContext(mealTags: [7], calorieTarget: 500);
+        var stream = BuildStream(scorers: [new MealPreferredTagScorer()]);
+
+        var result = await stream.GetRankedCandidatesAsync(ctx);
+
+        Assert.That(result[0].Score, Is.GreaterThan(0f),
+            "an Edamam recipe whose categorization matches a slot's preferred tag must now score above zero");
+    }
+
+    [Test]
+    public async Task GetRankedCandidatesAsync_TagSimilarityScorerScoresInverseClassifiedExternalRecipe()
+    {
+        var italian = new Tag { Id = 5, Name = "Italian" };
+        _tagRepoMock.Setup(r => r.GetTagsByPopularityAsync()).ReturnsAsync([italian]);
+        var upvotedLocal = new Recipe { Id = 100, Tags = [italian] };
+        var fromEdamam = new Recipe
+        {
+            Id = 0, ExternalUri = "u1", Name = "Pasta", Tags = [],
+            ExternalCategorization = ["Italian"]
+        };
+        _externalServiceMock
+            .Setup(s => s.SearchByContextAsync(It.IsAny<ExternalSearchQuery>()))
+            .ReturnsAsync([fromEdamam]);
+
+        var ctx = BuildContext(upvoted: [upvotedLocal], calorieTarget: 500);
+        var stream = BuildStream(scorers: [new TagSimilarityScorer()]);
+
+        var result = await stream.GetRankedCandidatesAsync(ctx);
+
+        Assert.That(result[0].Score, Is.GreaterThan(0f),
+            "an Edamam recipe sharing a tag with the user's upvoted recipes must now score above zero");
+    }
+
+    [Test]
+    public async Task GetRankedCandidatesAsync_NoExternalCategorization_LeavesTagsEmpty()
+    {
+        // A recipe whose categorization arrays were missing on the Edamam side
+        // (or whose strings classify to nothing locally) carries no inferred
+        // tags — the stream still returns it, with Tags empty.
+        _tagRepoMock.Setup(r => r.GetTagsByPopularityAsync()).ReturnsAsync([new Tag { Id = 1, Name = "Italian" }]);
+        var fromEdamam = new Recipe
+        {
+            Id = 0, ExternalUri = "u1", Name = "Plain", Tags = [],
+            ExternalCategorization = []
+        };
+        _externalServiceMock
+            .Setup(s => s.SearchByContextAsync(It.IsAny<ExternalSearchQuery>()))
+            .ReturnsAsync([fromEdamam]);
+
+        var stream = BuildStream();
+        var result = (await stream.GetRankedCandidatesAsync(BuildContext(calorieTarget: 500)))
+            .Select(s => s.Recipe).ToList();
+
+        Assert.That(result, Has.Count.EqualTo(1));
+        Assert.That(result[0].Tags, Is.Empty);
     }
 
     [Test]
