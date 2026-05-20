@@ -90,9 +90,7 @@
                         @Html.AntiForgeryToken()
                         <input type="hidden" name="mealId" value="@meal.Id" />
                         <input type="hidden" name="date"   value="@Model.SelectedDate.ToString("yyyy-MM-dd")" />
-                        <button type="submit" class="sm-delete-btn" title="Remove meal template">
-                            <i class="ti ti-trash"></i>
-                        </button>
+                        <button type="submit" class="sm-delete-btn">Remove Meal</button>
                     </form>
                 </div>
             }

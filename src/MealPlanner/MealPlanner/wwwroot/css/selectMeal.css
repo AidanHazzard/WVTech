@@ -65,6 +65,12 @@
     gap: 1rem;
 }
 
+/* Slot stacks card + remove button vertically */
+.sm-card-slot {
+    display: flex;
+    flex-direction: column;
+}
+
 /* Each form fills its grid cell */
 .sm-card-form {
     margin: 0;
@@ -246,6 +252,45 @@
     padding: 10px 12px;
     width: 100%;
     text-align: center;
+}
+
+/* ── Remove Meal button — below card, revealed on hover ──────── */
+.sm-remove-form {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    height: 36px;
+    padding-top: 6px;
+    margin: 0;
+    overflow: hidden;
+}
+
+.sm-delete-btn {
+    font-size: 12px;
+    font-weight: 500;
+    padding: 5px 16px;
+    border-radius: 8px;
+    background: transparent;
+    color: #E24B4A;
+    border: 1px solid rgba(226, 75, 74, 0.45);
+    cursor: pointer;
+    white-space: nowrap;
+    opacity: 0;
+    transform: translateY(6px);
+    transition: opacity 0.15s ease, transform 0.15s ease,
+                background-color 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.sm-card-slot:hover .sm-delete-btn,
+.sm-card-slot.controls-visible .sm-delete-btn {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.sm-delete-btn:hover {
+    background: #E24B4A;
+    border-color: #E24B4A;
+    color: #ffffff;
 }
 
 /* ── Responsive ──────────────────────────────────────────────── */

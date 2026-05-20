@@ -6,28 +6,37 @@ document.querySelectorAll('.sm-card').forEach(function (btn) {
     });
 });
 
-// Mobile tap: first tap reveals macro overlay; second tap submits
+// Mobile tap: first tap reveals X button (and macro overlay); second tap on card submits
 var isTouchOnly = !window.matchMedia('(hover: hover)').matches;
 if (isTouchOnly) {
-    document.querySelectorAll('.sm-card--has-meal').forEach(function (btn) {
-        btn.addEventListener('click', function (e) {
-            var overlay = btn.querySelector('.sm-macro-overlay');
-            if (!overlay) return;
-            if (!overlay.classList.contains('sm-macro-overlay--visible')) {
+    document.querySelectorAll('.sm-card-slot').forEach(function (slot) {
+        var card = slot.querySelector('.sm-card');
+        if (!card) return;
+
+        card.addEventListener('click', function (e) {
+            if (e.target.closest('.sm-delete-btn')) return;
+
+            if (!slot.classList.contains('controls-visible')) {
                 e.preventDefault();
-                document.querySelectorAll('.sm-macro-overlay--visible').forEach(function (o) {
-                    o.classList.remove('sm-macro-overlay--visible');
+                document.querySelectorAll('.sm-card-slot.controls-visible').forEach(function (s) {
+                    s.classList.remove('controls-visible');
+                    var o = s.querySelector('.sm-macro-overlay');
+                    if (o) o.classList.remove('sm-macro-overlay--visible');
                 });
-                overlay.classList.add('sm-macro-overlay--visible');
+                slot.classList.add('controls-visible');
+                var overlay = card.querySelector('.sm-macro-overlay');
+                if (overlay) overlay.classList.add('sm-macro-overlay--visible');
             }
         });
     });
 
-    // Dismiss overlay when tapping outside a card
+    // Dismiss controls when tapping outside a slot
     document.addEventListener('click', function (e) {
-        if (!e.target.closest('.sm-card--has-meal')) {
-            document.querySelectorAll('.sm-macro-overlay--visible').forEach(function (o) {
-                o.classList.remove('sm-macro-overlay--visible');
+        if (!e.target.closest('.sm-card-slot')) {
+            document.querySelectorAll('.sm-card-slot.controls-visible').forEach(function (s) {
+                s.classList.remove('controls-visible');
+                var o = s.querySelector('.sm-macro-overlay');
+                if (o) o.classList.remove('sm-macro-overlay--visible');
             });
         }
     });
