@@ -18,7 +18,7 @@ public static class RecipeSeedData
     {
         Amount = amount,
         DisplayName = ingredient,
-        Measurement = new Measurement { Name = measurement },
+        Measurement = new Measurement { Name = measurement, Abbreviation = measurement },
         IngredientBase = new IngredientBase { Name = IngredientNameNormalizer.NormalizeKey(ingredient) },
     };
 
