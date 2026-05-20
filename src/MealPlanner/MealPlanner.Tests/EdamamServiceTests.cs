@@ -632,6 +632,138 @@ public class EdamamServiceTests
     }
 
     [Test]
+    public async Task SearchByContextAsync_CapturesEdamamCategorizationOnReturnedRecipe()
+    {
+        // Edamam's response carries dishType / cuisineType / mealType /
+        // dietLabels / healthLabels — the inverse classifier needs them in
+        // order to attach matching local Tags to external recipes.
+        string json =
+            """
+            {
+                "from": 1, "to": 1, "count": 1, "_links": {},
+                "hits": [{
+                    "recipe": {
+                        "uri": "http://TestUri.com/X",
+                        "label": "Vegan Italian Salad",
+                        "ingredients": [],
+                        "totalNutrients": {
+                            "ENERC_KCAL": { "label": "Energy", "quantity": 200, "unit": "kcal" }
+                        },
+                        "dietLabels": ["high-protein"],
+                        "healthLabels": ["vegan", "gluten-free"],
+                        "cuisineType": ["Italian"],
+                        "mealType": ["lunch/dinner"],
+                        "dishType": ["Salad"]
+                    },
+                    "_links": { "self": { "href": "https://api.test.com/api/x", "title": "Self" } }
+                }]
+            }
+            """;
+        var (service, _) = SetupMocksCapturingRequests(json);
+        var query = new ExternalSearchQuery(null, 1, 500, null, null, null, null, null, null, []);
+
+        var result = (await service.SearchByContextAsync(query)).ToList();
+
+        Assert.That(result, Has.Count.EqualTo(1));
+        Assert.That(result[0].ExternalCategorization, Is.SupersetOf(new[]
+        {
+            "high-protein", "vegan", "gluten-free", "Italian", "Salad"
+        }));
+    }
+
+    [Test]
+    public async Task SearchByContextAsync_MissingCategorization_ProducesEmptyList()
+    {
+        // An Edamam response that omits the categorization arrays must still
+        // produce a Recipe with an empty (not-null) ExternalCategorization, so
+        // downstream code can iterate it safely.
+        string json =
+            """
+            {
+                "from": 1, "to": 1, "count": 1, "_links": {},
+                "hits": [{
+                    "recipe": {
+                        "uri": "http://TestUri.com/Y",
+                        "label": "Plain Recipe",
+                        "ingredients": [],
+                        "totalNutrients": {
+                            "ENERC_KCAL": { "label": "Energy", "quantity": 200, "unit": "kcal" }
+                        }
+                    },
+                    "_links": { "self": { "href": "https://api.test.com/api/y", "title": "Self" } }
+                }]
+            }
+            """;
+        var (service, _) = SetupMocksCapturingRequests(json);
+        var query = new ExternalSearchQuery(null, 1, 500, null, null, null, null, null, null, []);
+
+        var result = (await service.SearchByContextAsync(query)).ToList();
+
+        Assert.That(result[0].ExternalCategorization, Is.Not.Null);
+        Assert.That(result[0].ExternalCategorization, Is.Empty);
+    }
+
+    [Test]
+    public async Task GetExternalRecipeByURI_CapturesEdamamCategorizationOnReturnedRecipe()
+    {
+        string json =
+            """
+            {
+                "from": 1, "to": 1, "count": 1, "_links": {},
+                "hits": [{
+                    "recipe": {
+                        "uri": "http://TestUri.com/Z",
+                        "label": "Curry",
+                        "ingredients": [],
+                        "totalNutrients": {
+                            "ENERC_KCAL": { "label": "Energy", "quantity": 600, "unit": "kcal" }
+                        },
+                        "cuisineType": ["Indian"],
+                        "mealType": ["Dinner"]
+                    },
+                    "_links": { "self": { "href": "https://api.test.com/api/z", "title": "Self" } }
+                }]
+            }
+            """;
+        EdamamService service = SetupMocks(json);
+
+        var result = await service.GetExternalRecipeByURI("http://TestUri.com/Z");
+
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result!.ExternalCategorization, Is.SupersetOf(new[] { "Indian", "Dinner" }));
+    }
+
+    [Test]
+    public async Task GetExternalRecipesByURIs_CapturesEdamamCategorizationOnEachRecipe()
+    {
+        string json =
+            """
+            {
+                "from": 1, "to": 1, "count": 1, "_links": {},
+                "hits": [{
+                    "recipe": {
+                        "uri": "http://TestUri.com/W",
+                        "label": "Pancakes",
+                        "ingredients": [],
+                        "totalNutrients": {
+                            "ENERC_KCAL": { "label": "Energy", "quantity": 400, "unit": "kcal" }
+                        },
+                        "dishType": ["Pancake"],
+                        "mealType": ["Breakfast"]
+                    },
+                    "_links": { "self": { "href": "https://api.test.com/api/w", "title": "Self" } }
+                }]
+            }
+            """;
+        EdamamService service = SetupMocks(json);
+
+        var result = (await service.GetExternalRecipesByURIs(["http://TestUri.com/W"])).ToList();
+
+        Assert.That(result, Has.Count.EqualTo(1));
+        Assert.That(result[0].ExternalCategorization, Is.SupersetOf(new[] { "Pancake", "Breakfast" }));
+    }
+
+    [Test]
     public async Task GetExternalRecipesByURIs_MakesOneCall_When20URIsGiven()
     {
         // Arrange — exactly 20 URIs fits in one batch
