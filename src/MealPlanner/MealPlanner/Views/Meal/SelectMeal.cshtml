@@ -14,17 +14,25 @@
         {
             @foreach (var meal in Model.Meals)
             {
-                <form asp-action="AddMealToDay" method="post">
-                    @Html.AntiForgeryToken()
-                    <input type="hidden" name="mealId" value="@meal.Id" />
-                    <input type="hidden" name="date" value="@Model.SelectedDate.ToString("yyyy-MM-dd")" />
-                    <button type="submit"
-                            class="back2 d-flex align-items-center gap-2 back2-textbox selectMealRow w-100 text-start"
-                            style="cursor:pointer;"
-                            data-meal-id="@meal.Id">
-                        <h4 class="mb-0 flex-grow-1 selectMealName">@meal.Title</h4>
-                    </button>
-                </form>
+                <div class="back2 d-flex align-items-center gap-2 back2-textbox selectMealRow w-100">
+                    <form asp-action="AddMealToDay" method="post" class="flex-grow-1 m-0 p-0">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="mealId" value="@meal.Id" />
+                        <input type="hidden" name="date" value="@Model.SelectedDate.ToString("yyyy-MM-dd")" />
+                        <button type="submit"
+                                class="w-100 text-start border-0 bg-transparent p-0"
+                                style="cursor:pointer;"
+                                data-meal-id="@meal.Id">
+                            <h4 class="mb-0 selectMealName">@meal.Title</h4>
+                        </button>
+                    </form>
+                    <form asp-action="RemoveMealTemplate" method="post" class="m-0 p-0 flex-shrink-0">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="mealId" value="@meal.Id" />
+                        <input type="hidden" name="date" value="@Model.SelectedDate.ToString("yyyy-MM-dd")" />
+                        <button type="submit" class="mealDeleteButton mealRemoveButton" title="Remove meal">✕</button>
+                    </form>
+                </div>
             }
         }
     </div>
