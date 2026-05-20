@@ -1,3 +1,4 @@
+using MealPlanner.Models;
 using MealPlanner.Services;
 using NUnit.Framework;
 
@@ -94,5 +95,127 @@ public class EdamamTagClassifierTests
         var result = EdamamTagClassifier.Classify([]);
         Assert.That(result.CuisineTypes, Is.Empty);
         Assert.That(result.FreeTextTerms, Is.Empty);
+    }
+
+    // --- ResolveLocalTags (inverse direction) ---
+
+    [Test]
+    public void ResolveLocalTags_EdamamCuisineString_ResolvesToLocalCuisineTag()
+    {
+        var italian = new Tag { Id = 1, Name = "Italian" };
+        var breakfast = new Tag { Id = 2, Name = "Breakfast" };
+
+        var result = EdamamTagClassifier.ResolveLocalTags(["Italian"], [italian, breakfast]);
+
+        Assert.That(result, Does.Contain(italian));
+        Assert.That(result, Does.Not.Contain(breakfast));
+    }
+
+    [Test]
+    public void ResolveLocalTags_EdamamHealthString_ResolvesToLocalHealthTag()
+    {
+        var vegan = new Tag { Id = 1, Name = "Vegan" };
+
+        var result = EdamamTagClassifier.ResolveLocalTags(["vegan"], [vegan]);
+
+        Assert.That(result, Does.Contain(vegan));
+    }
+
+    [Test]
+    public void ResolveLocalTags_EdamamDishStringMatchesAliasedLocalTag()
+    {
+        // Edamam returns "Desserts"; the local Tag uses the alias "Dessert"
+        // (singular). The reverse map must find it via the same alias table the
+        // forward classifier uses.
+        var dessert = new Tag { Id = 1, Name = "Dessert" };
+
+        var result = EdamamTagClassifier.ResolveLocalTags(["Desserts"], [dessert]);
+
+        Assert.That(result, Does.Contain(dessert));
+    }
+
+    [Test]
+    public void ResolveLocalTags_MatchingIsCaseAndSeparatorInsensitive()
+    {
+        var lowCarb = new Tag { Id = 1, Name = "Low Carb" };
+
+        var result = EdamamTagClassifier.ResolveLocalTags(["low-carb"], [lowCarb]);
+
+        Assert.That(result, Does.Contain(lowCarb));
+    }
+
+    [Test]
+    public void ResolveLocalTags_MultipleCategories_ResolveEachToItsOwnTag()
+    {
+        var italian = new Tag { Id = 1, Name = "Italian" };
+        var breakfast = new Tag { Id = 2, Name = "Breakfast" };
+        var dessert = new Tag { Id = 3, Name = "Dessert" };
+        var unrelated = new Tag { Id = 4, Name = "Comfort Food" };
+
+        var result = EdamamTagClassifier.ResolveLocalTags(
+            ["Italian", "Breakfast", "Desserts"],
+            [italian, breakfast, dessert, unrelated]);
+
+        Assert.That(result, Is.EquivalentTo(new[] { italian, breakfast, dessert }));
+    }
+
+    [Test]
+    public void ResolveLocalTags_DeduplicatesAcrossMatches()
+    {
+        // If two Edamam strings both map to the same local Tag (e.g. via an
+        // alias collision), the local Tag appears in the result only once.
+        var dessert = new Tag { Id = 1, Name = "Dessert" };
+
+        var result = EdamamTagClassifier.ResolveLocalTags(["Desserts", "Desserts"], [dessert]);
+
+        Assert.That(result.Count, Is.EqualTo(1));
+    }
+
+    [Test]
+    public void ResolveLocalTags_BothAliasAndCanonicalLocalTags_ReturnsAll()
+    {
+        // A user with both a "Dessert" tag and a "Desserts" tag should see both
+        // attached when Edamam returns "Desserts".
+        var dessertAlias = new Tag { Id = 1, Name = "Dessert" };
+        var dessertCanonical = new Tag { Id = 2, Name = "Desserts" };
+
+        var result = EdamamTagClassifier.ResolveLocalTags(["Desserts"], [dessertAlias, dessertCanonical]);
+
+        Assert.That(result, Is.EquivalentTo(new[] { dessertAlias, dessertCanonical }));
+    }
+
+    [Test]
+    public void ResolveLocalTags_NoMatchingLocalTags_ReturnsEmpty()
+    {
+        var italian = new Tag { Id = 1, Name = "Italian" };
+
+        var result = EdamamTagClassifier.ResolveLocalTags(["Mexican"], [italian]);
+
+        Assert.That(result, Is.Empty);
+    }
+
+    [Test]
+    public void ResolveLocalTags_EmptyCategories_ReturnsEmpty()
+    {
+        var italian = new Tag { Id = 1, Name = "Italian" };
+
+        var result = EdamamTagClassifier.ResolveLocalTags([], [italian]);
+
+        Assert.That(result, Is.Empty);
+    }
+
+    [Test]
+    public void ResolveLocalTags_UnclassifiableLocalTag_NeverMatches()
+    {
+        // A local tag whose name maps to no Edamam facet (e.g. "Comfort Food"
+        // falls through to free text in the forward direction) cannot be
+        // resolved from any Edamam category and must not appear in the result.
+        var comfortFood = new Tag { Id = 1, Name = "Comfort Food" };
+
+        var result = EdamamTagClassifier.ResolveLocalTags(
+            ["Italian", "Breakfast", "Comfort Food"],
+            [comfortFood]);
+
+        Assert.That(result, Is.Empty);
     }
 }
