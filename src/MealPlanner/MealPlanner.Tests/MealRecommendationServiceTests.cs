@@ -75,6 +75,9 @@ public class MealRecommendationServiceTests
         _mealRepoMock
             .Setup(r => r.GetUserMealsByDateRangeAsync(It.IsAny<User>(), It.IsAny<DateTime>(), It.IsAny<DateTime>()))
             .ReturnsAsync([]);
+        _mealRepoMock
+            .Setup(r => r.GetUserMealsByDateAsync(It.IsAny<User>(), It.IsAny<DateTime>()))
+            .ReturnsAsync([]);
 
         _service = new MealRecommendationService(
             _userRecipeRepoMock.Object,
@@ -204,19 +207,162 @@ public class MealRecommendationServiceTests
     }
 
     [Test]
-    public async Task GetRecommendedMealsForUser_SeedsExcludedRecipeIdsIntoFirstSlot()
+    public async Task GetRecommendedMealsForUser_SeedsExistingDayMealRecipesIntoFirstSlotExcludeKeys()
     {
-        // Recipes the caller already placed elsewhere (e.g. sibling meals on
-        // the day) are excluded from the very first slot.
+        // Recipes already on the day's other meals are excluded from the very
+        // first slot — the service loads day meals itself rather than asking
+        // the caller for the id set.
+        var dayMeal = new Meal
+        {
+            Id = 99, UserId = _user.Id, StartTime = DateTime.Today,
+            Recipes = [new Recipe { Id = 7 }, new Recipe { Id = 8 }]
+        };
+        _mealRepoMock.Setup(r => r.GetUserMealsByDateAsync(It.IsAny<User>(), It.IsAny<DateTime>()))
+                     .ReturnsAsync([dayMeal]);
+
         RecommendationContext? captured = null;
         _streamMock.Setup(s => s.GetRankedCandidatesAsync(It.IsAny<RecommendationContext>()))
                    .Callback<RecommendationContext>(c => captured ??= c)
                    .ReturnsAsync([]);
 
-        await _service.GetRecommendedMealsForUser(
-            _user, DateTime.Today, SingleMealConfig(), excludeRecipeIds: [7, 8]);
+        await _service.GetRecommendedMealsForUser(_user, DateTime.Today, SingleMealConfig());
 
         Assert.That(captured!.Meal.ExcludedRecipeKeys, Is.SupersetOf(new[] { "id:7", "id:8" }));
+    }
+
+    [Test]
+    public async Task GetRecommendedMealsForUser_SubtractsExistingMealsCaloriesFromDailyBudget()
+    {
+        // Daily target 1800 minus an already-planned 900-cal meal leaves 900
+        // for the single slot — the bug WVT-59's scenario was trying (and
+        // failing) to catch.
+        SetNutritionPrefs(calories: 1800);
+        var planned = new Meal
+        {
+            Id = 1, UserId = _user.Id, StartTime = DateTime.Today,
+            Recipes = [new Recipe { Id = 50, Calories = 900 }]
+        };
+        _mealRepoMock.Setup(r => r.GetUserMealsByDateAsync(It.IsAny<User>(), It.IsAny<DateTime>()))
+                     .ReturnsAsync([planned]);
+
+        RecommendationContext? captured = null;
+        _streamMock.Setup(s => s.GetRankedCandidatesAsync(It.IsAny<RecommendationContext>()))
+                   .Callback<RecommendationContext>(c => captured ??= c)
+                   .ReturnsAsync([]);
+
+        await _service.GetRecommendedMealsForUser(_user, DateTime.Today, SingleMealConfig());
+
+        Assert.That(captured!.Meal.CalorieTarget, Is.EqualTo(900),
+            "the slot should target the budget remaining after existing meals are subtracted");
+    }
+
+    [Test]
+    public async Task GetRecommendedMealsForUser_SubtractsExistingMealsMacrosFromDailyBudget()
+    {
+        SetNutritionPrefs(calories: 1800, protein: 100, carbs: 200, fat: 60);
+        var planned = new Meal
+        {
+            Id = 1, UserId = _user.Id, StartTime = DateTime.Today,
+            Recipes = [new Recipe { Id = 50, Calories = 900, Protein = 40, Carbs = 80, Fat = 20 }]
+        };
+        _mealRepoMock.Setup(r => r.GetUserMealsByDateAsync(It.IsAny<User>(), It.IsAny<DateTime>()))
+                     .ReturnsAsync([planned]);
+
+        RecommendationContext? captured = null;
+        _streamMock.Setup(s => s.GetRankedCandidatesAsync(It.IsAny<RecommendationContext>()))
+                   .Callback<RecommendationContext>(c => captured ??= c)
+                   .ReturnsAsync([]);
+
+        await _service.GetRecommendedMealsForUser(_user, DateTime.Today, SingleMealConfig());
+
+        Assert.That(captured!.Meal.ProteinTarget, Is.EqualTo(60), "remaining protein = 100 - 40");
+        Assert.That(captured.Meal.CarbTarget,    Is.EqualTo(120), "remaining carbs   = 200 - 80");
+        Assert.That(captured.Meal.FatTarget,     Is.EqualTo(40),  "remaining fat     = 60 - 20");
+    }
+
+    [Test]
+    public async Task GetRecommendedMealsForUser_ClampsRemainingBudgetToZeroWhenOverConsumed()
+    {
+        // If existing meals already exceed the daily target, the remaining
+        // budget is clamped to zero rather than going negative (which would
+        // sign-flip the composer's calorie check).
+        SetNutritionPrefs(calories: 1000, protein: 50);
+        var planned = new Meal
+        {
+            Id = 1, UserId = _user.Id, StartTime = DateTime.Today,
+            Recipes = [new Recipe { Id = 50, Calories = 1500, Protein = 80 }]
+        };
+        _mealRepoMock.Setup(r => r.GetUserMealsByDateAsync(It.IsAny<User>(), It.IsAny<DateTime>()))
+                     .ReturnsAsync([planned]);
+
+        RecommendationContext? captured = null;
+        _streamMock.Setup(s => s.GetRankedCandidatesAsync(It.IsAny<RecommendationContext>()))
+                   .Callback<RecommendationContext>(c => captured ??= c)
+                   .ReturnsAsync([]);
+
+        await _service.GetRecommendedMealsForUser(_user, DateTime.Today, SingleMealConfig());
+
+        Assert.That(captured!.Meal.CalorieTarget, Is.EqualTo(0), "calorie budget clamps at zero");
+        Assert.That(captured.Meal.ProteinTarget,  Is.EqualTo(0), "macro budget clamps at zero");
+    }
+
+    [Test]
+    public async Task GetRecommendedMealsForUser_ExcludeMealId_KeepsThatMealsCaloriesInTheBudget()
+    {
+        // RegenerateMeal passes the meal being regenerated; its calories must
+        // NOT be subtracted, since its recipes are about to be replaced.
+        SetNutritionPrefs(calories: 1800);
+        var regenTarget = new Meal
+        {
+            Id = 1, UserId = _user.Id, StartTime = DateTime.Today,
+            Recipes = [new Recipe { Id = 7, Calories = 500 }]
+        };
+        var sibling = new Meal
+        {
+            Id = 2, UserId = _user.Id, StartTime = DateTime.Today,
+            Recipes = [new Recipe { Id = 8, Calories = 400 }]
+        };
+        _mealRepoMock.Setup(r => r.GetUserMealsByDateAsync(It.IsAny<User>(), It.IsAny<DateTime>()))
+                     .ReturnsAsync([regenTarget, sibling]);
+
+        RecommendationContext? captured = null;
+        _streamMock.Setup(s => s.GetRankedCandidatesAsync(It.IsAny<RecommendationContext>()))
+                   .Callback<RecommendationContext>(c => captured ??= c)
+                   .ReturnsAsync([]);
+
+        await _service.GetRecommendedMealsForUser(_user, DateTime.Today, SingleMealConfig(), excludeMealId: 1);
+
+        Assert.That(captured!.Meal.CalorieTarget, Is.EqualTo(1400),
+            "1800 - 400 (sibling only); the regen target's 500 cal must NOT be subtracted");
+    }
+
+    [Test]
+    public async Task GetRecommendedMealsForUser_ExcludeMealId_OmitsThatMealsRecipesFromExcludeKeys()
+    {
+        var regenTarget = new Meal
+        {
+            Id = 1, UserId = _user.Id, StartTime = DateTime.Today,
+            Recipes = [new Recipe { Id = 7 }]
+        };
+        var sibling = new Meal
+        {
+            Id = 2, UserId = _user.Id, StartTime = DateTime.Today,
+            Recipes = [new Recipe { Id = 8 }]
+        };
+        _mealRepoMock.Setup(r => r.GetUserMealsByDateAsync(It.IsAny<User>(), It.IsAny<DateTime>()))
+                     .ReturnsAsync([regenTarget, sibling]);
+
+        RecommendationContext? captured = null;
+        _streamMock.Setup(s => s.GetRankedCandidatesAsync(It.IsAny<RecommendationContext>()))
+                   .Callback<RecommendationContext>(c => captured ??= c)
+                   .ReturnsAsync([]);
+
+        await _service.GetRecommendedMealsForUser(_user, DateTime.Today, SingleMealConfig(), excludeMealId: 1);
+
+        Assert.That(captured!.Meal.ExcludedRecipeKeys, Does.Contain("id:8"),
+            "sibling meal's recipes are excluded as expected");
+        Assert.That(captured.Meal.ExcludedRecipeKeys, Does.Not.Contain("id:7"),
+            "the regenerated meal's own recipes are NOT excluded — they're being replaced");
     }
 
     [Test]
