@@ -222,11 +222,16 @@ public class WVT59Steps
     {
         User user = SharedSteps.Users[userName];
         Recipe recipe = new Recipe() { Calories = mealCalories, Name = "Filler", Directions = ""};
+        // StartTime is anchored to local today (not DateTime.UtcNow) so the
+        // seed meal lands on the same calendar date the controller uses for
+        // the new meal — otherwise on the west coast (UTC-7/-8) the meal
+        // could roll onto tomorrow's UTC date, get filtered out of the
+        // assertion's same-day calorie sum, and silently hide a regression.
         Meal meal = new Meal()
         {
             Title = "calorie filler",
             UserId = user.Id,
-            StartTime = DateTime.UtcNow,
+            StartTime = DateTime.Today,
             Recipes = [recipe]
         };
         _context.AddRange(recipe, meal);

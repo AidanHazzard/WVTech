@@ -10,6 +10,7 @@ public class NutritionBarSteps
 {
     IWebDriver _driver;
     string _baseUrl;
+    DateTime? _mealDate;
 
     [BeforeScenario]
     public void SetUp()
@@ -175,7 +176,8 @@ public class NutritionBarSteps
             _driver.FindElement(By.Id("SelectedDay"))
         );
 
-        var today = DateTime.Now;
+        var today = DateTime.Today;
+        _mealDate = today;
 
         monthDropdown.SelectByValue(today.Month.ToString());
         dayDropdown.SelectByValue(today.Day.ToString());
@@ -255,8 +257,8 @@ public class NutritionBarSteps
     [Given("'(.*)' marks the meal as completed")]
     public void GivenUserMarksTheMealAsCompleted(string user)
     {
-        var today = DateTime.Today.ToString("yyyy-MM-dd");
-        _driver.Navigate().GoToUrl($"{_baseUrl}/?date={today}");
+        var date = (_mealDate ?? DateTime.Today).ToString("yyyy-MM-dd");
+        _driver.Navigate().GoToUrl($"{_baseUrl}/?date={date}");
         new WebDriverWait(_driver, TimeSpan.FromSeconds(10)).Until(d =>
             ((IJavaScriptExecutor)d).ExecuteScript("return document.readyState").ToString() == "complete");
 

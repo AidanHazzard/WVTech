@@ -254,18 +254,29 @@ public class WVT165Steps
             try
             {
                 var el = d.FindElement(By.CssSelector(".inline-confirm-no"));
-                return el.Displayed ? el : null;
+                return el.Displayed && el.Enabled ? el : null;
             }
             catch (NoSuchElementException) { return null; }
         });
-        cancelBtn.Click();
+        ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].scrollIntoView({block:'center',behavior:'instant'});", cancelBtn);
+        try { cancelBtn.Click(); }
+        catch (ElementClickInterceptedException) { ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].click();", cancelBtn); }
     }
 
     [When("'Frank' clicks confirm on the in-app confirmation")]
     public void WhenFrankClicksConfirmOnConfirmation()
     {
-        var confirmBtn = _wait.Until(d => d.FindElement(By.CssSelector(".inline-confirm-yes")));
-        confirmBtn.Click();
+        var confirmBtn = _wait.Until(d => {
+            try
+            {
+                var el = d.FindElement(By.CssSelector(".inline-confirm-yes"));
+                return el.Displayed && el.Enabled ? el : null;
+            }
+            catch (NoSuchElementException) { return null; }
+        });
+        ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].scrollIntoView({block:'center',behavior:'instant'});", confirmBtn);
+        try { confirmBtn.Click(); }
+        catch (ElementClickInterceptedException) { ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].click();", confirmBtn); }
         _wait.Until(d => ((IJavaScriptExecutor)d)
             .ExecuteScript("return document.readyState").ToString() == "complete");
     }
