@@ -1,3 +1,4 @@
+using MealPlanner.Models;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Support.UI;
 using Reqnroll;
@@ -51,7 +52,7 @@ public class NutritionBarSteps
             {
                 new WebDriverWait(_driver, TimeSpan.FromSeconds(5)).Until(driver =>
                 {
-                    try { return driver.FindElement(By.Id("Directions")).Displayed; }
+                    try { return driver.FindElement(By.Id("step-input")).Displayed; }
                     catch (NoSuchElementException) { return false; }
                     catch (StaleElementReferenceException) { return false; }
                 });
@@ -73,7 +74,9 @@ public class NutritionBarSteps
     [Given("{string} fills in the recipe directions as {string}")]
     public void GivenUserFillsInRecipeDirections(string username, string directions)
     {
-        _driver.FindElement(By.Id("Directions")).SendKeys(directions);
+        var input = _driver.FindElement(By.Id("step-input"));
+        input.SendKeys(directions);
+        input.SendKeys(Keys.Enter);
     }
 
     [Given("{string} fills in the recipe calories as {string}")]
@@ -103,7 +106,7 @@ public class NutritionBarSteps
     [Given("{string} submits the recipe form")]
     public void GivenUserSubmitsRecipeForm(string username)
     {
-        var btn = _driver.FindElement(By.CssSelector("button.buttonBlue[type='submit']"));
+        var btn = _driver.FindElement(By.CssSelector("button.ar-submit-btn[type='submit']"));
         ((IJavaScriptExecutor)_driver).ExecuteScript(
             "arguments[0].scrollIntoView({block:'center',behavior:'instant'});", btn);
         ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].click();", btn);
@@ -115,6 +118,24 @@ public class NutritionBarSteps
     [Given("{string} is on the create meal page for nutrition")]
     public void GivenUserIsOnCreateMealPage(string username)
     {
+        // Clear any meals bob has for today from previous test scenarios so
+        // GivenUserMarksTheMealAsCompleted always finds exactly the one checkbox we care about.
+        var ctx = BDDSetup.Context;
+        ctx.ChangeTracker.Clear();
+        var user = ctx.Set<User>().FirstOrDefault(u => u.NormalizedEmail == $"{username}@fakeemail.com".ToUpper());
+        if (user != null)
+        {
+            var today = DateTime.Today;
+            var existing = ctx.Set<Meal>()
+                .Where(m => m.UserId == user.Id && m.StartTime != null && m.StartTime.Value.Date == today)
+                .ToList();
+            if (existing.Count > 0)
+            {
+                ctx.Set<Meal>().RemoveRange(existing);
+                ctx.SaveChanges();
+            }
+        }
+
         for (int attempt = 0; attempt < 3; attempt++)
         {
             _driver.Navigate().GoToUrl($"{_baseUrl}/Meal/NewMeal");
@@ -197,6 +218,19 @@ public class NutritionBarSteps
         ((IJavaScriptExecutor)_driver).ExecuteScript(
             "arguments[0].scrollIntoView(true);", firstResult);
         firstResult.Click();
+
+        // The redesigned UI requires a second click on "Add selected" to commit
+        // the recipe into the form (appends hidden RecipeIds input).
+        var addBtn = new WebDriverWait(_driver, TimeSpan.FromSeconds(5)).Until(driver =>
+        {
+            try
+            {
+                var el = driver.FindElement(By.Id("addSelectedRecipesBtn"));
+                return (el.Displayed && el.Enabled) ? el : null;
+            }
+            catch (NoSuchElementException) { return null; }
+        })!;
+        ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].click();", addBtn);
     }
 
     [Given("{string} submits the meal form")]
@@ -332,11 +366,43 @@ public class NutritionBarSteps
     [Given("{string} fills in the nutrition targets")]
     public void GivenUserFillsInNutritionTargets(string username)
     {
-        _driver.FindElement(By.Id("CalorieTarget")).SendKeys("40");
-        _driver.FindElement(By.Id("ProteinTarget")).SendKeys("50");
-        _driver.FindElement(By.Id("CarbTarget")).SendKeys("70");
-        _driver.FindElement(By.Id("FatTarget")).SendKeys("60");
-        _driver.FindElement(By.CssSelector("button.buttonBlue[type='submit']")).Click();
+        // Explicitly click the nutrition nav button to ensure the panel is active
+        var nutritionNavBtn = new WebDriverWait(_driver, TimeSpan.FromSeconds(10)).Until(driver =>
+        {
+            try
+            {
+                var el = driver.FindElement(By.CssSelector("button.settings-nav-item[data-section='nutrition']"));
+                return el.Displayed ? el : null;
+            }
+            catch (NoSuchElementException) { return null; }
+            catch (StaleElementReferenceException) { return null; }
+        })!;
+        ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].click();", nutritionNavBtn);
+
+        // Wait for the nutrition panel to be visible
+        var calorieInput = new WebDriverWait(_driver, TimeSpan.FromSeconds(10)).Until(driver =>
+        {
+            try
+            {
+                var el = driver.FindElement(By.Id("CalorieTarget"));
+                return (el.Displayed && el.Enabled) ? el : null;
+            }
+            catch (NoSuchElementException) { return null; }
+            catch (StaleElementReferenceException) { return null; }
+        })!;
+
+        void SetInput(IWebElement el, string value)
+        {
+            el.Clear();
+            el.SendKeys(value);
+        }
+
+        SetInput(calorieInput, "40");
+        SetInput(_driver.FindElement(By.Id("ProteinTarget")), "50");
+        SetInput(_driver.FindElement(By.Id("CarbTarget")), "70");
+        SetInput(_driver.FindElement(By.Id("FatTarget")), "60");
+
+        _driver.FindElement(By.CssSelector("#form-nutrition button.settings-save-btn")).Click();
         new WebDriverWait(_driver, TimeSpan.FromSeconds(10)).Until(driver =>
             ((IJavaScriptExecutor)driver)
                 .ExecuteScript("return document.readyState").ToString() == "complete");

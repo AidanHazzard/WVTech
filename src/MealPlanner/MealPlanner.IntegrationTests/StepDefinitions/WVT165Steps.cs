@@ -170,7 +170,11 @@ public class WVT165Steps
             .ExecuteScript("return document.readyState").ToString() == "complete");
 
         var searchBox = _wait.Until(d => d.FindElement(By.Id("searchText")));
-        searchBox.SendKeys(RecipeName);
+
+        // Set value and fire via jQuery's trigger so the registered .on("input") handler reliably fires
+        ((IJavaScriptExecutor)_driver).ExecuteScript(
+            "$(arguments[0]).val(arguments[1]).trigger('input');",
+            searchBox, RecipeName);
 
         _wait.Until(d => d.FindElements(By.CssSelector(".recipeSearchRow")).Count > 0);
 
@@ -180,6 +184,14 @@ public class WVT165Steps
         Assert.That(result, Is.Not.Null, $"Recipe '{RecipeName}' not found in search results");
         ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].scrollIntoView({block:'center'});", result);
         ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].click();", result);
+
+        // Multi-select: clicking a row toggles selection; commit via the "Add selected" button
+        var addBtn = _wait.Until(d =>
+        {
+            var btn = d.FindElement(By.Id("addSelectedRecipesBtn"));
+            return btn.Displayed ? btn : null;
+        });
+        addBtn.Click();
 
         _wait.Until(d => d.FindElements(By.CssSelector("#createMealList .delete-recipe-btn")).Count > 0);
     }

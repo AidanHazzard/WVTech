@@ -6,7 +6,7 @@ Feature: nutritionBar
 
   Scenario: 'bob' checks to see their progress
     Given 'bob' is on the create recipe page
-    And 'bob' fills in the recipe name as 'TestRecipe'
+    And 'bob' fills in the recipe name as 'NutritionBarTestRecipe'
     And 'bob' fills in the recipe directions as 'Test directions'
     And 'bob' fills in the recipe calories as '20'
     And 'bob' fills in the recipe protein as '30'
@@ -16,7 +16,7 @@ Feature: nutritionBar
     And 'bob' is on the create meal page for nutrition
     And 'bob' fills in the meal title as 'testMeal'
     And 'bob' sets the meal date to today
-    And 'bob' searches for recipe 'TestRecipe'
+    And 'bob' searches for recipe 'NutritionBarTestRecipe'
     And 'bob' clicks the first recipe result
     And 'bob' submits the meal form
     And 'bob' marks the meal as completed

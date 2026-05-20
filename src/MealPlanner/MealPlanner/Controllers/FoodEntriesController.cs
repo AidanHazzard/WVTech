@@ -102,18 +102,25 @@ public class FoodEntriesController : Controller
         {
             userRecipes = await _userRecipeRepository.GetUserOwnedRecipesByUserIdAsync(user.Id);
         }
-        var seededRecipes = (_recipeRepository.ReadAll() ?? []).Where(r => r.Id < 0);
-        var allRecipes = userRecipes.Concat(seededRecipes).DistinctBy(r => r.Id);
-        IEnumerable<RecipeViewModel> userRecipeVMs = allRecipes.Select(ViewModelService.RecipeToRecipeVM);
-        foreach (RecipeViewModel vm in userRecipeVMs)
+
+        var recipeVMs = userRecipes.Select(ViewModelService.RecipeToRecipeVM).ToList();
+        foreach (RecipeViewModel vm in recipeVMs)
         {
             if (vm.Id == null) continue;
             vm.VotePercentage = await _userRecipeRepository.GetRecipeVotePercentage(vm.Id ?? 0);
         }
 
+        var recentIds = GetRecentRecipeIds();
+        var recentVMs = recentIds
+            .Select(id => recipeVMs.FirstOrDefault(r => r.Id == id))
+            .Where(r => r != null)
+            .Cast<RecipeViewModel>()
+            .ToList();
+
         return View(new RecipesAndShoppingViewModel
         {
-            Recipes = userRecipeVMs,
+            Recipes = recipeVMs,
+            RecentRecipes = recentVMs,
         });
     }
 
@@ -154,7 +161,32 @@ public class FoodEntriesController : Controller
             viewModel.IsOwned = ownedRecipes.Any(r => r.Id == id);
         }
         
+        var recentIds = GetRecentRecipeIds();
+        recentIds = recentIds.Where(x => x != id).Prepend(id).Take(5).ToList();
+        SetRecentRecipeIds(recentIds);
+
         return View("SingleRecipe", viewModel);
+    }
+
+    private const string RecentsCookieKey = "RecentRecipes";
+
+    private List<int> GetRecentRecipeIds()
+    {
+        var cookie = Request.Cookies[RecentsCookieKey] ?? "";
+        return cookie.Split(',', StringSplitOptions.RemoveEmptyEntries)
+            .Select(s => int.TryParse(s, out var n) ? n : 0)
+            .Where(n => n > 0)
+            .ToList();
+    }
+
+    private void SetRecentRecipeIds(List<int> ids)
+    {
+        Response.Cookies.Append(RecentsCookieKey, string.Join(",", ids), new Microsoft.AspNetCore.Http.CookieOptions
+        {
+            Expires = DateTimeOffset.UtcNow.AddDays(30),
+            HttpOnly = true,
+            SameSite = Microsoft.AspNetCore.Http.SameSiteMode.Strict
+        });
     }
 
     public async Task<IActionResult> AddNewRecipe()

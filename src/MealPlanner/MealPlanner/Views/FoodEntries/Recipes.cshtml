@@ -34,6 +34,31 @@
         </div>
 
         <div class="panel-body">
+            @if (Model.RecentRecipes.Any())
+            {
+                <div class="recents-section">
+                    <div class="recents-label">Recents</div>
+                    <div class="recents-scroll">
+                        @foreach (var r in Model.RecentRecipes)
+                        {
+                            <a href="/FoodEntries/Recipes/@r.Id" class="recent-tile">
+                                <div class="recent-thumb">
+                                    @if (!string.IsNullOrEmpty(r.ImageUrl))
+                                    {
+                                        <img src="@r.ImageUrl" alt="@r.Name" />
+                                    }
+                                    else
+                                    {
+                                        <i class="ti ti-tools-kitchen-2"></i>
+                                    }
+                                </div>
+                                <span class="recent-name">@r.Name</span>
+                            </a>
+                        }
+                    </div>
+                </div>
+            }
+
             <!-- Search -->
             <input type="text" id="searchText" class="recipe-search-input"
                    placeholder="Search recipes…" autocomplete="off" />
