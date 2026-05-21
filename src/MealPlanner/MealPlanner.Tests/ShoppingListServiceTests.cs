@@ -37,6 +37,7 @@ public class ShoppingListServiceTests
             .Returns(new List<Measurement> { _cup, _count });
 
         _repo.Setup(r => r.GetByUserId(It.IsAny<string>())).Returns(new List<ShoppingListItem>());
+        _repo.Setup(r => r.GetDismissedIngredientBaseIds(It.IsAny<string>())).Returns(new HashSet<int>());
 
         _service = new ShoppingListService(_repo.Object, _mealRepo.Object, _ingredientBaseRepo.Object, _measurementRepo.Object);
     }

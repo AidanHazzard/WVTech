@@ -179,7 +179,7 @@ public class ShoppingControllerTests
             new ShoppingController.UpdateAmountRequest(10, "3"));
 
         Assert.That(result, Is.TypeOf<OkResult>());
-        _shoppingListServiceMock.Verify(s => s.UpdateItemAmount("user-1", 10, 3f), Times.Once);
+        _shoppingListServiceMock.Verify(s => s.UpdateItemAmount("user-1", 10, 3f, "3"), Times.Once);
     }
 
     [Test]
@@ -189,7 +189,7 @@ public class ShoppingControllerTests
             new ShoppingController.UpdateAmountRequest(10, "1 1/2"));
 
         Assert.That(result, Is.TypeOf<OkResult>());
-        _shoppingListServiceMock.Verify(s => s.UpdateItemAmount("user-1", 10, 1.5f), Times.Once);
+        _shoppingListServiceMock.Verify(s => s.UpdateItemAmount("user-1", 10, 1.5f, "1 1/2"), Times.Once);
     }
 
     [Test]
