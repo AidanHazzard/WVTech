@@ -217,6 +217,7 @@ public class MealController : Controller
         var newMeal = meals.FirstOrDefault();
         if (newMeal == null || newMeal.Recipes.IsNullOrEmpty()) return NotFound();
 
+        newMeal.IsGenerated = true;
         newMeal = _mealRepo.CreateOrUpdate(newMeal);
         _context.SaveChanges();
         Response.Cookies.Delete("ShoppingListSynced");
@@ -236,7 +237,10 @@ public class MealController : Controller
         var meals = await _recommendationService.GetRecommendedMealsForUser(user, selectedDate, model);
 
         foreach (var meal in meals)
+        {
+            meal.IsGenerated = true;
             _mealRepo.CreateOrUpdate(meal);
+        }
         _context.SaveChanges();
 
         TempData["GeneratedMealIds"] = string.Join(",", meals.Select(m => m.Id));
