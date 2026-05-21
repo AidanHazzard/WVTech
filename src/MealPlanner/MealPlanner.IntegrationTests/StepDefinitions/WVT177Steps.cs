@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Text.RegularExpressions;
 using MealPlanner.Models;
 using MealPlanner.Services;
 using Microsoft.EntityFrameworkCore;
@@ -166,7 +167,7 @@ public class WVT177Steps
             catch (StaleElementReferenceException) { return null; }
         });
         Assert.That(matchingItem, Is.Not.Null, $"Item '{ingredientName}' not found on shopping list");
-        var qtyInput = matchingItem!.FindElement(By.XPath("../preceding-sibling::div[2]//input[@name='newAmount']"));
+        var qtyInput = matchingItem!.FindElement(By.XPath("../preceding-sibling::div[1]//input[contains(@class,'qty-input')]"));
         Assert.That(qtyInput.GetAttribute("value"), Does.Contain(expectedAmount),
             $"Expected amount '{expectedAmount}' not found in qty input for '{ingredientName}'");
     }
@@ -197,19 +198,24 @@ public class WVT177Steps
         });
         Assert.That(span, Is.Not.Null, $"Shopping list item '{ingredientName}' not found");
 
-        var measurementDiv = span!.FindElement(By.XPath("../preceding-sibling::div[1]"));
-        var input = measurementDiv.FindElement(By.CssSelector(".measurement-inline-input"));
+        var qtyDiv = span!.FindElement(By.XPath("../preceding-sibling::div[1]"));
+        var input = qtyDiv.FindElement(By.CssSelector(".qty-input"));
 
-        var currentOriginal = input.GetAttribute("data-original");
+        var currentValue = input.GetAttribute("value") ?? "";
+        var numMatch = Regex.Match(currentValue, @"^(\d+(?:\.\d+)?(?:\s+\d+/\d+|/\d+)?)\s*");
+        var currentNumberStr = numMatch.Success ? numMatch.Groups[1].Value.Trim() : "0";
+        var newCombinedValue = $"{currentNumberStr} {newMeasurement}";
+
+        var currentOriginalMeasurement = input.GetAttribute("data-original-measurement");
         ((IJavaScriptExecutor)_driver).ExecuteScript(
             "arguments[0].focus(); arguments[0].value = arguments[1]; arguments[0].blur();",
-            input, newMeasurement);
+            input, newCombinedValue);
 
-        if (!string.Equals(currentOriginal, newMeasurement, StringComparison.OrdinalIgnoreCase))
+        if (!string.Equals(currentOriginalMeasurement, newMeasurement, StringComparison.OrdinalIgnoreCase))
         {
             _wait.Until(d =>
             {
-                try { return string.Equals(input.GetAttribute("data-original"), newMeasurement, StringComparison.OrdinalIgnoreCase); }
+                try { return string.Equals(input.GetAttribute("data-original-measurement"), newMeasurement, StringComparison.OrdinalIgnoreCase); }
                 catch (StaleElementReferenceException) { return false; }
             });
         }
@@ -230,8 +236,8 @@ public class WVT177Steps
         });
         Assert.That(span, Is.Not.Null, $"Shopping list item '{ingredientName}' not found");
 
-        var measurementDiv = span!.FindElement(By.XPath("../preceding-sibling::div[1]"));
-        var input = measurementDiv.FindElement(By.CssSelector(".measurement-inline-input"));
-        Assert.That(input.GetAttribute("value"), Is.EqualTo(expectedMeasurement).IgnoreCase);
+        var qtyDiv = span!.FindElement(By.XPath("../preceding-sibling::div[1]"));
+        var input = qtyDiv.FindElement(By.CssSelector(".qty-input"));
+        Assert.That(input.GetAttribute("data-original-measurement"), Is.EqualTo(expectedMeasurement).IgnoreCase);
     }
 }

@@ -188,7 +188,9 @@ public class KrogerController : Controller
                 return RedirectToAction("Index", "Shopping");
 
             case KrogerExportOutcome.NoMatchesFound:
-                TempData["KrogerError"] = "No matching Kroger products found for your shopping list items.";
+                TempData["KrogerError"] = result.Skipped.Count > 0
+                    ? $"Kroger could not find any matching products for: {string.Join(", ", result.Skipped)}."
+                    : "No matching Kroger products found for your shopping list items.";
                 return RedirectToAction("Index", "Shopping");
 
             case KrogerExportOutcome.Success:

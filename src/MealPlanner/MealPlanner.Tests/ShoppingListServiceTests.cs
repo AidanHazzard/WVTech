@@ -221,6 +221,13 @@ public class ShoppingListServiceTests
     }
 
     [Test]
+    public void UpdateItemAmount_ShouldThrowArgumentException_WhenAmountIsZero()
+    {
+        Assert.Throws<ArgumentException>(() => _service.UpdateItemAmount("user-1", 42, 0f));
+        _repo.Verify(r => r.UpdateAmountByIngredientBase(It.IsAny<string>(), It.IsAny<int>(), It.IsAny<float>()), Times.Never);
+    }
+
+    [Test]
     public void GetItemsForUser_ShouldReturnOnlyThatUsersItems()
     {
         var ingredientBase = new IngredientBase { Id = 1, Name = "milk" };

@@ -35,8 +35,8 @@ public static class FractionParser
         return ParseFraction(input);
     }
 
-    // Formats stored floats as readable strings: 0.5 → "1/2", 1.5 → "1 1/2", 1.0 → "1".
-    // Falls back to decimal representation for values that don't match a common fraction.
+    // Formats stored floats as readable strings: 1.0 → "1", 1.5 → "1.5", 1/4 → "1/4".
+    // Values that round cleanly to 1 decimal place are kept as decimals; others use fractions.
     public static string FormatAmount(float amount)
     {
         if (amount < 0) return amount.ToString("G", CultureInfo.InvariantCulture);

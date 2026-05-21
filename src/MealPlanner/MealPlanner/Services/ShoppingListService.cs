@@ -62,7 +62,7 @@ public class ShoppingListService : IShoppingListService
         }
     }
 
-    public void AddItem(string userId, string itemName, float amount, string measurement)
+    public void AddItem(string userId, string itemName, float amount, string measurement, string? displayAmount = null)
     {
         if (string.IsNullOrWhiteSpace(itemName))
             throw new ArgumentException("Item name cannot be empty.");
@@ -84,6 +84,7 @@ public class ShoppingListService : IShoppingListService
             IngredientBase = ingredientBase,
             Measurement = measurementEntity,
             Amount = amount,
+            DisplayAmount = displayAmount,
             IsAutoAdded = false
         };
 
@@ -133,12 +134,12 @@ public class ShoppingListService : IShoppingListService
         _shoppingListRepository.RemoveAllByIngredientBase(userId, ingredientBaseId);
     }
 
-    public void UpdateItemAmount(string userId, int ingredientBaseId, float newAmount)
+    public void UpdateItemAmount(string userId, int ingredientBaseId, float newAmount, string? displayAmount = null)
     {
-        if (newAmount < 0)
-            throw new ArgumentException("Amount cannot be negative.");
+        if (newAmount <= 0)
+            throw new ArgumentException("Amount must be greater than zero.");
 
-        _shoppingListRepository.UpdateAmountByIngredientBase(userId, ingredientBaseId, newAmount);
+        _shoppingListRepository.UpdateAmountByIngredientBase(userId, ingredientBaseId, newAmount, displayAmount);
     }
 
     public void ClearItems(string userId)

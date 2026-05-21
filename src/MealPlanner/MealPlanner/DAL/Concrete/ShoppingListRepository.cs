@@ -107,7 +107,7 @@ public class ShoppingListRepository : IShoppingListRepository
         _context.SaveChanges();
     }
 
-    public void UpdateAmountByIngredientBase(string userId, int ingredientBaseId, float newAmount)
+    public void UpdateAmountByIngredientBase(string userId, int ingredientBaseId, float newAmount, string? displayAmount = null)
     {
         var items = _context.ShoppingListItems
             .Where(i => i.UserId == userId && i.IngredientBaseId == ingredientBaseId)
@@ -116,6 +116,7 @@ public class ShoppingListRepository : IShoppingListRepository
         if (items.Count == 0) return;
 
         items[0].Amount = newAmount;
+        items[0].DisplayAmount = displayAmount;
         if (items.Count > 1)
             _context.ShoppingListItems.RemoveRange(items.Skip(1));
 

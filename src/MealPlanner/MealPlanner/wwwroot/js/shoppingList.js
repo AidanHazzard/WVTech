@@ -103,6 +103,33 @@ function formatWithDenominator(val, den) {
   return whole > 0 ? `${whole} ${num}/${den}` : `${num}/${den}`;
 }
 
+// Splits "1 2/3 cups" → { numberStr: "1 2/3", measurement: "cups" }
+function parseNumberAndMeasurement(str) {
+  str = str.trim();
+  const m = str.match(/^(\d+(?:\.\d+)?(?:\s+\d+\/\d+|\/\d+)?)\s*(.*)$/);
+  if (!m) return { numberStr: str, measurement: '' };
+  return { numberStr: m[1].trim(), measurement: (m[2] || '').trim() };
+}
+
+// ── Validation helpers ───────────────────────────────────────────
+let _alertTimer = null;
+function showLiveAlert(type, message) {
+  const el = document.getElementById('sl-live-alert');
+  if (!el) return;
+  clearTimeout(_alertTimer);
+  el.className = `sl-alert sl-alert-${type}`;
+  el.textContent = message;
+  el.style.display = 'block';
+  _alertTimer = setTimeout(() => { el.style.display = 'none'; }, 5000);
+}
+function clearLiveAlert() {
+  clearTimeout(_alertTimer);
+  const el = document.getElementById('sl-live-alert');
+  if (el) el.style.display = 'none';
+}
+function markError(el)  { el.classList.add('sl-input-error'); }
+function clearError(el) { el.classList.remove('sl-input-error'); }
+
 document.addEventListener("click", async function (e) {
   const btn = e.target.closest(".qty-increment, .qty-decrement");
   if (!btn) return;
@@ -110,62 +137,121 @@ document.addEventListener("click", async function (e) {
   const form = input.closest("form");
   const ingredientBaseId = parseInt(form.querySelector('[name="ingredientBaseId"]').value);
 
-  const val = parseAmountFloat(input.value);
-  const step = getStep(input.value);
-  const den = step < 1 ? Math.round(1 / step) : 1;
+  const { numberStr } = parseNumberAndMeasurement(input.value);
+  const measurement = input.dataset.measurement;
+  const val = parseAmountFloat(numberStr);
+  const den = parseInt(input.dataset.denominator) || 1;
+  const step = den > 1 ? 1 / den : 1;
   const newVal = btn.classList.contains("qty-increment")
     ? val + step
-    : Math.max(0, val - step);
-  const isDecimal = input.value.trim().includes('.') && !input.value.includes('/');
-  let newDisplay;
-  if (isDecimal) {
-    if (newVal <= 0) {
-      newDisplay = '0';
-    } else {
-      const decimals = (input.value.trim().split('.')[1] || '').length;
-      newDisplay = newVal.toFixed(decimals);
-    }
-  } else {
-    newDisplay = den > 1 ? formatWithDenominator(newVal, den) : formatAmountStr(newVal);
+    : val - step;
+
+  if (newVal <= 0) {
+    showLiveAlert('danger', 'Quantity must be greater than 0. Remove the item if you no longer need it.');
+    markError(input);
+    return;
   }
 
+  const isDecimal = input.dataset.isDecimal === 'true';
+  let newNumberStr;
+  if (isDecimal) {
+    if (newVal <= 0) {
+      newNumberStr = '0';
+    } else {
+      const decimals = ((input.dataset.originalAmount || '').trim().split('.')[1] || '').length;
+      newNumberStr = newVal.toFixed(decimals);
+    }
+  } else {
+    newNumberStr = den > 1 ? formatWithDenominator(newVal, den) : formatAmountStr(newVal);
+  }
+
+  const newDisplay = measurement ? `${newNumberStr} ${measurement}` : newNumberStr;
   input.value = newDisplay;
   input.dataset.original = newDisplay;
+  input.dataset.originalAmount = newNumberStr;
 
   await fetch("/Shopping/UpdateItemAmountJson", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ ingredientBaseId, newAmount: newDisplay })
+    body: JSON.stringify({ ingredientBaseId, newAmount: newNumberStr })
   }).catch(() => {});
 });
 
-document.addEventListener("focusout", function (e) {
+document.addEventListener("focusin", function (e) {
   if (!e.target.matches(".qty-input")) return;
-  const input = e.target;
-  if (input.value.trim() !== input.dataset.original.trim()) {
-    input.closest("form").submit();
-  }
+  clearError(e.target);
+  clearLiveAlert();
 });
 
 document.addEventListener("focusout", async function (e) {
-  if (!e.target.matches(".measurement-inline-input")) return;
+  if (!e.target.matches(".qty-input")) return;
   const input = e.target;
-  const newVal = input.value.trim();
-  if (!newVal || newVal === input.dataset.original) return;
-
+  const { numberStr, measurement } = parseNumberAndMeasurement(input.value);
+  const form = input.closest("form");
+  const ingredientBaseId = parseInt(form.querySelector('[name="ingredientBaseId"]').value);
   const itemId = parseInt(input.dataset.itemId);
-  const resp = await fetch("/Shopping/UpdateItemMeasurementJson", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ itemId, measurement: newVal })
-  }).catch(() => null);
 
-  if (resp && resp.ok) {
-    const data = await resp.json();
-    input.value = data.abbreviation;
-    input.dataset.original = data.abbreviation;
+  // ── Validation ──────────────────────────────────────────────
+  if (!input.value.trim()) {
+    showLiveAlert('danger', 'Quantity cannot be empty — enter an amount and unit (e.g. "2 cups").');
+    markError(input);
+    input.value = input.dataset.original || '';
+    return;
+  }
+  const parsedAmount = parseAmountFloat(numberStr);
+  if (!numberStr || parsedAmount <= 0) {
+    const msg = parsedAmount <= 0
+      ? 'Quantity must be greater than 0.'
+      : 'Could not read the quantity — try something like "2 cups" or "1 1/2 tbsp".';
+    showLiveAlert('danger', msg);
+    markError(input);
+    input.value = input.dataset.original || '';
+    return;
+  }
+  if (!measurement) {
+    showLiveAlert('danger', `Missing unit — try something like "${numberStr} cups" or "${numberStr} oz".`);
+    markError(input);
+    input.value = input.dataset.original || '';
+    return;
+  }
+  clearError(input);
+  // ────────────────────────────────────────────────────────────
+
+  const amountChanged = numberStr !== (input.dataset.originalAmount || '').trim();
+  const measurementChanged = measurement.toLowerCase() !== (input.dataset.originalMeasurement || '').trim().toLowerCase();
+
+  if (amountChanged) {
+    await fetch("/Shopping/UpdateItemAmountJson", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ ingredientBaseId, newAmount: numberStr })
+    }).catch(() => {});
+    input.dataset.originalAmount = numberStr;
+  }
+
+  if (measurementChanged && measurement) {
+    const resp = await fetch("/Shopping/UpdateItemMeasurementJson", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ itemId, measurement })
+    }).catch(() => null);
+
+    if (resp && resp.ok) {
+      const data = await resp.json();
+      const confirmedAbbrev = data.abbreviation;
+      input.dataset.originalMeasurement = confirmedAbbrev;
+      input.dataset.measurement = confirmedAbbrev;
+      const newDisplay = confirmedAbbrev ? `${input.dataset.originalAmount} ${confirmedAbbrev}` : input.dataset.originalAmount;
+      input.value = newDisplay;
+      input.dataset.original = newDisplay;
+    } else {
+      const orig = input.dataset.originalMeasurement || '';
+      const revert = orig ? `${input.dataset.originalAmount} ${orig}` : input.dataset.originalAmount;
+      input.value = revert;
+      input.dataset.original = revert;
+    }
   } else {
-    input.value = input.dataset.original;
+    input.dataset.original = input.value;
   }
 });
 
@@ -321,10 +407,82 @@ if (findStoresBtn) {
 
 const exportForm = document.getElementById("krogerExportForm");
 if (exportForm) {
-  exportForm.addEventListener("submit", function () {
+  exportForm.addEventListener("submit", function (e) {
+    const qtyInputs = document.querySelectorAll('#shopping-items-container .qty-input');
+    const invalid = [];
+
+    qtyInputs.forEach(input => {
+      const { numberStr, measurement } = parseNumberAndMeasurement(input.value);
+      const amount = parseAmountFloat(numberStr);
+      if (!input.value.trim() || !numberStr || amount <= 0 || !measurement) {
+        markError(input);
+        invalid.push(input);
+      } else {
+        clearError(input);
+      }
+    });
+
+    if (invalid.length > 0) {
+      e.preventDefault();
+      const msg = invalid.length === 1
+        ? 'One item has a missing or invalid quantity — fix it before exporting.'
+        : `${invalid.length} items have missing or invalid quantities — fix them before exporting.`;
+      showLiveAlert('danger', msg);
+      invalid[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
+
     const btn = document.getElementById("exportToKroger");
     const btnText = btn?.querySelector(".buttonText");
     if (btnText) btnText.textContent = "Exporting...";
     if (btn) btn.disabled = true;
+  });
+}
+
+// ── Add-item form validation ─────────────────────────────────────
+const addItemForm = document.querySelector('.sl-add-row');
+if (addItemForm) {
+  addItemForm.addEventListener('submit', function (e) {
+    const amountInput   = this.querySelector('[name="amount"]');
+    const measureSelect = this.querySelector('[name="measurement"]');
+    const nameInput     = this.querySelector('[name="itemName"]');
+
+    const missing = [];
+    const amount = parseAmountFloat(amountInput.value);
+
+    if (!amountInput.value || amount <= 0) {
+      markError(amountInput);
+      missing.push('a quantity greater than 0 (e.g. 2, 1.5, or 1/2)');
+    } else {
+      clearError(amountInput);
+    }
+
+    if (!measureSelect.value) {
+      markError(measureSelect);
+      missing.push('a measurement unit');
+    } else {
+      clearError(measureSelect);
+    }
+
+    if (!nameInput.value.trim()) {
+      markError(nameInput);
+      missing.push('an ingredient name');
+    } else {
+      clearError(nameInput);
+    }
+
+    if (missing.length > 0) {
+      e.preventDefault();
+      const last = missing.pop();
+      const msg = missing.length
+        ? `Please enter ${missing.join(', ')} and ${last}.`
+        : `Please enter ${last}.`;
+      showLiveAlert('danger', msg);
+    }
+  });
+
+  addItemForm.querySelectorAll('input, select').forEach(el => {
+    el.addEventListener('input',  () => clearError(el));
+    el.addEventListener('change', () => clearError(el));
   });
 }

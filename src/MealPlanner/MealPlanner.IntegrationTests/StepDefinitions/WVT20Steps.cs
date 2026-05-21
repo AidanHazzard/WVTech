@@ -392,8 +392,6 @@ public class WVT20Steps
     [When("'Alice' updates the quantity of '(.*)' to (.*)")]
     public void WhenAliceUpdatesTheQuantityOf(string itemName, float newAmount)
     {
-        _wait.Until(d => d.FindElements(By.CssSelector("input[name='newAmount']")).Count > 0);
-
         var amountStr = newAmount.ToString(System.Globalization.CultureInfo.InvariantCulture);
 
         var span = _wait.Until(d =>
@@ -408,10 +406,12 @@ public class WVT20Steps
         });
         Assert.That(span, Is.Not.Null, $"Shopping list item '{itemName}' not found");
 
-        var input = span!.FindElement(By.XPath("../preceding-sibling::div[2]//input[@name='newAmount']"));
+        var input = span!.FindElement(By.XPath("../preceding-sibling::div[1]//input[contains(@class,'qty-input')]"));
+        var measurement = input.GetAttribute("data-measurement") ?? "";
+        var combinedValue = string.IsNullOrEmpty(measurement) ? amountStr : $"{amountStr} {measurement}";
 
-        // Use JS to set the value and trigger focusout to auto-submit (the handler listens for focusout, not blur)
-        ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].value = arguments[1]", input, amountStr);
+        // Set the displayed value and trigger focusout so the JS handler detects amountChanged and saves
+        ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].value = arguments[1]", input, combinedValue);
         ((IJavaScriptExecutor)_driver).ExecuteScript(
             "arguments[0].dispatchEvent(new Event('focusout', {bubbles:true}))", input);
 
@@ -433,14 +433,14 @@ public class WVT20Steps
                     .FirstOrDefault(s => s.GetAttribute("data-name")
                         .Contains(itemName, StringComparison.OrdinalIgnoreCase));
                 if (span == null) return null;
-                return span.FindElement(By.XPath("../preceding-sibling::div[2]//input[@name='newAmount']"));
+                return span.FindElement(By.XPath("../preceding-sibling::div[1]//input[contains(@class,'qty-input')]"));
             }
             catch (StaleElementReferenceException) { return null; }
         });
 
         Assert.That(input, Is.Not.Null);
         var displayedAmount = float.Parse(
-            input!.GetAttribute("value") ?? "0",
+            input!.GetAttribute("data-original-amount") ?? "0",
             System.Globalization.CultureInfo.InvariantCulture);
         Assert.That(displayedAmount, Is.EqualTo(expectedAmount));
     }
@@ -460,10 +460,21 @@ public class WVT20Steps
         });
         Assert.That(span, Is.Not.Null, $"Shopping list item '{ingredientName}' not found");
 
-        var input = span!.FindElement(By.XPath("../preceding-sibling::div[2]//input[@name='newAmount']"));
+        var input = span!.FindElement(By.XPath("../preceding-sibling::div[1]//input[contains(@class,'qty-input')]"));
+        var measurement = input.GetAttribute("data-measurement") ?? "";
+        var combinedValue = string.IsNullOrEmpty(measurement) ? displayValue : $"{displayValue} {measurement}";
+
+        bool isDecimal = displayValue.Contains('.');
+        var slashIdx = displayValue.LastIndexOf('/');
+        string denominator = slashIdx > 0 ? displayValue[(slashIdx + 1)..].Trim() : "1";
+
         ((IJavaScriptExecutor)_driver).ExecuteScript(
-            "arguments[0].value = arguments[1]; arguments[0].dataset.original = arguments[1];",
-            input, displayValue);
+            @"arguments[0].value = arguments[1];
+              arguments[0].dataset.original = arguments[1];
+              arguments[0].dataset.originalAmount = arguments[2];
+              arguments[0].dataset.isDecimal = arguments[3];
+              arguments[0].dataset.denominator = arguments[4];",
+            input, combinedValue, displayValue, isDecimal.ToString().ToLower(), denominator);
     }
 
     [When("{string} clicks increment on {string}")]
@@ -481,7 +492,7 @@ public class WVT20Steps
         });
         Assert.That(span, Is.Not.Null, $"Shopping list item '{ingredientName}' not found");
 
-        var btn = span!.FindElement(By.XPath("../preceding-sibling::div[2]//button[contains(@class,'qty-increment')]"));
+        var btn = span!.FindElement(By.XPath("../preceding-sibling::div[1]//button[contains(@class,'qty-increment')]"));
         ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].click()", btn);
 
         _wait.Until(d => ((IJavaScriptExecutor)d)

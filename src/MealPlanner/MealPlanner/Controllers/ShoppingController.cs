@@ -161,7 +161,7 @@ public class ShoppingController : Controller
 
         try
         {
-            _shoppingListService.AddItem(user.Id, itemName, parsedAmount.Value, measurement);
+            _shoppingListService.AddItem(user.Id, itemName, parsedAmount.Value, measurement, amount.Trim());
             TempData["ShoppingListSuccess"] = $"{itemName} added to your shopping list.";
         }
         catch (ArgumentException ex)
@@ -182,7 +182,7 @@ public class ShoppingController : Controller
         float parsedAmount = FractionParser.ParseAmount(newAmount) ?? 0f;
         try
         {
-            _shoppingListService.UpdateItemAmount(user.Id, ingredientBaseId, parsedAmount);
+            _shoppingListService.UpdateItemAmount(user.Id, ingredientBaseId, parsedAmount, newAmount?.Trim());
         }
         catch (ArgumentException ex)
         {
@@ -198,8 +198,10 @@ public class ShoppingController : Controller
     {
         User? user = await _userManager.GetUserAsync(User);
         if (user == null) return Unauthorized();
-        float parsedAmount = FractionParser.ParseAmount(request.NewAmount) ?? 0f;
-        _shoppingListService.UpdateItemAmount(user.Id, request.IngredientBaseId, parsedAmount);
+        float? parsedAmount = FractionParser.ParseAmount(request.NewAmount);
+        if (parsedAmount == null || parsedAmount.Value <= 0)
+            return BadRequest("Invalid amount.");
+        _shoppingListService.UpdateItemAmount(user.Id, request.IngredientBaseId, parsedAmount.Value, request.NewAmount?.Trim());
         return Ok();
     }
 

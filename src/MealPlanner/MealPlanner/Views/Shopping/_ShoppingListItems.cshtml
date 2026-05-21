@@ -4,8 +4,12 @@
 {
     @foreach (var item in Model.Items)
     {
-        var amount = MealPlanner.Services.FractionParser.FormatAmount(item.Amount);
+        var amount = item.DisplayAmount ?? MealPlanner.Services.FractionParser.FormatAmount(item.Amount);
         var abbrev = string.IsNullOrEmpty(item.Measurement.Abbreviation) ? item.Measurement.Name : item.Measurement.Abbreviation;
+        var slashPos = amount.IndexOf('/');
+        int denominator = slashPos > 0 && int.TryParse(amount[(slashPos + 1)..].Trim(), out int parsedDen) ? parsedDen : 1;
+        bool amountIsDecimal = amount.Contains('.');
+        var combined = $"{amount} {abbrev}";
         <div class="sl-item-row">
             <div class="sl-qty-area">
                 <form asp-action="UpdateItemAmount" method="post" class="sl-qty-form">
@@ -14,21 +18,18 @@
                     <div class="qty-controls sl-qty-controls">
                         <button type="button" class="qty-decrement sl-qty-step-btn">−</button>
                         <input type="text"
-                               name="newAmount"
-                               value="@amount"
-                               class="qty-input sl-qty-pill-input"
-                               data-original="@amount" />
+                               class="qty-input measurement-inline-input"
+                               value="@combined"
+                               data-original="@combined"
+                               data-original-amount="@amount"
+                               data-original-measurement="@abbrev"
+                               data-measurement="@abbrev"
+                               data-item-id="@item.Id"
+                               data-denominator="@denominator"
+                               data-is-decimal="@amountIsDecimal.ToString().ToLower()" />
                         <button type="button" class="qty-increment sl-qty-step-btn">+</button>
                     </div>
-                    <button type="submit" class="qty-save sl-qty-save-btn" style="display:none">Save</button>
                 </form>
-            </div>
-            <div class="sl-meas-area">
-                <input type="text"
-                       class="measurement-inline-input sl-qty-unit"
-                       value="@abbrev"
-                       data-original="@abbrev"
-                       data-item-id="@item.Id" />
             </div>
             <div class="sl-name-area">
                 <span class="item-display sl-item-name"
@@ -52,5 +53,8 @@
 }
 else
 {
-    <p class="sl-empty">No items in your shopping list yet.</p>
+    <div class="sl-empty-state">
+        <i class="ti ti-shopping-cart sl-empty-icon"></i>
+        <p class="sl-empty">Your shopping list is empty.</p>
+    </div>
 }

@@ -17,16 +17,6 @@
     <!-- Header -->
     <div class="sl-header">
         <h1 class="sl-title">Shopping List</h1>
-        <div class="sl-header-right">
-            <span class="sl-date-label">@DateTime.Today.ToString("MMM d, yyyy")</span>
-            @if (Model.Items.Any())
-            {
-                <form asp-action="ClearItems" method="post" style="display:inline">
-                    @Html.AntiForgeryToken()
-                    <button type="submit" class="sl-clear-btn">Clear cart</button>
-                </form>
-            }
-        </div>
     </div>
 
     <!-- Alerts -->
@@ -38,6 +28,11 @@
     {
         <div class="sl-alert sl-alert-danger">@TempData["ShoppingListError"]</div>
     }
+    <div id="sl-live-alert" class="sl-alert" style="display:none" role="alert" aria-live="assertive"></div>
+    @if (TempData["KrogerSuccess"] != null)
+    {
+        <div class="sl-alert sl-alert-success">@TempData["KrogerSuccess"]</div>
+    }
     @if (TempData["KrogerError"] != null)
     {
         <div class="sl-alert sl-alert-danger">@TempData["KrogerError"]</div>
@@ -47,24 +42,33 @@
         <div class="sl-alert sl-alert-info">@TempData["KrogerInfo"]</div>
     }
 
-    <!-- Date range -->
-    <form asp-action="SetDateRange" method="post" class="sl-date-row" id="dateRangeForm">
-        @Html.AntiForgeryToken()
-        <input type="date" name="dateFrom"
-               value="@Model.DateFrom.ToString("yyyy-MM-dd")"
-               class="sl-date-input date-range-input" />
-        <span class="sl-date-sep">to</span>
-        <input type="date" name="dateTo"
-               value="@Model.DateTo.ToString("yyyy-MM-dd")"
-               class="sl-date-input date-range-input" />
-    </form>
+    <!-- Date range + clear cart -->
+    <div class="sl-date-row">
+        <form asp-action="SetDateRange" method="post" class="sl-date-inputs" id="dateRangeForm">
+            @Html.AntiForgeryToken()
+            <input type="date" name="dateFrom"
+                   value="@Model.DateFrom.ToString("yyyy-MM-dd")"
+                   class="sl-date-input date-range-input" />
+            <span class="sl-date-sep">to</span>
+            <input type="date" name="dateTo"
+                   value="@Model.DateTo.ToString("yyyy-MM-dd")"
+                   class="sl-date-input date-range-input" />
+        </form>
+        @if (Model.Items.Any())
+        {
+            <form asp-action="ClearItems" method="post" class="sl-clear-form">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="sl-clear-btn">Clear cart</button>
+            </form>
+        }
+    </div>
 
     <!-- Single card: add item + items list + Kroger export -->
     <div class="sl-card">
         <form asp-action="AddItem" method="post" class="sl-add-row">
             @Html.AntiForgeryToken()
-            <input type="number" name="amount" class="sl-input sl-qty-field"
-                   placeholder="0" min="0" step="any" />
+            <input type="text" name="amount" class="sl-input sl-qty-field"
+                   placeholder="Qty" inputmode="decimal" autocomplete="off" />
             <select name="measurement" class="sl-input sl-unit-select">
                 <option value="" disabled selected>Unit</option>
                 @foreach (var m in Model.Measurements)
@@ -76,10 +80,6 @@
                    placeholder="Ingredient name" required />
             <button type="submit" class="sl-add-btn">Add item</button>
         </form>
-        @if (TempData["KrogerSuccess"] != null)
-        {
-            <p class="sl-empty" style="padding-top:16px">@TempData["KrogerSuccess"]</p>
-        }
         <div id="shopping-items-container">
             @await Html.PartialAsync("_ShoppingListItems", Model)
         </div>

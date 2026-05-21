@@ -17,7 +17,7 @@ public interface IShoppingListRepository
 
     void ClearAllItems(string userId);
 
-    void UpdateAmountByIngredientBase(string userId, int ingredientBaseId, float newAmount);
+    void UpdateAmountByIngredientBase(string userId, int ingredientBaseId, float newAmount, string? displayAmount = null);
 
     HashSet<int> GetDismissedIngredientBaseIds(string userId);
     void DismissIngredientBase(string userId, int ingredientBaseId);
