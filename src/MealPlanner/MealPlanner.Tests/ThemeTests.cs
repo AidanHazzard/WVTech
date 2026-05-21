@@ -4,6 +4,7 @@ using MealPlanner.DAL.Concrete;
 using MealPlanner.Models;
 using MealPlanner.Services;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Moq;
@@ -29,7 +30,9 @@ namespace MealPlanner.Tests
             _userProfileRepository = new UserSettingsRepository(_context);
             _mockUserSettingsService = new Mock<IUserSettingsService>();
 
-            _controller = new UserSettingsController(_context, _userProfileRepository, new Mock<IUserSettingsService>().Object, new Mock<ITagRepository>().Object, new Mock<IUserFoodPreferenceRepository>().Object);
+            var userManagerMock = new Mock<UserManager<User>>(
+                Mock.Of<IUserStore<User>>(), null!, null!, null!, null!, null!, null!, null!, null!);
+            _controller = new UserSettingsController(_userProfileRepository, new Mock<IUserSettingsService>().Object, new Mock<ITagRepository>().Object, new Mock<IUserFoodPreferenceRepository>().Object, new Mock<IUserNutritionPreferenceRepository>().Object, new Mock<IUserDietaryRestrictionRepository>().Object, userManagerMock.Object);
 
             var claims = new List<Claim>
             {

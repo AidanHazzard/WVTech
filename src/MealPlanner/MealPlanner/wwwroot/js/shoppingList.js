@@ -7,6 +7,67 @@ function parseAmountFloat(str) {
   const num = parseFloat(str);
   return isNaN(num) ? 0 : num;
 }
+const today = new Date().toISOString().split("T")[0];
+
+// Guard against double-submission when both change and blur fire together.
+let _submitting = false;
+function submitDateForm() {
+  if (_submitting) return;
+  _submitting = true;
+  document.getElementById("dateRangeForm").submit();
+}
+
+// Shared debounce timer across both inputs so rapid section edits (MM→DD→YYYY)
+// only trigger one submission after the user finishes all three sections.
+let _debounceTimer = null;
+function scheduleSubmit() {
+  clearTimeout(_debounceTimer);
+  _debounceTimer = setTimeout(submitDateForm, 600);
+}
+
+document.querySelectorAll(".date-range-input").forEach((input) => {
+  // change fires whenever a section completes and the full date becomes valid.
+  // Debounce so the user can edit all three sections before the form submits.
+  input.addEventListener("change", function () {
+    if (!this.value) {
+      this.classList.add("date-invalid");
+      clearTimeout(_debounceTimer);
+      return;
+    }
+    this.classList.remove("date-invalid");
+    scheduleSubmit();
+  });
+
+  // Show red border while the value is incomplete (value is "" mid-type).
+  input.addEventListener("input", function () {
+    if (this.value) {
+      this.classList.remove("date-invalid");
+    } else {
+      this.classList.add("date-invalid");
+    }
+  });
+
+  // On blur: user left the field — cancel any pending debounce and commit now.
+  // If empty, revert to today first.
+  input.addEventListener("blur", function () {
+    clearTimeout(_debounceTimer);
+    if (!this.value) {
+      this.value = today;
+      this.classList.remove("date-invalid");
+    } else {
+      this.classList.remove("date-invalid");
+    }
+    submitDateForm();
+  });
+});
+
+function toggleSaveButton(input) {
+  const btn = input.closest("form").querySelector(".qty-save");
+  btn.style.display =
+    parseFloat(input.value) !== parseFloat(input.dataset.original)
+      ? "inline-block"
+      : "none";
+}
 
 function formatAmountStr(val) {
   if (val <= 0) return "0";
@@ -189,19 +250,25 @@ function populateStores(stores, zip, radius) {
 
   document.getElementById("zipCodeHidden").value = zip;
   select.innerHTML = "";
+  message.className = "sl-store-msg";
   message.style.display = "block";
 
   if (stores.length === 0) {
-    message.textContent = `No Kroger stores found within ${radius} miles of "${zip}". Try increasing the radius or a nearby zip code.`;
+    message.textContent = `No Kroger stores found within ${radius} miles of "${zip}". Try increasing the radius or check the zip code.`;
+    message.className = "sl-alert sl-alert-danger";
     select.style.display = "none";
     document.getElementById("exportToKroger").style.display = "none";
   } else {
     select.style.display = "";
     document.getElementById("exportToKroger").style.display = "";
+    const storeWord = stores.length === 1 ? "store" : "stores";
     const exactMatch = stores.some((s) => s.zipCode === zip);
-    message.textContent = exactMatch
-      ? `Found ${stores.length} store(s) within ${radius} miles of ${zip}:`
-      : `No Kroger in ${zip}. Showing nearest store(s) within ${radius} miles:`;
+    if (!exactMatch) {
+      message.textContent = `No stores in ${zip}. Showing the nearest within ${radius} miles:`;
+      message.className = "sl-alert sl-alert-danger";
+    } else {
+      message.textContent = `${stores.length} ${storeWord} found near ${zip}:`;
+    }
 
     const storeTmpl = document.getElementById("tmpl-store-option");
     stores.forEach((store) => {
@@ -253,15 +320,11 @@ if (findStoresBtn) {
 }
 
 const exportForm = document.getElementById("krogerExportForm");
-const exportBtn = document.getElementById("exportToKroger");
-if (exportForm && exportBtn) {
-  exportForm.addEventListener("submit", function (e) {
-    if (!e.submitter || e.submitter !== exportBtn) {
-      e.preventDefault();
-      return;
-    }
-    const btnText = exportBtn.querySelector(".buttonText");
+if (exportForm) {
+  exportForm.addEventListener("submit", function () {
+    const btn = document.getElementById("exportToKroger");
+    const btnText = btn?.querySelector(".buttonText");
     if (btnText) btnText.textContent = "Exporting...";
-    exportBtn.disabled = true;
+    if (btn) btn.disabled = true;
   });
 }

@@ -2,104 +2,227 @@
 
 <link rel="stylesheet" href="~/css/AddNewRecipe.css" asp-append-version="true" />
 
+<div class="ar-page">
 
-<div class="back1 backHasButton">
-    <h1 class="back1Title">Edit Recipe</h1>
+    <div class="ar-page-header">
+        <h1 class="ar-page-title">Edit recipe</h1>
+        <p class="ar-page-subtitle">Update the details for this recipe.</p>
+    </div>
 
-<form asp-controller="FoodEntries" asp-action="RecipeEditFinished" asp-route-id="@Model.Id" method="post" enctype="multipart/form-data">
+    <form asp-controller="FoodEntries" asp-action="RecipeEditFinished" asp-route-id="@Model.Id"
+          method="post" enctype="multipart/form-data">
 
-        <h2 class="back1Title left">
-            <span>Name:</span>
-            <input class="back2-textbox" type="text" placeholder="Enter Recipe Name" asp-for="Name" value="@Model.Name" required>
-            </h2>
+        <!-- Name -->
+        <div class="ar-card">
+            <div class="ar-card-title">
+                <span class="ar-card-icon"><i class="ti ti-pencil"></i></span>
+                <span class="ar-card-label">Name</span>
+            </div>
+            <input class="ar-input" type="text" placeholder="Recipe name…" asp-for="Name" required />
+        </div>
 
-
-            <div class="back2 backHasButton" id="AppendHere"
-                 data-measurements="@System.Text.Json.JsonSerializer.Serialize(Model.Measurements.Select(m => new { value = m.Name, label = m.Abbreviation }))">
-                <h2 class="back1Title">Ingredients</h2>
+        <!-- Ingredients -->
+        <div class="ar-card" id="AppendHere">
+            <div class="ar-card-title">
+                <span class="ar-card-icon"><i class="ti ti-bowl-chopsticks"></i></span>
+                <span class="ar-card-label">Ingredients</span>
+            </div>
+            <div class="ar-ing-add-row">
+                <input type="number" class="ar-input ar-ing-qty" id="ingQty"
+                       placeholder="0" min="0" step="any" />
+                <select class="ar-input ar-ing-unit" id="ingUnit">
+                    <option value="Unit">Unit</option>
+                    <option value="Count">Count</option>
+                    <option value="Cup(s)">Cup(s)</option>
+                    <option value="Ounce(s)">Ounce(s)</option>
+                    <option value="Pound(s)">Pounds</option>
+                    <option value="L">L</option>
+                    <option value="KG">KG</option>
+                </select>
+                <input type="text" class="ar-input ar-ing-name" id="ingName"
+                       placeholder="Ingredient name" />
+                <button type="button" class="ar-teal-btn" id="buttonAppend">Add</button>
+            </div>
+            <div id="ingredientList">
                 @for (int i = 0; i < Model.Ingredients.Count; i++)
                 {
-                    <div class="row input-wrapper">
-                        <div class="row">
-                            <input type="text" class="col-1 back2-textbox-partial mx-1" name="IngredientAmounts" placeholder="e.g. 1/2" value="@Model.IngredientAmounts[i]">
-                            <select class="col-2 back2-textbox-partial mx-1" name="IngredientMeasurements">
-                                <option value="">Select</option>
-                                @foreach (var m in Model.Measurements)
-                                {
-                                    <option value="@m.Name" selected="@(Model.IngredientMeasurements[i] == m.Name ? "selected" : null)">@m.Abbreviation</option>
-                                }
-                            </select>
-                            <input type="text" class="col back2-textbox-partial mx-1" placeholder="Enter Ingredient" name="Ingredients" value="@Model.Ingredients[i]" required>
+                    var qty  = Model.IngredientAmounts.Count > i  ? Model.IngredientAmounts[i].ToString()      : "";
+                    var unit = Model.IngredientMeasurements.Count > i ? Model.IngredientMeasurements[i] : "";
+                    var ing  = Model.Ingredients[i];
+
+                    string display;
+                    if (!string.IsNullOrEmpty(qty) || !string.IsNullOrEmpty(unit))
+                    {
+                        var parts = new System.Collections.Generic.List<string>();
+                        if (!string.IsNullOrEmpty(qty))  parts.Add(qty);
+                        if (!string.IsNullOrEmpty(unit)) parts.Add(unit);
+                        parts.Add("—");
+                        parts.Add(ing);
+                        display = string.Join(" ", parts);
+                    }
+                    else
+                    {
+                        display = ing;
+                    }
+
+                    <div class="ar-ing-row">
+                        <span class="ar-ing-row-name">@display</span>
+                        <div class="ar-ing-row-right">
+                            <input type="hidden" name="IngredientAmounts"      value="@qty" />
+                            <input type="hidden" name="IngredientMeasurements" value="@unit" />
+                            <input type="hidden" name="Ingredients"            value="@ing" />
+                            <button type="button" class="ar-ing-remove-btn" title="Remove">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24"
+                                     fill="none" stroke="currentColor" stroke-width="2.5"
+                                     stroke-linecap="round" stroke-linejoin="round">
+                                    <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                                </svg>
+                            </button>
                         </div>
-                        <button type="button" class="deleteButton">
-                            <img src="/images/icons/delete.png" alt="delete" class="deleteImage">
-                        </button>
                     </div>
                 }
 
-                <button class="buttonGreen" id="buttonAppend">
-                    <h2 class="buttonText">Add Ingredient</h2>
-                </button>
             </div>
+        </div>
 
-            <div class="back2">
-                <h2 class="back1Title">Instructions</h2>
-                <textarea class="back2-textbox instructionsBox" placeholder="Enter Instructions" asp-for="Directions" value="@Model.Directions" required></textarea>
+        <!-- Instructions -->
+        <div class="ar-card">
+            <div class="ar-card-title">
+                <span class="ar-card-icon"><i class="ti ti-list"></i></span>
+                <span class="ar-card-label">Instructions</span>
             </div>
-
-            <div class="back2">
-                <h2 class="back1Title">Nutrients</h2>
-                
-                <h2 class="back1Title left">
-                    <span>Calories:</span>
-                    <input type="number" class="back2-textbox" placeholder="Enter Calories" min="0" max="32767" step="1" asp-for="Calories" value="@Model.Calories" required>
-                </h2>
-
-                <h2 class="back1Title left">
-                    <span>Protein:</span>
-                    <input type="number" class="back2-textbox" placeholder="Enter Protein" min="0" max="32767" step="1" asp-for="Protein" value="@Model.Protein" required>
-                </h2>
-
-                <h2 class="back1Title left">
-                    <span>Carbs:</span>
-                    <input type="number" class="back2-textbox" placeholder="Enter Carbs" min="0" max="32767" step="1" asp-for="Carbs" value="@Model.Carbs" required>
-                </h2>
-
-                <h2 class="back1Title left">
-                    <span>Fat:</span>
-                    <input type="number" class="back2-textbox" placeholder="Enter Fat" min="0" max="32767" step="1" asp-for="Fat" value="@Model.Fat" required>
-                </h2>
+            <input type="hidden" id="Directions" name="Directions" value="@Model.Directions" />
+            <div id="step-list"></div>
+            <div class="ar-step-add-row">
+                <input type="text" id="step-input" class="ar-input ar-step-input"
+                       placeholder="Describe the next step…" />
+                <button type="button" id="add-step-btn" class="ar-teal-btn">Add step</button>
             </div>
+            <p id="step-validation-msg" class="ar-step-validation-msg" style="display:none;">
+                Please add at least one step.
+            </p>
+        </div>
 
-            @await Html.PartialAsync("_TagSelector")
+        <!-- Nutrients -->
+        <div class="ar-card">
+            <div class="ar-card-title">
+                <span class="ar-card-icon"><i class="ti ti-chart-bar"></i></span>
+                <span class="ar-card-label">Nutrients</span>
+            </div>
+            <div class="ar-nutrients-grid">
+                <div class="ar-nutrient-cell">
+                    <label class="ar-nutrient-label" for="Calories">CALORIES</label>
+                    <div class="ar-input-group">
+                        <input type="number" class="ar-input" asp-for="Calories"
+                               placeholder="0" min="0" max="32767" step="1" required />
+                        <span class="ar-input-unit">kcal</span>
+                    </div>
+                </div>
+                <div class="ar-nutrient-cell">
+                    <label class="ar-nutrient-label" for="Protein">PROTEIN</label>
+                    <div class="ar-input-group">
+                        <input type="number" class="ar-input" asp-for="Protein"
+                               placeholder="0" min="0" max="32767" step="1" required />
+                        <span class="ar-input-unit">g</span>
+                    </div>
+                </div>
+                <div class="ar-nutrient-cell">
+                    <label class="ar-nutrient-label" for="Carbs">CARBS</label>
+                    <div class="ar-input-group">
+                        <input type="number" class="ar-input" asp-for="Carbs"
+                               placeholder="0" min="0" max="32767" step="1" required />
+                        <span class="ar-input-unit">g</span>
+                    </div>
+                </div>
+                <div class="ar-nutrient-cell">
+                    <label class="ar-nutrient-label" for="Fat">FAT</label>
+                    <div class="ar-input-group">
+                        <input type="number" class="ar-input" asp-for="Fat"
+                               placeholder="0" min="0" max="32767" step="1" required />
+                        <span class="ar-input-unit">g</span>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-            <div class="back2">
-                <h2 class="back1Title">Recipe Image</h2>
-                <input type="hidden" asp-for="ImageUrl" />
-                <div class="file-input-wrapper back2-textbox">
-                    <label for="imageFile" class="file-browse-btn buttonGreenInline">
-                        <h4 class="buttonText">Browse</h4>
-                    </label>
-                    <span class="file-name-display">No file chosen</span>
-                    <input type="file" id="imageFile" name="ImageFile" accept="image/*" style="display:none;" />
-                    <button type="button" class="deleteButton file-remove-btn" id="removeImageBtn" style="@(string.IsNullOrEmpty(Model.ImageUrl) ? "display:none;" : "")">
-                        <img src="/images/icons/delete.png" alt="remove" class="deleteImage">
+        <!-- Tags -->
+        <div class="ar-card">
+            <div class="ar-card-title">
+                <span class="ar-card-icon"><i class="ti ti-tag"></i></span>
+                <span class="ar-card-label">Tags</span>
+            </div>
+            <div id="tags-container" class="ar-tags-container">
+                @foreach (var tag in Model.Tags)
+                {
+                    <span class="tag-wrapper">
+                        <button type="button"
+                                class="tag-pill ar-tag-chip"
+                                title="Remove @tag"
+                                data-predefined="@Model.AvailableTags.Contains(tag).ToString().ToLower()">
+                            @tag <span class="ar-tag-x">×</span>
+                        </button>
+                        <input type="hidden" name="Tags" value="@tag" />
+                    </span>
+                }
+            </div>
+            <div class="ar-tags-add-row">
+                <select id="tag-select" class="ar-input ar-tags-select">
+                    <option value="">Select a tag…</option>
+                    @foreach (var tag in Model.AvailableTags.Where(t => !Model.Tags.Contains(t)))
+                    {
+                        <option value="@tag">@tag</option>
+                    }
+                </select>
+                <input type="text" id="custom-tag-input" class="ar-input ar-tags-custom-input"
+                       placeholder="Or type a custom tag…" />
+                <button type="button" class="ar-teal-btn" id="add-custom-tag-btn">Add</button>
+            </div>
+        </div>
+
+        <!-- Recipe Image -->
+        <div class="ar-card">
+            <div class="ar-card-title">
+                <span class="ar-card-icon"><i class="ti ti-photo"></i></span>
+                <span class="ar-card-label">Recipe Image</span>
+            </div>
+            <input type="hidden" asp-for="ImageUrl" />
+            <input type="hidden" id="removeImageHidden" name="RemoveImage" value="false" />
+
+            @{
+                bool hasImage = !string.IsNullOrEmpty(Model.ImageUrl);
+            }
+
+            @if (hasImage)
+            {
+                <div class="ar-current-img-wrap" id="currentImgWrap">
+                    <img src="@Model.ImageUrl" alt="Current recipe image" class="ar-current-img-preview" />
+                    <button type="button" class="ar-remove-img-btn" id="removeImageBtn">
+                        <i class="ti ti-x"></i> Remove
                     </button>
                 </div>
-                <input type="hidden" id="removeImageHidden" name="RemoveImage" value="false" />
-                @if (!string.IsNullOrEmpty(Model.ImageUrl))
-                {
-                    <img src="@Model.ImageUrl" alt="Current recipe image" class="image-preview" style="display:block;" />
-                }
-                <img id="imagePreview" src="" alt="Image preview" class="image-preview" />
-            </div>
+            }
 
-            <button class="buttonBlue" type="submit">
-                <h2 class="buttonText">Finish</h2>
+            <label for="imageFile" class="ar-upload-zone" id="uploadZone"
+                   style="@(hasImage ? "display:none;" : "")">
+                <i class="ti ti-upload ar-upload-icon"></i>
+                <span class="ar-upload-text">Click to upload or drag and drop</span>
+            </label>
+            <input type="file" id="imageFile" name="ImageFile" accept="image/*" style="display:none;" />
+            <div id="imageFilename" class="ar-filename-pill" style="display:none;"></div>
+            <img id="imagePreview" src="" alt="Image preview" class="ar-image-preview" />
+        </div>
+
+        <!-- Actions -->
+        <div class="ar-action-row">
+            <a href="@Url.Action("Recipes", "FoodEntries")" class="ar-ghost-btn">Cancel</a>
+            <button type="submit" class="ar-submit-btn">
+                <i class="ti ti-check"></i>
+                Save changes
             </button>
+        </div>
+
     </form>
 </div>
-
 
 @section Scripts {
     <script src="~/js/newrecipepage.js"></script>

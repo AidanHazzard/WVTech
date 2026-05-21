@@ -5,6 +5,7 @@ namespace MealPlanner.DAL.Abstract;
 public interface IShoppingListRepository
 {
     void Add(ShoppingListItem item);
+    void AddBatch(IEnumerable<ShoppingListItem> items);
 
     void Remove(int itemId, string userId);
 
@@ -17,4 +18,9 @@ public interface IShoppingListRepository
     void ClearAllItems(string userId);
 
     void UpdateAmountByIngredientBase(string userId, int ingredientBaseId, float newAmount);
+
+    HashSet<int> GetDismissedIngredientBaseIds(string userId);
+    void DismissIngredientBase(string userId, int ingredientBaseId);
+    void DismissBatch(string userId, IEnumerable<int> ingredientBaseIds);
+    void UnDismiss(string userId, int ingredientBaseId);
 }

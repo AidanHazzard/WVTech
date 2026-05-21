@@ -32,6 +32,7 @@ public class ShoppingListService : IShoppingListService
         _shoppingListRepository.RemoveAutoAddedByUserId(userId);
 
         var manualItems = _shoppingListRepository.GetByUserId(userId).ToList();
+        var dismissed = _shoppingListRepository.GetDismissedIngredientBaseIds(userId);
 
         var grouped = ingredients
             .GroupBy(i => (IngredientNameNormalizer.NormalizeKey(i.IngredientBase.Name), i.Measurement.Id))
@@ -46,6 +47,9 @@ public class ShoppingListService : IShoppingListService
 
         foreach (var item in grouped)
         {
+            if (dismissed.Contains(item.IngredientBase.Id))
+                continue;
+
             var normalizedName = IngredientNameNormalizer.NormalizeKey(item.IngredientBase.Name);
             var alreadyCovered = manualItems.Any(m =>
                 string.Equals(
@@ -72,6 +76,8 @@ public class ShoppingListService : IShoppingListService
         if (measurementEntity == null)
             throw new ArgumentException($"Unknown measurement '{trimmed}'.");
 
+        _shoppingListRepository.UnDismiss(userId, ingredientBase.Id);
+
         var item = new ShoppingListItem
         {
             UserId = userId,
@@ -82,6 +88,36 @@ public class ShoppingListService : IShoppingListService
         };
 
         _shoppingListRepository.Add(item);
+    }
+
+    public void AddItemsBatch(string userId, IEnumerable<(string name, float amount, string measurement)> items)
+    {
+        var allMeasurements = _measurementRepo.ReadAll();
+        var toAdd = new List<ShoppingListItem>();
+
+        foreach (var (name, amount, measurement) in items)
+        {
+            if (string.IsNullOrWhiteSpace(name)) continue;
+
+            var trimmed = measurement.Trim();
+            var measurementEntity = allMeasurements
+                .FirstOrDefault(m => string.Equals(m.Name, trimmed, StringComparison.OrdinalIgnoreCase)
+                                  || string.Equals(m.Abbreviation, trimmed, StringComparison.OrdinalIgnoreCase));
+            if (measurementEntity == null) continue;
+
+            var ingredientBase = _ingredientBaseRepo.FindOrCreateByName(name);
+
+            toAdd.Add(new ShoppingListItem
+            {
+                UserId = userId,
+                IngredientBase = ingredientBase,
+                Measurement = measurementEntity,
+                Amount = amount,
+                IsAutoAdded = false
+            });
+        }
+
+        _shoppingListRepository.AddBatch(toAdd);
     }
 
     public void RemoveItem(int itemId, string userId)
@@ -112,8 +148,6 @@ public class ShoppingListService : IShoppingListService
 
     public IEnumerable<ShoppingListItem> GetItemsForUser(string userId)
     {
-        return _shoppingListRepository.GetByUserId(userId)
-            .OrderBy(i => i.IngredientBase.Name)
-            .ToList();
+        return _shoppingListRepository.GetByUserId(userId);
     }
 }

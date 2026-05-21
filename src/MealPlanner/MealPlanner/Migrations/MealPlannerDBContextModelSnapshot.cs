@@ -39,6 +39,28 @@ namespace MealPlanner.Migrations
                     b.ToTable("DietaryRestriction");
                 });
 
+            modelBuilder.Entity("MealPlanner.Models.DismissedShoppingItem", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("IngredientBaseId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("IngredientBaseId");
+
+                    b.ToTable("DismissedShoppingItems");
+                });
+
             modelBuilder.Entity("MealPlanner.Models.Ingredient", b =>
                 {
                     b.Property<int>("Id")
@@ -618,6 +640,9 @@ namespace MealPlanner.Migrations
                     b.Property<DateTime?>("DateOfBirth")
                         .HasColumnType("datetime2");
 
+                    b.Property<string>("DisplayHandle")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("Gender")
                         .HasColumnType("nvarchar(max)");
 
@@ -851,6 +876,17 @@ namespace MealPlanner.Migrations
                     b.HasIndex("UsersId");
 
                     b.ToTable("RecipeUser");
+                });
+
+            modelBuilder.Entity("MealPlanner.Models.DismissedShoppingItem", b =>
+                {
+                    b.HasOne("MealPlanner.Models.IngredientBase", "IngredientBase")
+                        .WithMany()
+                        .HasForeignKey("IngredientBaseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("IngredientBase");
                 });
 
             modelBuilder.Entity("MealPlanner.Models.Ingredient", b =>

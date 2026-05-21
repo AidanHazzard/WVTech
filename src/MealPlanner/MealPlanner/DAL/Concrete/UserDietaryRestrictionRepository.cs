@@ -13,11 +13,31 @@ public class UserDietaryRestrictionRepository : IUserDietaryRestrictionRepositor
         _context = context;
     }
 
+    public async Task<List<DietaryRestriction>> GetAllDietaryRestrictionsAsync()
+    {
+        return await _context.DietaryRestrictions
+            .OrderBy(d => d.Name)
+            .ToListAsync();
+    }
+
     public async Task<List<UserDietaryRestriction>> GetByUserIdAsync(string userId)
     {
         return await _context.UserDietaryRestrictions
             .Include(x => x.DietaryRestriction)
             .Where(x => x.UserId == userId)
+            .ToListAsync();
+    }
+
+    public async Task<List<DietaryRestriction>> GetAllAsync()
+    {
+        return await _context.DietaryRestrictions.OrderBy(d => d.Name).ToListAsync();
+    }
+
+    public async Task<List<int>> GetSelectedIdsByUserIdAsync(string userId)
+    {
+        return await _context.UserDietaryRestrictions
+            .Where(x => x.UserId == userId)
+            .Select(x => x.DietaryRestrictionId)
             .ToListAsync();
     }
 

@@ -240,6 +240,39 @@ public class ShoppingController : Controller
 
     public record UpdateMeasurementRequest(int ItemId, string Measurement);
 
+    public record BatchAddItem(string Name, float Amount, string Measurement);
+
+    [HttpPost]
+    [IgnoreAntiforgeryToken]
+    public async Task<IActionResult> AddItemsBatch([FromBody] List<BatchAddItem> items)
+    {
+        User? user = await _userManager.GetUserAsync(User);
+        if (user == null) return Unauthorized();
+
+        if (items == null || items.Count == 0)
+            return BadRequest("No items provided.");
+
+        var batch = items
+            .Where(i => !string.IsNullOrWhiteSpace(i.Name))
+            .Select(i => (i.Name.Trim(), i.Amount, i.Measurement ?? ""));
+
+        _shoppingListService.AddItemsBatch(user.Id, batch);
+
+        return Ok(new { added = items.Count });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ClearItems()
+    {
+        User? user = await _userManager.GetUserAsync(User);
+        if (user == null) return Challenge();
+
+        _shoppingListService.ClearItems(user.Id);
+        TempData["ShoppingListSuccess"] = "Shopping list cleared.";
+        return RedirectToAction(nameof(Index));
+    }
+
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> RemoveItem(int itemId)

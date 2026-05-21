@@ -88,6 +88,8 @@ public class RecipeRepository : Repository<Recipe>, IRecipeRepository
 
             if (i.Measurement.Id == 0)
             {
+                if (string.IsNullOrEmpty(i.Measurement.Name)) continue;
+
                 // Use existing db entry for Measurement if it exits, ensuring Unique constraint
                 try
                 {
@@ -144,6 +146,18 @@ public class RecipeRepository : Repository<Recipe>, IRecipeRepository
         return _dbset.FirstOrDefault(r => r.ExternalUri == uri);
     }
 
+    public async Task<List<Recipe>> GetRecipesByExternalUrisAsync(IEnumerable<string> uris)
+    {
+        var uriList = uris.Distinct().ToList();
+        if (uriList.Count == 0) return [];
+
+        return await _dbset
+            .Include(r => r.Tags)
+            .Include(r => r.Ingredients)
+            .Where(r => r.ExternalUri != null && uriList.Contains(r.ExternalUri))
+            .ToListAsync();
+    }
+
     public List<Recipe> GetRecipesByNameAndRestrictions(string name, IEnumerable<string> restrictionTagNames)
     {
         var required = restrictionTagNames.Select(n => n.ToLower()).ToList();
@@ -162,10 +176,11 @@ public class RecipeRepository : Repository<Recipe>, IRecipeRepository
         return query.ToList();
     }
 
-    public async Task<List<Recipe>> GetAllWithTagsAsync()
+    public async Task<List<Recipe>> GetAllWithTagsAndIngredientsAsync()
     {
         return await _dbset
             .Include(r => r.Tags)
+            .Include(r => r.Ingredients)
             .ToListAsync();
     }
 }

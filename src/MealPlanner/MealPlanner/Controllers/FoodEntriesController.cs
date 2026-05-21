@@ -24,6 +24,7 @@ public class FoodEntriesController : Controller
     private readonly IExternalRecipeService? _externalRecipeService;
     private readonly BlobContainerClient? _blobContainer;
     private readonly IWebHostEnvironment? _env;
+    private readonly IShoppingListService? _shoppingListService;
 
     public FoodEntriesController(
         IRecipeRepository recipeRepository,
@@ -34,7 +35,8 @@ public class FoodEntriesController : Controller
         IWebHostEnvironment env,
         BlobContainerClient? blobContainer = null,
         IExternalRecipeService? externalRecipeService = null,
-        INutritionProgressService? nutritionProgressService = null)
+        INutritionProgressService? nutritionProgressService = null,
+        IShoppingListService? shoppingListService = null)
     {
         _recipeRepository = recipeRepository;
         _tagRepository = tagRepository;
@@ -45,6 +47,7 @@ public class FoodEntriesController : Controller
         _externalRecipeService = externalRecipeService;
         _blobContainer = blobContainer;
         _env = env;
+        _shoppingListService = shoppingListService;
     }
 
     public IActionResult SearchRecipes()
@@ -100,13 +103,18 @@ public class FoodEntriesController : Controller
         {
             userRecipes = await _userRecipeRepository.GetUserOwnedRecipesByUserIdAsync(user.Id);
         }
-        IEnumerable<RecipeViewModel> userRecipeVMs = userRecipes.Select(ViewModelService.RecipeToRecipeVM);
-        foreach (RecipeViewModel vm in userRecipeVMs)
+
+        var recipeVMs = userRecipes.Select(ViewModelService.RecipeToRecipeVM).ToList();
+        foreach (RecipeViewModel vm in recipeVMs)
         {
             if (vm.Id == null) continue;
             vm.VotePercentage = await _userRecipeRepository.GetRecipeVotePercentage(vm.Id ?? 0);
         }
-        return View(userRecipeVMs);
+
+        return View(new RecipesAndShoppingViewModel
+        {
+            Recipes = recipeVMs,
+        });
     }
 
     [HttpGet]
@@ -178,6 +186,13 @@ public class FoodEntriesController : Controller
         {
             newRecipeViewModel.AvailableTags = await _tagRepository.GetTagNamesAsync();
             newRecipeViewModel.Measurements = await _context.Set<Measurement>().Where(m => m.Abbreviation != "").OrderBy(m => m.SortOrder).ToListAsync();
+            return View("AddNewRecipe", newRecipeViewModel);
+        }
+
+        if (newRecipeViewModel.Ingredients.Any(i => string.IsNullOrWhiteSpace(i)))
+        {
+            ModelState.AddModelError("Ingredients", "Ingredient names cannot be blank.");
+            newRecipeViewModel.AvailableTags = await _tagRepository.GetTagNamesAsync();
             return View("AddNewRecipe", newRecipeViewModel);
         }
 

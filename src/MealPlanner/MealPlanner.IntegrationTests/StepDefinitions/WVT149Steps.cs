@@ -35,11 +35,19 @@ namespace Mealplanner.IntegrationTests
         [Then("a theme toggle is shown on the settings page")]
         public void ThenAThemeToggleIsShownOnTheSettingsPage()
         {
+            // Navigate to the Appearance panel where the toggle lives
+            var appearanceBtn = _wait.Until(driver =>
+            {
+                try { return driver.FindElement(By.CssSelector(".settings-nav-item[data-section='appearance']")); }
+                catch (NoSuchElementException) { return null; }
+            })!;
+            appearanceBtn.Click();
+
             var toggle = _wait.Until(driver =>
             {
                 try
                 {
-                    var el = driver.FindElement(By.CssSelector("#themeToggle"));
+                    var el = driver.FindElement(By.CssSelector("#themeToggle-panel"));
                     return el.Displayed ? el : null;
                 }
                 catch (NoSuchElementException) { return null; }
@@ -51,11 +59,19 @@ namespace Mealplanner.IntegrationTests
         [When("'Jack' clicks the theme toggle")]
         public void WhenJackClicksTheThemeToggle()
         {
+            // Navigate to the Appearance panel where the toggle lives
+            var appearanceBtn = _wait.Until(driver =>
+            {
+                try { return driver.FindElement(By.CssSelector(".settings-nav-item[data-section='appearance']")); }
+                catch (NoSuchElementException) { return null; }
+            })!;
+            appearanceBtn.Click();
+
             var toggle = _wait.Until(driver =>
             {
                 try
                 {
-                    var el = driver.FindElement(By.CssSelector("#themeToggle"));
+                    var el = driver.FindElement(By.CssSelector("#themeToggle-panel"));
                     return el.Displayed ? el : null;
                 }
                 catch (NoSuchElementException) { return null; }
@@ -64,18 +80,17 @@ namespace Mealplanner.IntegrationTests
             toggle.Click();
         }
 
-       [Then("the theme changes")]
-public void ThenTheThemeChanges()
-{
-    var js = (IJavaScriptExecutor)_driver;
-    var toggle = _driver.FindElement(By.CssSelector("#themeToggle"));
-    var isChecked = js.ExecuteScript("return document.getElementById('themeToggle').checked;") as bool? == true;
-    var theme = js.ExecuteScript("return document.documentElement.getAttribute('data-theme');")?.ToString();
+        [Then("the theme changes")]
+        public void ThenTheThemeChanges()
+        {
+            var js = (IJavaScriptExecutor)_driver;
+            var isOn = js.ExecuteScript("return document.getElementById('themeToggle-panel').classList.contains('on');") as bool? == true;
+            var theme = js.ExecuteScript("return document.documentElement.getAttribute('data-theme');")?.ToString();
 
-    if (isChecked)
-        Assert.That(theme, Is.EqualTo("light"));
-    else
-        Assert.That(theme, Is.Null.Or.Empty);
-}
+            if (isOn)
+                Assert.That(theme, Is.Null.Or.Empty);
+            else
+                Assert.That(theme, Is.EqualTo("light"));
+        }
     }
 }

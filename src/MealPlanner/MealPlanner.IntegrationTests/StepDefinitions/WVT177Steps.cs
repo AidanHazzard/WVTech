@@ -25,16 +25,23 @@ public class WVT177Steps
     [When("{string} adds an ingredient row")]
     public void WhenUserAddsAnIngredientRow(string username)
     {
-        _driver.FindElement(By.Id("buttonAppend")).Click();
-        _wait.Until(d => d.FindElements(By.CssSelector("select[name='IngredientMeasurements']")).Count > 0);
+        _wait.Until(d =>
+        {
+            try { return d.FindElement(By.Id("ingUnit")).Displayed; }
+            catch (NoSuchElementException) { return false; }
+        });
     }
 
     [Then("the ingredient measurement dropdown contains {string}")]
     public void ThenIngredientMeasurementDropdownContains(string measurement)
     {
-        var selects = _driver.FindElements(By.CssSelector("select[name='IngredientMeasurements']"));
-        Assert.That(selects, Is.Not.Empty, "No ingredient measurement dropdowns found on page");
-        var options = selects.Last().FindElements(By.TagName("option"));
+        var select = _wait.Until(d =>
+        {
+            try { return d.FindElement(By.Id("ingUnit")); }
+            catch (NoSuchElementException) { return null; }
+        });
+        Assert.That(select, Is.Not.Null, "Ingredient measurement dropdown (#ingUnit) not found");
+        var options = select!.FindElements(By.TagName("option"));
         Assert.That(
             options.Any(o => (o.GetAttribute("value") ?? "").Equals(measurement, StringComparison.OrdinalIgnoreCase)),
             Is.True,
@@ -44,20 +51,29 @@ public class WVT177Steps
     [When("{string} adds an ingredient with name {string} amount {string} and measurement {string}")]
     public void WhenUserAddsIngredientWithAmountAndMeasurement(string username, string name, string amount, string measurement)
     {
+        var ingQty = _driver.FindElement(By.Id("ingQty"));
+        ingQty.Clear();
+        ingQty.SendKeys(amount);
+
+        new SelectElement(_driver.FindElement(By.Id("ingUnit"))).SelectByValue(measurement);
+
+        var ingName = _driver.FindElement(By.Id("ingName"));
+        ingName.Clear();
+        ingName.SendKeys(name);
+
+        int rowsBefore = _driver.FindElements(By.CssSelector("#ingredientList .ar-ing-row")).Count;
         _driver.FindElement(By.Id("buttonAppend")).Click();
+        _wait.Until(d => d.FindElements(By.CssSelector("#ingredientList .ar-ing-row")).Count > rowsBefore);
+    }
 
-        _wait.Until(d => d.FindElements(By.CssSelector("input[name='IngredientAmounts']")).Count > 0);
-
-        var amountInputs = _driver.FindElements(By.CssSelector("input[name='IngredientAmounts']"));
-        var amountInput = amountInputs.Last();
-        amountInput.Clear();
-        amountInput.SendKeys(amount);
-
-        var measureSelects = _driver.FindElements(By.CssSelector("select[name='IngredientMeasurements']"));
-        new SelectElement(measureSelects.Last()).SelectByValue(measurement);
-
-        var nameInputs = _driver.FindElements(By.CssSelector("input[name='Ingredients']"));
-        nameInputs.Last().SendKeys(name);
+    [When("{string} submits the recipe form")]
+    public void WhenSubmitsTheRecipeForm(string username)
+    {
+        var submitBtn = _driver.FindElement(By.CssSelector(".ar-submit-btn"));
+        ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].scrollIntoView({block:'center'});", submitBtn);
+        ((IJavaScriptExecutor)_driver).ExecuteScript("arguments[0].click();", submitBtn);
+        _wait.Until(d => ((IJavaScriptExecutor)d)
+            .ExecuteScript("return document.readyState").ToString() == "complete");
     }
 
     [Then("the recipe {string} stores {string} with amount {string}")]
